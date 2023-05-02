@@ -1,0 +1,10 @@
+function Condition_Coefficient_Plots(model)
+
+subplot(2,2,1)
+PlotCoefficients(model.Condition1, {'Par1', 'Par2', 'Par3', 'Par4', 'Par5'})
+subplot(2,2,2)
+PlotCoefficients(model.Condition2, {'Par1', 'Par2', 'Par3', 'Par4', 'Par5'})
+subplot(2,2,3)
+PlotCoefficients(model.Condition3, {'Par1', 'Par2', 'Par3', 'Par4', 'Par5'})
+subplot(2,2,4)
+PlotCoefficients(model.Condition4, {'Par1', 'Par2', 'Par3', 'Par4', 'Par5'})

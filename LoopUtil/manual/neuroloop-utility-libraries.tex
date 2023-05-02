@@ -1,0 +1,120 @@
+% Neuroloop utilities - Library reference - Top level
+% Written by Christopher Thomas.
+
+\documentclass[letterpaper,11pt]{report}
+\usepackage[letterpaper]{geometry}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{placeins}
+\usepackage{longtable}
+
+\geometry{nohead,footskip=0.3in,margin=0.75in}
+
+% Force my paragraph style, darnit.
+\usepackage{indentfirst}
+\setlength{\parskip}{\baselineskip}
+
+% NOTE - "\thispagestyle" is used for part and chapter beginning pages, and
+% overrides \pagestyle. Redefine it to be harmless.
+% NOTE - The canonical solution ("\pagenumbering{gobble}") resets the page
+% counter whenever it's used.
+\renewcommand{\thispagestyle}[1]{}
+
+% Custom macros.
+\newcommand{\fixme}[1]{\textbf{FIXME: #1}}
+
+\newcommand{\figdef}[3]
+{\begin{figure}[htb]
+\begin{center}#1\end{center}
+\caption{#2}\label{#3}\end{figure}}
+
+\newcommand{\tabdef}[3]
+{\begin{table}[hb]
+\begin{center}#1\end{center}
+\caption{#2}\label{#3}\end{table}}
+
+% Document body.
+\begin{document}
+%
+% Title page.
+%
+\pagestyle{empty}
+
+\begin{center}
+%
+\vspace*{1in}
+{\Huge NeuroLoop Utilities -- Function Reference} \\
+{\footnotesize Written by Christopher Thomas -- \today.}
+%
+\vspace*{1in}\\
+\includegraphics[width=6in]{plots/20201005/spect-burst-abs-A-051}
+%
+\end{center}
+%
+\vfill
+{\tiny \input{../LICENSE.md}}
+%
+\clearpage
+%
+%
+% Front matter.
+%
+% NOTE - Putting the overview before the TOC!
+%
+\pagestyle{plain}
+\pagenumbering{roman}
+\setcounter{page}{1}
+%
+\input{nlutilref-over}
+\clearpage
+%
+\tableofcontents
+\clearpage
+%
+%
+% Document parts.
+%
+\pagestyle{plain}
+\setcounter{page}{1}
+\pagenumbering{arabic}
+%
+\part{Core Libraries}
+\label{sect-core}
+%
+\input{nlutilref-notes-core}
+%
+\input{nlutilref-proc}
+\input{nlutilref-util}
+\input{nlutilref-plot}
+\input{nlutilref-io}
+%
+\part{Abstraction Libraries}
+\label{sect-vendor}
+%
+\input{nlutilref-notes-vendor}
+%
+\input{nlutilref-ft}
+%
+\input{nlutilref-intan}
+\input{nlutilref-vend-intan}
+%
+\input{nlutilref-openephys}
+%
+\part{Application Libraries}
+\label{sect-apps}
+%
+\input{nlutilref-notes-apps}
+%
+\input{nlutilref-chantool}
+\input{nlutilref-sanity}
+%
+\part{Sample Code}
+\label{sect-samplecode}
+%
+\input{nlutilref-examples}
+%
+%
+\end{document}
+
+%
+% This is the end of the file.
