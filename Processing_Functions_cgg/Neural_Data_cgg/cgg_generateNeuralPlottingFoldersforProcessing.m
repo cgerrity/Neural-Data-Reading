@@ -61,5 +61,10 @@ cfg_tmp=cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Processing_Steps;
 [cfg_tmp,~] = cgg_generateFolderAndPath('Resample','Resample',cfg_tmp);
 cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Processing_Steps=cfg_tmp;
 
+% Processing Steps: Average
+cfg_tmp=cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Processing_Steps;
+[cfg_tmp,~] = cgg_generateFolderAndPath('Average','Average',cfg_tmp);
+cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Processing_Steps=cfg_tmp;
+
 end
 
