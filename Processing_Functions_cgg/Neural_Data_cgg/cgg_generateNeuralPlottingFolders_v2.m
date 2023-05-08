@@ -94,5 +94,10 @@ cfg_tmp=cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Alignment;
 [cfg_tmp,~] = cgg_generateFolderAndPath('Mean_Values','Mean_Values',cfg_tmp);
 cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Alignment=cfg_tmp;
 
+% Processing Steps
+cfg_tmp=cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Alignment;
+[cfg_tmp,~] = cgg_generateFolderAndPath('Processing_Steps','Processing_Steps',cfg_tmp);
+cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Alignment=cfg_tmp;
+
 end
 
