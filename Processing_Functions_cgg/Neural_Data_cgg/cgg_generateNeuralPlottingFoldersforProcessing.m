@@ -31,6 +31,11 @@ cfg_tmp=cfg.outdatadir.Experiment.Session.Plots.Area;
 [cfg_tmp,~] = cgg_generateFolderAndPath(Activity_Type,'Activity',cfg_tmp);
 cfg.outdatadir.Experiment.Session.Plots.Area=cfg_tmp;
 
+% Correlation Plots
+cfg_tmp=cfg.outdatadir.Experiment.Session.Plots.Area.Activity;
+[cfg_tmp,~] = cgg_generateFolderAndPath('Correlation','Correlation',cfg_tmp);
+cfg.outdatadir.Experiment.Session.Plots.Area.Activity=cfg_tmp;
+
 % Processing Steps
 cfg_tmp=cfg.outdatadir.Experiment.Session.Plots.Area.Activity;
 [cfg_tmp,~] = cgg_generateFolderAndPath('Processing_Steps','Processing_Steps',cfg_tmp);
