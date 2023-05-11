@@ -628,9 +628,9 @@ MatchArray_Full(:,7)=MatchArray_Previous;
 
 [~,NumCondArray]=size(MatchArray_Full);
 
-for fidx=1:NumAllFeatures-1
-MatchArray_Full(:,fidx+NumCondArray)=MatchArray_Chosen{fidx};
-end
+% for fidx=1:NumAllFeatures-1
+% MatchArray_Full(:,fidx+NumCondArray)=MatchArray_Chosen{fidx};
+% end
 
 MatchArray_Full_Ones=MatchArray_Full;
 [~,NumCondArray]=size(MatchArray_Full);
