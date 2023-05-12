@@ -53,17 +53,22 @@ for aidx=1:length(All_probe_area)
     SessionName,ExperimentName,probe_area,Activity_Type);
 
 %%
-
+% tic
 fullfilename=[outdatadir_WideBand filesep Activity_Type '_Trial_%d.mat'];
-this_Data=[];
-for tidx=1:length(Sel_Trial)
+% this_Data=[];
+this_Data=cell(1,Count_Sel_Trial);
+parfor tidx=1:length(Sel_Trial)
     this_tidx=Sel_Trial(tidx);
 recdata_wideband=load(sprintf(fullfilename,this_tidx));
 recdata_wideband=recdata_wideband.this_recdata_wideband;
 
-this_Data=[this_Data,recdata_wideband.trial{1}];
+this_Data{tidx}=recdata_wideband.trial{1};
+
+% this_Data=[this_Data,recdata_wideband.trial{1}];
 end
 
+this_Data=cell2mat(this_Data);
+% toc
 %%
 InData=this_Data;
 InArea=probe_area;
@@ -78,7 +83,7 @@ InData=this_Data;
 InArea=probe_area;
 InTrials=Sel_Trial;
 InSavePlotCFG=cfg_outplotdir.outdatadir.Experiment.Session.Plots.Area.Activity.Correlation;
-InSaveName='Channel_Clustering_Mapped_Clusters_%d_%s';
+InSaveName='Channel_Clustering_%s_Mapped_Clusters_%d_%s';
 
 %%
 cgg_plotChannelClusteringAlongProbe(InData,InArea,InTrials,InSavePlotCFG,InSaveName)
