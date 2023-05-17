@@ -61,7 +61,7 @@ gaze_samprate = lfp_samprate;
 % signal in each channel. This should remove noise that is common across
 % all channels
 
-want_rereference = false; % true, false
+want_rereference = true; % true, false
 
 % This string determines the type of rereferencing that is done.
 % Typicalling this will be set to 'avg' for common average referencing or
