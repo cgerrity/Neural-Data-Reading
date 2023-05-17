@@ -38,6 +38,9 @@ probe_selection=cfg.probe_selection;
 probe_area=cfg.probe_area;
 want_channel_remap = cfg.want_channel_remap;
 want_artifact_rejection = cfg.want_artifact_rejection;
+want_rereference = cfg.want_rereference;
+rereference_type = cfg.rereference_type;
+clustering_trial_count = cfg.clustering_trial_count;
 
 %% Directories
 
@@ -639,7 +642,7 @@ parfor tidx=1:trialcount
        this_trial_index);
     
     if ~(exist(this_trial_wideband_file_name,'file')) 
-        
+    
 % Wrapping this to suppress the annoying banner.
 ft_defaults;
         
@@ -728,9 +731,6 @@ if have_chanmap
   end
 end
 
-% NOTE - You'd normally do re-referencing here.
-
-
 % Second step: Do notch filtering using our own filter, as FT's brick wall
 % filter acts up as of 2021.
 
@@ -746,6 +746,34 @@ m.this_recdata_wideband=this_recdata_wideband;
     end
 
 end
+
+%% Connected Channels
+% Here the information for what channels are connected is obtained.
+
+% NOTE - You'd normally do re-referencing here.
+if want_rereference
+    disp('.. Performing Clustering to Identify Connected Channels');
+[Connected_Channels,Disconnected_Channels,is_any_previously_rereferenced] = cgg_getDisconnectedChannels(trialcount,...
+    clustering_trial_count,[outdatadir_WideBand filesep ...
+    'WideBand_Trial_%d.mat']);
+
+Message_Rereferencing=sprintf('--- Disconnected Channels for Area: %s are:',this_probe_area);
+for didx=1:length(Disconnected_Channels)
+    if didx<length(Disconnected_Channels)
+    Message_Rereferencing=sprintf([Message_Rereferencing ' %d,'],Disconnected_Channels(didx));
+    else
+    Message_Rereferencing=sprintf([Message_Rereferencing ' %d'],Disconnected_Channels(didx));
+    end
+end
+
+disp(Message_Rereferencing);
+
+cfg_rereference=[];
+cfg_rereference.reref='yes';
+cfg_rereference.refchannel=Connected_Channels; %All Good Channels
+cfg_rereference.refmethod=rereference_type;
+end
+
 %% Iterate through trials for LFP, MUA, and Spike Data
 
 % Variables needed: lfp_maxfreq, lfp_samprate, spike_minfreq,
@@ -790,13 +818,20 @@ parfor tidx=1:trialcount
         % 30 ksps double-precision data takes up about 1 GB per channel-hour.
         nlFT_setMemChans(8); 
         
-     % Third step: Get derived signals (LFP, spike, and rectified activity).
-
-    disp('.. Getting LFP, spike, and rectified activity signals.');
-    
     m_wideband = matfile(this_trial_wideband_file_name,'Writable',true);
     this_recdata_wideband=m_wideband.this_recdata_wideband;
-
+        
+    is_previously_rereferenced=cgg_checkFTRereference(this_recdata_wideband);
+    
+    if want_rereference && ~is_any_previously_rereferenced &&~is_previously_rereferenced
+        disp('.. Rereferencing Wideband data.');
+    this_recdata_wideband = ft_preprocessing(cfg_rereference, this_recdata_wideband);        
+    end
+    
+    % Third step: Get derived signals (LFP, spike, and rectified activity).
+    
+    disp('.. Getting LFP, spike, and rectified activity signals.');
+    
     [ this_recdata_lfp, this_recdata_spike, this_recdata_activity ] = ...
         euFT_getDerivedSignals( this_recdata_wideband, lfp_maxfreq, ...
         lfp_samprate, spike_minfreq, rect_bandfreqs, rect_lowpassfreq, ...
@@ -812,6 +847,11 @@ parfor tidx=1:trialcount
 %         m_Spike.this_recdata_spike=this_recdata_spike;
         m_MUA = matfile(this_trial_MUA_file_name,'Writable',true);
         m_MUA.this_recdata_activity=this_recdata_activity;
+        
+        if want_rereference && ~is_any_previously_rereferenced && ~is_previously_rereferenced
+        m_WB = matfile(this_trial_wideband_file_name,'Writable',true);
+        m_WB.this_recdata_wideband=this_recdata_wideband;
+        end
 
     end
 

@@ -16,7 +16,7 @@ trial_align_evcode = 'FixCentralCueStart';
 % following and preceding trials and overlap isn't necessary
 padtime = 1; % Time in seconds
 
-%% Data Processiong Information
+%% Data Processing Information
 
 % Narrow-band frequencies to filter out.
 
@@ -55,6 +55,29 @@ rect_samprate = lfp_samprate;
 % The gaze data itself is non-uniformly sampled.
 
 gaze_samprate = lfp_samprate;
+
+% This boolean determines whether rereferencing is wanted. This will
+% calculate a reference from selected channels and subtract that from the
+% signal in each channel. This should remove noise that is common across
+% all channels
+
+want_rereference = false; % true, false
+
+% This string determines the type of rereferencing that is done.
+% Typicalling this will be set to 'avg' for common average referencing or
+% 'median' for median referencing. Median rereferecning will be less
+% sensitive to large excursions such as spikes.
+
+rereference_type='median'; %'avg', 'median', 'rest', 'bipolar' or 
+% 'laplace' (default = 'avg') [Directly from FieldTrip Documentation]
+
+% This scalar determines the number of trials that are used when
+% automatically getting the channels that are disconnected. A higher number
+% will increase the time to calculate but will include more data in the
+% calculation of which channels are disconnected. The value must be less
+% than the number of trials in the session.
+
+clustering_trial_count=30;
 
 
 %% Probe Information
@@ -111,6 +134,8 @@ fifth_probe_area='CD_002';
 % Use a cell array with all the probe locations that are being looked at.
 probe_area={first_probe_area,second_probe_area,third_probe_area,...
     fourth_probe_area,fifth_probe_area};
+
+probe_disconnected={[30,60:64],[30,39,60:64],[30,60:64],[14,30,60:64],[30,60:64]};
 
 
 %% Boolean Decision Section
