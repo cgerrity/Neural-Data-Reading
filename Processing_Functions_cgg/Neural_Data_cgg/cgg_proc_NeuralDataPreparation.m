@@ -717,6 +717,7 @@ if have_chanmap
 %   this_recdata_wideband.oldlabel=newlabels;
   this_recdata_wideband.label = this_recdata_wideband.label(newlabels_order);
   this_recdata_wideband.label_in_order = newlabels_in_order;
+  this_recdata_wideband.old_label = preproc_config_rec.channel;
 %   this_recdata_wideband.hdr.label = newlabels_in_order;
 %   rechdr.label = newlabels_in_order;
   
