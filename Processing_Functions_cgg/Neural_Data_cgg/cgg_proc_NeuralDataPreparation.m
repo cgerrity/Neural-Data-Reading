@@ -752,6 +752,7 @@ end
 % Here the information for what channels are connected is obtained.
 
 % NOTE - You'd normally do re-referencing here.
+is_any_previously_rereferenced=false;
 if want_rereference
     disp('.. Performing Clustering to Identify Connected Channels');
 [Connected_Channels,Disconnected_Channels,is_any_previously_rereferenced] = cgg_getDisconnectedChannels(trialcount,...
