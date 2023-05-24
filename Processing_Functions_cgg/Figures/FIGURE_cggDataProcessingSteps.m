@@ -28,7 +28,7 @@ Smooth_Factor=10;
 Sel_Trial=5;
 Sel_Channel=1:64;
 
-Count_Sel_Trial=10;
+Count_Sel_Trial=30;
 rereference_type='median';
 
 
@@ -315,6 +315,31 @@ this_Average_Reref_CD=Average_Reref_CD(Sel_Channel,Start_IDX_Average:End_IDX_Ave
 
 PlotDir_ACC=cfg_outplotdir_ACC.outdatadir.Experiment.Session.Plots.Area.Activity.Processing_Steps;
 PlotDir_CD=cfg_outplotdir_CD.outdatadir.Experiment.Session.Plots.Area.Activity.Processing_Steps;
+
+%% WideBand Plotting in Groups
+
+YLim_WideBand=[-30,30];
+YName_WideBand='WideBand Activity (a.u.)';
+Title_WideBand='WideBand Activity';
+SaveName_WideBand_ACC=[sprintf('Data_Processing_WideBand_ACC_Trial_%s_Channel_',num2str(Sel_Trial)) '%s'];
+SaveName_WideBand_CD=[sprintf('Data_Processing_WideBand_CD_Trial_%s_Channel_',num2str(Sel_Trial)) '%s'];
+Title_WideBand_Reref='WideBand Activity (Rereferenced)';
+SaveName_WideBand_Reref_ACC=[sprintf('Data_Processing_WideBand_Reref_ACC_Trial_%s_Channel_',num2str(Sel_Trial)) '%s'];
+SaveName_WideBand_Reref_CD=[sprintf('Data_Processing_WideBand_Reref_CD_Trial_%s_Channel_',num2str(Sel_Trial)) '%s'];
+InGroup_WideBand=27:33;
+
+cgg_plotDataProcessingStepsInGroups(this_WideBand_ACC,this_Time_WideBand_ACC,...
+    'Time (s)',YName_WideBand,Title_WideBand,YLim_WideBand,InGroup_WideBand,...
+    PlotDir_ACC.WideBand,SaveName_WideBand_ACC,'ACC');
+% cgg_plotDataProcessingStepsInGroups(this_WideBand_CD,this_Time_WideBand_CD,...
+%     'Time (s)',YName_WideBand,Title_WideBand,YLim_WideBand,InGroup_WideBand,...
+%     PlotDir_CD.WideBand,SaveName_WideBand_CD,'CD');
+cgg_plotDataProcessingStepsInGroups(this_WideBand_Reref_ACC,this_Time_WideBand_ACC,...
+    'Time (s)',YName_WideBand,Title_WideBand_Reref,YLim_WideBand,InGroup_WideBand,...
+    PlotDir_ACC.WideBand,SaveName_WideBand_Reref_ACC,'ACC');
+% cgg_plotDataProcessingStepsInGroups(this_WideBand_Reref_CD,this_Time_WideBand_CD,...
+%     'Time (s)',YName_WideBand,Title_WideBand_Reref,YLim_WideBand,InGroup_WideBand,...
+%     PlotDir_CD.WideBand,SaveName_WideBand_Reref_CD,'CD');
 
 %% WideBand Plotting
 
