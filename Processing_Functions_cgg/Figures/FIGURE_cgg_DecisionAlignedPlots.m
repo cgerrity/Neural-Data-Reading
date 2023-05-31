@@ -791,7 +791,7 @@ this_Channel=cidx;
 FitBaseline_sel_channel=diag(diag(FitBaseline_sel(this_Channel,:)));
 
 % [b_Baseline{cidx,sidx},bint_Baseline{cidx,sidx},r_Baseline{cidx,sidx},rint_Baseline{cidx,sidx},stats_Baseline{cidx,sidx}] = regress(FitBaseline_sel_channel,MatchArray_Fit);
-[b,bint,r,rint,stats] = regress(FitBaseline_sel_channel,MatchArray_Fit_Ones);
+% [b,bint,r,rint,stats] = regress(FitBaseline_sel_channel,MatchArray_Fit_Ones);
 
 mdl = fitlm(MatchArray_Fit,FitBaseline_sel_channel,'CategoricalVars',1:NumMatchArray);
 

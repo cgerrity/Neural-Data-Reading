@@ -73,12 +73,15 @@ fullfilename=[outdatadir_MUA filesep Activity_Type '_Trial_%d.mat'];
 %     'outdatadir',outdatadir);
 
 [Norm_Segmented_Data,Norm_Segmented_Baseline,...
-    TrialNumbers_Data,TrialNumbers_Baseline,Segmented_Data_Unsmoothed,Segmented_Data_Smoothed,Segmented_Data_Smoothed_Norm] = ...
+    TrialNumbers_Data,TrialNumbers_Baseline,Segmented_Data_Unsmoothed,Segmented_Data_Smoothed,Segmented_Baseline_Smoothed,Segmented_Data_Smoothed_Norm] = ...
     cgg_procFullTrialPreparation(Start_IDX_Data,End_IDX_Data,...
     Start_IDX_Base,End_IDX_Base,fullfilename,Smooth_Factor,'inputfolder',inputfolder,'outdatadir',outdatadir);
 
-[NumChannels,NumSamples_Data,~]=size(Norm_Segmented_Data);
-[~,NumSamples_Baseline,~]=size(Norm_Segmented_Baseline);
+this_Selected_Data=Segmented_Data_Smoothed;
+this_Selected_Baseline=Segmented_Baseline_Smoothed;
+
+[NumChannels,NumSamples_Data,~]=size(this_Selected_Data);
+[~,NumSamples_Baseline,~]=size(this_Selected_Baseline);
 
 %%
 exptType='FLU';
@@ -235,8 +238,8 @@ MatchData=cell(1);
 MatchBaseline=cell(1);
 
 for midx=1:NumMultiplePlot
-[MatchData{midx}] = cgg_getSeparateTrialsByCriteria_v2(this_TrialCondition{midx},this_MatchValue{midx},TrialVariableTrialNumber,Norm_Segmented_Data,TrialNumbers_Data);
-[MatchBaseline{midx}] = cgg_getSeparateTrialsByCriteria_v2(this_TrialCondition{midx},this_MatchValue{midx},TrialVariableTrialNumber,Norm_Segmented_Baseline,TrialNumbers_Baseline);
+[MatchData{midx}] = cgg_getSeparateTrialsByCriteria_v2(this_TrialCondition{midx},this_MatchValue{midx},TrialVariableTrialNumber,this_Selected_Data,TrialNumbers_Data);
+[MatchBaseline{midx}] = cgg_getSeparateTrialsByCriteria_v2(this_TrialCondition{midx},this_MatchValue{midx},TrialVariableTrialNumber,this_Selected_Baseline,TrialNumbers_Baseline);
 end
 %%
 
@@ -252,16 +255,16 @@ for midx=1:NumMultiplePlot
 [this_TrialCondition_Rewarded,this_MatchValue_Rewarded] = cgg_addTrialCriteria(this_TrialCondition{midx},this_MatchValue{midx},Single_TrialCondition_Rewarded,Single_MatchValue_Rewarded);
 [this_TrialCondition_Unrewarded,this_MatchValue_Unrewarded] = cgg_addTrialCriteria(this_TrialCondition{midx},this_MatchValue{midx},Single_TrialCondition_Unrewarded,Single_MatchValue_Unrewarded);
     
-[MatchData_Rewarded{midx}] = cgg_getSeparateTrialsByCriteria_v2(this_TrialCondition_Rewarded,this_MatchValue_Rewarded,TrialVariableTrialNumber,Norm_Segmented_Data,TrialNumbers_Data);
-[MatchBaseline_Rewarded{midx}] = cgg_getSeparateTrialsByCriteria_v2(this_TrialCondition_Rewarded,this_MatchValue_Rewarded,TrialVariableTrialNumber,Norm_Segmented_Baseline,TrialNumbers_Baseline);
+[MatchData_Rewarded{midx}] = cgg_getSeparateTrialsByCriteria_v2(this_TrialCondition_Rewarded,this_MatchValue_Rewarded,TrialVariableTrialNumber,this_Selected_Data,TrialNumbers_Data);
+[MatchBaseline_Rewarded{midx}] = cgg_getSeparateTrialsByCriteria_v2(this_TrialCondition_Rewarded,this_MatchValue_Rewarded,TrialVariableTrialNumber,this_Selected_Baseline,TrialNumbers_Baseline);
 
-[MatchData_Unrewarded{midx}] = cgg_getSeparateTrialsByCriteria_v2(this_TrialCondition_Unrewarded,this_MatchValue_Unrewarded,TrialVariableTrialNumber,Norm_Segmented_Data,TrialNumbers_Data);
-[MatchBaseline_Unrewarded{midx}] = cgg_getSeparateTrialsByCriteria_v2(this_TrialCondition_Unrewarded,this_MatchValue_Unrewarded,TrialVariableTrialNumber,Norm_Segmented_Baseline,TrialNumbers_Baseline);
+[MatchData_Unrewarded{midx}] = cgg_getSeparateTrialsByCriteria_v2(this_TrialCondition_Unrewarded,this_MatchValue_Unrewarded,TrialVariableTrialNumber,this_Selected_Data,TrialNumbers_Data);
+[MatchBaseline_Unrewarded{midx}] = cgg_getSeparateTrialsByCriteria_v2(this_TrialCondition_Unrewarded,this_MatchValue_Unrewarded,TrialVariableTrialNumber,this_Selected_Baseline,TrialNumbers_Baseline);
 end
 end
 %%
 
-FullBaseline=0;
+% FullBaseline=0;
 
 Mean_Norm_InData=cell(1);
 Mean_Norm_InBaseline=cell(1);
@@ -476,18 +479,24 @@ end
 MatchArray_Full=NaN(length(MatchArray_Rewarded),1);
 
 MatchArray_Full(:,1)=MatchArray_Rewarded;
-MatchArray_Full(:,2)=MatchArray_Learned;
-MatchArray_Full(:,3)=MatchArray_Attention_2;
-MatchArray_Full(:,4)=MatchArray_Attention_3;
-MatchArray_Full(:,5)=MatchArray_Gain;
-MatchArray_Full(:,6)=MatchArray_Loss;
-MatchArray_Full(:,7)=MatchArray_Previous;
+[~,NumCondArray]=size(MatchArray_Full);
+MatchArray_Full(:,NumCondArray+1)=MatchArray_Learned;
+[~,NumCondArray]=size(MatchArray_Full);
+MatchArray_Full(:,NumCondArray+1)=MatchArray_Attention_2;
+[~,NumCondArray]=size(MatchArray_Full);
+MatchArray_Full(:,NumCondArray+1)=MatchArray_Attention_3;
+[~,NumCondArray]=size(MatchArray_Full);
+MatchArray_Full(:,NumCondArray+1)=MatchArray_Gain;
+[~,NumCondArray]=size(MatchArray_Full);
+MatchArray_Full(:,NumCondArray+1)=MatchArray_Loss;
+[~,NumCondArray]=size(MatchArray_Full);
+MatchArray_Full(:,NumCondArray+1)=MatchArray_Previous;
 
 [~,NumCondArray]=size(MatchArray_Full);
 
-for fidx=1:NumAllFeatures-1
-MatchArray_Full(:,fidx+NumCondArray)=MatchArray_Chosen{fidx};
-end
+% for fidx=1:NumAllFeatures-1
+% MatchArray_Full(:,fidx+NumCondArray)=MatchArray_Chosen{fidx};
+% end
 
 MatchArray_Full_Ones=MatchArray_Full;
 [~,NumCondArray]=size(MatchArray_Full);
@@ -495,8 +504,8 @@ MatchArray_Full_Ones(:,1+NumCondArray)=MatchArray_Input;
 
 %%
 
-[FitData,TrialNumbers_Data_NotFound,TrialNumbers_Condition_NotFound] = cgg_getSeparateTrialsByCriteria_v2(TrialCondition_Baseline,MatchValue_Baseline,TrialVariableTrialNumber,Norm_Segmented_Data,TrialNumbers_Data);
-[FitBaseline,TrialNumbers_Data_NotFound_Baseline,TrialNumbers_Condition_NotFound_Baseline] = cgg_getSeparateTrialsByCriteria_v2(TrialCondition_Baseline,MatchValue_Baseline,TrialVariableTrialNumber,Norm_Segmented_Baseline,TrialNumbers_Baseline);
+[FitData,TrialNumbers_Data_NotFound,TrialNumbers_Condition_NotFound] = cgg_getSeparateTrialsByCriteria_v2(TrialCondition_Baseline,MatchValue_Baseline,TrialVariableTrialNumber,this_Selected_Data,TrialNumbers_Data);
+[FitBaseline,TrialNumbers_Data_NotFound_Baseline,TrialNumbers_Condition_NotFound_Baseline] = cgg_getSeparateTrialsByCriteria_v2(TrialCondition_Baseline,MatchValue_Baseline,TrialVariableTrialNumber,this_Selected_Baseline,TrialNumbers_Baseline);
 
 % [FitData_Norm_Mean,FitBaseline_Norm_Mean,~,~,FitData_Norm,FitBaseline_Norm] = ...
 %     cgg_procTrialNormalization_v2(FitData,FitBaseline,FullBaseline);
@@ -506,7 +515,7 @@ this_FitBaseline=FitBaseline;
 
 [NumChannels,NumSamplesData,NumValidTrials]=size(this_FitaData);
 [NumChannels,NumSamplesBaseline,NumValidTrials]=size(this_FitBaseline);
-Regress_Period=250;
+Regress_Period=1;
 % this_Match_Array=[MatchArray_Rewarded,ones(size(MatchArray_Rewarded))];
 this_Match_Array=MatchArray_Full;
 
@@ -523,8 +532,8 @@ MatchArray_Fit_Ones=this_Match_Array_Ones((MatchArray_Input==1)&(~TrialNumbers_C
 
 %%
 
-% parfor sidx=1:NumSamplesData
-    sidx=2000;
+parfor sidx=1:NumSamplesData
+%     sidx=2000;
     
 this_DataSection_Start=sidx-floor(Regress_Period/2);
 this_DataSection_End=sidx+floor(Regress_Period/2)-(rem(Regress_Period, 2) == 0);
@@ -544,8 +553,8 @@ FitData_sel=mean(FitData_sel,2);
 
 FitData_sel=squeeze(FitData_sel);
 
-% for cidx=1:NumChannels
-        cidx=39;
+for cidx=1:NumChannels
+%         cidx=39;
 
 this_Channel=cidx;
 
@@ -562,18 +571,18 @@ P_Value_Data(cidx,sidx)=mdl_summary.pValue(2);
 % P_Value_Data(cidx,sidx)=stats(3);
 R_Value_Data(cidx,sidx)=mdl.Rsquared.Ordinary;
 
-% end
+end
 
 sidx
 
-% end
+end
 
-%%
+%%%
 
 P_Value_Baseline=NaN(NumChannels,NumSamplesBaseline,1);
 R_Value_Baseline=NaN(NumChannels,NumSamplesBaseline,1);
 
-% parfor sidx=1:NumSamplesBaseline
+parfor sidx=1:NumSamplesBaseline
     
     
 this_BaselineSection_Start=sidx-floor(Regress_Period/2);
@@ -594,7 +603,7 @@ FitBaseline_sel=mean(FitBaseline_sel,2);
 
 FitBaseline_sel=squeeze(FitBaseline_sel);
 
-% for cidx=1:NumChannels
+for cidx=1:NumChannels
     
 
 
@@ -613,13 +622,13 @@ P_Value_Baseline(cidx,sidx)=mdl_summary.pValue(2);
 % P_Value_Baseline(cidx,sidx)=stats(3);
 R_Value_Baseline(cidx,sidx)=mdl.Rsquared.Ordinary;
 
-% end
+end
 
 sidx
 
-% end
+end
 
-%%
+%%%
 
 InData_X_Name=InData_X_Name_All{1};
 InBaseline_X_Name=InBaseline_X_Name_All{1};
@@ -633,13 +642,24 @@ InBaseline_Title_Plog=InData_Title_Plog;
 
 InSavePlotCFG=cfg_outplotdir.outdatadir.Experiment.Session.Plots.Area.Activity.Alignment;
 
-InSaveName_P='Significance_Decision_Aligned';
-InSaveName_R='R_Squared_Decision_Aligned';
-InSaveName_Plog='PLog_Decision_Aligned';
+InSaveName_P='Significance_Decision_Aligned_All_Regressors_Low_Significance';
+InSaveName_R='R_Squared_Decision_Aligned_All_Regressors_Low_Significance';
+InSaveName_Plog='PLog_Decision_Aligned_All_Regressors_Low_Significance';
 
 InSaveDescriptor='';
 
-Significance_Value=0.05;
+Significance_Value=0.01;
+
+InP_ValueData=P_Value_Data;
+InP_ValueBaseline=P_Value_Baseline;
+InData_Time=Time_Data;
+InBaseline_Time=Time_Baseline;
+
+
+InData_Title=InData_Title_P;
+InBaseline_Title=InBaseline_Title_P;
+
+InSaveName=InSaveName_P;
 
 cgg_plotAllTrialSignificance(P_Value_Data,P_Value_Baseline,Time_Data,Time_Baseline,InData_X_Name,InBaseline_X_Name,InData_Title_P,InBaseline_Title_P,InSavePlotCFG,InSaveName_P,InSaveDescriptor,Significance_Value);
 
