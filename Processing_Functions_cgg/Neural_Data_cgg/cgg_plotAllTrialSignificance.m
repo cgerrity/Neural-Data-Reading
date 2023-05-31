@@ -34,21 +34,23 @@ figure(fig_activity);
     
 %%
 
-map = [0 1 0
-    0 0 0];
+map = [0 0 0
+    0 1 0];
     
 
 
 %% Single Plots Plots
  
-% this_Plot_Data=InP_ValueData<Significance_Value;
-% this_Plot_Baseline=InP_ValueBaseline<Significance_Value;
 
-this_Plot_Data=InP_ValueData;
-this_Plot_Baseline=InP_ValueBaseline;
 
-this_Plot_Data=this_Plot_Data*1;
-this_Plot_Baseline=this_Plot_Baseline*1;
+% this_Plot_Data=InP_ValueData;
+% this_Plot_Baseline=InP_ValueBaseline;
+% 
+% this_Plot_Data=this_Plot_Data*1;
+% this_Plot_Baseline=this_Plot_Baseline*1;
+
+this_Plot_Data=InP_ValueData<Significance_Value;
+this_Plot_Baseline=InP_ValueBaseline<Significance_Value;
 
     [NumChannels,~]=size(this_Plot_Data);
 
@@ -57,15 +59,17 @@ this_Plot_Baseline=this_Plot_Baseline*1;
 this_InSaveDescriptor=InSaveDescriptor;
 
 subplot(1,SubPlot_Total,SubPlot_Data_Range);
-s_Data = surf(InData_Time,1:NumChannels,this_Plot_Data,'Edgecolor','none');
+imagesc(InData_Time,1:NumChannels,this_Plot_Data)
+fig_activity.CurrentAxes.YDir='normal';
+% s_Data = surf(InData_Time,1:NumChannels,this_Plot_Data,'Edgecolor','none');
 view(2);
 % zlim(InYLim);
 % colorbar('vert');
 colormap(map);
 % caxis(InYLim);
-xline(0,'LineWidth',4);
-xline(-0.4,'LineWidth',4);
-xline(-0.7,'LineWidth',4);
+xline(0,'LineWidth',4,'Color','w');
+xline(-0.4,'LineWidth',4,'Color','b');
+xline(-0.7,'LineWidth',4,'Color','r');
 xlim([InData_Time(1),InData_Time(end)]);
 ylim([1,NumChannels]);
 % zlim(InYLim);
@@ -80,7 +84,9 @@ this_Title_Data='Segment of Interest';
 title(this_Title_Data,'FontSize',14);
 
 subplot(1,SubPlot_Total,SubPlot_Baseline_Range);
-s_Baseline = surf(InBaseline_Time,1:NumChannels,this_Plot_Baseline,'Edgecolor','none');
+imagesc(InBaseline_Time,1:NumChannels,this_Plot_Baseline)
+fig_activity.CurrentAxes.YDir='normal';
+% s_Baseline = surf(InBaseline_Time,1:NumChannels,this_Plot_Baseline,'Edgecolor','none');
 view(2);
 % zlim(InYLim);
 % colorbar('vert');
