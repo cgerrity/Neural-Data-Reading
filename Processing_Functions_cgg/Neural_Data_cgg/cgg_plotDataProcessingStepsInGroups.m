@@ -41,7 +41,7 @@ hold off
 
 xlabel(X_Name,'FontSize',X_Name_Size);
 ylabel(Y_Name,'FontSize',Y_Name_Size);
-legend('Location','northeast');
+% legend('Location','northeast');
 % legend([p_Data]);
 
 this_InYLim=[InYLim(1)-this_Y_Range*((length(Channel_Group)-1)*1+0.5),InYLim(1)+this_Y_Range*((length(Channel_Group)-1)*0+1.5)];
