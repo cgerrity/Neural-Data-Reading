@@ -51,7 +51,9 @@ this_Plot_Baseline=this_Plot_Baseline*1;
 this_InSaveDescriptor=InSaveDescriptor;
 
 subplot(1,SubPlot_Total,SubPlot_Data_Range);
-s_Data = surf(InData_Time,1:NumChannels,this_Plot_Data,'Edgecolor','none');
+imagesc(InData_Time,1:NumChannels,this_Plot_Data)
+fig_activity.CurrentAxes.YDir='normal';
+% s_Data = surf(InData_Time,1:NumChannels,this_Plot_Data,'Edgecolor','none');
 view(2);
 % zlim(InYLim);
 colorbar('vert');
@@ -74,7 +76,9 @@ this_Title_Data='Segment of Interest';
 title(this_Title_Data,'FontSize',14);
 
 subplot(1,SubPlot_Total,SubPlot_Baseline_Range);
-s_Baseline = surf(InBaseline_Time,1:NumChannels,this_Plot_Baseline,'Edgecolor','none');
+imagesc(InBaseline_Time,1:NumChannels,this_Plot_Baseline)
+fig_activity.CurrentAxes.YDir='normal';
+% s_Baseline = surf(InBaseline_Time,1:NumChannels,this_Plot_Baseline,'Edgecolor','none');
 view(2);
 % zlim(InYLim);
 colorbar('vert');
