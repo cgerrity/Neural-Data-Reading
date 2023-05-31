@@ -304,8 +304,8 @@ Color_Green=[0.4660,0.6740,0.1880];
 Color_Purple=[0.4940,0.1840,0.5560];
 Color_Red=[0.8510,0.0667,0.0824];
 
-if exist('Segmented_Baseline','var')
-[FullBaseline] = cgg_getSeparateTrialsByCriteria_v2(TrialCondition_Baseline,MatchValue_Baseline,TrialVariableTrialNumber,Segmented_Baseline,TrialNumbers_Baseline);
+if exist('this_Selected_Baseline','var')
+[FullBaseline] = cgg_getSeparateTrialsByCriteria_v2(TrialCondition_Baseline,MatchValue_Baseline,TrialVariableTrialNumber,this_Selected_Baseline,TrialNumbers_Baseline);
 end
 
 NumFigures=length(MatchValue_All);
