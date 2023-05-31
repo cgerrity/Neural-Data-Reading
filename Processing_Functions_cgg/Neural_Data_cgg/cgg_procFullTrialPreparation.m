@@ -1,5 +1,5 @@
 function [Norm_Segmented_Data,Norm_Segmented_Baseline,...
-    TrialNumbers_Data,TrialNumbers_Baseline,Segmented_Data_Unsmoothed,Segmented_Data_Smoothed,Segmented_Data_Smoothed_Norm] = ...
+    TrialNumbers_Data,TrialNumbers_Baseline,Segmented_Data_Unsmoothed,Segmented_Data_Smoothed,Segmented_Baseline_Smoothed,Segmented_Data_Smoothed_Norm] = ...
     cgg_procFullTrialPreparation(Start_IDX_Data,End_IDX_Data,...
     Start_IDX_Base,End_IDX_Base,fullfilename,Smooth_Factor,varargin)
 %UNTITLED4 Summary of this function goes here
@@ -33,8 +33,8 @@ outdatadir=cfg.outdatadir;
 [Segmented_Baseline,TrialNumbers_Baseline] = cgg_getAllTrialDataFromTimeSegments_v2(Start_IDX_Base,End_IDX_Base,fullfilename,Smooth_Factor,'inputfolder',inputfolder,...
     'outdatadir',outdatadir);
 
-
-Segmented_Data_Smoothed=Segmented_Data(1,:,:);
+Segmented_Data_Smoothed=Segmented_Data(:,:,:);
+Segmented_Baseline_Smoothed=Segmented_Baseline(:,:,:);
 %%
 
 [~,~,NumTrials]=size(Segmented_Data);
