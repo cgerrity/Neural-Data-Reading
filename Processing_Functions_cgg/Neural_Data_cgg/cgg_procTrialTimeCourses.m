@@ -4,12 +4,13 @@ function cgg_procTrialTimeCourses(varargin)
 
 
 [cfg] = cgg_generateNeuralDataFoldersTopLevel(varargin{:});
+%%
 
 % get the folder contents
 Contents_Activity=dir(cfg.outdatadir_Activity);
 % remove all files (isdir property is 0)
 Contents_Activity=Contents_Activity([Contents_Activity(:).isdir]);
-% remove '.' and '..' 
+% remove '.' and '..'
 Contents_Activity = Contents_Activity(~ismember({Contents_Activity(:).name},{'.','..'}));
 
 outdatadir_EX_Area=[cfg.outdatadir_Activity, filesep, Contents_Activity(1).name];
@@ -18,8 +19,8 @@ outdatadir_EX_Area=[cfg.outdatadir_Activity, filesep, Contents_Activity(1).name]
 Contents_EX_Area = dir(outdatadir_EX_Area);
 % remove all files (isdir property is 0)
 Contents_EX_Area = Contents_EX_Area([Contents_EX_Area(:).isdir]);
-% remove '.' and '..' 
-Contents_EX_Area = Contents_EX_Area(~ismember({Contents_EX_Area(:).name},{'.','..'}));
+% remove '.' and '..' and the 'Connected' Folder
+Contents_EX_Area = Contents_EX_Area(~ismember({Contents_EX_Area(:).name},{'.','..','Connected'}));
 
 %%
 NumTypesActivity=length(Contents_EX_Area);
@@ -52,7 +53,6 @@ end
 % Record the Time information in the configuration struct
 cfg.outdatadir_TimeInformation_Type=outdatadir_TimeInformation_Type;
 
-
 %%
 
 for aidx=1:NumTypesActivity
@@ -67,7 +67,14 @@ Contents_EX_Area_Type = Contents_EX_Area_Type(~ismember({Contents_EX_Area_Type(:
 NumTrials=length(Contents_EX_Area_Type);
 
 parfor tidx=1:NumTrials
-outdatadir_EX_Area_Type_Trial=[outdatadir_EX_Area_Type{aidx} filesep Contents_EX_Area_Type(tidx).name];
+    
+[~,EX_Area_Type_Trial_File_Name,~]=fileparts(Contents_EX_Area_Type(tidx).name); 
+    
+EX_Area_Type_Trial_Time_Name=[outdatadir_TimeInformation_Type{aidx} filesep EX_Area_Type_Trial_File_Name '_Time.mat'];
+
+if ~(exist(EX_Area_Type_Trial_Time_Name,'file'))
+
+outdatadir_EX_Area_Type_Trial=[outdatadir_EX_Area_Type{aidx} filesep EX_Area_Type_Trial_File_Name '.mat'];
 
 m_EX_Area_Type_Trial=matfile(outdatadir_EX_Area_Type_Trial);
 
@@ -78,12 +85,13 @@ EX_Area_Type_Trial=m_EX_Area_Type_Trial.(EX_Area_Type_Trial_Name);
 
 EX_Area_Type_Trial_Time=EX_Area_Type_Trial.time{1};
 
-[~,EX_Area_Type_Trial_Name,~]=fileparts(Contents_EX_Area_Type(tidx).name);
-
-EX_Area_Type_Trial_Time_Name=[outdatadir_TimeInformation_Type{aidx} filesep EX_Area_Type_Trial_Name '_Time.mat'];
+% [~,EX_Area_Type_Trial_File_Name,~]=fileparts(Contents_EX_Area_Type(tidx).name);
+% 
+% EX_Area_Type_Trial_Time_Name=[outdatadir_TimeInformation_Type{aidx} filesep EX_Area_Type_Trial_File_Name '_Time.mat'];
 
 m_EX_Area_Type_Trial_Time=matfile(EX_Area_Type_Trial_Time_Name,'writable',true);
 m_EX_Area_Type_Trial_Time.this_trial_time=EX_Area_Type_Trial_Time;
+end
 
 end
 end

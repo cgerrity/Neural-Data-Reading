@@ -87,13 +87,27 @@ sel_frame_Epoch=strcmp(frame_Epochs,Frame_Event_Selection);
 sel_cut_start_index=NaN(NumTrials,1);
 sel_cut_end_index=NaN(NumTrials,1);
 
+%% Update Information Setup
+
+gcp;
+
+q = parallel.pool.DataQueue;
+afterEach(q, @nUpdateWaitbar);
+
+All_Iterations = NumTrials;
+Iteration_Count = 0;
+
+formatSpec = '*** Current Time Point Segmentation Progress is: %.2f%%';
+Current_Message=sprintf(formatSpec,0);
+disp(Current_Message);
+
 %%
 
 parfor tidx=1:NumTrials
    this_trial_index=rectrialdefs(tidx,8);
    this_trial_Type_file_name=...
        sprintf([outdatadir_TimeInformation_Type filesep Activity_Type '_Trial_%d_Time.mat'],this_trial_index);
-   disp(this_trial_index)
+%    disp(this_trial_index)
 %    m_MUA = matfile(this_trial_MUA_file_name);
     m_Time = load(this_trial_Type_file_name);
     this_trial_time=m_Time.this_trial_time;
@@ -147,8 +161,17 @@ parfor tidx=1:NumTrials
     [~,sel_cut_end_index(tidx)]=min(abs(this_time_series_absolute-sel_cut_end_time));
     
     
-    
+    send(q, tidx);
 end
-    
+
+function nUpdateWaitbar(~)
+    Iteration_Count = Iteration_Count + 1;
+    Current_Progress=Iteration_Count/All_Iterations*100;
+    Delete_Message=repmat('\b',1,length(Current_Message)+1);
+    fprintf(Delete_Message);
+    Current_Message=sprintf(formatSpec,Current_Progress);
+    disp(Current_Message);
+end
+
 end
 
