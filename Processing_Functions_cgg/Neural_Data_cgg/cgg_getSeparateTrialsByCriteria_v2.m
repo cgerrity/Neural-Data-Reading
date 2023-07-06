@@ -1,4 +1,4 @@
-function [MatchData,TrialNumbers_Data_NotFound,TrialNumbers_Condition_NotFound] = cgg_getSeparateTrialsByCriteria_v2(TrialCondition,MatchValue,TrialNumbers_Condition,AllOutData,TrialNumbers_Data)
+function [MatchData,TrialNumbers_Data_NotFound,TrialNumbers_Condition_NotFound,MatchTrialNumber] = cgg_getSeparateTrialsByCriteria_v2(TrialCondition,MatchValue,TrialNumbers_Condition,AllOutData,TrialNumbers_Data)
 %CGG_GETSEPARATETRIALSBYCRITERIA Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -7,6 +7,7 @@ function [MatchData,TrialNumbers_Data_NotFound,TrialNumbers_Condition_NotFound] 
 NumTrials=length(TrialNumbers_Data);
 
 MatchData=[];
+MatchTrialNumber=[];
 MatchData_Counter=0;
 
 this_Data_IDX_NF=ones(size(TrialNumbers_Data));
@@ -24,6 +25,7 @@ for tidx=1:NumTrials
     if MatchArray(this_Condtion_IDX)==1
         MatchData_Counter=MatchData_Counter+1;
         MatchData(:,:,MatchData_Counter)=AllOutData(:,:,this_Data_IDX);
+        MatchTrialNumber(MatchData_Counter)=this_TrialNumber;
     end
 end
 
