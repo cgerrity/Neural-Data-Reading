@@ -93,7 +93,7 @@ clustering_trial_count=30;
 % will not have an effect if all the contacts for a probe are selected
 % since they will all be remapped together.
 
-probe_mapping='recorded'; %unmapped, mapped, recorded
+probe_mapping='mapped'; %unmapped, mapped, recorded
 
 % This vector will determine what the probes that are being used are. Here
 % the probes are 64 channel NeuroNexus probes and there are only 2 of them.
@@ -154,6 +154,14 @@ want_channel_remap = true;
 % will likely not be necessary so it should be set to false.
 
 want_artifact_rejection = false;
+
+% This boolean determines which of the different derivative activities are
+% wanted. If the value is true then the function will process the data to
+% obtain the given activity if it does not already exist.
+
+want_LFP = true;
+want_MUA = true;
+want_Spike = false;
 
 
 %%

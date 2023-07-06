@@ -29,6 +29,18 @@ rectrialdefs=m_rectrialdefs.rectrialdefs;
 
 AllOutData_tmp=cell(NumTrials);
 TrialNumbers=NaN(NumTrials,1);
+
+%% Update Information Setup
+
+q = parallel.pool.DataQueue;
+afterEach(q, @nUpdateWaitbar);
+
+All_Iterations = NumTrials;
+Iteration_Count = 0;
+
+formatSpec = '*** Current Data Segmentation Progress is: %.2f%%';
+Current_Message=sprintf(formatSpec,0);
+disp(Current_Message);
 %%
 parfor tidx=1:NumTrials
     this_trial_index=rectrialdefs(tidx,8);
@@ -36,14 +48,15 @@ parfor tidx=1:NumTrials
     
     this_Start_IDX=Start_IDX(tidx);
     this_End_IDX=End_IDX(tidx);
-    disp(tidx)
+%     disp(tidx)
     
 [AllOutData_tmp{tidx},Data_Unsmoothed{tidx}] = cgg_getSingleTrialDataFromTimeSegments_v2(...
     this_Start_IDX,this_End_IDX,fullfilename,this_trial_index,...
     Smooth_Factor);
 
 [NumChannels_tmp(tidx),NumSamples_tmp(tidx)]=size(AllOutData_tmp{tidx});
-      
+
+send(q, tidx);
 end
 
 NumChannels=max(NumChannels_tmp);
@@ -53,7 +66,7 @@ AllOutData=NaN(NumChannels,NumSamples,NumTrials);
 OutData_Unsmoothed=NaN(1,NumSamples,NumTrials);
 
 for tidx=1:NumTrials
-    disp(tidx)
+%     disp(tidx)
     
     [this_NumChannels,this_NumSamples]=size(AllOutData_tmp{tidx});
 
@@ -62,6 +75,15 @@ for tidx=1:NumTrials
     OutData_Unsmoothed(1,1:this_NumSamples,tidx)=...
         Data_Unsmoothed{tidx};
  
+end
+
+function nUpdateWaitbar(~)
+    Iteration_Count = Iteration_Count + 1;
+    Current_Progress=Iteration_Count/All_Iterations*100;
+    Delete_Message=repmat('\b',1,length(Current_Message)+1);
+    fprintf(Delete_Message);
+    Current_Message=sprintf(formatSpec,Current_Progress);
+    disp(Current_Message);
 end
 
 

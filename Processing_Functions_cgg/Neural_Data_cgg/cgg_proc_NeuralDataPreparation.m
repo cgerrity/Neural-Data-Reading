@@ -41,6 +41,9 @@ want_artifact_rejection = cfg.want_artifact_rejection;
 want_rereference = cfg.want_rereference;
 rereference_type = cfg.rereference_type;
 clustering_trial_count = cfg.clustering_trial_count;
+want_LFP = cfg.want_LFP;
+want_MUA = cfg.want_MUA;
+want_Spike = cfg.want_Spike;
 
 %% Directories
 
@@ -751,13 +754,36 @@ end
 %% Connected Channels
 % Here the information for what channels are connected is obtained.
 
+[cfg_directories] = cgg_generateNeuralDataFolders_v2(this_probe_area,...
+    'inputfolder',inputfolder,'outdatadir',outdatadir);
+
+this_area_clustering_file_name=...
+    [cfg_directories.outdatadir.Experiment.Session.Activity.Area.Connected.path ...
+    filesep 'Clustering_Results.mat'];
+
 % NOTE - You'd normally do re-referencing here.
 is_any_previously_rereferenced=false;
-if want_rereference
+if ~(exist(this_area_clustering_file_name,'file')) 
     disp('.. Performing Clustering to Identify Connected Channels');
-[Connected_Channels,Disconnected_Channels,is_any_previously_rereferenced] = cgg_getDisconnectedChannels(trialcount,...
-    clustering_trial_count,[outdatadir_WideBand filesep ...
-    'WideBand_Trial_%d.mat']);
+% [Connected_Channels,Disconnected_Channels,is_any_previously_rereferenced] = cgg_getDisconnectedChannels(trialcount,...
+%     clustering_trial_count,[outdatadir_WideBand filesep ...
+%     'WideBand_Trial_%d.mat']);
+[Connected_Channels,Disconnected_Channels,...
+    is_any_previously_rereferenced] = ...
+    cgg_getDisconnectedChannelsFromDirectories(clustering_trial_count,...
+    'inputfolder',inputfolder,'outdatadir',outdatadir,...
+    'Activity_Type', Activity_Type,'probe_area',probe_area);
+
+m_Cluster = matfile(this_area_clustering_file_name,'Writable',true);
+m_Cluster.Connected_Channels=Connected_Channels;
+m_Cluster.Disconnected_Channels=Disconnected_Channels;
+m_Cluster.is_any_previously_rereferenced=is_any_previously_rereferenced;
+end
+
+m_Cluster = matfile(this_area_clustering_file_name,'Writable',true);
+    Connected_Channels=m_Cluster.Connected_Channels;
+    Disconnected_Channels=m_Cluster.Disconnected_Channels;
+    is_any_previously_rereferenced=m_Cluster.is_any_previously_rereferenced;
 
 Message_Rereferencing=sprintf('--- Disconnected Channels for Area: %s are:',this_probe_area);
 for didx=1:length(Disconnected_Channels)
@@ -770,6 +796,7 @@ end
 
 disp(Message_Rereferencing);
 
+if want_rereference
 cfg_rereference=[];
 cfg_rereference.reref='yes';
 cfg_rereference.refchannel=Connected_Channels; %All Good Channels
@@ -801,9 +828,9 @@ parfor tidx=1:trialcount
        this_trial_index);
    
     
-    if ~(exist(this_trial_LFP_file_name,'file'))||...
-            ~(exist(this_trial_MUA_file_name,'file'))||...
-            ~(exist(this_trial_Spike_file_name,'file'))
+    if ((~(exist(this_trial_LFP_file_name,'file'))) && want_LFP)||...
+            ((~(exist(this_trial_MUA_file_name,'file'))) && want_MUA)||...
+            ((~(exist(this_trial_Spike_file_name,'file'))) && want_Spike)
         
         % Wrapping this to suppress the annoying banner.
         ft_defaults;
@@ -842,13 +869,18 @@ parfor tidx=1:trialcount
 %         save(this_trial_LFP_file_name,'this_recdata_lfp');
 %         save(this_trial_Spike_file_name,'this_recdata_spike');
 %         save(this_trial_MUA_file_name,'this_recdata_activity');
-        
+        if want_LFP
         m_LFP = matfile(this_trial_LFP_file_name,'Writable',true);
         m_LFP.this_recdata_lfp=this_recdata_lfp;
-%         m_Spike = matfile(this_trial_Spike_file_name,'Writable',true);
-%         m_Spike.this_recdata_spike=this_recdata_spike;
+        end
+        if want_Spike
+        m_Spike = matfile(this_trial_Spike_file_name,'Writable',true);
+        m_Spike.this_recdata_spike=this_recdata_spike;
+        end
+        if want_MUA
         m_MUA = matfile(this_trial_MUA_file_name,'Writable',true);
         m_MUA.this_recdata_activity=this_recdata_activity;
+        end
         
         if want_rereference && ~is_any_previously_rereferenced && ~is_previously_rereferenced
         m_WB = matfile(this_trial_wideband_file_name,'Writable',true);
@@ -859,6 +891,14 @@ parfor tidx=1:trialcount
 
 end
 end
+
+%% Time Courses
+% Get Time courses for each trial and each activity type. This is used in
+% processing steps that look for time information, but do not need the
+% entire trial data.
+
+cgg_procTrialTimeCourses('inputfolder',inputfolder,...
+    'outdatadir',outdatadir);
 
 %%
 
