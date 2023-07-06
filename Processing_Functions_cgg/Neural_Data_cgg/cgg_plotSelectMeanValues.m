@@ -8,6 +8,7 @@ function cgg_plotSelectMeanValues(InBaseline,InBaseline_Legend_Name,...
 X_Name_Size=18;
 Y_Name_Size=18;
 Tick_Size=25;
+Mean_Smooth_Factor=50;
 
 fig_mean=figure;
 fig_mean.WindowState='maximized';
@@ -59,6 +60,20 @@ this_Baseline_Mean_STD_ERROR=STD_ERROR_Baseline(sel_channel,:);
 this_Baseline_Mean_Upper=this_Baseline_Mean+this_Baseline_Mean_STD_ERROR;
 this_Baseline_Mean_Lower=this_Baseline_Mean-this_Baseline_Mean_STD_ERROR;
 
+this_Baseline_Mean_Smoothed=smoothdata(this_Baseline_Mean,2,'movmean',Mean_Smooth_Factor);
+
+this_y=[];
+this_x=[];
+
+this_y=this_Baseline_Mean';
+this_x=1:NumTrials;
+this_x=this_x';
+this_x=[this_x,ones(size(this_x))];
+
+[Coefficients,~,~,~,~] = regress(this_y,this_x);
+
+this_Baseline_Fit=this_x*Coefficients;
+
 hold on
 
 if isempty(Plot_Colors)
@@ -68,6 +83,8 @@ p_Baseline(midx)=plot(1:NumTrials,this_Baseline_Mean,'Color',Plot_Colors{midx},'
 end
 plot(1:NumTrials,this_Baseline_Mean_Upper,'Color',p_Baseline(midx).Color,'LineStyle',':','LineWidth',2);
 plot(1:NumTrials,this_Baseline_Mean_Lower,'Color',p_Baseline(midx).Color,'LineStyle',':','LineWidth',2);
+p_Baseline_Smoothed(midx)=plot(1:NumTrials,this_Baseline_Mean_Smoothed,'LineWidth',4,'DisplayName', 'Smoothed Mean Values');
+p_Baseline_Fit(midx)=plot(1:NumTrials,this_Baseline_Fit,'LineWidth',4,'DisplayName', 'Fit Values');
 
 hold off
 
@@ -87,7 +104,7 @@ xlim([1,NumTrials]);
 xticks(0:Tick_Size:NumTrials);
 
 end
-legend(p_Baseline);
+legend([p_Baseline,p_Baseline_Smoothed,p_Baseline_Fit]);
 
 Main_Title=InBaseline_Title;
 Main_SubTitle=sprintf('Channel: %s',num2str(sel_channel));

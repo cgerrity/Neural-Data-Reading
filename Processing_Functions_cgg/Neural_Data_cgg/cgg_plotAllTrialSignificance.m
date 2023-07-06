@@ -1,4 +1,4 @@
-function cgg_plotAllTrialSignificance(InP_ValueData,InP_ValueBaseline,InData_Time,InBaseline_Time,InData_X_Name,InBaseline_X_Name,InData_Title,InBaseline_Title,InSavePlotCFG,InSaveName,InSaveDescriptor,Significance_Value,varargin)
+function OutP_ValueData = cgg_plotAllTrialSignificance(InP_ValueData,InP_ValueBaseline,InData_Time,InBaseline_Time,InData_X_Name,InBaseline_X_Name,InData_Title,InBaseline_Title,InArea,InRegressor,InModel,InSavePlotCFG,InSaveName,InSaveDescriptor,Significance_Value,Minimum_Length,varargin)
 %CGG_PLOTSELECTTRIALCONDITIONS Summary of this function goes here
 %   Detailed explanation goes here
 %%% Plotting
@@ -29,15 +29,19 @@ fig_activity.WindowState='maximized';
 fig_activity.PaperSize=[20 10];
 
 figure(fig_activity);
+
+InArea_Label=replace(InArea,'_',' ');
+InRegressor_Label=replace(InRegressor,'_',' ');
+InModel_Label=replace(InModel,'_',' ');
     
     clf(fig_activity);
     
 %%
 
-map = [0 0 0
-    0 1 0];
-    
-
+map = [0 0 0;0 1 0];
+% map = [0 0 0;1 0 0;0 1 0];
+%%    
+Connected_Channels = CheckVararginPairs('Connected_Channels', NaN, varargin{:});
 
 %% Single Plots Plots
  
@@ -46,13 +50,37 @@ map = [0 0 0
 % this_Plot_Data=InP_ValueData;
 % this_Plot_Baseline=InP_ValueBaseline;
 % 
-% this_Plot_Data=this_Plot_Data*1;
-% this_Plot_Baseline=this_Plot_Baseline*1;
 
-this_Plot_Data=InP_ValueData<Significance_Value;
-this_Plot_Baseline=InP_ValueBaseline<Significance_Value;
+
+% this_Plot_Data=InP_ValueData<Significance_Value;
+% this_Plot_Baseline=InP_ValueBaseline<Significance_Value;
+
+[this_Plot_Data] = cgg_procSignificanceOverChannels(InP_ValueData,Significance_Value,Minimum_Length);
+[this_Plot_Baseline] = cgg_procSignificanceOverChannels(InP_ValueBaseline,Significance_Value,Minimum_Length);
+
+if ~(any(this_Plot_Data))
+    map_Data=[0,0,0];
+else
+    map_Data=map;
+end
+if ~(any(this_Plot_Baseline))
+    map_Baseline=[0,0,0];
+else
+    map_Baseline=map;
+end
+
+
+this_Plot_Data=this_Plot_Data*1;
+this_Plot_Baseline=this_Plot_Baseline*1;
 
     [NumChannels,~]=size(this_Plot_Data);
+    
+    if ~any(isnan(Connected_Channels))
+        Disconnected_Channels=1:NumChannels;
+        Disconnected_Channels(Connected_Channels)=[];
+        this_Plot_Data(Disconnected_Channels,:)=NaN;
+        this_Plot_Baseline(Disconnected_Channels,:)=NaN;
+    end
 
 % this_InData_Legend_Name=InData_Legend_Name;
 % this_InBaseline_Legend_Name=InBaseline_Legend_Name;
@@ -65,13 +93,13 @@ fig_activity.CurrentAxes.YDir='normal';
 view(2);
 % zlim(InYLim);
 % colorbar('vert');
-colormap(map);
+colormap(map_Data);
 % caxis(InYLim);
 xline(0,'LineWidth',4,'Color','w');
 xline(-0.4,'LineWidth',4,'Color','b');
 xline(-0.7,'LineWidth',4,'Color','r');
 xlim([InData_Time(1),InData_Time(end)]);
-ylim([1,NumChannels]);
+ylim([1-0.5,NumChannels+0.5]);
 % zlim(InYLim);
 
 xlabel(InData_X_Name,'FontSize',X_Name_Size);
@@ -90,11 +118,11 @@ fig_activity.CurrentAxes.YDir='normal';
 view(2);
 % zlim(InYLim);
 % colorbar('vert');
-colormap(map);
+colormap(map_Baseline);
 % caxis(InYLim);
 xline(0,'LineWidth',4);
 xlim([InBaseline_Time(1),InBaseline_Time(end)]);
-ylim([1,NumChannels]);
+ylim([1-0.5,NumChannels+0.5]);
 % zlim(InYLim);
 
 xlabel(InBaseline_X_Name,'FontSize',X_Name_Size);
@@ -106,26 +134,32 @@ ylabel('Channel Number','FontSize',Y_Name_Size);
 this_Title_Baseline='Baseline';
 title(this_Title_Baseline,'FontSize',14);
 
-Main_Title=InData_Title;
-% Main_SubTitle=sprintf('Significance of %s',this_InData_Legend_Name);
+Main_Title=sprintf('%s',InData_Title);
+% Main_SubTitle=sprintf(InArea_Label);
+Main_SubTitle=sprintf('%s Model: %s',InArea_Label,InModel_Label);
+Main_SubSubTitle=sprintf('(Parameter: %s; p-Value = %.3f; Minimum Length = %d ms)',InRegressor_Label,Significance_Value,Minimum_Length);
 
 Main_Title_Size=18;
-% Main_SubTitle_Size=14;
+Main_SubTitle_Size=14;
+Main_SubSubTitle_Size=12;
 
 Main_Title=['{\' sprintf(['fontsize{%d}' Main_Title '}'],Main_Title_Size)];
-% Main_SubTitle=['{\' sprintf(['fontsize{%d}' Main_SubTitle '}'],Main_SubTitle_Size)];
+Main_SubTitle=['{\' sprintf(['fontsize{%d}' Main_SubTitle '}'],Main_SubTitle_Size)];
+Main_SubSubTitle=['{\' sprintf(['fontsize{%d}' Main_SubSubTitle '}'],Main_SubSubTitle_Size)];
 
 % Full_Title={Main_Title,Main_SubTitle};
-Full_Title={Main_Title};
+Full_Title={Main_Title,Main_SubTitle,Main_SubSubTitle};
+% Full_Title={Main_Title};
 
 sgtitle(Full_Title);
 drawnow;
 
-this_figure_save_name=[InSavePlotCFG.path filesep sprintf(InSaveName,'All_Channels_Significance') this_InSaveDescriptor];
+this_figure_save_name=[InSavePlotCFG.Regression.path filesep sprintf(InSaveName,'All_Channels_Significance') this_InSaveDescriptor];
 
 saveas(fig_activity,this_figure_save_name,'pdf');
 
-
 close all
+
+OutP_ValueData=this_Plot_Data;
 end
 
