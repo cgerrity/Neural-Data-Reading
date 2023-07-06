@@ -84,6 +84,10 @@ this_Selected_Baseline=Segmented_Baseline_Smoothed;
 [~,NumSamples_Baseline,~]=size(this_Selected_Baseline);
 
 %%
+
+% [trialVariables] = cgg_getTrialVariables('inputfolder',inputfolder,'outdatadir',outdatadir);
+
+%%
 exptType='FLU';
 dataFolder=[inputfolder_base '/DATA_neural/Wotan/Wotan_FLToken_Probe_01/Wo_Probe_01_23-02-23_008_01/Session39__23_02_2023__10_34_03'];
 gazeArgs='TX300';
