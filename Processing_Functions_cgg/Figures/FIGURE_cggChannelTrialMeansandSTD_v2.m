@@ -54,10 +54,14 @@ Window_After_Baseline = 0.5;
 
 fullfilename=[outdatadir_MUA filesep Activity_Type '_Trial_%d.mat'];
 
-[Segmented_Baseline,TrialNumbers_Baseline] = cgg_getAllTrialDataFromTimeSegments(Start_IDX_Base,End_IDX_Base,fullfilename,'inputfolder',inputfolder,...
+% [Segmented_Baseline,TrialNumbers_Baseline] = cgg_getAllTrialDataFromTimeSegments(Start_IDX_Base,End_IDX_Base,fullfilename,'inputfolder',inputfolder,...
+%     'outdatadir',outdatadir);
+[Segmented_Baseline,TrialNumbers_Baseline] = cgg_getAllTrialDataFromTimeSegments_v2(Start_IDX_Base,End_IDX_Base,fullfilename,Smooth_Factor,'inputfolder',inputfolder,...
     'outdatadir',outdatadir);
 
-[NumChannels,NumSamples_Baseline,~]=size(Segmented_Baseline);
+this_Selected_Baseline=Segmented_Baseline;
+
+[NumChannels,NumSamples_Baseline,~]=size(this_Selected_Baseline);
 
 %%
 exptType='FLU';
@@ -199,13 +203,19 @@ PLOTPARAMETERS_FIGURE_cgg_DecisionAlignedPlots;
 
 Time_Baseline=linspace(-Window_Before_Baseline,Window_After_Baseline,NumSamples_Baseline);
 
-[MatchBaseline] = cgg_getSeparateTrialsByCriteria_v2(TrialCondition_Baseline,MatchValue_Baseline,TrialVariableTrialNumber,Segmented_Baseline,TrialNumbers_Baseline);
+[MatchBaseline] = cgg_getSeparateTrialsByCriteria_v2(TrialCondition_Baseline,MatchValue_Baseline,TrialVariableTrialNumber,this_Selected_Baseline,TrialNumbers_Baseline);
 
 %%
 cgg_plotSelectMeanValues(MatchBaseline,'Baseline Mean',...
     'Trial','Mean Across Trials',[0.25,0.25],...
-    InSavePlotCFG_Global.Mean_Values,'Mean_Value_Decision_Aligned_Channel_%s')
+    InSavePlotCFG_Global.Mean_Values,'Mean_Value_Decision_Aligned_Rereferenced_Channel_%s')
+cgg_plotSelectMeanValues(this_Selected_Baseline,'Baseline Mean',...
+    'Trial','Mean Across Trials',[0.25,0.25],...
+    InSavePlotCFG_Global.Mean_Values,'Mean_Value_Decision_Aligned_Rereferenced_All_Trials_Channel_%s')
 %%
 cgg_plotAllMeanValues(MatchBaseline,'Baseline Mean',...
     'Trial','Mean Across Trials',[1.5,1.5],...
-    InSavePlotCFG_Global.Mean_Values,'Mean_Value_Decision_Aligned_Channel_%s');
+    InSavePlotCFG_Global.Mean_Values,'Mean_Value_Decision_Aligned_Rereferenced_Channel_%s');
+cgg_plotAllMeanValues(this_Selected_Baseline,'Baseline Mean',...
+    'Trial','Mean Across Trials',[1.5,1.5],...
+    InSavePlotCFG_Global.Mean_Values,'Mean_Value_Decision_Aligned_Rereferenced_All_Trials_Channel_%s');
