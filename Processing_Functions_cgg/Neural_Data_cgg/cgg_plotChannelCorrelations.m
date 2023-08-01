@@ -13,9 +13,13 @@ YLim_Upper=1;
 
 YLim_Lower_Zoomx2=0.5;
 YLim_Upper_Zoomx2=1;
+% YLim_Lower_Zoomx2=0;
+% YLim_Upper_Zoomx2=0.1;
 
 YLim_Lower_Zoomx4=0.75;
 YLim_Upper_Zoomx4=1;
+% YLim_Lower_Zoomx4=0;
+% YLim_Upper_Zoomx4=0.01;
 
 Tick_Size=8;
 
