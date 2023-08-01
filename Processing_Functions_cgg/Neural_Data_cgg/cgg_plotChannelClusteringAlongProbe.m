@@ -48,7 +48,8 @@ else
 end
 %%
 
-NumGroups=2;
+% NumGroups=2;
+NumGroups=10;
 NumReplicates=10;
 InDistance='sqeuclidean';
 
@@ -58,10 +59,10 @@ NumChannels=length(Group_Labels);
 
 clr = hsv(NumGroups);
 
-clr=[clr(2,:);clr(1,:)];
+% clr=[clr(2,:);clr(1,:)];
 
-Group_Switch=20;
-if mean(Group_Labels(1:Group_Switch))>1.5
+Group_Switch=59;
+if mean(Group_Labels(Group_Switch:NumChannels))<1.5
     Group_Labels_tmp=Group_Labels;
     Group_Distance_tmp=Group_Distance;
     Group_Labels_tmp(Group_Labels==1)=2;

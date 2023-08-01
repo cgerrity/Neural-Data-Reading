@@ -31,20 +31,43 @@ end
 is_previously_rereferenced=any(is_previously_rereferenced);
 
 InData=cell2mat(InData);
-
-NumGroups=2;
-NumReplicates=10;
+%%
+% NumGroups=10;
+NumReplicates=10; %10
 InDistance='sqeuclidean';
 
+Start_Group=2;
+End_Group=15;
+NumIterations=length(Start_Group:End_Group);
+
+Connected_Channels_iter=cell(1,NumIterations);
+Disconnected_Channels_iter=cell(1,NumIterations);
+
+for idx=Start_Group:End_Group
+NumGroups=idx;
 [Group_Labels,~,~] = cgg_procChannelClustering(InData,NumGroups,NumReplicates,InDistance);
 
 NumChannels=length(Group_Labels);
-Connected_IDX=mode(Group_Labels);
+Disconnected_IDX_iter=Group_Labels(NumChannels-4:NumChannels);
+% Connected_IDX=mode(Group_Labels);
 
 All_Channels=1:NumChannels;
 
-Connected_Channels=All_Channels((Group_Labels==Connected_IDX));
-Disconnected_Channels=All_Channels(~(Group_Labels==Connected_IDX));
+% Connected_Channels=All_Channels(~ismember(Group_Labels,Disconnected_IDX));
+% Disconnected_Channels=All_Channels(ismember(Group_Labels,Disconnected_IDX));
+Connected_Channels_iter{idx-Start_Group+1}=All_Channels(~ismember(Group_Labels,Disconnected_IDX_iter));
+Disconnected_Channels_iter{idx-Start_Group+1}=All_Channels(ismember(Group_Labels,Disconnected_IDX_iter));
+end
+
+Disconnected_Count=cell2mat(Disconnected_Channels_iter);
+Disconnected_Possible = unique(Disconnected_Count)';
+Disconnected_Histogram = [Disconnected_Possible,...
+    histc(Disconnected_Count(:),Disconnected_Possible)];
+
+Disconnected_IDX=Disconnected_Possible(Disconnected_Histogram(:,2)/NumIterations>0.5);
+
+Connected_Channels{aidx}=All_Channels(~Disconnected_IDX);
+Disconnected_Channels{aidx}=All_Channels(Disconnected_IDX);
 
 end
 
