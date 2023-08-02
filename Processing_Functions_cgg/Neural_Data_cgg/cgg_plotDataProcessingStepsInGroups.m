@@ -12,6 +12,8 @@ fig_activity=figure;
 fig_activity.WindowState='maximized';
 fig_activity.PaperSize=[20 10];
 
+InArea_Label=replace(InSaveArea,'_',' ');
+
 figure(fig_activity);
 
 % [NumChannels,~]=size(InData);
@@ -54,18 +56,31 @@ xticks(InData_Time(1):Tick_Size:InData_Time(end));
 % drawnow;
 
 Main_Title=InData_Title;
-Main_SubTitle=sprintf(' Channel: %s',num2str(Channel_Group(1)));
+Main_SubTitle=sprintf('Channel: %s',num2str(Channel_Group(1)));
 for gidx=2:length(Channel_Group)
-Main_SubTitle=sprintf([Main_SubTitle ', %s'],num2str(Channel_Group(gidx)));
+%     if gidx<33
+        Main_SubTitle=sprintf([Main_SubTitle ', %s'],num2str(Channel_Group(gidx)));
+%     elseif gidx==33
+%         Main_SubTitle_2='33';
+%     else
+%         Main_SubTitle_2=sprintf([Main_SubTitle_2 ', %s'],num2str(Channel_Group(gidx)));
+%     end
 end
 
 Main_Title_Size=18;
-Main_SubTitle_Size=14;
+% Main_SubTitle_Size=10;
+Main_SubTitle_Size=8;
 
-Main_Title=['{\' sprintf(['fontsize{%d}' Main_Title '}'],Main_Title_Size)];
-Main_SubTitle=['{\' sprintf(['fontsize{%d}' InSaveArea Main_SubTitle '}'],Main_SubTitle_Size)];
+Main_Title=['{\' sprintf(['fontsize{%d}' Main_Title ': ' InArea_Label '}'],Main_Title_Size)];
+% Main_SubTitle=['{\' sprintf(['fontsize{%d}' InArea_Label '}'],Main_SubTitle_Size)];
+Main_SubTitle=['{\' sprintf(['fontsize{%d}' Main_SubTitle '}'],Main_SubTitle_Size)];
 
 Full_Title={Main_Title,Main_SubTitle};
+
+% if exist('Main_SubTitle_2','var')
+%     Main_SubTitle_2=['{\' sprintf(['fontsize{%d}' Main_SubTitle_2 '}'],Main_SubSubTitle_Size)];
+%     Full_Title={Main_Title,Main_SubTitle,Main_SubTitle_2};
+% end
 
 if verLessThan('matlab','9.5')
 title(Full_Title);
