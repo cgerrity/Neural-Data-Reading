@@ -1,4 +1,4 @@
-function [P_Value,R_Value,P_Value_Coefficients,CoefficientNames] = cgg_procTrialVariableRegression(InData,MatchArray)
+function [P_Value,R_Value,P_Value_Coefficients,CoefficientNames] = cgg_procTrialVariableRegression(InData,MatchArray,InIncrement)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -10,29 +10,35 @@ this_FitaData=InData;
 [~,NumMatchArray]=size(MatchArray);
 
 Regress_Period=1;
+Increment_Amount=InIncrement;
+Increment_Values=1:Increment_Amount:NumSamplesData;
+NumIncrements=length(Increment_Values);
 %%
-P_Value=NaN(NumChannels,NumSamplesData,1);
-R_Value=NaN(NumChannels,NumSamplesData,1);
-P_Value_Coefficients=NaN(NumChannels,NumSamplesData,NumMatchArray+1);
-% P_Value_Coefficients=NaN(NumChannels,NumSamplesData,NumMatchArray+2);
+P_Value=NaN(NumChannels,NumIncrements,1);
+R_Value=NaN(NumChannels,NumIncrements,1);
+P_Value_Coefficients=NaN(NumChannels,NumIncrements,NumMatchArray+1);
+% P_Value_Coefficients=NaN(NumChannels,NumIncrements,NumMatchArray+2);
 %% Update Information Setup
 
 q = parallel.pool.DataQueue;
 afterEach(q, @nUpdateWaitbar);
 
-All_Iterations = NumSamplesData*NumChannels;
+All_Iterations = NumIncrements*NumChannels;
 Iteration_Count = 0;
 
-formatSpec = '*** Current Trial Variable Regression Progress is: %.2f%%';
+formatSpec = '*** Current Trial Variable Regression Progress is: %.2f%%%%\n';
 Current_Message=sprintf(formatSpec,0);
-disp(Current_Message);
+% disp(Current_Message);
+fprintf(Current_Message);
 
 %%
 
-parfor sidx=1:NumSamplesData
+parfor sidx=1:NumIncrements
     
-this_DataSection_Start=sidx-floor(Regress_Period/2);
-this_DataSection_End=sidx+floor(Regress_Period/2)-(rem(Regress_Period, 2) == 0);
+    this_sidx=Increment_Values(sidx);
+    
+this_DataSection_Start=this_sidx-floor(Regress_Period/2);
+this_DataSection_End=this_sidx+floor(Regress_Period/2)-(rem(Regress_Period, 2) == 0);
 
 if this_DataSection_Start<1
     this_DataSection_Start=1;
@@ -80,10 +86,12 @@ CoefficientNames=mdl.CoefficientNames;
 function nUpdateWaitbar(~)
     Iteration_Count = Iteration_Count + 1;
     Current_Progress=Iteration_Count/All_Iterations*100;
-    Delete_Message=repmat('\b',1,length(Current_Message)+1);
-    fprintf(Delete_Message);
+%     Delete_Message=repmat('\b',1,length(Current_Message)+1);
+    Delete_Message=repmat(sprintf('\b'),1,length(Current_Message)-1);
+%     fprintf(Delete_Message);
     Current_Message=sprintf(formatSpec,Current_Progress);
-    disp(Current_Message);
+%     disp(Current_Message);
+    fprintf([Delete_Message,Current_Message]);
 end
 
 
