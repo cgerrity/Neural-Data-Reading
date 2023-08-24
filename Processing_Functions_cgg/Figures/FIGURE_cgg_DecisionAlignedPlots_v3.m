@@ -28,6 +28,7 @@ cfg_param = PARAMETERS_cgg_procFullTrialPreparation_v2;
 probe_area=cfg_param.probe_area;
 Activity_Type=cfg_param.Activity_Type;
 Alignment_Type='Decision';
+Increment_Time=cfg_param.Increment_Time;
 
 [~,~,SessionName,ExperimentName,...
     outdatadir_EventInformation,outdatadir_FrameInformation] = ...
@@ -109,6 +110,15 @@ Window_After_Baseline=cfg_param.Window_After_Baseline;
 Time_Data=linspace(-Window_Before_Data,Window_After_Data,NumSamples_Data);
 Time_Baseline=linspace(-Window_Before_Baseline,Window_After_Baseline,NumSamples_Baseline);
 
+
+%%
+Sampling_Period=mean(abs(Time_Data(2:end)-Time_Data(1:end-1)))*1000; %Get the sampling period in ms
+
+InIncrement=round(Increment_Time/Sampling_Period);
+
+Time_Data_Regression=Time_Data(1:InIncrement:NumSamples_Data);
+Time_Baseline_Regression=Time_Baseline(1:InIncrement:NumSamples_Baseline);
+
 %% Regrression Analysis
 
 % 1 indicates the trial is valid. 0 indicates the trial is not valid
@@ -182,6 +192,11 @@ MatchArray_Full(:,NumCondArray+1)=MatchArray_Loss;
 [~,NumCondArray]=size(MatchArray_Full);
 MatchArray_Full(:,NumCondArray+1)=MatchArray_Previous;
 
+GainValue=3;
+LossValue=-3;
+
+[MatchArray_Full_tmp] = cgg_getFullMatchArray(trialVariables,GainValue,LossValue);
+
 [~,NumCondArray]=size(MatchArray_Full);
 
 % for fidx=1:NumAllFeatures-1
@@ -216,12 +231,15 @@ this_Match_Array_Ones=[this_Match_Array,ones(NumTrialsMatchArray,1)];
 MatchArray_Fit=this_Match_Array((MatchArray_Input==1)&(~TrialNumbers_Condition_NotFound),:);
 MatchArray_Fit_Ones=this_Match_Array_Ones((MatchArray_Input==1)&(~TrialNumbers_Condition_NotFound),:);
 
+InData=this_Selected_Data;
+TrialNumbers=TrialNumbers_Data;
 
+[Data_Fit_tmp,MatchArray_Fit_tmp,TrialNumbers_Data_NotFound_tmp,TrialNumbers_Condition_NotFound_tmp] = cgg_getRegressionInputs(InData,TrialNumbers,trialVariables,GainValue,LossValue);
 
 %%
 
-[P_Value_Data,R_Value_Data,P_Value_Coefficients_Data,CoefficientNames_Data] = cgg_procTrialVariableRegression(this_FitaData,MatchArray_Fit);
-[P_Value_Baseline,R_Value_Baseline,P_Value_Coefficients_Baseline,CoefficientNames_Baseline] = cgg_procTrialVariableRegression(this_FitBaseline,MatchArray_Fit);
+[P_Value_Data,R_Value_Data,P_Value_Coefficients_Data,CoefficientNames_Data] = cgg_procTrialVariableRegression(this_FitaData,MatchArray_Fit,InIncrement);
+[P_Value_Baseline,R_Value_Baseline,P_Value_Coefficients_Baseline,CoefficientNames_Baseline] = cgg_procTrialVariableRegression(this_FitBaseline,MatchArray_Fit,InIncrement);
 
 %%
 
@@ -246,164 +264,186 @@ InSavePlotCFG=cfg_outplotdir.outdatadir.Experiment.Session.Plots.Area.Activity.A
 % Regressor_Array=2;
 Regressor_Array=1:length(Current_Regressor_Name);
 Significance_Array=[0.05,0.01,0.001];
-Length_Array=[1,10,20];
+% Length_Array=[1,10,20];
+Length_Array=[1,50,100];
 
-% for ridx=1:length(Regressor_Array)
-%     for sidx=1:length(Significance_Array)
-%         for lidx=1:length(Length_Array)
-% 
-% sel_Current_Regressor=Regressor_Array(ridx);
-% sel_Significance=Significance_Array(sidx);
-% sel_Length=Length_Array(lidx);
-% 
-% Significance_Value=sel_Significance;
-% Minimum_Length=sel_Length;
-% 
-% this_Current_Regressor_Name=Current_Regressor_Name{sel_Current_Regressor};
-% Significance_Value_Name=replace(sprintf('%0.3f',Significance_Value),'0.','');
-% 
-% InSaveName_P=sprintf('Significance_Decision_Aligned_%s_Regressors_%s_Minimum_Length_%d_Significance_%s',this_Current_Regressor_Name,Model_Regressors,Minimum_Length,Significance_Value_Name);
-% InSaveName_R=sprintf('R_Squared_Decision_Aligned_%s',Model_Regressors);
-% InSaveName_Plog=sprintf('PLog_Decision_Aligned_%s',Model_Regressors);
-% InSaveName_SigFrac=sprintf('Significant_Fraction_Decision_Aligned_%s_Regressors_%s_Minimum_Length_%d_Significance_%s',this_Current_Regressor_Name,Model_Regressors,Minimum_Length,Significance_Value_Name);
-% 
-% InSaveDescriptor='';
-% 
-% % InP_ValueData=P_Value_Data;
-% if ~isequal(this_Current_Regressor_Name,'Model')
-% InP_ValueData=P_Value_Coefficients_Data(:,:,sel_Current_Regressor);
-% InP_ValueBaseline=P_Value_Coefficients_Baseline(:,:,sel_Current_Regressor);
-% else
+InData_Time=Time_Data_Regression;
+InBaseline_Time=Time_Baseline_Regression;
+InSaveDescriptor='';
+Connected_Channels=Output(2).Connected_Channels;
+
+
+for ridx=1:length(Regressor_Array)
+    for sidx=1:length(Significance_Array)
+        for lidx=1:length(Length_Array)
+
+sel_Current_Regressor=Regressor_Array(ridx);
+sel_Significance=Significance_Array(sidx);
+sel_Length=Length_Array(lidx);
+
+Significance_Value=sel_Significance;
+Minimum_Length=sel_Length;
+
+this_Current_Regressor_Name=Current_Regressor_Name{sel_Current_Regressor};
+Significance_Value_Name=replace(sprintf('%0.3f',Significance_Value),'0.','');
+
+InSaveName_P=sprintf('Significance_Decision_Aligned_%s_Regressors_%s_Minimum_Length_%d_Significance_%s_Increment_%d',this_Current_Regressor_Name,Model_Regressors,Minimum_Length,Significance_Value_Name,Increment_Time);
+InSaveName_R=sprintf('R_Squared_Decision_Aligned_%s_Increment_%d',Model_Regressors,Increment_Time);
+InSaveName_Plog=sprintf('PLog_Decision_Aligned_%s_Increment_%d',Model_Regressors,Increment_Time);
+InSaveName_SigFrac=sprintf('Significant_Fraction_Decision_Aligned_%s_Regressors_%s_Minimum_Length_%d_Significance_%s_Increment_%d',this_Current_Regressor_Name,Model_Regressors,Minimum_Length,Significance_Value_Name,Increment_Time);
+
 % InP_ValueData=P_Value_Data;
+if ~isequal(this_Current_Regressor_Name,'Model')
+InP_ValueData=P_Value_Coefficients_Data(:,:,sel_Current_Regressor);
+InP_ValueBaseline=P_Value_Coefficients_Baseline(:,:,sel_Current_Regressor);
+else
+InP_ValueData=P_Value_Data;
+InP_ValueBaseline=P_Value_Baseline;
+end
 % InP_ValueBaseline=P_Value_Baseline;
-% end
-% % InP_ValueBaseline=P_Value_Baseline;
-% % InP_ValueBaseline=P_Value_Coefficients_Baseline(:,:,sel_Current_Regressor);
-% InData_Time=Time_Data;
-% InBaseline_Time=Time_Baseline;
-% 
-% 
-% InData_Title=InData_Title_P;
-% InBaseline_Title=InBaseline_Title_P;
-% 
-% InSaveName=InSaveName_P;
-% InArea=probe_area;
-% InRegressor=this_Current_Regressor_Name;
-% InModel=Model_Regressors;
-% Connected_Channels=Output(2).Connected_Channels;
-% 
-% cgg_plotAllTrialSignificance(InP_ValueData,InP_ValueBaseline,Time_Data,Time_Baseline,InData_X_Name,InBaseline_X_Name,InData_Title_P,InBaseline_Title_P,probe_area,this_Current_Regressor_Name,Model_Regressors,InSavePlotCFG,InSaveName_P,InSaveDescriptor,Significance_Value,Minimum_Length,'Connected_Channels',Connected_Channels);
-% 
-% cgg_plotSignificanceAcrossTime(InP_ValueData,InP_ValueBaseline,Time_Data,Time_Baseline,InData_X_Name,InBaseline_X_Name,'Fraction of Significant Channels',probe_area,this_Current_Regressor_Name,Model_Regressors,InSavePlotCFG,InSaveName_SigFrac,Significance_Value,Minimum_Length,'Connected_Channels',Connected_Channels);
-%         end
-%     end
-% end
-% %
-% 
-% cgg_plotAllTrialRValue(R_Value_Data,R_Value_Baseline,Time_Data,Time_Baseline,InData_X_Name,InBaseline_X_Name,InData_Title_R,InBaseline_Title_R,Model_Regressors,InSavePlotCFG,InSaveName_R,InSaveDescriptor,Significance_Value,'Connected_Channels',Connected_Channels);
-% 
-% cgg_plotAllTrialRValue(-log(P_Value_Data),-log(P_Value_Baseline),Time_Data,Time_Baseline,InData_X_Name,InBaseline_X_Name,InData_Title_Plog,InBaseline_Title_Plog,Model_Regressors,InSavePlotCFG,InSaveName_Plog,InSaveDescriptor,Significance_Value,'Connected_Channels',Connected_Channels);
+% InP_ValueBaseline=P_Value_Coefficients_Baseline(:,:,sel_Current_Regressor);
 
+
+
+InData_Title=InData_Title_P;
+InBaseline_Title=InBaseline_Title_P;
+
+InSaveName=InSaveName_P;
+InArea=probe_area;
+InRegressor=this_Current_Regressor_Name;
+InModel=Model_Regressors;
+
+cgg_plotAllTrialSignificance(InP_ValueData,InP_ValueBaseline,InData_Time,InBaseline_Time,InData_X_Name,InBaseline_X_Name,InData_Title_P,InBaseline_Title_P,probe_area,this_Current_Regressor_Name,Model_Regressors,InSavePlotCFG,InSaveName_P,InSaveDescriptor,Significance_Value,Minimum_Length,Increment_Time,'Connected_Channels',Connected_Channels);
+
+cgg_plotSignificanceAcrossTime(InP_ValueData,InP_ValueBaseline,InData_Time,InBaseline_Time,InData_X_Name,InBaseline_X_Name,'Fraction of Significant Channels',probe_area,this_Current_Regressor_Name,Model_Regressors,InSavePlotCFG,InSaveName_SigFrac,Significance_Value,Minimum_Length,Increment_Time,'Connected_Channels',Connected_Channels);
+        end
+    end
+end
+%
+
+cgg_plotAllTrialRValue(R_Value_Data,R_Value_Baseline,InData_Time,InBaseline_Time,InData_X_Name,InBaseline_X_Name,InData_Title_R,InBaseline_Title_R,Model_Regressors,InSavePlotCFG,InSaveName_R,InSaveDescriptor,Significance_Value,Increment_Time,'Connected_Channels',Connected_Channels);
+
+cgg_plotAllTrialRValue(-log(P_Value_Data),-log(P_Value_Baseline),InData_Time,InBaseline_Time,InData_X_Name,InBaseline_X_Name,InData_Title_Plog,InBaseline_Title_Plog,Model_Regressors,InSavePlotCFG,InSaveName_Plog,InSaveDescriptor,Significance_Value,Increment_Time,'Connected_Channels',Connected_Channels);
+
+%%
+Connected_Channels=1:59;
+Connected_Channels(30)=[];
+Regression_SP=25;
+Significance_Value=0.05;
+Minimum_Length=50;
+
+[cfg_regression] = cgg_generateRegressionFolders(probe_area,'inputfolder',inputfolder,'outdatadir',outdatadir);
+
+[Significant_Channels,NotSignificant_Channels] = cgg_procChannelSelectionFromRegression(InData,trialVariables,SamplingFrequency,Regression_SP,TrialNumbers,Significance_Value,Minimum_Length,GainValue,LossValue,cfg_regression,'Connected_Channels',Connected_Channels);
+
+%%
+% % 
+% % All_Channels=1:NumChannels;
+% % Good_Channels=false(NumChannels,1);
+% % Good_Channels(Connected_Channels)=true;
+% % 
+% % ridx=2;
+% % Significance_Value=0.01;
+% % Minimum_Length=10;
+% % 
+% % sel_Current_Regressor=Regressor_Array(ridx);
+% % 
+% % InP_ValueData=P_Value_Coefficients_Data(:,:,sel_Current_Regressor);
+% % 
+% % [this_Significant_Data] = cgg_procSignificanceOverChannels(InP_ValueData,Significance_Value,Minimum_Length);
+% % 
+% % this_Channel_Significant=any(this_Significant_Data,2)&Good_Channels;
+% % 
+% % this_setListData=All_Channels(this_Channel_Significant);
+% % 
+% % fig_activity=figure;
+% % % figure(fig_activity);
+% % imagesc(this_Significant_Data)
+% % fig_activity.CurrentAxes.YDir='normal';
+% 
 % %%
+% 
+% Significance_Value=0.05;
+% Minimum_Length=10;
+% Connected_Channels=Output(2).Connected_Channels;
 % 
 % All_Channels=1:NumChannels;
 % Good_Channels=false(NumChannels,1);
 % Good_Channels(Connected_Channels)=true;
 % 
-% ridx=2;
-% Significance_Value=0.01;
-% Minimum_Length=10;
+% % setListData=cell(length(Current_Regressor_Name)-2,1);
 % 
-% sel_Current_Regressor=Regressor_Array(ridx);
+% [Significant_Data] = cgg_procSignificanceOverChannels(P_Value_Coefficients_Data(:,:,2:8),Significance_Value,Minimum_Length);
 % 
-% InP_ValueData=P_Value_Coefficients_Data(:,:,sel_Current_Regressor);
+% Channel_Significant=any(Significant_Data,2)&Good_Channels;
 % 
-% [this_Significant_Data] = cgg_procSignificanceOverChannels(InP_ValueData,Significance_Value,Minimum_Length);
+% Channel_TaskModulated=any(Channel_Significant,3);
+% Channel_Significant_None=(~Channel_TaskModulated);
 % 
-% this_Channel_Significant=any(this_Significant_Data,2)&Good_Channels;
+% Channel_Significant_Rewarded=Channel_Significant(:,:,1)&Good_Channels;
+% Channel_Significant_Learned=Channel_Significant(:,:,2)&Good_Channels;
+% Channel_Significant_Attention=Channel_Significant(:,:,3)|Channel_Significant(:,:,4)&Good_Channels;
+% % Channel_Significant_Attention=Channel_Significant(:,:,3)&Good_Channels;
+% Channel_Significant_Motivation=Channel_Significant(:,:,5)|Channel_Significant(:,:,6)&Good_Channels;
+% Channel_Significant_Previous=Channel_Significant(:,:,7)&Good_Channels;
 % 
-% this_setListData=All_Channels(this_Channel_Significant);
+% setListData_Rewarded=All_Channels(Channel_Significant_Rewarded);
+% setListData_Learned=All_Channels(Channel_Significant_Learned);
+% setListData_Attention=All_Channels(Channel_Significant_Attention);
+% setListData_Motivation=All_Channels(Channel_Significant_Motivation);
+% setListData_Previous=All_Channels(Channel_Significant_Previous);
+% setListData_Disconnected=All_Channels(~Good_Channels);
+% setListData_None=All_Channels(Channel_Significant_None);
 % 
-% fig_activity=figure;
-% % figure(fig_activity);
-% imagesc(this_Significant_Data)
-% fig_activity.CurrentAxes.YDir='normal';
-
-%%
-
-Significance_Value=0.05;
-Minimum_Length=10;
-Connected_Channels=Output(2).Connected_Channels;
-
-All_Channels=1:NumChannels;
-Good_Channels=false(NumChannels,1);
-Good_Channels(Connected_Channels)=true;
-
-% setListData=cell(length(Current_Regressor_Name)-2,1);
-
-[Significant_Data] = cgg_procSignificanceOverChannels(P_Value_Coefficients_Data(:,:,2:8),Significance_Value,Minimum_Length);
-
-Channel_Significant=any(Significant_Data,2)&Good_Channels;
-
-Channel_TaskModulated=any(Channel_Significant,3);
-Channel_Significant_None=(~Channel_TaskModulated);
-
-Channel_Significant_Rewarded=Channel_Significant(:,:,1)&Good_Channels;
-Channel_Significant_Learned=Channel_Significant(:,:,2)&Good_Channels;
-Channel_Significant_Attention=Channel_Significant(:,:,3)|Channel_Significant(:,:,4)&Good_Channels;
-% Channel_Significant_Attention=Channel_Significant(:,:,3)&Good_Channels;
-Channel_Significant_Motivation=Channel_Significant(:,:,5)|Channel_Significant(:,:,6)&Good_Channels;
-Channel_Significant_Previous=Channel_Significant(:,:,7)&Good_Channels;
-
-setListData_Rewarded=All_Channels(Channel_Significant_Rewarded);
-setListData_Learned=All_Channels(Channel_Significant_Learned);
-setListData_Attention=All_Channels(Channel_Significant_Attention);
-setListData_Motivation=All_Channels(Channel_Significant_Motivation);
-setListData_Previous=All_Channels(Channel_Significant_Previous);
-setListData_Disconnected=All_Channels(~Good_Channels);
-setListData_None=All_Channels(Channel_Significant_None);
-
-setListData=cell(5,1);
-setListData_Bad=cell(2,1);
-
-setListData{1}=setListData_Rewarded;
-setListData{2}=setListData_Learned;
-setListData{3}=setListData_Attention;
-setListData{4}=setListData_Motivation;
-setListData{5}=setListData_Previous;
-setListData_Bad{1}=setListData_Disconnected;
-setListData_Bad{2}=setListData_None;
-
-setLabels = ["Rewarded"; "Learned"; "Attention"; "Motivation"; "Previous"];
-setLabels_Bad = ["Disconnected"; "None"];
-
-
+% setListData=cell(5,1);
+% setListData_Bad=cell(2,1);
+% 
+% setListData{1}=setListData_Rewarded;
+% setListData{2}=setListData_Learned;
+% setListData{3}=setListData_Attention;
+% setListData{4}=setListData_Motivation;
+% setListData{5}=setListData_Previous;
+% setListData_Bad{1}=setListData_Disconnected;
+% setListData_Bad{2}=setListData_None;
+% 
+% setLabels = ["Rewarded"; "Learned"; "Attention"; "Motivation"; "Previous"];
+% setLabels_Bad = ["Disconnected"; "None"];
+% 
+% 
+% % %%
+% % setListData_loop=cell(length(Current_Regressor_Name)-2,1);
+% % for ridx=2:length(Current_Regressor_Name)-1
+% % 
+% % sel_Current_Regressor=Regressor_Array(ridx);
+% % 
+% % InP_ValueData=P_Value_Coefficients_Data(:,:,sel_Current_Regressor);
+% % 
+% % [this_Significant_Data] = cgg_procSignificanceOverChannels(InP_ValueData,Significance_Value,Minimum_Length);
+% % 
+% % this_Channel_Significant=any(this_Significant_Data,2);
+% % 
+% % this_setListData=All_Channels(this_Channel_Significant);
+% % 
+% % setListData_loop{ridx-1} = this_setListData;
+% % 
+% % end
+% 
 % %%
-% setListData_loop=cell(length(Current_Regressor_Name)-2,1);
-% for ridx=2:length(Current_Regressor_Name)-1
 % 
-% sel_Current_Regressor=Regressor_Array(ridx);
+% % setLabels = ["Rewarded"; "Learned"; "Attention_2"; "Attention_3"; "Gain"; "Loss"; "Previous"];
+% h = vennEulerDiagram(setListData, 'drawProportional', true, 'SetLabels', setLabels);
+% h.ShowIntersectionCounts = true;
 % 
-% InP_ValueData=P_Value_Coefficients_Data(:,:,sel_Current_Regressor);
-% 
-% [this_Significant_Data] = cgg_procSignificanceOverChannels(InP_ValueData,Significance_Value,Minimum_Length);
-% 
-% this_Channel_Significant=any(this_Significant_Data,2);
-% 
-% this_setListData=All_Channels(this_Channel_Significant);
-% 
-% setListData_loop{ridx-1} = this_setListData;
-% 
-% end
-
-%%
-
-% setLabels = ["Rewarded"; "Learned"; "Attention_2"; "Attention_3"; "Gain"; "Loss"; "Previous"];
-h = vennEulerDiagram(setListData, 'drawProportional', true, 'SetLabels', setLabels);
-h.ShowIntersectionCounts = true;
-
-%%
-% figure;
-% h_Bad = vennEulerDiagram(setListData_Bad, 'drawProportional', true, 'SetLabels', setLabels_Bad);
-% h_Bad.ShowIntersectionCounts = true;
+% %%
+% % figure;
+% % h_Bad = vennEulerDiagram(setListData_Bad, 'drawProportional', true, 'SetLabels', setLabels_Bad);
+% % h_Bad.ShowIntersectionCounts = true;
+% %%
+% fakedata=rand(64,30000*100);
+% tic
+% [COEFF,SCORE,LATENT,EXPLAINED] = fastpca(fakedata);
+% toc
+% tic
+% p = pca(fakedata,'NumComponents',2);
+% toc
 
