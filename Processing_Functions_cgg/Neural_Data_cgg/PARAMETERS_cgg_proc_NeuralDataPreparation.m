@@ -1,4 +1,4 @@
-function cfg = PARAMETERS_cgg_proc_NeuralDataPreparation
+function cfg = PARAMETERS_cgg_proc_NeuralDataPreparation(varargin)
 
 
 % This script includes the Parameters for cgg_proc_NeuralDataPreparation.
@@ -95,47 +95,12 @@ clustering_trial_count=30;
 
 probe_mapping='mapped'; %unmapped, mapped, recorded
 
-% This vector will determine what the probes that are being used are. Here
-% the probes are 64 channel NeuroNexus probes and there are only 2 of them.
-% The first 64 channels are one probe and the second 64 channels are
-% another probe. If a single channel is desired then single_channel will 
-% select the channel that will be used for analysis. The function should be
-% run using each of the probes and can save them separately depending on
-% which area they represent.
-% first_probe=1:64;
-% second_probe=65:128;
-% single_channel=1;
-first_probe=65:128;
-second_probe=1:64;
-third_probe=193:256;
-fourth_probe=321:384;
-fifth_probe=257:320;
-single_channel=1;
+SessionName = CheckVararginPairs('SessionName', 'None', varargin{:});
 
-% This variable determines which probe will be used for analysis. Use a
-% cell array with all the probe locations that are being looked at.
-probe_selection={first_probe,second_probe,third_probe,fourth_probe,...
-    fifth_probe};
+[probe_area,probe_selection] = ...
+    PARAMETERS_cgg_getSessionProbeInformation(SessionName);
 
-% This variable determines what the probe area is and uses it for saving
-% the data and organizing it by area. For the naming choose an area then a
-% three digit number. (ACC_###, CD_###, PFC_###)
-
-% first_probe_area='ACC_001';
-% second_probe_area='CD_001';
-% single_channel_area='SINGLE_001';
-
-first_probe_area='ACC_001';
-second_probe_area='ACC_002';
-third_probe_area='PFC_001';
-fourth_probe_area='CD_001';
-fifth_probe_area='CD_002';
-
-% Use a cell array with all the probe locations that are being looked at.
-probe_area={first_probe_area,second_probe_area,third_probe_area,...
-    fourth_probe_area,fifth_probe_area};
-
-probe_disconnected={[30,60:64],[30,39,60:64],[30,60:64],[14,30,60:64],[30,60:64]};
+% probe_disconnected={[30,60:64],[30,39,60:64],[30,60:64],[14,30,60:64],[30,60:64]};
 
 
 %% Boolean Decision Section
@@ -162,6 +127,13 @@ want_artifact_rejection = false;
 want_LFP = true;
 want_MUA = true;
 want_Spike = false;
+
+% This boolean determines whether to keep the wideband data saved after
+% processing the different derivative activities. Keeping this to false
+% will GREATLY reduce the amount of data that has to be saved to hard
+% drive.
+
+keep_wideband=false;
 
 
 %%

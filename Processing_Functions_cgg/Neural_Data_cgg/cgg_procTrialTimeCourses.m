@@ -91,6 +91,7 @@ EX_Area_Type_Trial_Time=EX_Area_Type_Trial.time{1};
 
 m_EX_Area_Type_Trial_Time=matfile(EX_Area_Type_Trial_Time_Name,'writable',true);
 m_EX_Area_Type_Trial_Time.this_trial_time=EX_Area_Type_Trial_Time;
+% m_EX_Area_Type_Trial_Time.this_fsample=EX_Area_Type_Trial.fsample;
 end
 
 end

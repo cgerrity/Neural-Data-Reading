@@ -11,6 +11,9 @@ Count_Sel_Trial=30;
 probe_area='ACC_001';
 Activity_Type='MUA';
 Smooth_Factor=250;
+want_all_Probes=true;
+
+Increment_Time=25; %Value in ms
 
 Frame_Event_Selection_Data = 'SelectObject';
 Frame_Event_Selection_Location_Data = 'END';
@@ -21,6 +24,17 @@ Frame_Event_Selection_Baseline = 'Blink';
 Frame_Event_Selection_Location_Baseline = 'START';
 Window_Before_Baseline = 0;
 Window_After_Baseline = 0.5;
+
+Epoch = 'Decision';
+
+%% Regression Parameters
+
+GainValue=3;
+LossValue=-3;
+
+Regression_SP=25;
+Significance_Value=0.05;
+Minimum_Length=50;
 
 %%
 

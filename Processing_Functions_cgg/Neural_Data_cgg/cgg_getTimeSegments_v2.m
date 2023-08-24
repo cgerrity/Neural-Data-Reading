@@ -1,4 +1,4 @@
-function [sel_cut_start_index,sel_cut_end_index] = cgg_getTimeSegments_v2(varargin)
+function [sel_cut_start_index,sel_cut_end_index,this_trial_fsample] = cgg_getTimeSegments_v2(varargin)
 %CGG_GETTIMESEGMENTS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -86,6 +86,7 @@ sel_frame_Epoch=strcmp(frame_Epochs,Frame_Event_Selection);
 
 sel_cut_start_index=NaN(NumTrials,1);
 sel_cut_end_index=NaN(NumTrials,1);
+this_trial_fsample=NaN(NumTrials,1);
 
 %% Update Information Setup
 
@@ -97,9 +98,10 @@ afterEach(q, @nUpdateWaitbar);
 All_Iterations = NumTrials;
 Iteration_Count = 0;
 
-formatSpec = '*** Current Time Point Segmentation Progress is: %.2f%%';
+formatSpec = '*** Current Time Point Segmentation Progress is: %.2f%%%%\n';
 Current_Message=sprintf(formatSpec,0);
-disp(Current_Message);
+% disp(Current_Message);
+fprintf(Current_Message);
 
 %%
 
@@ -111,6 +113,9 @@ parfor tidx=1:NumTrials
 %    m_MUA = matfile(this_trial_MUA_file_name);
     m_Time = load(this_trial_Type_file_name);
     this_trial_time=m_Time.this_trial_time;
+%     this_trial_fsample=m_Time.fsample;
+
+this_trial_fsample(tidx)=1/mode(diff(this_trial_time));
 
 %     time_offsets=this_trial_time.trialinfo(:,3);
     time_offsets=rectrialdefs(tidx,6);
@@ -167,10 +172,12 @@ end
 function nUpdateWaitbar(~)
     Iteration_Count = Iteration_Count + 1;
     Current_Progress=Iteration_Count/All_Iterations*100;
-    Delete_Message=repmat('\b',1,length(Current_Message)+1);
-    fprintf(Delete_Message);
+%     Delete_Message=repmat('\b',1,length(Current_Message)+1);
+    Delete_Message=repmat(sprintf('\b'),1,length(Current_Message)-1);
+%     fprintf(Delete_Message);
     Current_Message=sprintf(formatSpec,Current_Progress);
-    disp(Current_Message);
+%     disp(Current_Message);
+    fprintf([Delete_Message,Current_Message]);
 end
 
 end
