@@ -6,7 +6,8 @@ function cgg_plotDataProcessingStepsInGroups(InData,InData_Time,X_Name,Y_Name,In
 X_Name_Size=18;
 Y_Name_Size=18;
 Tick_Size=0.05;
-Plot_Line_Width=2;
+Y_Tick_Skip=8;
+Plot_Line_Width=1;
 
 fig_activity=figure;
 fig_activity.WindowState='maximized';
@@ -27,17 +28,20 @@ this_Y_Range=InYLim(2)-InYLim(1);
 % this_Data=smoothdata(this_Data,'movmean',Smooth_Factor);
 
 ColorMap=turbo(length(Channel_Group));
+Y_Offsets=ones(length(Channel_Group),1);
+
 for gidx=1:length(Channel_Group)
     if gidx==1
         hold on
     end
     
+this_Y_Offset=-(gidx-1)*this_Y_Range;
 sel_channel=Channel_Group(gidx);
-this_Data=InData(sel_channel,:)-(gidx-1)*this_Y_Range;
+this_Data=InData(sel_channel,:)+this_Y_Offset;
 
 p_Data{gidx}=plot(InData_Time,this_Data,'LineWidth',Plot_Line_Width,...
     'Color',ColorMap(gidx,:),'DisplayName',['Channel ' num2str(sel_channel)]);
-
+Y_Offsets(gidx)=this_Data(1);
 end
 hold off
 
@@ -46,12 +50,27 @@ ylabel(Y_Name,'FontSize',Y_Name_Size);
 % legend('Location','northeast');
 % legend([p_Data]);
 
-this_InYLim=[InYLim(1)-this_Y_Range*((length(Channel_Group)-1)*1+0.5),InYLim(1)+this_Y_Range*((length(Channel_Group)-1)*0+1.5)];
+this_InYLim=[InYLim(1)-this_Y_Range*((length(Channel_Group)-1)*1+1),InYLim(1)+this_Y_Range*((length(Channel_Group)-1)*0+4)];
 
 ylim(this_InYLim);
 xlim([InData_Time(1),InData_Time(end)]);
 
 xticks(InData_Time(1):Tick_Size:InData_Time(end));
+
+YTicks_IDX=fliplr([1,Y_Tick_Skip:Y_Tick_Skip:length(Channel_Group)]);
+
+% Convert the array of numbers to a cell array of strings
+YTicks_Names = cellfun(@num2str, num2cell(YTicks_IDX), 'UniformOutput', false);
+
+YTicks=Y_Offsets(YTicks_IDX);
+
+yticks(YTicks);
+yticklabels(YTicks_Names);
+
+% Adjust y-axis tick marks
+ax = gca; % Get the current axes handle
+ax.YAxis.TickLength = [0.01, 0.01]; % Set tick length
+ax.YAxis.TickDirection = 'out';   % Set tick direction
 
 % drawnow;
 

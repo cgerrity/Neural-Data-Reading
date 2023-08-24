@@ -1,4 +1,4 @@
-function cgg_plotAllTrialRValue(InP_ValueData,InP_ValueBaseline,InData_Time,InBaseline_Time,InData_X_Name,InBaseline_X_Name,InData_Title,InBaseline_Title,InModel,InSavePlotCFG,InSaveName,InSaveDescriptor,Significance_Value,varargin)
+function cgg_plotAllTrialRValue(InP_ValueData,InP_ValueBaseline,InData_Time,InBaseline_Time,InData_X_Name,InBaseline_X_Name,InData_Title,InBaseline_Title,InModel,InSavePlotCFG,InSaveName,InSaveDescriptor,Significance_Value,InIncrement,varargin)
 %CGG_PLOTSELECTTRIALCONDITIONS Summary of this function goes here
 %   Detailed explanation goes here
 %%% Plotting
@@ -113,7 +113,7 @@ this_Title_Baseline='Baseline';
 title(this_Title_Baseline,'FontSize',14);
 
 Main_Title=sprintf('%s',InData_Title);
-Main_SubTitle=sprintf('Model: %s',InModel_Label);
+Main_SubTitle=sprintf('Model: %s; Increment: %d ms',InModel_Label,InIncrement);
 
 Main_Title_Size=18;
 Main_SubTitle_Size=14;

@@ -108,6 +108,34 @@ drawnow;
 this_figure_save_name=[InSavePlotCFG.path filesep sprintf(InSaveName,'Zoomx4',InArea)];
 saveas(fig_mean,this_figure_save_name,'pdf');
 
+%%
+
+% Get the anti-diagonal of the matrix
+Average_OffDiagonal = mean(diag(flipud(this_DataCorr),1));
+
+Zoomx2_Range=YLim_Upper_Zoomx2-YLim_Lower_Zoomx2;
+Zoomx4_Range=YLim_Upper_Zoomx4-YLim_Lower_Zoomx4;
+
+YLim_Lower_Offx2=max(Average_OffDiagonal-Zoomx2_Range/2,0);
+YLim_Upper_Offx2=min(Average_OffDiagonal+Zoomx2_Range/2,1);
+
+YLim_Lower_Offx4=max(Average_OffDiagonal-Zoomx4_Range/2,0);
+YLim_Upper_Offx4=min(Average_OffDiagonal+Zoomx4_Range/2,1);
+
+% Off Diagonal Average Zoomx2
+caxis([YLim_Lower_Offx2,YLim_Upper_Offx2]);
+drawnow;
+this_figure_save_name=[InSavePlotCFG.path filesep sprintf(InSaveName,'Off_Zoomx2',InArea)];
+saveas(fig_mean,this_figure_save_name,'pdf');
+
+% Off Diagonal Average Zoomx4
+caxis([YLim_Lower_Offx4,YLim_Upper_Offx4]);
+drawnow;
+this_figure_save_name=[InSavePlotCFG.path filesep sprintf(InSaveName,'Off_Zoomx4',InArea)];
+saveas(fig_mean,this_figure_save_name,'pdf');
+
+
+
 close all
 end
 
