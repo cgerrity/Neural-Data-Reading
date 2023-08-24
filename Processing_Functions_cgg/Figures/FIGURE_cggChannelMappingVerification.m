@@ -92,6 +92,10 @@ rect_samprate=cfg.rect_samprate;
 
 %%
 
+Connected_Channels=cell(length(Activity_Types),length(probe_area));
+Disconnected_Channels=cell(length(Activity_Types),length(probe_area));
+Debugging_Info=cell(length(Activity_Types),length(probe_area));
+
 for aidx=1:length(probe_area)
     
     this_probe_area=probe_area{aidx};
@@ -265,7 +269,7 @@ InSaveName='Channel_Clustering_%s_Mapped_Clusters_%d_%s';
 
 %%
 for gidx=2:15
-cgg_plotChannelClusteringAlongProbe_v2(InData,gidx,InArea,InTrials,InSavePlotCFG,InSaveName)(InData,InArea,InTrials,InSavePlotCFG,InSaveName)
+cgg_plotChannelClusteringAlongProbe_v2(InData,gidx,InArea,InTrials,InSavePlotCFG,InSaveName)
 end
 
 % %%
@@ -339,10 +343,10 @@ cgg_plotDataProcessingStepsInGroups(InData,InData_Time,X_Name,Y_Name,InData_Titl
 end
 end
 
-[Connected_Channels{aidx},Disconnected_Channels{aidx},Debugging_Info{aidx}] = ...
+[Connected_Channels{taidx,aidx},Disconnected_Channels{taidx,aidx},Debugging_Info{taidx,aidx}] = ...
     cgg_getDisconnectedChannelsIteration(InData,NumReplicates,...
     InDistance,Start_Group,End_Group,Disconnected_Channels_GT,...
-    All_Channels,Disconnected_Threshold,NumIterations);
+    Disconnected_Threshold,NumIterations);
 
 end
 
