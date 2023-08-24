@@ -1,6 +1,8 @@
-function [Group_Labels,Data_Reduced,Group_Distance] = cgg_procChannelClustering_v3(InData,NumGroups,NumReplicates,InDistance)
+function [Group_Labels,Group_Distance,SCORE] = cgg_procChannelClustering_v4(InData,NumGroups,NumReplicates,InDistance,NumComponents,varargin)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
+
+PCA_SCORE = CheckVararginPairs('PCA_SCORE', '', varargin{:});
 
 stream = RandStream('mlfg6331_64');  % Random number stream
 opts = statset('UseParallel',1,'UseSubstreams',1,...
@@ -13,10 +15,14 @@ InDistancetsne='cosine'; % seuclidean seuclidean
 InLearnRate=100; % 250 250
 %%
 
+if ~exist('PCA_SCORE','var')
+[~,SCORE,~,~] = fastpca(InData);
+PCA_SCORE=SCORE;
+else
+SCORE=PCA_SCORE;
+end
 
-Data_Reduced = tsne(InData,'Algorithm','barneshut','Distance',InDistancetsne,'Exaggeration',InExaggeration,'Perplexity',InPerplexity,'LearnRate',InLearnRate,'NumDimensions',2);
-
-[Group_Labels,~,~,Group_Distance] = kmeans(Data_Reduced,NumGroups,'Distance',InDistance,...
+[Group_Labels,~,~,Group_Distance] = kmeans(SCORE(:,1:NumComponents),NumGroups,'Distance',InDistance,...
     'Replicates',NumReplicates,'Options',opts);
 
 

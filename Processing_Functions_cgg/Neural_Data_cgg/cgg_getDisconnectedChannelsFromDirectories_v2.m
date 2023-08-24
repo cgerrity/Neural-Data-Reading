@@ -1,4 +1,4 @@
-function [Connected_Channels,Disconnected_Channels,is_previously_rereferenced] = cgg_getDisconnectedChannelsFromDirectories(Count_Sel_Trial,varargin)
+function [Connected_Channels,Disconnected_Channels,is_previously_rereferenced,Debugging_Info] = cgg_getDisconnectedChannelsFromDirectories_v2(Count_Sel_Trial,varargin)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -62,7 +62,7 @@ Activity_Type_Folder = dir(this_dir);
 % remove all files (isdir property is 0)
 Activity_Type_Folder = Activity_Type_Folder(~[Activity_Type_Folder(:).isdir]);
 % remove '.' and '..' and the 'Connected' Folder
-Activity_Type_Folder = Activity_Type_Folder(~ismember({Activity_Type_Folder(:).name},{'.','..','.DS_Store','Connected'}));
+Activity_Type_Folder = Activity_Type_Folder(~ismember({Activity_Type_Folder(:).name},{'.','..','Connected'}));
 
 Trial_Numbers={Activity_Type_Folder.name};
 Trial_Numbers = regexp(Trial_Numbers,'\d*','match');
@@ -78,13 +78,13 @@ outdatadir=cfg.outdatadir.path;
 
 fullfilename = cgg_generateActivityFullFileName('inputfolder',inputfolder,'outdatadir',outdatadir,...
     'Activity_Type', Activity_Type,'probe_area',probe_area);
-
+%%
 % Trial_Table_struct = dir(fullfile(cfg.outdatadir_TrialInformation,'*Table*'));
 % Trial_Table_Name = Trial_Table_struct.name;
 % rectrialdeftable=load([cfg.outdatadir_TrialInformation filesep Trial_Table_Name]);
 % rectrialdeftable=rectrialdeftable.rectrialdeftable;
 % [NumTrials,~]=size(rectrialdeftable);
 
-[Connected_Channels,Disconnected_Channels,is_previously_rereferenced] = cgg_getDisconnectedChannels(Trial_Numbers,Count_Sel_Trial,fullfilename);
+[Connected_Channels,Disconnected_Channels,is_previously_rereferenced,Debugging_Info] = cgg_getDisconnectedChannels_v3(Trial_Numbers,Count_Sel_Trial,fullfilename);
 end
 
