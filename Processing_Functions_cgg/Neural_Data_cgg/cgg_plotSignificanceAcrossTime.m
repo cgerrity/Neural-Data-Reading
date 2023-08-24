@@ -1,4 +1,4 @@
-function cgg_plotSignificanceAcrossTime(InP_ValueData,InP_ValueBaseline,InData_Time,InBaseline_Time,InData_X_Name,InBaseline_X_Name,InData_Title,InArea,InRegressor,InModel,InSavePlotCFG,InSaveName,Significance_Value,Minimum_Length,varargin)
+function cgg_plotSignificanceAcrossTime(InP_ValueData,InP_ValueBaseline,InData_Time,InBaseline_Time,InData_X_Name,InBaseline_X_Name,InData_Title,InArea,InRegressor,InModel,InSavePlotCFG,InSaveName,Significance_Value,Minimum_Length,InIncrement,varargin)
 %cgg_plotSignificanceAcrossTime Summary of this function goes here
 %   Detailed explanation goes here
 %%% Plotting
@@ -49,13 +49,18 @@ InModel_Label=replace(InModel,'_',' ');
 
 Connected_Channels = CheckVararginPairs('Connected_Channels', NaN, varargin{:});
 
+Sampling_Period_Data=mean(abs(InData_Time(2:end)-InData_Time(1:end-1)))*1000; %Get the sampling period in ms
+Sampling_Period_Baseline=mean(abs(InBaseline_Time(2:end)-InBaseline_Time(1:end-1)))*1000; %Get the sampling period in ms
+Minimum_Length_Data_Samples=round(Minimum_Length/Sampling_Period_Data);
+Minimum_Length_Baseline_Samples=round(Minimum_Length/Sampling_Period_Baseline);
+
 %%
 
 % this_Plot_Data=InP_ValueData<Significance_Value;
 % this_Plot_Baseline=InP_ValueBaseline<Significance_Value;
 
-[this_Plot_Data] = cgg_procSignificanceOverChannels(InP_ValueData,Significance_Value,Minimum_Length);
-[this_Plot_Baseline] = cgg_procSignificanceOverChannels(InP_ValueBaseline,Significance_Value,Minimum_Length);
+[this_Plot_Data] = cgg_procSignificanceOverChannels(InP_ValueData,Significance_Value,Minimum_Length_Data_Samples);
+[this_Plot_Baseline] = cgg_procSignificanceOverChannels(InP_ValueBaseline,Significance_Value,Minimum_Length_Baseline_Samples);
 
 this_Plot_Data=this_Plot_Data*1;
 this_Plot_Baseline=this_Plot_Baseline*1;
@@ -151,7 +156,7 @@ xticks(InBaseline_Time(1):Tick_Size:InBaseline_Time(end));
 Main_Title=sprintf('%s',InData_Title);
 % Main_SubTitle=sprintf(InArea_Label);
 Main_SubTitle=sprintf('%s Model: %s',InArea_Label,InModel_Label);
-Main_SubSubTitle=sprintf('(Parameter: %s; p-Value = %.3f; Minimum Length = %d ms)',InRegressor_Label,Significance_Value,Minimum_Length);
+Main_SubSubTitle=sprintf('(Parameter: %s; p-Value = %.3f; Minimum Length = %d ms; Increment = %d ms)',InRegressor_Label,Significance_Value,Minimum_Length,InIncrement);
 
 Main_Title_Size=18;
 Main_SubTitle_Size=14;

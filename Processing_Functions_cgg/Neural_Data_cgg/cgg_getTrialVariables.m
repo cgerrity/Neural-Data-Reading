@@ -7,21 +7,34 @@ isfunction=exist('varargin','var');
 
 if isfunction
 [cfg] = cgg_generateNeuralDataFoldersTopLevel(varargin{:});
+[cfg_v2] = cgg_generateNeuralDataFoldersTopLevel_v2(varargin{:});
 elseif (exist('inputfolder','var'))&&(exist('outdatadir','var'))
 [cfg] = cgg_generateNeuralDataFoldersTopLevel('inputfolder',...
     inputfolder,'outdatadir',outdatadir);
+[cfg_v2] = cgg_generateNeuralDataFoldersTopLevel_v2('inputfolder',...
+    inputfolder,'outdatadir',outdatadir);
 elseif (exist('inputfolder','var'))&&~(exist('outdatadir','var'))
 [cfg] = cgg_generateNeuralDataFoldersTopLevel('inputfolder',inputfolder);
+[cfg_v2] = cgg_generateNeuralDataFoldersTopLevel_v2(...
+    'inputfolder',inputfolder);
 elseif ~(exist('inputfolder','var'))&&(exist('outdatadir','var'))
 [cfg] = cgg_generateNeuralDataFoldersTopLevel('outdatadir',outdatadir);
+[cfg_v2] = cgg_generateNeuralDataFoldersTopLevel_v2(...
+    'outdatadir',outdatadir);
 else
 [cfg] = cgg_generateNeuralDataFoldersTopLevel;
+[cfg_v2] = cgg_generateNeuralDataFoldersTopLevel_v2;
 end
 
 inputfolder=cfg.inputfolder;
 outdatadir=cfg.outdatadir;
 
 %%
+
+TrialVariables_file_name=[cfg_v2.outdatadir.Experiment.Session.Trial_Information.path filesep 'TrialVariables_', cfg.SessionName, '.mat'];
+
+%%
+if ~(exist(TrialVariables_file_name,'file')) 
 
 Session_struct = dir(fullfile(inputfolder,'Session*'));
 USE_Session_Name = Session_struct.name;
@@ -37,7 +50,7 @@ end
 %%
 
 
-dataFolder=[inputfolder USE_Session_Name];
+dataFolder=[inputfolder filesep USE_Session_Name];
 outdatadir_LT=cfg.outdatadir_SessionName;
 
 gazeArgs='TX300';
@@ -125,6 +138,13 @@ for tidx=1:length(TrialNumber)
     end
     
     trialVariables(tidx).PreviousTrialCorrect=Previous_Trial;
+end
+
+m_TrialVariables = matfile(TrialVariables_file_name,'Writable',true);
+m_TrialVariables.trialVariables=trialVariables;
+else
+m_TrialVariables = matfile(TrialVariables_file_name,'Writable',true);
+trialVariables=m_TrialVariables.trialVariables;
 end
 
 end
