@@ -1,4 +1,4 @@
-function [Output,Area_Names] = cgg_procFullTrialPreparation_v2(varargin)
+function cgg_procFullTrialPreparation_v3(varargin)
 %cgg_procFullTrialPreparation_v2 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -23,6 +23,8 @@ Frame_Event_Selection_Baseline=cfg_param.Frame_Event_Selection_Baseline;
 Frame_Event_Selection_Location_Baseline=cfg_param.Frame_Event_Selection_Location_Baseline;
 Window_Before_Baseline=cfg_param.Window_Before_Baseline;
 Window_After_Baseline=cfg_param.Window_After_Baseline;
+
+Epoch=cfg_param.Epoch;
 
 GainValue=cfg_param.GainValue;
 LossValue=cfg_param.LossValue;
@@ -53,12 +55,18 @@ end
 inputfolder=cfg.inputfolder;
 outdatadir=cfg.outdatadir;
 
+Session_Start_Message=sprintf('*** Starting Processing Session: %s',cfg.SessionName);
+Session_End_Message=sprintf('*** Finished Processing Session: %s',cfg.SessionName);
+disp(Session_Start_Message);
+
+%%
 if want_all_Probes
 Area_Names = cgg_getProbeAreas(cfg.outdatadir_SessionName);
-Output=cell(length(Area_Names),1);
+% Output=cell(length(Area_Names),1);
 else
 Area_Names={probe_area};
 end
+
 %% Get the time point indices for the trials
 [Start_IDX_Data,End_IDX_Data,SF_Data] = cgg_getTimeSegments_v2(...
     'inputfolder',inputfolder,'outdatadir',outdatadir,...
@@ -83,6 +91,24 @@ this_probe_area=Area_Names{aidx};
 %% Get input/output folders for Specified Area
 
 [cfg_directories] = cgg_generateNeuralDataFolders_v2(this_probe_area,'inputfolder',inputfolder,'outdatadir',outdatadir);
+
+[cfg_regression] = cgg_generateRegressionFolders(this_probe_area,'inputfolder',inputfolder,'outdatadir',outdatadir);
+cfg_directories.outdatadir.Experiment.Session.Regression=cfg_regression.outdatadir.Experiment.Session.Regression;
+
+[cfg_epoch] = cgg_generateEpochFolders(Epoch,'inputfolder',inputfolder,'outdatadir',outdatadir);
+cfg_directories.outdatadir.Experiment.Session.Epoched_Data.Epoch=cfg_epoch.outdatadir.Experiment.Session.Epoched_Data.Epoch;
+
+%% Check if this probe has already been processed
+
+IsProbeProcessed = cgg_checkProbeProcessed(this_probe_area,...
+    cfg_directories);
+
+%% Only process if not already processed
+if ~IsProbeProcessed
+    
+Start_Message=sprintf('*** Start of Processing of %s',this_probe_area);
+disp(Start_Message);
+
 %% Get the full file name
 fullfilename = cgg_generateActivityFullFileName('inputfolder',inputfolder,'outdatadir',outdatadir,...
     'Activity_Type',Activity_Type,'probe_area',this_probe_area);
@@ -127,9 +153,6 @@ FullBaseline=MatchBaseline;
 
 %% Regression
 
-[cfg_regression] = cgg_generateRegressionFolders(this_probe_area,'inputfolder',inputfolder,'outdatadir',outdatadir);
-cfg_directories.outdatadir.Experiment.Session.Regression=cfg_regression.outdatadir.Experiment.Session.Regression;
-
 TrialNumbers=MatchTrialNumber_Data;
 InData=Norm_Data;
 SamplingFrequency=mode(SF_Data);
@@ -138,53 +161,53 @@ SamplingFrequency=mode(SF_Data);
 
 %%
 
-this_Output=struct();
+Output=struct();
 
-this_Output(1).Name='Description of Each Field';
-this_Output(2).Name='Data';
-this_Output(3).Name='Baseline';
+Output(1).Name='Description of Each Field';
+Output(2).Name='Data';
+Output(3).Name='Baseline';
 
-this_Output(1).Mean={'Mean Value of the signal source across trials.';...
+Output(1).Mean={'Mean Value of the signal source across trials.';...
     ['The value for each time point and each channel is averaged '...
     'across each trial.']};
-this_Output(2).Mean=Mean_Norm_Data;
-this_Output(3).Mean=Mean_Norm_Baseline;
+Output(2).Mean=Mean_Norm_Data;
+Output(3).Mean=Mean_Norm_Baseline;
 
-this_Output(1).STD_Error={['Standard Error of the mean of the signal source '...
+Output(1).STD_Error={['Standard Error of the mean of the signal source '...
     'across trials.'];...
     ['The value for each time point and each channel is averaged '...
     'across each trial. Then the standard error of this mean is taken.']};
-this_Output(2).STD_Error=STD_ERROR_Norm_Data;
-this_Output(3).STD_Error=STD_ERROR_Norm_Baseline;
+Output(2).STD_Error=STD_ERROR_Norm_Data;
+Output(3).STD_Error=STD_ERROR_Norm_Baseline;
 
-this_Output(1).Trials={'All the trials for the data source';...
+Output(1).Trials={'All the trials for the data source';...
     ['Each channel is baseline z-scored by the mean and standard '...
     'deviation that come from the FullBaseline. This FullBaseline '...
     'excludes aborted trials and trials longer than specified. The '...
     'activity of all the trials for all time points of a channel are '...
     'used to calculate the mean and standard deviations for normalizing']};
-this_Output(2).Trials=Norm_Data;
-this_Output(3).Trials=Norm_Baseline;
+Output(2).Trials=Norm_Data;
+Output(3).Trials=Norm_Baseline;
 
-this_Output(1).TrialNumber={'The trial numbers for each trial.';...
+Output(1).TrialNumber={'The trial numbers for each trial.';...
     ['The trial number is unique for each trial whether it is aborted '...
     'or not. This value indicates which of the trials is included in '...
     'this data since there are no numbers on the Trials field. The '...
     'first trial in the Trials field could have trial number 2. This '...
     'would be the second trial in the session but the first in the '...
     'Trials field']};
-this_Output(2).TrialNumber=MatchTrialNumber_Data;
-this_Output(3).TrialNumber=MatchTrialNumber_Baseline;
+Output(2).TrialNumber=MatchTrialNumber_Data;
+Output(3).TrialNumber=MatchTrialNumber_Baseline;
 
-this_Output(1).Connected_Channels={'Channels that are connected.';...
+Output(1).Connected_Channels={'Channels that are connected.';...
     ['The Channels that are in the brain and recording brain activity '...
     'instead of random noise unrelated to the brain. The first entry '...
     'represents the connected channels and the second entry '...
     'represents disconnected channels.']};
-this_Output(2).Connected_Channels=Connected_Channels;
-this_Output(3).Connected_Channels=Disconnected_Channels;
+Output(2).Connected_Channels=Connected_Channels;
+Output(3).Connected_Channels=Disconnected_Channels;
 
-this_Output(1).Significant_Channels={'Channels that are significant.';...
+Output(1).Significant_Channels={'Channels that are significant.';...
     ['The Channels that show significant activity. If the model '...
     'singificantly predicts activity over no model within a specific '...
     'period then the channel is considered significantly modulated. '...
@@ -192,16 +215,24 @@ this_Output(1).Significant_Channels={'Channels that are significant.';...
     'Load, Gain, Loss, Previous. The first entry represents the '...
     'significant channels and the second entry represents not '...
     'significant channels.']};
-this_Output(2).Significant_Channels=Significant_Channels;
-this_Output(3).Significant_Channels=NotSignificant_Channels;
+Output(2).Significant_Channels=Significant_Channels;
+Output(3).Significant_Channels=NotSignificant_Channels;
 
-if want_all_Probes
-    Output{aidx}=this_Output;
-else
-    Output=this_Output;
-end
+%% 
+cgg_saveTrialEpochs(Output,this_probe_area,trialVariables,Epoch,cfg_directories);
+
+% if want_all_Probes
+%     Output{aidx}=this_Output;
+% else
+%     Output=this_Output;
+% end
+
+End_Message=sprintf('*** End of Processing of %s',this_probe_area);
+
+disp(End_Message);
+end % End If for whether Probe has been processed
 
 end % End Iteration through all the Probes
-
+disp(Session_End_Message);
 end
 

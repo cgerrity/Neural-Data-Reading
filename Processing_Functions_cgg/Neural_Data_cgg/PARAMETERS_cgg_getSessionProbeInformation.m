@@ -341,6 +341,9 @@ switch SessionName
         fourth_probe_area='CD_001';
         probe_area={first_probe_area,second_probe_area,...
             third_probe_area,fourth_probe_area};
+    case 'none'
+        probe_selection={};
+        probe_area={};
     otherwise
         disp('!!!No Matching Session Name - Selecting Default!!!');
         disp(['!!![see top of '...

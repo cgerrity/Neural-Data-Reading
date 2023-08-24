@@ -38,9 +38,10 @@ afterEach(q, @nUpdateWaitbar);
 All_Iterations = NumTrials;
 Iteration_Count = 0;
 
-formatSpec = '*** Current Data Segmentation Progress is: %.2f%%';
+formatSpec = '*** Current Data Segmentation Progress is: %.2f%%%%\n';
 Current_Message=sprintf(formatSpec,0);
-disp(Current_Message);
+% disp(Current_Message);
+fprintf(Current_Message);
 %%
 parfor tidx=1:NumTrials
     this_trial_index=rectrialdefs(tidx,8);
@@ -80,10 +81,12 @@ end
 function nUpdateWaitbar(~)
     Iteration_Count = Iteration_Count + 1;
     Current_Progress=Iteration_Count/All_Iterations*100;
-    Delete_Message=repmat('\b',1,length(Current_Message)+1);
-    fprintf(Delete_Message);
+%     Delete_Message=repmat('\b',1,length(Current_Message)+1);
+    Delete_Message=repmat(sprintf('\b'),1,length(Current_Message)-1);
+%     fprintf(Delete_Message);
     Current_Message=sprintf(formatSpec,Current_Progress);
-    disp(Current_Message);
+%     disp(Current_Message);
+    fprintf([Delete_Message,Current_Message]);
 end
 
 

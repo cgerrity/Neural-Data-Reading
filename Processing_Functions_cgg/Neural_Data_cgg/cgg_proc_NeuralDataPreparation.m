@@ -12,39 +12,6 @@ function [inputfolder, outdatadir] = cgg_proc_NeuralDataPreparation(varargin)
 
 isfunction=exist('varargin','var');
 
-%% Parameters
-
-% This gets the parameter values from 
-% PARAMETERS_cgg_proc_NeuralDataPreparation. Open this script and read the
-% descriptions to change the set values for this function.
-
-
-
-cfg=PARAMETERS_cgg_proc_NeuralDataPreparation;
-
-trial_align_evcode = cfg.trial_align_evcode;
-padtime = cfg.padtime;
-notch_filter_freqs = cfg.notch_filter_freqs;
-notch_filter_bandwidth = cfg.notch_filter_bandwidth;
-lfp_maxfreq = cfg.lfp_maxfreq;
-lfp_samprate = cfg.lfp_samprate;
-spike_minfreq = cfg.spike_minfreq;
-rect_bandfreqs =cfg.rect_bandfreqs;
-rect_lowpassfreq = cfg.rect_lowpassfreq;
-rect_samprate = cfg.rect_samprate;
-gaze_samprate = cfg.gaze_samprate;
-probe_mapping=cfg.probe_mapping;
-probe_selection=cfg.probe_selection;
-probe_area=cfg.probe_area;
-want_channel_remap = cfg.want_channel_remap;
-want_artifact_rejection = cfg.want_artifact_rejection;
-want_rereference = cfg.want_rereference;
-rereference_type = cfg.rereference_type;
-clustering_trial_count = cfg.clustering_trial_count;
-want_LFP = cfg.want_LFP;
-want_MUA = cfg.want_MUA;
-want_Spike = cfg.want_Spike;
-
 %% Directories
 
 % This gets the input folder from varargin. Use the name value pair of
@@ -81,6 +48,39 @@ end
 else
     outdatadir = uigetdir(['/Volumes/gerritcg''','s home/Data_Neural_gerritcg'], 'Choose the output data folder');
 end
+
+%% Parameters
+
+% This gets the parameter values from 
+% PARAMETERS_cgg_proc_NeuralDataPreparation. Open this script and read the
+% descriptions to change the set values for this function.
+
+
+cfg=PARAMETERS_cgg_proc_NeuralDataPreparation('SessionName',SessionName);
+
+trial_align_evcode = cfg.trial_align_evcode;
+padtime = cfg.padtime;
+notch_filter_freqs = cfg.notch_filter_freqs;
+notch_filter_bandwidth = cfg.notch_filter_bandwidth;
+lfp_maxfreq = cfg.lfp_maxfreq;
+lfp_samprate = cfg.lfp_samprate;
+spike_minfreq = cfg.spike_minfreq;
+rect_bandfreqs =cfg.rect_bandfreqs;
+rect_lowpassfreq = cfg.rect_lowpassfreq;
+rect_samprate = cfg.rect_samprate;
+gaze_samprate = cfg.gaze_samprate;
+probe_mapping=cfg.probe_mapping;
+probe_selection=cfg.probe_selection;
+probe_area=cfg.probe_area;
+want_channel_remap = cfg.want_channel_remap;
+want_artifact_rejection = cfg.want_artifact_rejection;
+want_rereference = cfg.want_rereference;
+rereference_type = cfg.rereference_type;
+clustering_trial_count = cfg.clustering_trial_count;
+want_LFP = cfg.want_LFP;
+want_MUA = cfg.want_MUA;
+want_Spike = cfg.want_Spike;
+keep_wideband = cfg.keep_wideband;
 
 %%
 % Make the Experiment and Session output folder names.
@@ -577,6 +577,15 @@ end
   padtime, padtime, 'TrlStart', 'TrlEnd', trial_align_evcode, ...
   trial_metadata_events, 'codeData' );
 
+TrialStartInsideRecording=rectrialdefs(:,1)<rechdr.nSamples;
+TrialEndInsideRecording=rectrialdefs(:,2)<rechdr.nSamples;
+if any(xor(TrialStartInsideRecording,TrialEndInsideRecording))
+    disp('!! Trial starts within recording but ends outside of recording');
+end
+
+rectrialdefs=rectrialdefs(TrialEndInsideRecording,:);
+rectrialdeftable=rectrialdeftable(TrialEndInsideRecording,:);
+
 trialcount = height(rectrialdeftable);
 
 if have_stim
@@ -643,8 +652,22 @@ parfor tidx=1:trialcount
    this_trial_wideband_file_name=...
        sprintf([outdatadir_WideBand filesep 'WideBand_Trial_%d.mat'],...
        this_trial_index);
+   this_trial_LFP_file_name=...
+       sprintf([outdatadir_LFP filesep 'LFP_Trial_%d.mat'],...
+       this_trial_index);
+   this_trial_MUA_file_name=...
+       sprintf([outdatadir_MUA filesep 'MUA_Trial_%d.mat'],...
+       this_trial_index);
+   this_trial_Spike_file_name=...
+       sprintf([outdatadir_Spike filesep 'Spike_Trial_%d.mat'],...
+       this_trial_index);
+   
+   have_desired_data=...
+       ~(((~(exist(this_trial_LFP_file_name,'file'))) && want_LFP)||...
+            ((~(exist(this_trial_MUA_file_name,'file'))) && want_MUA)||...
+            ((~(exist(this_trial_Spike_file_name,'file'))) && want_Spike));
     
-    if ~(exist(this_trial_wideband_file_name,'file')) 
+    if ~(exist(this_trial_wideband_file_name,'file')) && ~have_desired_data
     
 % Wrapping this to suppress the annoying banner.
 ft_defaults;
@@ -735,12 +758,7 @@ if have_chanmap
   end
 end
 
-% Second step: Do notch filtering using our own filter, as FT's brick wall
-% filter acts up as of 2021.
 
-disp('.. Performing notch filtering (recorder).');
-this_recdata_wideband = euFT_doBrickNotchRemoval( ...
-  this_recdata_wideband, notch_filter_freqs, notch_filter_bandwidth );
 
 % save(this_trial_wideband_file_name,'this_recdata_wideband');
 
@@ -769,15 +787,16 @@ if ~(exist(this_area_clustering_file_name,'file'))
 %     clustering_trial_count,[outdatadir_WideBand filesep ...
 %     'WideBand_Trial_%d.mat']);
 [Connected_Channels,Disconnected_Channels,...
-    is_any_previously_rereferenced] = ...
-    cgg_getDisconnectedChannelsFromDirectories(clustering_trial_count,...
+    is_any_previously_rereferenced,Debugging_Info] = ...
+    cgg_getDisconnectedChannelsFromDirectories_v2(clustering_trial_count,...
     'inputfolder',inputfolder,'outdatadir',outdatadir,...
-    'Activity_Type', Activity_Type,'probe_area',probe_area);
+    'Activity_Type', 'WideBand','probe_area',this_probe_area);
 
 m_Cluster = matfile(this_area_clustering_file_name,'Writable',true);
 m_Cluster.Connected_Channels=Connected_Channels;
 m_Cluster.Disconnected_Channels=Disconnected_Channels;
 m_Cluster.is_any_previously_rereferenced=is_any_previously_rereferenced;
+m_Cluster.Debugging_Info=Debugging_Info;
 end
 
 m_Cluster = matfile(this_area_clustering_file_name,'Writable',true);
@@ -849,6 +868,13 @@ parfor tidx=1:trialcount
         
     m_wideband = matfile(this_trial_wideband_file_name,'Writable',true);
     this_recdata_wideband=m_wideband.this_recdata_wideband;
+
+    % Second step: Do notch filtering using our own filter, as FT's brick wall
+    % filter acts up as of 2021.
+
+    disp('.. Performing notch filtering (recorder).');
+    this_recdata_wideband = euFT_doBrickNotchRemoval( ...
+      this_recdata_wideband, notch_filter_freqs, notch_filter_bandwidth );
         
     is_previously_rereferenced=cgg_checkFTRereference(this_recdata_wideband);
     
@@ -889,6 +915,10 @@ parfor tidx=1:trialcount
 
     end
 
+end
+%%
+if ~keep_wideband
+    rmdir(outdatadir_WideBand, 's');
 end
 end
 
