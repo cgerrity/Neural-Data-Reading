@@ -583,8 +583,22 @@ if any(xor(TrialStartInsideRecording,TrialEndInsideRecording))
     disp('!! Trial starts within recording but ends outside of recording');
 end
 
-rectrialdefs=rectrialdefs(TrialEndInsideRecording,:);
-rectrialdeftable=rectrialdeftable(TrialEndInsideRecording,:);
+WeirdnessAmount=500;
+
+TrialWeirdnessMeasure=rectrialdefs(:,8)-rectrialdefs(:,7);
+TrialWeird=TrialWeirdnessMeasure>WeirdnessAmount | ...
+    isnan(TrialWeirdnessMeasure);
+
+TrialNormal=~TrialWeird;
+
+if any(TrialWeird)
+    disp('!! Trial numbers and indices have a large difference');
+end
+
+TrialValid=TrialEndInsideRecording & TrialNormal;
+
+rectrialdefs=rectrialdefs(TrialValid,:);
+rectrialdeftable=rectrialdeftable(TrialValid,:);
 
 trialcount = height(rectrialdeftable);
 
