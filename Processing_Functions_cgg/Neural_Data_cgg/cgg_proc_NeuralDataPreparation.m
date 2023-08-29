@@ -583,9 +583,9 @@ if any(xor(TrialStartInsideRecording,TrialEndInsideRecording))
     disp('!! Trial starts within recording but ends outside of recording');
 end
 
-WeirdnessAmount=500;
+WeirdnessAmount=100;
 
-TrialWeirdnessMeasure=rectrialdefs(:,8)-rectrialdefs(:,7);
+TrialWeirdnessMeasure=abs(rectrialdefs(:,8)-rectrialdefs(:,7));
 TrialWeird=TrialWeirdnessMeasure>WeirdnessAmount | ...
     isnan(TrialWeirdnessMeasure);
 
@@ -595,7 +595,11 @@ if any(TrialWeird)
     disp('!! Trial numbers and indices have a large difference');
 end
 
-TrialValid=TrialEndInsideRecording & TrialNormal;
+[~,BadTrials] = cgg_procIdentifyBadTrialNumbers(rectrialdefs);
+
+GoodTrials=~BadTrials;
+
+TrialValid=TrialEndInsideRecording & TrialNormal & GoodTrials;
 
 rectrialdefs=rectrialdefs(TrialValid,:);
 rectrialdeftable=rectrialdeftable(TrialValid,:);
