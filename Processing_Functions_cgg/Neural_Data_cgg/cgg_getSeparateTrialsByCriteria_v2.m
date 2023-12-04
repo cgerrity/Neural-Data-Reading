@@ -6,7 +6,13 @@ function [MatchData,TrialNumbers_Data_NotFound,TrialNumbers_Condition_NotFound,M
 
 NumTrials=length(TrialNumbers_Data);
 
+IsCell=iscell(AllOutData);
+
+if IsCell
+MatchData=cell(0);
+else
 MatchData=[];
+end
 MatchTrialNumber=[];
 MatchData_Counter=0;
 
@@ -24,7 +30,11 @@ for tidx=1:NumTrials
     
     if MatchArray(this_Condtion_IDX)==1
         MatchData_Counter=MatchData_Counter+1;
+        if IsCell
+        MatchData{MatchData_Counter}=AllOutData{this_Data_IDX};
+        else
         MatchData(:,:,MatchData_Counter)=AllOutData(:,:,this_Data_IDX);
+        end
         MatchTrialNumber(MatchData_Counter)=this_TrialNumber;
     end
 end
@@ -34,6 +44,10 @@ this_Condtion_IDX_NF=diag(diag(this_Condtion_IDX_NF));
 
 TrialNumbers_Data_NotFound=this_Data_IDX_NF==1;
 TrialNumbers_Condition_NotFound=this_Condtion_IDX_NF==1;
+
+if IsCell
+    MatchData=MatchData';
+end
 
 
 end

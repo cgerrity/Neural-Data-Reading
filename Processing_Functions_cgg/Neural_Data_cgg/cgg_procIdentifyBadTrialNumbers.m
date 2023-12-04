@@ -43,7 +43,7 @@ Difference_Array=[diff(Monotonic_Array);0];
 % Check for indixes where the difference is less than 1, indicating that
 % the right value is less than the value on the left, which idicates a
 % numbering issue
-IDX_logical=Difference_Array < 0;
+IDX_logical=Difference_Array < 0 | isnan(Monotonic_Array);
 
 % Get the value to the right of the bad index
 IDX_logical_plus_1=circshift(IDX_logical,1);

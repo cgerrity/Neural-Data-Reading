@@ -359,14 +359,20 @@ end
 
 % Default alignment config is fine.
 alignconfig = struct();
-
+alignconfig.coarsewindows=1000;
 % Just align using event codes. Falling back to reward pulses takes too long.
 
 
 disp('.. Propagating recorder timestamps to SynchBox.');
 
 % Use raw code bytes for this, to avoid glitching from missing box codes.
+% boxevents.cookedcodes = removevars(boxevents.cookedcodes, 'recTime');
+% boxevents.rawcodes = removevars(boxevents.rawcodes, 'recTime');
+% boxevents.rwdB = removevars(boxevents.rwdB, 'recTime');
+% boxevents.rwdA = removevars(boxevents.rwdA, 'recTime');
+% boxevents.rwdA = removevars(boxevents.synchB, 'recTime');
 eventtables = { recevents.rawcodes, boxevents.rawcodes };
+% eventtables = { recevents.cookedcodes(recevents.cookedcodes.codeLabel=="TrialIndex",:), boxevents.cookedcodes(boxevents.cookedcodes.codeLabel=="TrialIndex",:) };
 [ newtables times_recorder_synchbox ] = euUSE_alignTwoDevices( ...
   eventtables, 'recTime', 'synchBoxTime', alignconfig );
 
@@ -377,7 +383,12 @@ boxevents = euAlign_addTimesToAllTables( ...
 disp('.. Propagating recorder timestamps to USE.');
 
 % Use cooked codes for this, since both sides have a complete event list.
+% gameevents.cookedcodes = removevars(gameevents.cookedcodes, 'recTime');
+% gameevents.rawcodes = removevars(gameevents.rawcodes, 'recTime');
+% gameevents.rwdB = removevars(gameevents.rwdB, 'recTime');
+% gameevents.rwdA = removevars(gameevents.rwdA, 'recTime');
 eventtables = { recevents.cookedcodes, gameevents.cookedcodes };
+% eventtables = { recevents.cookedcodes(recevents.cookedcodes.codeLabel=="TrialIndex",:), gameevents.cookedcodes(gameevents.cookedcodes.codeLabel=="TrialIndex",:) };
 [ newtables times_recorder_game ] = euUSE_alignTwoDevices( ...
   eventtables, 'recTime', 'unityTime', alignconfig );
 
@@ -583,23 +594,24 @@ if any(xor(TrialStartInsideRecording,TrialEndInsideRecording))
     disp('!! Trial starts within recording but ends outside of recording');
 end
 
-WeirdnessAmount=100;
-
-TrialWeirdnessMeasure=abs(rectrialdefs(:,8)-rectrialdefs(:,7));
-TrialWeird=TrialWeirdnessMeasure>WeirdnessAmount | ...
-    isnan(TrialWeirdnessMeasure);
-
-TrialNormal=~TrialWeird;
-
-if any(TrialWeird)
-    disp('!! Trial numbers and indices have a large difference');
-end
+% WeirdnessAmount=100;
+% 
+% TrialWeirdnessMeasure=abs(rectrialdefs(:,8)-rectrialdefs(:,7));
+% TrialWeird=TrialWeirdnessMeasure>WeirdnessAmount | ...
+%     isnan(TrialWeirdnessMeasure);
+% 
+% TrialNormal=~TrialWeird;
+% 
+% if any(TrialWeird)
+%     disp('!! Trial numbers and indices have a large difference');
+% end
 
 [~,BadTrials] = cgg_procIdentifyBadTrialNumbers(rectrialdefs);
 
 GoodTrials=~BadTrials;
 
-TrialValid=TrialEndInsideRecording & TrialNormal & GoodTrials;
+% TrialValid=TrialEndInsideRecording & TrialNormal & GoodTrials;
+TrialValid=TrialEndInsideRecording & GoodTrials;
 
 rectrialdefs=rectrialdefs(TrialValid,:);
 rectrialdeftable=rectrialdeftable(TrialValid,:);

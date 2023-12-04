@@ -46,9 +46,9 @@ outdatafile_FrameInformation=...
    sprintf([cfg.outdatadir_FrameInformation filesep ...
    'Frame_Data_%s.mat'],cfg.SessionName);
 
-outdatafile_EventInformation_Each=...
-   sprintf([cfg.outdatadir_EventInformation filesep ...
-   'Event_Codes_Each_%s.mat'],cfg.SessionName);
+% outdatafile_EventInformation_Each=...
+%    sprintf([cfg.outdatadir_EventInformation filesep ...
+%    'Event_Codes_Each_%s.mat'],cfg.SessionName);
 
 outdatafile_TrialInformation=...
    sprintf([cfg.outdatadir_TrialInformation filesep ...
@@ -77,16 +77,28 @@ Frame_Event_Window_Before=1; % In Seconds
 Frame_Event_Window_After=1.5; % In Seconds  
 end
 
-frame_Epochs={'SelectObject','ChoiceToFB','Feedback','Reward','ITI',...
-    'Blink','Fixation','BaselineNoFix','Calibration'};
 
-sel_frame_Epoch=strcmp(frame_Epochs,Frame_Event_Selection);
+    FrameDescriptor=Frame_Event_Selection;
+    DescriptorPlace=Frame_Event_Selection_Location;
+    if ~iscell(FrameDescriptor)
+        FrameDescriptor={FrameDescriptor};
+    end
+    if ~iscell(DescriptorPlace)
+        DescriptorPlace={DescriptorPlace};
+    end
+% frame_Epochs={'SelectObject','ChoiceToFB','Feedback','Reward','ITI',...
+%     'Blink','Fixation','BaselineNoFix','Calibration'};
+
+% sel_frame_Epoch=strcmp(frame_Epochs,Frame_Event_Selection);
 
 [NumTrials,~]=size(rectrialdefs);
 
-sel_cut_start_index=NaN(NumTrials,1);
-sel_cut_end_index=NaN(NumTrials,1);
+% sel_cut_start_index=NaN(NumTrials,1);
+% sel_cut_end_index=NaN(NumTrials,1);
 this_trial_fsample=NaN(NumTrials,1);
+
+sel_cut_start_index=cell(NumTrials,1);
+sel_cut_end_index=cell(NumTrials,1);
 
 %% Update Information Setup
 
@@ -125,47 +137,82 @@ this_trial_fsample(tidx)=1/mode(diff(this_trial_time));
 %BE MOVED TO A NEW FUNCTION PRODUCING A SINGLE VALUE!!!
     this_trial_frame_data=this_frame_data(this_frame_data.TrialCounter==this_trial_index,:);
     
-    Epoch_Start_idx=NaN(length(frame_Epochs),1);
-    Epoch_End_idx=NaN(length(frame_Epochs),1);
-    Epoch_Start_Time=NaN(length(frame_Epochs),1);
-    Epoch_End_Time=NaN(length(frame_Epochs),1);
-    for eidx=1:length(frame_Epochs)
-        
-        sel_cut_frame_index=strcmp(this_trial_frame_data.TrialEpoch,...
-            frame_Epochs{eidx});
-        
-        Epoch_indices=find(sel_cut_frame_index==1);
-        
-        if ~(isempty(Epoch_indices))
-        Epoch_Start_idx(eidx)=Epoch_indices(1);
-        Epoch_End_idx(eidx)=Epoch_indices(end);
-        Epoch_Start_Time(eidx)=this_trial_frame_data.recTime(Epoch_Start_idx(eidx));
-        Epoch_End_Time(eidx)=this_trial_frame_data.recTime(Epoch_End_idx(eidx));
-        else
-        Epoch_Start_idx(eidx)=NaN;
-        Epoch_End_idx(eidx)=NaN;
-        Epoch_Start_Time(eidx)=NaN;
-        Epoch_End_Time(eidx)=NaN;
-        end
+    FrameData=this_trial_frame_data;
+    if strcmp(FrameData.TrialEpoch(1),'Reward')
+    FrameData(1,:)=[];
     end
-    
-    if strcmp(Frame_Event_Selection_Location,'START')
-        sel_cut_time=Epoch_Start_Time(sel_frame_Epoch);
-    else
-        sel_cut_time=Epoch_End_Time(sel_frame_Epoch);
+%     FrameDescriptor={'Fixation','Fixation'};
+%     DescriptorPlace={'START','END'};
+    %%
+%     disp(tidx)
+    TimePoint=cell(length(FrameDescriptor),1);
+    for fidx=1:length(FrameDescriptor)
+    TimePoint{fidx} = cgg_getTrialTimePointFromFrameData(FrameData,FrameDescriptor{fidx},DescriptorPlace{fidx});
     end
+    TimePoint=cell2mat(TimePoint);
+    [~,NumGroups]=size(TimePoint);
+%     
+%     
+%     Epoch_Start_idx=NaN(length(frame_Epochs),1);
+%     Epoch_End_idx=NaN(length(frame_Epochs),1);
+%     Epoch_Start_Time=NaN(length(frame_Epochs),1);
+%     Epoch_End_Time=NaN(length(frame_Epochs),1);
+%     for eidx=1:length(frame_Epochs)
+%         
+%         sel_cut_frame_index=strcmp(this_trial_frame_data.TrialEpoch,...
+%             frame_Epochs{eidx});
+%         
+%         Epoch_indices=find(sel_cut_frame_index==1);
+%         
+%         if ~(isempty(Epoch_indices))
+%         Epoch_Start_idx(eidx)=Epoch_indices(1);
+%         Epoch_End_idx(eidx)=Epoch_indices(end);
+%         Epoch_Start_Time(eidx)=this_trial_frame_data.recTime(Epoch_Start_idx(eidx));
+%         Epoch_End_Time(eidx)=this_trial_frame_data.recTime(Epoch_End_idx(eidx));
+%         else
+%         Epoch_Start_idx(eidx)=NaN;
+%         Epoch_End_idx(eidx)=NaN;
+%         Epoch_Start_Time(eidx)=NaN;
+%         Epoch_End_Time(eidx)=NaN;
+%         end
+%     end
+%     
+%     if strcmp(Frame_Event_Selection_Location,'START')
+%         sel_cut_time=Epoch_Start_Time(sel_frame_Epoch);
+%     else
+%         sel_cut_time=Epoch_End_Time(sel_frame_Epoch);
+%     end
     
     %%
     
     this_time_series_absolute=this_trial_time+time_offsets;
    
-    sel_cut_start_time=sel_cut_time-Frame_Event_Window_Before;
-    sel_cut_end_time=sel_cut_time+Frame_Event_Window_After;
+%     sel_cut_start_time=sel_cut_time-Frame_Event_Window_Before;
+%     sel_cut_end_time=sel_cut_time+Frame_Event_Window_After;
+
+    if length(FrameDescriptor)<2
+    sel_cut_start_time=TimePoint-Frame_Event_Window_Before;
+    sel_cut_end_time=TimePoint+Frame_Event_Window_After;
+    else
+    sel_cut_start_time=TimePoint(1,:);
+    sel_cut_end_time=TimePoint(2,:);    
+    end
     
-    [~,sel_cut_start_index(tidx)]=min(abs(this_time_series_absolute-sel_cut_start_time));
-    [~,sel_cut_end_index(tidx)]=min(abs(this_time_series_absolute-sel_cut_end_time));
+    sel_cut_start_index_tmp=NaN(1,NumGroups);
+    sel_cut_end_index_tmp=NaN(1,NumGroups);
     
-    
+    if isnan(NumGroups)||any(any(isnan(TimePoint)))
+        sel_cut_start_index{tidx}=NaN;
+        sel_cut_end_index{tidx}=NaN;
+    else
+    for gidx=1:NumGroups
+        [~,sel_cut_start_index_tmp(gidx)]=min(abs(this_time_series_absolute-sel_cut_start_time(gidx)));
+        [~,sel_cut_end_index_tmp(gidx)]=min(abs(this_time_series_absolute-sel_cut_end_time(gidx)));
+    end
+        sel_cut_start_index{tidx}=sel_cut_start_index_tmp;
+        sel_cut_end_index{tidx}=sel_cut_end_index_tmp;
+    end
+  %%  
     send(q, tidx);
 end
 
