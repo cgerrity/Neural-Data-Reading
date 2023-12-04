@@ -1,10 +1,8 @@
-function cgg_saveTrialEpochs(Input,Probe_Area,trialVariables,Epoch,cfg)
+function SizeIssue = cgg_saveTrialEpochs(Input,Probe_Area,trialVariables,Epoch,Probe_Order,cfg)
 %CGG_SAVETRIALEPOCHS Summary of this function goes here
 %   Detailed explanation goes here
 
 %%
-
-Probe_Order={'ACC_001','ACC_002','PFC_001','PFC_002','CD_001','CD_002'};
 
 NumProbes=length(Probe_Order);
 
@@ -13,29 +11,53 @@ tmp_ProbeNumber=1:NumProbes;
 this_ProbeNumber=strcmp(Probe_Order,Probe_Area);
 this_ProbeNumber=tmp_ProbeNumber(this_ProbeNumber);
 
+IsProbeProcessed = cgg_checkProbeProcessed(Probe_Area,cfg);
+
 %%
 
 DataDir=cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch.Data.path;
 TargetDir=cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch.Target.path;
+ProcessingDir=cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch.Processing.path;
 
-Data_SaveName='%s_Data_%d.mat';
+Data_SaveName='%s_Data_%06d.mat';
 Target_SaveName='Target_Information.mat';
 ProbeProcessing_SaveName='Probe_Processing_Information.mat';
+SessionProcessing_SaveName='Session_Processing_Information.mat';
 
 Data_SaveNameFull=[DataDir filesep Data_SaveName];
 Target_SaveNameFull=[TargetDir filesep Target_SaveName];
-ProbeProcessing_SaveNameFull=[TargetDir filesep ProbeProcessing_SaveName];
+ProbeProcessing_SaveNameFull=[ProcessingDir filesep ProbeProcessing_SaveName];
+
+%%
+
+isDataCell=iscell(Input(2).Trials);
+isDataNumeric=isnumeric(Input(2).Trials);
+
+if isDataCell
+    NumData=length(Input(2).Trials);
+elseif isDataNumeric
+    [~,~,NumData]=size(Input(2).Trials);
+else
+    warning('DataType:unrecognized','Input Data is an unrecognized class');
+end
 
 TrialNumbers=Input(2).TrialNumber;
 
-[NumChannels,NumSamples,NumData]=size(Input(2).Trials);
+[~,ChosenTrial]=unique(TrialNumbers,'last');
+
+TrialChosen=false(1,length(NumData));
+TrialChosen(ChosenTrial)=true;
+TrialChosen=num2cell(TrialChosen);
+
+% [NumChannels,NumSamples,NumData]=size(Input(2).Trials);
 
 Disconnected_Channels=Input(3).Connected_Channels;
 NotSignificant_Channels=Input(3).Significant_Channels;
 
 %%
 
-Target_IDX=false(1,length(trialVariables));
+Target_IDX=NaN(1,length(NumData));
+SizeIssue=false;
 
 %% Update Information Setup
 
@@ -54,24 +76,49 @@ fprintf(Current_Message);
 
 parfor didx=1:NumData
     this_TrialNumber=TrialNumbers(didx);
+%     disp(this_TrialNumber);
+    if isDataCell
+    this_Data=Input(2).Trials{didx};
+    else
     this_Data=Input(2).Trials(:,:,didx);
+    end
     this_Data_SaveName=sprintf(Data_SaveNameFull,Epoch,didx);
     [this_NumChannels,this_NumSamples]=size(this_Data);
     
     this_Data(Disconnected_Channels,:)=NaN;
     this_Data(NotSignificant_Channels,:)=NaN;
     
-    this_trialVariablesNumber=[trialVariables.TrialNumber]==this_TrialNumber;
+    this_trialVariablesNumber=find([trialVariables.TrialNumber]==this_TrialNumber);
     
     if ~(exist(this_Data_SaveName,'file'))
         m = matfile(this_Data_SaveName,'Writable',true);
         m.Data=NaN(this_NumChannels,this_NumSamples,NumProbes);
+        
+    elseif ~(exist(ProbeProcessing_SaveNameFull,'file'))
+        m = matfile(this_Data_SaveName,'Writable',true);
+        m.Data=NaN(this_NumChannels,this_NumSamples,NumProbes);
+        
     else
         m = matfile(this_Data_SaveName,'Writable',true);
+        [this_DataNumChannels,this_DataNumSamples,this_DataNumProbes]=size(m.Data);
+        if (~isequal(this_DataNumChannels,this_NumChannels))||...
+                (~isequal(this_DataNumSamples,this_NumSamples))||...
+                (~isequal(this_DataNumProbes,NumProbes))
+               warning('DataNumbers:incorrectsize',...
+       ['Size of the saved epoch (%d %d %d) does not match the size of '...
+       'the epoch for this probe area (%d %d %d) for area: %s.' ...
+       'Rewriting saved epoch to all NaN and setting probe processing '...
+       'to false'],this_DataNumChannels,this_DataNumSamples,...
+       this_DataNumProbes,this_NumChannels,this_NumSamples,NumProbes,...
+       Probe_Area);
+   
+       m.Data=NaN(this_NumChannels,this_NumSamples,NumProbes);
+       SizeIssue=true;
+       end
     end
     
     m.Data(:,:,this_ProbeNumber)=this_Data;
-    Target_IDX=Target_IDX|this_trialVariablesNumber;
+    Target_IDX(didx)=this_trialVariablesNumber;
     
     send(q, didx);
 end
@@ -79,6 +126,7 @@ end
 %% Save the Target Information for Decoding
 
 Target=trialVariables(Target_IDX);
+[Target.TrialChosen]=TrialChosen{:};
 
     if ~(exist(Target_SaveNameFull,'file'))
         m_Target = matfile(Target_SaveNameFull,'Writable',true);
@@ -104,6 +152,14 @@ Target=trialVariables(Target_IDX);
     
     m_Probe = matfile(ProbeProcessing_SaveNameFull,'Writable',true);
     m_Probe.ProbeProcessing=ProbeProcessing;
+    
+    if SizeIssue
+        for pidx=1:NumProbes
+        ProbeProcessing.(Probe_Order{pidx})=false;
+        end
+    m_Probe = matfile(ProbeProcessing_SaveNameFull,'Writable',true);
+    m_Probe.ProbeProcessing=ProbeProcessing;
+    end
     
     
 function nUpdateWaitbar(~)

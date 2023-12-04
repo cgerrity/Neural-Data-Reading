@@ -4,7 +4,9 @@ function cgg_procFullTrialPreparation_v3(varargin)
 
 %% Parameters
 
-cfg_param = PARAMETERS_cgg_procFullTrialPreparation_v2;
+Epoch = CheckVararginPairs('Epoch', 'Decision', varargin{:});
+
+cfg_param = PARAMETERS_cgg_procFullTrialPreparation_v2(Epoch);
 
 TrialDuration_Minimum=cfg_param.TrialDuration_Minimum;
 % Count_Sel_Trial=cfg_param.Count_Sel_Trial;
@@ -32,6 +34,8 @@ Minimum_Length=cfg_param.Minimum_Length;
 Significance_Value=cfg_param.Significance_Value;
 Regression_SP=cfg_param.Regression_SP;
 
+Probe_Order=cfg_param.Probe_Order;
+
 
 %% Get input/output folders
 
@@ -54,11 +58,16 @@ end
 
 inputfolder=cfg.inputfolder;
 outdatadir=cfg.outdatadir;
+[cfg_epoch] = cgg_generateEpochFolders(Epoch,'inputfolder',inputfolder,'outdatadir',outdatadir);
 
 Session_Start_Message=sprintf('*** Starting Processing Session: %s',cfg.SessionName);
 Session_End_Message=sprintf('*** Finished Processing Session: %s',cfg.SessionName);
 disp(Session_Start_Message);
 
+%%
+IsSessionProcessed=cgg_checkEpochSessionProcessed(cfg_epoch);
+if ~IsSessionProcessed
+SessionIssue=false;
 %%
 if want_all_Probes
 Area_Names = cgg_getProbeAreas(cfg.outdatadir_SessionName);
@@ -95,7 +104,7 @@ this_probe_area=Area_Names{aidx};
 [cfg_regression] = cgg_generateRegressionFolders(this_probe_area,'inputfolder',inputfolder,'outdatadir',outdatadir);
 cfg_directories.outdatadir.Experiment.Session.Regression=cfg_regression.outdatadir.Experiment.Session.Regression;
 
-[cfg_epoch] = cgg_generateEpochFolders(Epoch,'inputfolder',inputfolder,'outdatadir',outdatadir);
+% [cfg_epoch] = cgg_generateEpochFolders(Epoch,'inputfolder',inputfolder,'outdatadir',outdatadir);
 cfg_directories.outdatadir.Experiment.Session.Epoched_Data.Epoch=cfg_epoch.outdatadir.Experiment.Session.Epoched_Data.Epoch;
 
 %% Check if this probe has already been processed
@@ -127,7 +136,7 @@ fullfilename = cgg_generateActivityFullFileName('inputfolder',inputfolder,'outda
 
 %% Detrend the data according to the baseline period
 
-[Detrend_Data,Detrend_Baseline] = cgg_procDetrendFromBaseline(Segmented_Data,Segmented_Baseline,TrialNumbers_Baseline);
+[Detrend_Data,Detrend_Baseline] = cgg_procDetrendFromBaseline(Segmented_Data,Segmented_Baseline,TrialNumbers_Data,TrialNumbers_Baseline);
 
 %% Get the trial variables
 
@@ -143,13 +152,14 @@ TrialVariableTrialNumber=[trialVariables(:).TrialNumber];
 [MatchBaseline,~,~,MatchTrialNumber_Baseline] = cgg_getSeparateTrialsByCriteria_v2(TrialCondition,MatchValue,TrialVariableTrialNumber,Detrend_Baseline,TrialNumbers_Baseline);
 
 FullBaseline=MatchBaseline;
+MatchTrialNumber_FullBaseline=MatchTrialNumber_Baseline;
 
 %% Normalize the baseline and data according to the baseline period
 
 [Mean_Norm_Data,Mean_Norm_Baseline,...
     STD_ERROR_Norm_Data,STD_ERROR_Norm_Baseline,...
     Norm_Data,Norm_Baseline] = ...
-    cgg_procTrialNormalization_v2(MatchData,MatchBaseline,FullBaseline);
+    cgg_procTrialNormalization_v2(MatchData,MatchBaseline,FullBaseline,MatchTrialNumber_Data,MatchTrialNumber_Baseline,MatchTrialNumber_FullBaseline);
 
 %% Regression
 
@@ -219,7 +229,11 @@ Output(2).Significant_Channels=Significant_Channels;
 Output(3).Significant_Channels=NotSignificant_Channels;
 
 %% 
-cgg_saveTrialEpochs(Output,this_probe_area,trialVariables,Epoch,cfg_directories);
+SizeIssue = cgg_saveTrialEpochs(Output,this_probe_area,trialVariables,Epoch,Probe_Order,cfg_directories);
+
+if SizeIssue
+    SessionIssue=true;
+end
 
 % if want_all_Probes
 %     Output{aidx}=this_Output;
@@ -233,6 +247,11 @@ disp(End_Message);
 end % End If for whether Probe has been processed
 
 end % End Iteration through all the Probes
+    
+cgg_checkEpochSessionProcessed(cfg_epoch,'SessionFinished',~SessionIssue);
+
+end % End If for whether Session has been processed
+
 disp(Session_End_Message);
 end
 

@@ -25,10 +25,17 @@ outdatafile_TrialInformation=...
 m_rectrialdefs = load(outdatafile_TrialInformation);
 rectrialdefs=m_rectrialdefs.rectrialdefs;
 
+NumSectionsPerTrial=cellfun(@(x) sum(~isnan(x)),Start_IDX);
+NumSections=sum(NumSectionsPerTrial);
+
 [NumTrials,~]=size(rectrialdefs);
 
-AllOutData_tmp=cell(NumTrials);
-TrialNumbers=NaN(NumTrials,1);
+AllOutData_tmp=cell(NumTrials,1);
+TrialNumbers_tmp=NaN(NumTrials,1);
+NumChannels_tmp=NaN(NumTrials,1);
+NumSamples_tmp=NaN(NumTrials,1);
+% AllOutData_tmp=cell(NumSections);
+% TrialNumbers=NaN(NumSections,1);
 
 %% Update Information Setup
 
@@ -45,36 +52,80 @@ fprintf(Current_Message);
 %%
 parfor tidx=1:NumTrials
     this_trial_index=rectrialdefs(tidx,8);
-    TrialNumbers(tidx)=this_trial_index;
+    TrialNumbers_tmp(tidx)=this_trial_index;
+    this_NumSections=NumSectionsPerTrial(tidx);
     
+    if iscell(Start_IDX)
+    this_Start_IDX=Start_IDX{tidx};
+    else   
     this_Start_IDX=Start_IDX(tidx);
+    end
+    if iscell(End_IDX)
+    this_End_IDX=End_IDX{tidx};
+    else   
     this_End_IDX=End_IDX(tidx);
-%     disp(tidx)
+    end
+%%     disp(tidx)
+
+    this_AllOutData_tmp=cell(this_NumSections,1);
+    this_Data_Unsmoothed=cell(this_NumSections,1);
     
-[AllOutData_tmp{tidx},Data_Unsmoothed{tidx}] = cgg_getSingleTrialDataFromTimeSegments_v2(...
-    this_Start_IDX,this_End_IDX,fullfilename,this_trial_index,...
+    this_NumChannels_tmp=0;
+    this_NumSamples_tmp=0;
+
+    for sidx=1:this_NumSections
+        [this_AllOutData_tmp{sidx},this_Data_Unsmoothed{sidx}] = cgg_getSingleTrialDataFromTimeSegments_v2(...
+    this_Start_IDX(sidx),this_End_IDX(sidx),fullfilename,this_trial_index,...
     Smooth_Factor);
 
-[NumChannels_tmp(tidx),NumSamples_tmp(tidx)]=size(AllOutData_tmp{tidx});
+    [this_NumChannels,this_NumSamples]=size(this_AllOutData_tmp{sidx});
+    this_NumChannels_tmp=max([this_NumChannels_tmp,this_NumChannels]);
+    this_NumSamples_tmp=max([this_NumSamples_tmp,this_NumSamples]);
+    end
+    
+% [AllOutData_tmp{tidx},Data_Unsmoothed{tidx}] = cgg_getSingleTrialDataFromTimeSegments_v2(...
+%     this_Start_IDX,this_End_IDX,fullfilename,this_trial_index,...
+%     Smooth_Factor);
+AllOutData_tmp{tidx}=this_AllOutData_tmp;
+Data_Unsmoothed{tidx}=this_Data_Unsmoothed;
 
+% [NumChannels_tmp(tidx),NumSamples_tmp(tidx)]=size(AllOutData_tmp{tidx});
+NumChannels_tmp(tidx)=this_NumChannels_tmp;
+NumSamples_tmp(tidx)=this_NumSamples_tmp;
+%%
 send(q, tidx);
 end
-
+%%
 NumChannels=max(NumChannels_tmp);
 NumSamples=max(NumSamples_tmp);
 
-AllOutData=NaN(NumChannels,NumSamples,NumTrials);
-OutData_Unsmoothed=NaN(1,NumSamples,NumTrials);
-
+% AllOutData=NaN(NumChannels,NumSamples,NumTrials);
+% OutData_Unsmoothed=NaN(1,NumSamples,NumTrials);
+AllOutData=cell(NumSections,1);
+OutData_Unsmoothed=cell(NumSections,1);
+TrialNumbers=NaN(NumSections,1);
+SectionCounter=1;
+%%
 for tidx=1:NumTrials
-%     disp(tidx)
     
-    [this_NumChannels,this_NumSamples]=size(AllOutData_tmp{tidx});
-
-    AllOutData(1:this_NumChannels,1:this_NumSamples,tidx)=...
-        AllOutData_tmp{tidx};
-    OutData_Unsmoothed(1,1:this_NumSamples,tidx)=...
-        Data_Unsmoothed{tidx};
+    this_AllOutData=AllOutData_tmp{tidx};
+    this_Data_Unsmoothed=Data_Unsmoothed{tidx};
+    this_NumSections=NumSectionsPerTrial(tidx);
+    this_TrialNumber=TrialNumbers_tmp(tidx);
+    
+    for sidx=1:this_NumSections
+        AllOutData{SectionCounter}=this_AllOutData{sidx};
+        OutData_Unsmoothed{SectionCounter}=this_Data_Unsmoothed{sidx};
+        TrialNumbers(SectionCounter)=this_TrialNumber;
+        SectionCounter=SectionCounter+1;
+    end
+    %%
+%     [this_NumChannels,this_NumSamples]=size(AllOutData_tmp{tidx});
+% 
+%     AllOutData(1:this_NumChannels,1:this_NumSamples,tidx)=...
+%         AllOutData_tmp{tidx};
+%     OutData_Unsmoothed(1,1:this_NumSamples,tidx)=...
+%         Data_Unsmoothed{tidx};
  
 end
 

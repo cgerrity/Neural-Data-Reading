@@ -14,6 +14,9 @@ if want_rerun || ~(exist(this_area_regression_file_name,'file'))
 Connected_Channels = CheckVararginPairs('Connected_Channels', NaN, varargin{:});
 
 %%
+if iscell(InData)
+    InData=cat(3,InData{:});
+end
 
 [NumChannels,~]=size(InData);
 
