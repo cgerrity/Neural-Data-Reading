@@ -33,6 +33,7 @@ EpochDir=[SessionFolder filesep 'Epoched_Data' filesep Epoch];
 
 DataDir=[EpochDir filesep 'Data'];
 TargetDir=[EpochDir filesep 'Target'];
+ProcessingDir=[EpochDir filesep 'Processing'];
 
 [~,SessionName,~]=fileparts(SessionFolder);
 
@@ -45,11 +46,11 @@ if ~IsSessionProcessed
 
 DataAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Data.path;
 TargetAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Target.path;
-ProcessingDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Processing.path;
+ProcessingAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Processing.path;
 
-TargetAggregate_PathNameExt=[TargetAggregateDir filesep 'Target_%d.mat'];
-TargetInformation_PathNameExt=[ProcessingDir filesep 'Target_Information.mat'];
-SessionProcessing_PathNameExt=[ProcessingDir filesep 'Session_Processing_Information.mat'];
+TargetAggregate_PathNameExt=[TargetAggregateDir filesep 'Target_%07d.mat'];
+TargetInformation_PathNameExt=[ProcessingAggregateDir filesep 'Target_Information.mat'];
+SessionProcessing_PathNameExt=[ProcessingAggregateDir filesep 'Session_Processing_Information.mat'];
 
 %%
 
@@ -90,7 +91,7 @@ NumTargetAggregate=length(TargetAggregate_Folder);
 Target=load([TargetDir filesep 'Target_Information.mat']);
 Target=Target.Target;
 
-ProbeProcessing=load([TargetDir filesep 'Probe_Processing_Information.mat']);
+ProbeProcessing=load([ProcessingDir filesep 'Probe_Processing_Information.mat']);
 ProbeProcessing=ProbeProcessing.ProbeProcessing;
 
 %%
@@ -162,9 +163,9 @@ parfor didx=1:NumData
     [~,this_Data_Name,this_Data_Ext]=fileparts(this_Data_PathNameExt);
     
     this_Data_Number=...
-        str2double(regexp(this_Data_Name, '\d+(\.\d+)?', 'match'));
+        str2double(extractAfter(this_Data_Name,'Data_'));
     this_Data_Name_NoNumber=...
-        regexprep(this_Data_Name, '\d+(\.\d+)?', '');
+        extractBefore(this_Data_Name,extractAfter(this_Data_Name,'Data_'));
     this_DataAggregate_Number=this_Data_Number+NumDataAggregate;
     
     this_Target=Target(this_Data_Number);
@@ -176,7 +177,7 @@ parfor didx=1:NumData
     
     if existData
         this_DataAggregate_NameExt=sprintf(...
-            [this_Data_Name_NoNumber '%d' this_Data_Ext],...
+            [this_Data_Name_NoNumber '%07d' this_Data_Ext],...
             this_DataAggregate_Number);
         this_DataAggregate_PathNameExt=[DataAggregateDir filesep ...
             this_DataAggregate_NameExt];

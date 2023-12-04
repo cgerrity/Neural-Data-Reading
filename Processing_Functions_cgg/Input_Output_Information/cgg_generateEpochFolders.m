@@ -61,6 +61,10 @@ cfg_tmp=cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch;
 [cfg_tmp,~] = cgg_generateFolderAndPath('Target','Target',cfg_tmp);
 cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch=cfg_tmp;
 
+% Make the Processing output folder names.
+cfg_tmp=cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch;
+[cfg_tmp,~] = cgg_generateFolderAndPath('Processing','Processing',cfg_tmp);
+cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch=cfg_tmp;
 
 end
 
