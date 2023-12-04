@@ -4,6 +4,8 @@ clc; clear; close all;
 
 [cfg] = DATA_cggAllSessionInformationConfiguration;
 
+Epoch='Epoch_2';
+
 %%
 
 for sidx=1:length(cfg)
@@ -12,6 +14,6 @@ for sidx=1:length(cfg)
     outdatadir=cfg(sidx).outdatadir;
 
 cgg_procFullTrialPreparation_v3(...
-    'inputfolder',cfg(sidx).inputfolder,'outdatadir',cfg(sidx).outdatadir);
+    'inputfolder',cfg(sidx).inputfolder,'outdatadir',cfg(sidx).outdatadir,'Epoch',Epoch);
 
 end
