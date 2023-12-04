@@ -61,6 +61,11 @@ cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
 [cfg_tmp,~] = cgg_generateFolderAndPath('Processing','Processing',cfg_tmp);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
+% Make the Decoding folder names.
+cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
+[cfg_tmp,~] = cgg_generateFolderAndPath('Decoding','Decoding',cfg_tmp);
+cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
+
 
 end % End for whether there exists any input for the Epoch
 end % End for whether this is being called within a function
