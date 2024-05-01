@@ -1,4 +1,4 @@
-function [Data,Probe_Order_Random] = cgg_loadDataArray(FileName,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector)
+function [Data,Probe_Order_Random] = cgg_loadDataArray(FileName,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,varargin)
 %CGG_LOADDATAARRAY Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -12,6 +12,16 @@ disp(Name);
 end
 
 [NumChannels,NumSamples,NumProbes]=size(Data);
+
+isfunction=exist('varargin','var');
+
+if isfunction
+ARModelOrder = CheckVararginPairs('ARModelOrder', '', varargin{:});
+else
+if ~(exist('ARModelOrder','var'))
+ARModelOrder='';
+end
+end
 
 %% Data Width
 if isequal(DataWidth,'All')
@@ -101,13 +111,15 @@ end
 %% What Data to get
 this_Data=NaN(NumChannels,this_DataWidth,NumProbes,NumWindows);
 if this_DataWidth<NumSamples
-parfor pidx=1:NumWindows
-this_StartingIDX=StartPoint_IDX(pidx);
-this_Order=Probe_Order_Random(:,pidx);
-this_Data(:,:,:,pidx)=Data(:,this_StartingIDX:this_StartingIDX+this_DataWidth-1,this_Order);
+parfor widx=1:NumWindows
+this_StartingIDX=StartPoint_IDX(widx);
+this_Order=Probe_Order_Random(:,widx);
+this_Data(:,:,:,widx)=Data(:,this_StartingIDX:this_StartingIDX+this_DataWidth-1,this_Order);
 end
 else
 this_Data=NaN(NumChannels,this_DataWidth,NumProbes);
+this_Order=Probe_Order_Random(:);
+this_Data(:,:,:)=Data(:,:,this_Order);
 end
 
 %% Remove Channels
@@ -119,14 +131,39 @@ if ~isempty(ChannelRemoval)
     end
 end
 
+%% AR Model
+
+if ~isempty(ARModelOrder)
+this_Data_tmp=cell(NumProbes*NumWindows,1);
+[pidx_Grid,widx_Grid]=meshgrid(1:NumProbes,1:NumWindows);
+parfor pwidx=1:numel(pidx_Grid)
+    this_pidx=pidx_Grid(pwidx);
+    this_widx=widx_Grid(pwidx);
+
+    warning('off','all');
+    this_Data_tmp{pwidx} = arcov(this_Data(:,:,this_pidx,this_widx)',ARModelOrder);
+    warning('on','all');
+end
+this_DataAR_tmp=NaN(NumChannels,ARModelOrder,NumProbes,NumWindows);
+
+for pwidx=1:numel(pidx_Grid)
+    this_pidx=pidx_Grid(pwidx);
+    this_widx=widx_Grid(pwidx);
+this_DataAR_tmp(:,:,this_pidx,this_widx)=this_Data_tmp{pwidx}(:,2:end);
+end
+this_Data=this_DataAR_tmp;
+end
+
 %%
 
 if Want1DVector
     this_Data= permute(this_Data,[4 1 2 3]);
     this_Data= reshape(this_Data,NumWindows,[]);
-    Data=this_Data;
 end
 
+%%
+
+Data=this_Data;
 %%
 
 if WantDisp

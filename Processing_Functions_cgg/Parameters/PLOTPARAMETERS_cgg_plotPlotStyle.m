@@ -12,10 +12,16 @@ Main_SubSubTitle_Size=8;
 Title_Size=24;
 
 Label_Size=14;
-Legend_Size = 14;
+Legend_Size = 6;
+
+Indicator_Size = 8;
+
+Text_Size = 16;
 
 Tick_Size_Channels=8;
 Tick_Size_Time=0.5;
+
+ErrorCapSize=50;
 
 %%
 
@@ -41,26 +47,38 @@ Color_PFC = '#2E3192';
 %% Error Plots
 
 Error_FaceAlpha = 0.05;
-Error_EdgeAlpha = 0.75;
+Error_EdgeAlpha = 0.25;
 
 %% Decision Epoch
 
 xline_record=0;
 xline_fixation=-0.7;
 xline_choice=-0.4;
+xline_audio=0.55;
+xline_move=0.75;
+xline_complete=1.45;
 xline_width=4;
 
-Label_Record = 'Decision Recorded';
-Label_Fixation = 'Fixation Start';
-Label_Choice = 'Likely Committed';
+Label_Record = {'Decision', 'Recorded'};
+Label_Fixation = {'Fixation', 'Start'};
+Label_Choice = {'Likely', 'Committed'};
+Label_Audio = {'Audio', 'Feedback'};
+Label_Move = {'Tokens', 'Move'};
+Label_Complete = {'Token Bar', 'Completion'};
 
 LineSpec_Record = '-';
 LineSpec_Fixation = '-';
 LineSpec_Choice = '-';
+LineSpec_Audio = '-';
+LineSpec_Move = '-';
+LineSpec_Complete = '-';
 
 DisplayName_Record = 'Decision Recorded';
 DisplayName_Fixation = 'Fixation Start';
 DisplayName_Choice = 'Likely Committed';
+DisplayName_Audio = 'Audio Feedback';
+DisplayName_Move = 'Tokens Move';
+DisplayName_Complete = 'Token Bar Completion';
 
 %% SubPlot Sizing
 
@@ -73,6 +91,11 @@ SubPlot_Separation_Fraction=0.05;
 RangeFactorUpper = 0.3;
 RangeFactorLower = 0.3;
 
+RangeFactorHeatUpper = 0.3;
+RangeFactorHeatLower = 0.3;
+
+RangeAccuracyUpper = 0.5;
+RangeAccuracyLower = 0.4;
 
 %%
 

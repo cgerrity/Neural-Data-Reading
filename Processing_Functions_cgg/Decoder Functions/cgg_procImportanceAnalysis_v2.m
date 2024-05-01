@@ -14,6 +14,14 @@ NumIter=4;
 end
 end
 
+if isfunction
+DimensionNumber = CheckVararginPairs('DimensionNumber', 1, varargin{:});
+else
+if ~(exist('DimensionNumber','var'))
+DimensionNumber=1;
+end
+end
+
 % Window_Accuracy = cell(NumIter,1);
 % Accuracy = NaN(NumIter,1);
 CM_Table = cell(NumIter,1);
@@ -22,7 +30,7 @@ CM_Table = cell(NumIter,1);
 
 for idx=1:NumIter
 
-[~,~,~,~,~,CM_Table{idx}] = cgg_procConfusionMatrixFromDatastore(InDatastore_tmp,Mdl,ClassNames);
+[~,~,~,~,~,CM_Table{idx}] = cgg_procConfusionMatrixFromDatastore(InDatastore_tmp,Mdl,ClassNames,'DimensionNumber',DimensionNumber);
 
 end
 
@@ -157,7 +165,7 @@ this_Datastore.UnderlyingDatastores{1}.ReadFcn=Data_Fun;
 this_IA_CM_Table = cell(NumIter,1);
 
 for idx=1:NumIter
-[~,~,~,~,~,this_IA_CM_Table{idx}] = cgg_procConfusionMatrixFromDatastore(InDatastore_tmp,Mdl,ClassNames);
+[~,~,~,~,~,this_IA_CM_Table{idx}] = cgg_procConfusionMatrixFromDatastore(this_Datastore,Mdl,ClassNames,'DimensionNumber',DimensionNumber);
 end
 
 [this_IA_CM_Table] = cgg_gatherConfusionMatrixTablesOverIterations(this_IA_CM_Table);

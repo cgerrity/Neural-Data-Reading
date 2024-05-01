@@ -35,7 +35,8 @@ TargetDir=outdatadir;
 cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
     'Epoch',Epoch,'Decoder',Decoder{1},'Fold',1);
 
-Partition_Dir = cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Decoding.path;
+%%
+Partition_Dir = cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Partition.path;
 
 if wantSubset
 Partition_NameExt = 'KFoldPartition_Subset.mat';

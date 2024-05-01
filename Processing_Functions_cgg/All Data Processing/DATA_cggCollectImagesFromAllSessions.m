@@ -1,7 +1,7 @@
 
 clc; clear; close all;
 
-TargetDir='/Volumes/gerritcg''s home/Data_Neural_gerritcg';
+TargetDir='/Volumes/gerritcg''s home/Data_Neural';
 
 Activity='LFP';
 ActivitySubFolders={'Correlation'};

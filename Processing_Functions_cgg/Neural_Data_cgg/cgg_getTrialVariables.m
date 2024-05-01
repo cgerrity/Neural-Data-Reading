@@ -82,6 +82,8 @@ CorrectTrial=trialData.PositiveFbObtained;
 TrialsFromLP=trialData.TrialsFromLP;
 TrialTime=trialData.TrialTime;
 Block=trialData.Block;
+TargetFeature=TrialDATA.TargetFeature;
+ReactionTime=TrialDATA.RT;
 
 IsTrialCorrect=strcmp(CorrectTrial,{'True'});
 
@@ -96,6 +98,8 @@ for tidx=1:length(TrialNumber)
     trialVariables(tidx).TrialsFromLP=TrialsFromLP(tidx);
     trialVariables(tidx).TrialTime=TrialTime(tidx);
     trialVariables(tidx).Block=Block(tidx);
+    trialVariables(tidx).TargetFeature=TargetFeature(tidx);
+    trialVariables(tidx).ReactionTime=ReactionTime(tidx);
     
     this_Perfromance=NaN;
 
@@ -132,18 +136,29 @@ for tidx=1:length(TrialNumber)
     trialVariables(tidx).Loss=this_Token_Loss;
     
     Previous_Trial=NaN;
+%     this_Previous_SelectedObjectDimVals=NaN;
+%     hasSharedFeature=NaN;
     
     if tidx>1
         Previous_Trial=CorrectTrial(tidx-1);
+%         this_Previous_SelectedObjectDimVals=trialVariables(tidx-1).SelectedObjectDimVals;
+%         PriorNonZeroFeature=this_Previous_SelectedObjectDimVals~=0;
+%         hasSharedFeature=any(this_Previous_SelectedObjectDimVals(PriorNonZeroFeature)==this_SelectedObjectDimVals(PriorNonZeroFeature));
     end
     
     trialVariables(tidx).PreviousTrialCorrect=Previous_Trial;
+%     trialVariables(tidx).PreviousSelectedObjectDimVals=this_Previous_SelectedObjectDimVals;
+%     trialVariables(tidx).SharesFeature=hasSharedFeature;
 end
 
-m_TrialVariables = matfile(TrialVariables_file_name,'Writable',true);
-m_TrialVariables.trialVariables=trialVariables;
+% m_TrialVariables = matfile(TrialVariables_file_name,'Writable',true);
+% m_TrialVariables.trialVariables=trialVariables;
+
+SaveVariables={trialVariables};
+SaveVariablesName={'trialVariables'};
+cgg_saveVariableUsingMatfile(SaveVariables,SaveVariablesName,TrialVariables_file_name);
 else
-m_TrialVariables = matfile(TrialVariables_file_name,'Writable',true);
+m_TrialVariables = matfile(TrialVariables_file_name,'Writable',false);
 trialVariables=m_TrialVariables.trialVariables;
 end
 

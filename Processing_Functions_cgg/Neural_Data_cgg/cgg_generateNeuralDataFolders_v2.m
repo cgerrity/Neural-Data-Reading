@@ -56,6 +56,11 @@ cfg_tmp=cfg.outdatadir.Experiment.Session;
 [cfg_tmp,~] = cgg_generateFolderAndPath('Activity','Activity',cfg_tmp);
 cfg.outdatadir.Experiment.Session=cfg_tmp;
 
+% Make the Parameters folder names.
+cfg_tmp=cfg.outdatadir.Experiment.Session;
+[cfg_tmp,~] = cgg_generateFolderAndPath('Parameters','Parameters',cfg_tmp);
+cfg.outdatadir.Experiment.Session=cfg_tmp;
+
 % Make the Area output folder names.
 cfg_tmp=cfg.outdatadir.Experiment.Session.Activity;
 [cfg_tmp,~] = cgg_generateFolderAndPath(probe_area,'Area',cfg_tmp);

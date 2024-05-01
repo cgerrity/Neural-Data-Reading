@@ -5,7 +5,7 @@ end
 
 %% Chosen Parameters
 
-VariableName='Session Name';
+VariableName='Shared Feature Coding';
 wantSubset = false;
 % wantBar = false;
 % wantDifference = true;
@@ -31,6 +31,19 @@ cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
     'Epoch',Epoch,'DistributionType',DistributionType);
 
 %%
+
+% if strcmp(VariableName,'Shared Feature Coding')
+% FullDataTable.Name=string(FullDataTable.Name);
+% FullDataTable.Name(FullDataTable.Name=="1")='EC_Shared';
+% FullDataTable.Name(FullDataTable.Name=="2")='EC_NonShared';
+% FullDataTable.Name(FullDataTable.Name=="3")='EE_Shared';
+% FullDataTable.Name(FullDataTable.Name=="4")='EE_NonShared';
+% FullDataTable.Name(FullDataTable.Name=="5")='CC_Shared';
+% FullDataTable.Name(FullDataTable.Name=="6")='CC_NonShared';
+% FullDataTable.Name(FullDataTable.Name=="7")='CE_Shared';
+% FullDataTable.Name(FullDataTable.Name=="8")='CE_NonShared';
+% FullDataTable.Name(FullDataTable.Name=="9")='Start';
+% end
 
 InVariableName=VariableName;
 InEpoch=Epoch;

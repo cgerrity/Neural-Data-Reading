@@ -9,6 +9,7 @@ cfg_param = PARAMETERS_cgg_procSimpleDecoders_v2;
 %%
 
 SubsetAmount=cfg_param.SubsetAmount;
+SessionSubset=cfg_param.SessionSubset;
 NumFolds=cfg_param.NumFolds;
 % Dimension = cfg_param.Dimension;
 wantSubset = cfg_param.wantSubset;
@@ -18,15 +19,17 @@ NumKPartitions = cfg_param.NumKPartitions;
 %%
 
 Epoch=cfg_param.Epoch;
-Decoder=cfg_param.Decoder;
+% Decoder=cfg_param.Decoder;
 
 outdatadir=cfg_Sessions(1).outdatadir;
 TargetDir=outdatadir;
 
+% cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+%     'Epoch',Epoch,'Decoder',Decoder{1},'Fold',1);
 cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
-    'Epoch',Epoch,'Decoder',Decoder{1},'Fold',1);
+    'Epoch',Epoch);
 
-Partition_Dir = cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Decoding.path;
+Partition_Dir = cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Partition.path;
 
 if (wantSubset) && (wantStratifiedPartition)
 Partition_NameExt = 'KFoldPartition_Subset.mat';
@@ -60,7 +63,15 @@ Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun);
 % end
 
 if wantSubset
-Target_ds=subset(Target_ds,1:SubsetAmount);
+TargetSession_Fun=@(x) cgg_loadTargetArray(x,'SessionName',true);
+SessionNameDataStore = fileDatastore(TargetAggregateDir,"ReadFcn",TargetSession_Fun);
+
+SessionsList=gather(tall(SessionNameDataStore));
+IndicesPartition=strcmp(SessionsList,SessionSubset);
+
+Target_ds=subset(Target_ds,IndicesPartition);
+else
+IndicesPartition=true(numpartitions(Target_ds),1);
 end
 
 %%
@@ -94,8 +105,9 @@ for pidx=2:NumKPartitions
 KFoldPartition(pidx) = cvpartition(PartitionGroups,"KFold",NumFolds);
 end
 
-m_Partition = matfile(Partition_PathNameExt,'Writable',true);
-m_Partition.KFoldPartition=KFoldPartition;
+Partition_SaveVariables={KFoldPartition,IndicesPartition};
+Partition_SaveVariablesName={'KFoldPartition','Indices'};
+cgg_saveVariableUsingMatfile(Partition_SaveVariables,Partition_SaveVariablesName,Partition_PathNameExt);
 
 end
 

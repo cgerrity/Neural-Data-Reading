@@ -1,4 +1,4 @@
-%% DATA_cggAllSessionPreProcessing
+%% DATA_cggAllSessionPreProcessing_v2
 
 clc; clear; close all;
 

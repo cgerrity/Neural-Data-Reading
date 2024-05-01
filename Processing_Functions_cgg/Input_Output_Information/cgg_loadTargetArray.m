@@ -82,10 +82,42 @@ end
 end
 
 if isfunction
+TargetFeature = CheckVararginPairs('TargetFeature', false, varargin{:});
+else
+if ~(exist('TargetFeature','var'))
+TargetFeature=false;
+end
+end
+
+if isfunction
+ReactionTime = CheckVararginPairs('ReactionTime', false, varargin{:});
+else
+if ~(exist('ReactionTime','var'))
+ReactionTime=false;
+end
+end
+
+if isfunction
 TrialChosen = CheckVararginPairs('TrialChosen', '', varargin{:});
 else
 if ~(exist('TrialChosen','var'))
 TrialChosen=[];
+end
+end
+
+if isfunction
+SharedFeatureCoding = CheckVararginPairs('SharedFeatureCoding', false, varargin{:});
+else
+if ~(exist('SharedFeatureCoding','var'))
+SharedFeatureCoding=false;
+end
+end
+
+if isfunction
+SharedFeature = CheckVararginPairs('SharedFeature', false, varargin{:});
+else
+if ~(exist('SharedFeature','var'))
+SharedFeature=false;
 end
 end
 
@@ -131,8 +163,16 @@ elseif Learned
 TargetType='Learned';
 elseif ProbeProcessing
 TargetType='ProbeProcessing';
+elseif TargetFeature
+TargetType='TargetFeature';
+elseif ReactionTime
+TargetType='ReactionTime';
 elseif ~isempty(TrialChosen)
 TargetType='TrialChosen';
+elseif SharedFeatureCoding
+TargetType='SharedFeatureCoding';
+elseif SharedFeature
+TargetType='SharedFeature';
 elseif ~isempty(SessionName)
 TargetType='SessionName';
 elseif DataNumber
@@ -152,7 +192,8 @@ end
 % Selecting Correct vs Error
 
 if CorrectTrial||AllTargets
-this_CorrectTrial=strcmp(Target.CorrectTrial{1},'True');
+% this_CorrectTrial=strcmp(Target.CorrectTrial{1},'True');
+this_CorrectTrial=strcmp(Target.CorrectTrial,'True');
 end
 
 % Selecting Correct vs Error on Previous Trial
@@ -196,6 +237,18 @@ if ProbeProcessing||AllTargets
 this_ProbeProcessing=Target.ProbeProcessing;
 end
 
+% Selecting Target Feature Dimension
+
+if TargetFeature||AllTargets
+this_TargetFeature=Target.TargetFeature;
+end
+
+% Selecting Reaction Time
+
+if ReactionTime||AllTargets
+this_ReactionTime=Target.ReactionTime;
+end
+
 % Selecting Is Trial Chosen
 
 if ~isempty(TrialChosen)||AllTargets
@@ -204,6 +257,18 @@ this_TrialChosen = Target.TrialChosen;
 else
 this_TrialChosen = true;
 end
+end
+
+% Selecting Shared Feature Coding
+
+if SharedFeatureCoding||AllTargets
+this_SharedFeatureCoding=Target.SharedFeatureCoding;
+end
+
+% Selecting Shared Feature Coding
+
+if SharedFeature||AllTargets
+this_SharedFeature=Target.SharedFeature;
 end
 
 % Selecting Session Name
@@ -238,15 +303,23 @@ switch TargetType
         Target = this_Learned;
     case 'ProbeProcessing'
         Target = this_ProbeProcessing;
+    case 'TargetFeature'
+        Target = this_TargetFeature;
+    case 'ReactionTime'
+        Target = this_ReactionTime;
     case 'TrialChosen'
         Target = this_TrialChosen;
+    case 'SharedFeatureCoding'
+        Target = this_SharedFeatureCoding;
+    case 'SharedFeature'
+        Target = this_SharedFeature;
     case 'SessionName'
         Target = this_SessionName;
     case 'DataNumber'
         Target = this_DataNumber;
     case 'AllTargets'
         Target=cell(1,2);
-        [Target{1},Target{2}] = cgg_procDataSegmentationGroups(this_Dimension_Each,this_CorrectTrial,this_PreviousTrialCorrect,this_Dimensionality,this_Gain,this_Loss,this_Learned,this_ProbeProcessing,this_TrialChosen,this_SessionName,this_DataNumber);
+        [Target{1},Target{2}] = cgg_procDataSegmentationGroups(this_Dimension_Each,this_CorrectTrial,this_PreviousTrialCorrect,this_Dimensionality,this_Gain,this_Loss,this_Learned,this_ProbeProcessing,this_TargetFeature,this_ReactionTime,this_TrialChosen,this_SessionName,this_DataNumber,this_SharedFeatureCoding);
     otherwise
 end
 

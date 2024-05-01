@@ -738,3 +738,785 @@ hold off
 
 xlabel('Iterations','FontSize',16);
 ylabel('Accuracy','FontSize',16)
+
+%%
+
+
+% rng(0,'twister'); % For reproducibility
+% n = 1000;
+% r = linspace(-10,10,n)';
+% x = 1 + r*5e-2 + sin(r)./r + 0.2*randn(n,1);
+
+[xTrainImages,tTrain] = digitTrainCellArrayData;
+
+[imageWidth,imageHeight]=size(xTrainImages{1});
+inputSize = imageWidth*imageHeight;
+
+NumInputs_Batch_1=numel(xTrainImages)/2;
+
+xTrainImages_Batch_1=xTrainImages(1:NumInputs_Batch_1);
+xTrainImages_Batch_2=xTrainImages(NumInputs_Batch_1+1:end);
+
+tTrain_Batch_1=tTrain(:,1:NumInputs_Batch_1);
+tTrain_Batch_2=tTrain(:,NumInputs_Batch_1+1:end);
+
+NumInputs_Batch_2=numel(xTrainImages_Batch_2);
+
+xTrain_Batch_1 = zeros(inputSize,NumInputs_Batch_1);
+for i = 1:NumInputs_Batch_1
+    xTrain_Batch_1(:,i) = xTrainImages_Batch_1{i}(:);
+end
+xTrain_Batch_2 = zeros(inputSize,NumInputs_Batch_2);
+for i = 1:NumInputs_Batch_2
+    xTrain_Batch_2(:,i) = xTrainImages_Batch_2{i}(:);
+end
+
+Full_xTrain_Batch{1}=xTrain_Batch_1;
+Full_xTrain_Batch{2}=xTrain_Batch_2;
+
+Full_tTrain_Batch{1}=tTrain_Batch_1;
+Full_tTrain_Batch{2}=tTrain_Batch_2;
+
+NumStacks=2;
+hiddenSize_1 = 100;
+hiddenSize_2=50;
+NumEpochs=1000;
+NumBatches = 2;
+
+hiddenSize=NaN(1,NumStacks);
+hiddenSize(1)=hiddenSize_1;
+hiddenSize(2)=hiddenSize_2;
+
+WantProgressWindow=false;
+
+All_AutoEncoder=cell(1,NumStacks);
+All_AutoEncoder_Net=cell(1,NumStacks);
+All_FeatureVector=cell(NumBatches,NumStacks+1);
+
+for bidx=1:NumBatches
+All_FeatureVector{bidx,1}=Full_xTrain_Batch{bidx};
+end
+
+%
+
+for sidx=1:NumStacks
+
+    this_FeatureVector = All_FeatureVector{1,sidx};
+
+this_AutoEncoder = trainAutoencoder(this_FeatureVector,hiddenSize(sidx),...
+        'EncoderTransferFunction','satlin',...
+        'DecoderTransferFunction','purelin',...
+        'L2WeightRegularization',0.01,...
+        'SparsityRegularization',4,...
+        'SparsityProportion',0.10,...
+        'MaxEpochs',1,...
+        'ShowProgressWindow',WantProgressWindow);
+
+this_FeatureVector = encode(this_AutoEncoder,this_FeatureVector);
+
+this_AutoEncoder_Net=network(this_AutoEncoder);
+this_AutoEncoder_Net.performFcn='mse';
+this_AutoEncoder_Net.trainParam.epochs=NumEpochs;
+
+All_AutoEncoder{sidx}=this_AutoEncoder;
+All_AutoEncoder_Net{sidx}=this_AutoEncoder_Net;
+All_FeatureVector{1,sidx+1}=this_FeatureVector;
+
+end
+
+softnet = trainSoftmaxLayer(this_FeatureVector,Full_tTrain_Batch{1},'MaxEpochs',1);
+
+AutoEncoder_Stack = stack(All_AutoEncoder{:});
+
+Encoder_Full = stack(All_AutoEncoder{:},softnet);
+
+[Encoder_FrontEnd,Encoder_BackEnd] = cgg_getEncoderPartsFromWhole(AutoEncoder_Stack,softnet,Encoder_Full);
+[Encoder_Full] = cgg_getEncoderWholeFromParts(Encoder_FrontEnd,Encoder_BackEnd,Encoder_Full_Ex);
+%%
+for bidx=1:NumBatches
+    this_FeatureVector=Full_xTrain_Batch{bidx};
+for sidx=1:NumStacks
+
+    this_AutoEncoder=All_AutoEncoder{sidx};
+
+    this_AutoEncoder = train(this_AutoEncoder,this_FeatureVector,this_FeatureVector,'useParallel','yes');
+    this_FeatureVector = cgg_getEncoderFeaturesFromNetwork(this_AutoEncoder,this_FeatureVector);
+
+    All_AutoEncoder{sidx}=this_AutoEncoder;
+
+end
+end
+
+[FeatureVector_1] = cgg_getEncoderFeaturesFromNetworkStack(All_AutoEncoder,Full_xTrain_Batch{1});
+
+% this_AutoEncoder_1 = trainAutoencoder(xTrain_Batch_1,hiddenSize(1),...
+%         'EncoderTransferFunction','satlin',...
+%         'DecoderTransferFunction','purelin',...
+%         'L2WeightRegularization',0.01,...
+%         'SparsityRegularization',4,...
+%         'SparsityProportion',0.10,...
+%         'MaxEpochs',1,...
+%         'ShowProgressWindow',WantProgressWindow);
+% 
+% feature_1 = encode(this_AutoEncoder_1,xTrain_Batch_1);
+% 
+% this_AutoEncoder_2 = trainAutoencoder(feature_1,hiddenSize(2),...
+%         'EncoderTransferFunction','satlin',...
+%         'DecoderTransferFunction','purelin',...
+%         'L2WeightRegularization',0.01,...
+%         'SparsityRegularization',4,...
+%         'SparsityProportion',0.10,...
+%         'MaxEpochs',1,...
+%         'ShowProgressWindow',WantProgressWindow);
+
+%% Save image files to emulate brain data
+
+[xTrainImages,tTrain] = digitTrainCellArrayData;
+tTrainCategorical = onehotdecode(tTrain,[1:9,0],1);
+NumClasses=numel(unique(tTrainCategorical));
+
+Group_Amount=4;
+
+[NumRows,NumColumns,NumDepth]=size(xTrainImages{1});
+InputSize=size(xTrainImages{1});
+
+[~,NumObservations]=size(xTrainImages);
+
+NumCombinedObservations=NumObservations/Group_Amount;
+
+Data_Dir='Data';
+Target_Dir='Target';
+
+%%
+SaveVariablesName_Data={'Data'};
+SaveVariablesName_Target={'Target'};
+SavePathNameExt_Data=[Data_Dir filesep 'Data_%04d.mat'];
+SavePathNameExt_Target=[Target_Dir filesep 'Target_%04d.mat'];
+
+parfor coidx=1:NumCombinedObservations
+    this_ObservationStartIDX=(coidx-1)*Group_Amount+1;
+    this_ObservationEndIDX=coidx*Group_Amount;
+    this_ObservationIndices=...
+        this_ObservationStartIDX:this_ObservationEndIDX;
+
+    this_CombinedObservation=[xTrainImages{this_ObservationIndices}];
+    this_CombinedTarget=tTrainCategorical(this_ObservationIndices);
+
+    this_SaveVariables_Data={this_CombinedObservation};
+    this_SaveVariables_Target={this_CombinedTarget};
+
+    this_SavePathNameExt_Data=sprintf(SavePathNameExt_Data,coidx);
+    this_SavePathNameExt_Target=sprintf(SavePathNameExt_Target,coidx);
+
+    cgg_saveVariableUsingMatfile(this_SaveVariables_Data,SaveVariablesName_Data,this_SavePathNameExt_Data);
+    cgg_saveVariableUsingMatfile(this_SaveVariables_Target,SaveVariablesName_Target,this_SavePathNameExt_Target);
+
+end
+
+%%
+
+DataWidth=NumColumns;
+WindowStride=NumColumns;
+
+ClassNames=["1","2","3","4","5","6","7","8","9","0"];
+
+Data_Fun=@(x) cgg_loadDataArrayTMP(x,DataWidth,WindowStride);
+Target_Fun=@(x) cgg_loadTargetArrayTMP(x,ClassNames);
+
+Data_ds = fileDatastore(Data_Dir,"ReadFcn",Data_Fun);
+Target_ds = fileDatastore(Target_Dir,"ReadFcn",Target_Fun);
+
+DataStore_AutoEncoder=combine(Data_ds,Data_ds);
+DataStore_Classifier=combine(Data_ds,Target_ds);
+
+%% AutoEncoder with DataStore
+NumTimeWindows=Group_Amount;
+
+maxEpochs = 200;
+maxEpochs_Tuning=500;
+miniBatchSize = 400;
+HiddenSizes=[500,500,500,200];
+GradientThreshold=1;
+
+LossType='Regression';
+
+DataFormat={'SSCTB','SSCTB'};
+
+DataStore_AutoEncoder_Batch_1=subset(DataStore_AutoEncoder,1:floor(NumCombinedObservations/2));
+DataStore_AutoEncoder_Batch_2=subset(DataStore_AutoEncoder,floor(NumCombinedObservations/2)+1:NumCombinedObservations);
+
+DataStore_Classifier_Batch_1=subset(DataStore_Classifier,1:floor(NumCombinedObservations/2));
+DataStore_Classifier_Batch_2=subset(DataStore_Classifier,floor(NumCombinedObservations/2)+1:NumCombinedObservations);
+
+% options = trainingOptions('sgdm', ...
+%     'MaxEpochs',maxEpochs, ...
+%     'MiniBatchSize',miniBatchSize, ...
+%     'InitialLearnRate',0.01, ...
+%     'GradientThreshold',1, ...
+%     'Shuffle','every-epoch', ...
+%     'Plots','training-progress',...
+%     'Verbose',0,...
+%     'ValidationData',DataStore_AutoEncoder_Batch_2, ...
+%     'ExecutionEnvironment',"auto");
+
+Example_Data=read(DataStore_AutoEncoder_Batch_1);
+Example_Data=Example_Data{1};
+InputSize=size(Example_Data);
+InputSize=InputSize(1:3);
+
+[Layers_AutoEncoder,Layers_Custom] = cgg_generateLayersForAutoEncoder(InputSize,HiddenSizes,NumTimeWindows,DataFormat{2});
+
+InDataStore=DataStore_AutoEncoder_Batch_1;
+InputNet= initialize(Layers_Custom);
+NumEpochs=maxEpochs;
+
+[net_custom] = cgg_trainCustomTrainingParallel(InputNet,InDataStore,DataFormat,NumEpochs,miniBatchSize,GradientThreshold,LossType);
+
+% net = trainNetwork(DataStore_AutoEncoder_Batch_1,Layers_AutoEncoder,options);
+%%
+
+Layer_Names={net_custom.Layers(:).Name};
+
+Layer_Encoder_IDX=contains(Layer_Names,'Encoder');
+Layer_Decoder_IDX=contains(Layer_Names,'Decoder');
+
+Layers_Encoder=net_custom.Layers(Layer_Encoder_IDX);
+
+Layer_Names_Encoder=Layer_Names(Layer_Encoder_IDX);
+% Layers_Encoder_Untrained=Layers_AutoEncoder(1:(2*numel(HiddenSizes)+1));
+
+Layers_Tuning=[
+    fullyConnectedLayer(NumClasses, 'Name','fc_Tuning')
+    sequenceUnfoldingLayer('Name','unfold_Tuning')
+    softmaxLayer("Name","softmaxoutput_Tuning")
+    classificationLayer("Name","classoutput_Tuning")];
+
+Layers_Custom_Tuning=[
+    fullyConnectedLayer(NumClasses, 'Name','fc_Tuning')
+    softmaxLayer("Name","softmaxoutput_Tuning")
+    ];
+
+% lgraph = layerGraph(net);
+lgraph = layerGraph(net_custom);
+% lgraph_Untrained = layerGraph(Layers_AutoEncoder);
+
+% Layers_Decoder=net.Layers((2*(numel(HiddenSizes)+1)):end);
+% Layers_RemoveNames={Layers_Decoder(:).Name};
+Layers_RemoveNames=Layer_Names(Layer_Decoder_IDX);
+
+% lgraph = removeLayers(lgraph,Layers_RemoveNames);
+lgraph = removeLayers(lgraph,Layers_RemoveNames);
+% lgraph_Untrained = removeLayers(lgraph_Untrained,Layers_RemoveNames);
+
+% lgraph = addLayers(lgraph,Layers_Tuning);
+lgraph = addLayers(lgraph,Layers_Custom_Tuning);
+% lgraph_Untrained = addLayers(lgraph_Untrained,Layers_Tuning);
+
+lgraph = connectLayers(lgraph,Layer_Names_Encoder{end},Layers_Custom_Tuning(1).Name);
+% lgraph = connectLayers(lgraph,'fold/miniBatchSize','unfold/miniBatchSize');
+% lgraph_Untrained = connectLayers(lgraph_Untrained,Layers_Encoder(end).Name,Layers_Tuning(1).Name);
+
+options = trainingOptions('sgdm', ...
+    'MaxEpochs',maxEpochs_Tuning, ...
+    'MiniBatchSize',miniBatchSize, ...
+    'InitialLearnRate',0.01, ...
+    'GradientThreshold',1, ...
+    'Shuffle','every-epoch', ...
+    'Plots','training-progress',...
+    'Verbose',0,...
+    'ValidationData',DataStore_Classifier_Batch_2, ...
+    'ExecutionEnvironment',"auto");
+
+
+DataFormat={'SSCTB','CTB'};
+InDataStore=DataStore_Classifier_Batch_1;
+InputNet=dlnetwork(lgraph);
+
+[net_tuning] = cgg_trainCustomTrainingParallel(InputNet,InDataStore,DataFormat,NumEpochs,miniBatchSize,GradientThreshold,LossType);
+
+% net_tuning = trainNetwork(DataStore_Classifier_Batch_1,lgraph,options);
+% net_tuning_Untrained = trainNetwork(xTrainTable_Batch_1_Classifier,lgraph_Untrained,options);
+
+%%
+
+NumPredictions=1;
+
+this_Batch=DataStore_Classifier_Batch_2;
+NumInputs=numpartitions(this_Batch);
+
+this_viewIDX=randi(NumInputs,NumPredictions,1);
+
+this_DataStoreExample = partition(this_Batch,NumInputs,this_viewIDX);
+
+this_Example=read(this_DataStoreExample);
+
+this_Example_Data=this_Example{1};
+this_Example_Target=this_Example{2};
+this_Example_Target=onehotdecode(this_Example_Target,[1:9,0],1);
+
+%     workerImds = this_DataStoreExample;
+% 
+%     % Create minibatchqueue using partitioned datastore on each worker.
+%     workerMbq = minibatchqueue(workerImds,...
+%         MiniBatchFormat=DataFormat);
+% 
+%     [workerX,workerT] = next(workerMbq);
+% 
+% dlarray(this_Example_Data,"SSCT")
+
+this_Example_Data_DLArray=dlarray(this_Example_Data,"SSCTB");
+
+Prediction_Reconstruction = forward(net_custom,this_Example_Data_DLArray);
+Prediction_Reconstruction = extractdata(Prediction_Reconstruction);
+
+Prediction_Classification = forward(net_tuning,this_Example_Data_DLArray);
+Prediction_Classification = extractdata(Prediction_Classification);
+
+% Prediction_Reconstruction = predict(net,this_Example_Data);
+% Prediction_Classification = predict(net_tuning,this_Example_Data);
+
+[~,~,~,NumPlots]=size(this_Example_Data);
+
+Prediction_Classification = squeeze(onehotdecode(Prediction_Classification,[1:9,0],1));
+
+for idx = 1:NumPlots
+
+    this_Target=this_Example_Target(idx);
+    this_Prediction=Prediction_Classification(idx);
+
+    subplot(2,NumPlots,idx);
+    imshow(this_Example_Data(:,:,:,idx));
+    title(sprintf('Target Image of %s',this_Target));
+    subplot(2,NumPlots,idx+NumPlots);
+    imshow((Prediction_Reconstruction(:,:,:,idx)));
+    title(sprintf('Predicted Image of %s',this_Prediction));
+end
+
+%%
+
+maxEpochs = 200;
+maxEpochs_Tuning=500;
+miniBatchSize = 200;
+
+xTrainTable_Batch_1=table(xTrainImages_Batch_1',xTrainImages_Batch_1');
+xTrainTable_Batch_2=table(xTrainImages_Batch_2',xTrainImages_Batch_2');
+
+tTrainCategorical_Batch_1 = onehotdecode(tTrain_Batch_1,[1:9,0],1);
+tTrainCategorical_Batch_2 = onehotdecode(tTrain_Batch_2,[1:9,0],1);
+
+xTrainTable_Batch_1_Classifier=table(xTrainImages_Batch_1',tTrainCategorical_Batch_1');
+xTrainTable_Batch_2_Classifier=table(xTrainImages_Batch_2',tTrainCategorical_Batch_2');
+
+options = trainingOptions('sgdm', ...
+    'MaxEpochs',maxEpochs, ...
+    'MiniBatchSize',miniBatchSize, ...
+    'InitialLearnRate',0.01, ...
+    'GradientThreshold',1, ...
+    'Shuffle','every-epoch', ...
+    'Plots','training-progress',...
+    'Verbose',0,...
+    'ValidationData',xTrainTable_Batch_2, ...
+    'ExecutionEnvironment',"parallel");
+
+% InputSize=[size(xTrainImages{1}) 1];
+InputSize=size(xTrainImages{1});
+HiddenSizes=[500,500,500,200];
+
+[Layers_AutoEncoder] = cgg_generateLayersForAutoEncoder(InputSize,HiddenSizes);
+
+% net = trainNetwork(xTrainImages_Batch_1,xTrainImages_Batch_1,Layers_AutoEncoder,options);
+
+net = trainNetwork(xTrainTable_Batch_1,Layers_AutoEncoder,options);
+
+%%
+
+Layers_Encoder=net.Layers(1:(2*numel(HiddenSizes)+1));
+Layers_Encoder_Untrained=Layers_AutoEncoder(1:(2*numel(HiddenSizes)+1));
+
+Layers_Tuning=[
+    fullyConnectedLayer(NumClasses, 'Name','new_fc')
+    softmaxLayer("Name","softmaxoutput")
+    classificationLayer("Name","classoutput")];
+
+lgraph = layerGraph(net);
+lgraph_Untrained = layerGraph(Layers_AutoEncoder);
+
+Layers_Decoder=net.Layers((2*(numel(HiddenSizes)+1)):end);
+Layers_RemoveNames={Layers_Decoder(:).Name};
+
+lgraph = removeLayers(lgraph,Layers_RemoveNames);
+lgraph_Untrained = removeLayers(lgraph_Untrained,Layers_RemoveNames);
+
+lgraph = addLayers(lgraph,Layers_Tuning);
+lgraph_Untrained = addLayers(lgraph_Untrained,Layers_Tuning);
+
+lgraph = connectLayers(lgraph,Layers_Encoder(end).Name,Layers_Tuning(1).Name);
+lgraph_Untrained = connectLayers(lgraph_Untrained,Layers_Encoder(end).Name,Layers_Tuning(1).Name);
+
+options = trainingOptions('sgdm', ...
+    'MaxEpochs',maxEpochs_Tuning, ...
+    'MiniBatchSize',miniBatchSize, ...
+    'InitialLearnRate',0.01, ...
+    'GradientThreshold',1, ...
+    'Shuffle','every-epoch', ...
+    'Plots','training-progress',...
+    'Verbose',0,...
+    'ValidationData',xTrainTable_Batch_2_Classifier, ...
+    'ExecutionEnvironment',"parallel");
+
+net_tuning = trainNetwork(xTrainTable_Batch_1_Classifier,lgraph,options);
+net_tuning_Untrained = trainNetwork(xTrainTable_Batch_1_Classifier,lgraph_Untrained,options);
+%%
+
+NumPredictions=3;
+
+this_Batch=xTrainTable_Batch_2;
+this_Batch_Classifier=xTrainTable_Batch_2_Classifier;
+[NumInputs,~]=size(this_Batch);
+
+this_viewIDX=randi(NumInputs,NumPredictions,1);
+
+this_Example=this_Batch(this_viewIDX,1);
+this_Example_Classifier=this_Batch_Classifier(this_viewIDX,1);
+
+this_Value_Classifier=this_Batch_Classifier(this_viewIDX,2);
+
+Prediction_Reconstruction = predict(net,this_Example);
+Prediction_Classification = predict(net_tuning,this_Example_Classifier);
+
+Prediction_Classification = onehotdecode(Prediction_Classification,[1:9,0],2);
+
+for idx = 1:NumPredictions
+
+    this_Target=this_Value_Classifier{idx,1};
+    this_Prediction=Prediction_Classification(idx);
+
+    % subplot(2,NumPredictions,2*(idx-1)+1);
+    subplot(2,NumPredictions,idx);
+    imshow(this_Example{idx,1}{1});
+    title(sprintf('Target Image of %s',this_Target));
+    % subplot(2,NumPredictions,2*idx);
+    subplot(2,NumPredictions,idx+NumPredictions);
+    imshow((Prediction_Reconstruction(:,:,:,idx)));
+    title(sprintf('Predicted Image of %s',this_Prediction));
+end
+
+%%
+
+Layers_Encoder=net.Layers(1:(2*numel(HiddenSizes)+1));
+
+Layers_Encoder_Tuning=[
+    Layers_Encoder
+    fullyConnectedLayer(NumClasses, 'Name','new_fc')
+    softmaxLayer("Name","softmaxoutput")
+    classificationLayer("Name","classoutput")];
+
+Layers_Tuning=[
+    fullyConnectedLayer(NumClasses, 'Name','new_fc')
+    softmaxLayer("Name","softmaxoutput")
+    classificationLayer("Name","classoutput")];
+
+lgraph = layerGraph(net);
+
+Layers_Decoder=net.Layers((2*(numel(HiddenSizes)+1)):end);
+Layers_RemoveNames={Layers_Decoder(:).Name};
+
+lgraph = removeLayers(lgraph,Layers_RemoveNames);
+
+lgraph = addLayers(lgraph,Layers_Tuning);
+
+lgraph = connectLayers(lgraph,Layers_Encoder(end).Name,Layers_Tuning(1).Name);
+
+Layers_Classifier=[
+    Layers_AutoEncoder(1:7)
+    Layers_Tuning];
+
+% net_tuning = assembleNetwork(lgraph);
+
+net_tuning = trainNetwork(xTrain_Batch_1,tTrain_Batch_1,lgraph,options);
+
+
+
+%%
+
+% layersEncoder = [
+%     fullyConnectedLayer(100,"Name","fc_Encoder")
+%     reluLayer("Name","relu_Encoder")];
+% layersDecoder = [
+%     fullyConnectedLayer(100,"Name","fc_Decoder")];
+% 
+% NetworkEncoder=dlnetwork(layersEncoder,'Initialize',false);
+% NetworkDecoder=dlnetwork(layersDecoder,'Initialize',false);
+% 
+% inputSize=[size(xTrainImages{1}),1];
+% 
+% TestNet = encoderDecoderNetwork(inputSize,NetworkEncoder,NetworkDecoder)
+
+
+%%
+
+All_AutoEncoder=network(All_AutoEncoder);
+All_AutoEncoder.performFcn='mse';
+All_AutoEncoder.trainParam.epochs=NumEpochs;
+
+% this_AutoEncoder_1 = train(this_AutoEncoder,xTrain_Batch_1,xTrain_Batch_1,'useParallel','yes');
+% this_AutoEncoder_2 = train(this_AutoEncoder,xTrain_Batch_2,xTrain_Batch_2,'useParallel','yes');
+% 
+% this_AutoEncoder_12 = train(this_AutoEncoder_1,xTrain_Batch_2,xTrain_Batch_2,'useParallel','yes');
+% this_AutoEncoder_21 = train(this_AutoEncoder_2,xTrain_Batch_1,xTrain_Batch_1,'useParallel','yes');
+
+All_AutoEncoder = train(All_AutoEncoder,xTrain_Batch_1,xTrain_Batch_1,'useParallel','yes');
+All_AutoEncoder = train(All_AutoEncoder,xTrain_Batch_2,xTrain_Batch_2,'useParallel','yes');
+
+% All_AutoEncoder = stack(this_AutoEncoder_1,this_AutoEncoder_2);
+
+%
+% XReconstructed_All_12 = this_AutoEncoder_12([xTrain_Batch_1,xTrain_Batch_2]);
+% XReconstructed_All_21 = this_AutoEncoder_21([xTrain_Batch_1,xTrain_Batch_2]);
+% XReconstructed_All_1 = this_AutoEncoder_1([xTrain_Batch_1,xTrain_Batch_2]);
+% XReconstructed_All_2 = this_AutoEncoder_2([xTrain_Batch_1,xTrain_Batch_2]);
+% 
+% XReconstructed_1_12 = this_AutoEncoder_12(xTrain_Batch_1);
+% XReconstructed_1_21 = this_AutoEncoder_21(xTrain_Batch_1);
+% XReconstructed_1_1 = this_AutoEncoder_1(xTrain_Batch_1);
+% XReconstructed_1_2 = this_AutoEncoder_2(xTrain_Batch_1);
+% 
+% XReconstructed_2_12 = this_AutoEncoder_12(xTrain_Batch_2);
+% XReconstructed_2_21 = this_AutoEncoder_21(xTrain_Batch_2);
+% XReconstructed_2_1 = this_AutoEncoder_1(xTrain_Batch_2);
+% XReconstructed_2_2 = this_AutoEncoder_2(xTrain_Batch_2);
+% 
+% mseError_All_12 = mse([xTrain_Batch_1,xTrain_Batch_2]-XReconstructed_All_12);
+% mseError_All_21 = mse([xTrain_Batch_1,xTrain_Batch_2]-XReconstructed_All_21);
+% mseError_All_1 = mse([xTrain_Batch_1,xTrain_Batch_2]-XReconstructed_All_1);
+% mseError_All_2 = mse([xTrain_Batch_1,xTrain_Batch_2]-XReconstructed_All_2);
+% 
+% mseError_1_12 = mse(xTrain_Batch_1-XReconstructed_1_12);
+% mseError_1_21 = mse(xTrain_Batch_1-XReconstructed_1_21);
+% mseError_1_1 = mse(xTrain_Batch_1-XReconstructed_1_1);
+% mseError_1_2 = mse(xTrain_Batch_1-XReconstructed_1_2);
+% 
+% mseError_2_12 = mse(xTrain_Batch_2-XReconstructed_2_12);
+% mseError_2_21 = mse(xTrain_Batch_2-XReconstructed_2_21);
+% mseError_2_1 = mse(xTrain_Batch_2-XReconstructed_2_1);
+% mseError_2_2 = mse(xTrain_Batch_2-XReconstructed_2_2);
+% 
+% MSE_AutoEncoder_1={mseError_All_1,mseError_1_1,mseError_2_1}';
+% MSE_AutoEncoder_2={mseError_All_2,mseError_1_2,mseError_2_2}';
+% MSE_AutoEncoder_12={mseError_All_12,mseError_1_12,mseError_2_12}';
+% MSE_AutoEncoder_21={mseError_All_21,mseError_1_21,mseError_2_21}';
+% 
+% 
+% mse_Table=table(MSE_AutoEncoder_1,MSE_AutoEncoder_2,MSE_AutoEncoder_12,MSE_AutoEncoder_21,'RowNames',{'All Images','Batch 1','Batch 2'});
+
+%%
+
+% create encoder form trained network
+encoder = network;
+% Define topology
+encoder.numInputs = 1;
+encoder.numLayers = 1;
+encoder.inputConnect(1,1) = 1;
+encoder.outputConnect = 1;
+encoder.biasConnect = 1;
+
+% Set values for labels
+encoder.name = 'Encoder';
+encoder.layers{1}.name = 'Encoder';
+% Copy parameters from input network
+encoder.inputs{1}.size = All_AutoEncoder.inputs{1}.size;
+encoder.layers{1}.size = All_AutoEncoder.layers{1}.size;
+encoder.layers{1}.transferFcn = All_AutoEncoder.layers{1}.transferFcn;
+encoder.IW{1,1} = All_AutoEncoder.IW{1,1};
+encoder.b{1} = All_AutoEncoder.b{1};
+% Set a training function
+encoder.trainFcn = All_AutoEncoder.trainFcn;
+% Set the input
+encoderStruct = struct(encoder);
+networkStruct = struct(All_AutoEncoder);
+encoderStruct.inputs{1} = networkStruct.inputs{1};
+encoder = network(encoderStruct);
+% extract features from net
+Z = encoder(xTrain_Batch_1);
+
+
+
+% Z=encode(this_AutoEncoder,xTrain_Batch_1);
+
+
+%%
+% autoenc_1 = trainAutoencoder(xTrainImages,hiddenSize_1,...
+%         'EncoderTransferFunction','satlin',...
+%         'DecoderTransferFunction','purelin',...
+%         'L2WeightRegularization',0.01,...
+%         'SparsityRegularization',4,...
+%         'SparsityProportion',0.10);
+autoenc_1_flat = trainAutoencoder(xTrain,hiddenSize_1,...
+        'EncoderTransferFunction','satlin',...
+        'DecoderTransferFunction','purelin',...
+        'L2WeightRegularization',0.01,...
+        'SparsityRegularization',4,...
+        'SparsityProportion',0.10);
+
+feature_1 = encode(autoenc_1,xTrainImages);
+
+autoenc_2 = trainAutoencoder(feature_1,hiddenSize_2,...
+        'EncoderTransferFunction','satlin',...
+        'DecoderTransferFunction','purelin',...
+        'L2WeightRegularization',0.01,...
+        'SparsityRegularization',4,...
+        'SparsityProportion',0.10);
+
+stackednet = stack(autoenc_1,autoenc_2);
+
+Z = stackednet(xTrain);
+
+% n = 1000;
+% r = sort(-10 + 20*rand(n,1));
+% xtest = 1 + r*5e-2 + sin(r)./r + 0.4*randn(n,1);
+% 
+% % Z = encode(stackednet,xtest');
+% Z = stackednet(xtest');
+
+%%
+
+digitDatasetPath = fullfile(toolboxdir("nnet"),"nndemos", ...
+    "nndatasets","DigitDataset");
+imds = imageDatastore(digitDatasetPath, ...
+    IncludeSubfolders=true, ...
+    LabelSource="foldernames");
+
+[imdsTrain,imdsTest] = splitEachLabel(imds,0.9,"randomized");
+
+inputSize = [28 28 1];
+augimdsTrain = augmentedImageDatastore(inputSize(1:2),imdsTrain);
+augimdsTrain = shuffle(augimdsTrain);
+
+classes = categories(imdsTrain.Labels);
+numClasses = numel(classes);
+
+layers = [
+    imageInputLayer(inputSize,Normalization="none")
+    convolution2dLayer(5,20)
+    batchNormalizationLayer
+    reluLayer
+    convolution2dLayer(3,20,Padding=1)
+    batchNormalizationLayer
+    reluLayer
+    convolution2dLayer(3,20,Padding=1)
+    batchNormalizationLayer
+    reluLayer
+    fullyConnectedLayer(numClasses)
+    softmaxLayer];
+
+net = dlnetwork(layers);
+
+InputNet=net;
+InDataStore=augimdsTrain;
+DataFormat=["SSCB" "" ""];
+
+[net] = trainCustomTrainingParallel(InputNet,InDataStore,DataFormat);
+
+%%
+
+if canUseGPU
+    executionEnvironment = "gpu";
+    numberOfGPUs = gpuDeviceCount("available");
+    pool = parpool(numberOfGPUs);
+else
+    executionEnvironment = "cpu";
+    pool = gcp;
+end
+
+numWorkers = pool.NumWorkers;
+
+numEpochs = 20;
+miniBatchSize = 128;
+velocity = [];
+
+if executionEnvironment == "gpu"
+     miniBatchSize = miniBatchSize .* numWorkers;
+end
+
+workerMiniBatchSize = floor(miniBatchSize ./ repmat(numWorkers,1,numWorkers));
+remainder = miniBatchSize - sum(workerMiniBatchSize);
+workerMiniBatchSize = workerMiniBatchSize + [ones(1,remainder) zeros(1,numWorkers-remainder)];
+
+batchNormLayers = arrayfun(@(l)isa(l,"nnet.cnn.layer.BatchNormalizationLayer"),net.Layers);
+batchNormLayersNames = string({net.Layers(batchNormLayers).Name});
+state = net.State;
+isBatchNormalizationStateMean = ismember(state.Layer,batchNormLayersNames) & state.Parameter == "TrainedMean";
+isBatchNormalizationStateVariance = ismember(state.Layer,batchNormLayersNames) & state.Parameter == "TrainedVariance";
+
+monitor = trainingProgressMonitor( ...
+    Metrics="TrainingLoss", ...
+    Info=["Epoch" "Workers"], ...
+    XLabel="Iteration");
+
+spmd
+    stopTrainingEventQueue = parallel.pool.DataQueue;
+end
+stopTrainingQueue = stopTrainingEventQueue{1};
+
+dataQueue = parallel.pool.DataQueue;
+displayFcn = @(x) displayTrainingProgress(x,numEpochs,numWorkers,monitor,stopTrainingQueue);
+afterEach(dataQueue,displayFcn)
+
+spmd
+    % Partition the datastore.
+    workerImds = partition(augimdsTrain,numWorkers,spmdIndex);
+
+    % Create minibatchqueue using partitioned datastore on each worker.
+    workerMbq = minibatchqueue(workerImds,3,...
+        MiniBatchSize=workerMiniBatchSize(spmdIndex),...
+        MiniBatchFcn=@preprocessMiniBatch,...
+        MiniBatchFormat=["SSCB" "" ""]);
+
+    workerVelocity = velocity;
+    epoch = 0;
+    iteration = 0;
+    stopRequest = false;
+
+    while epoch < numEpochs && ~stopRequest
+        epoch = epoch + 1;
+        shuffle(workerMbq);
+
+        % Loop over mini-batches.
+        while spmdReduce(@and,hasdata(workerMbq)) && ~stopRequest
+            iteration = iteration + 1;
+
+            % Read a mini-batch of data.
+            [workerX,workerT,workerNumObservations] = next(workerMbq);
+
+            % Evaluate the model loss and gradients on the worker.
+            [workerLoss,workerGradients,workerState] = dlfeval(@modelLoss,net,workerX,workerT);
+
+            % Aggregate the losses on all workers.
+            workerNormalizationFactor = workerMiniBatchSize(spmdIndex)./miniBatchSize;
+            loss = spmdPlus(workerNormalizationFactor*extractdata(workerLoss));
+
+            % Aggregate the network state on all workers.
+            net.State = aggregateState(workerState,workerNormalizationFactor,...
+                isBatchNormalizationStateMean,isBatchNormalizationStateVariance);
+
+            % Aggregate the gradients on all workers.
+            workerGradients.Value = dlupdate(@aggregateGradients,workerGradients.Value,{workerNormalizationFactor});
+
+            % Update the network parameters using the SGDM optimizer.
+            [net,workerVelocity] = sgdmupdate(net,workerGradients,workerVelocity);
+        end
+
+        % Stop training if the Stop button has been clicked.
+        stopRequest = spmdPlus(stopTrainingEventQueue.QueueLength);
+
+        % Send training progress information to the client.
+        if spmdIndex == 1
+            data = [epoch loss iteration];
+            send(dataQueue,gather(data));
+        end
+    end
+
+end
+
+
+

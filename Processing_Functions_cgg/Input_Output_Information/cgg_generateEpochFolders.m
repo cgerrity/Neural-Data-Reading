@@ -66,5 +66,32 @@ cfg_tmp=cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch;
 [cfg_tmp,~] = cgg_generateFolderAndPath('Processing','Processing',cfg_tmp);
 cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch=cfg_tmp;
 
+if isfunction
+Data_Normalized = CheckVararginPairs('Data_Normalized', false, varargin{:});
+if Data_Normalized
+
+% Make the Normalized Data output folder names.
+cfg_tmp=cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch;
+[cfg_tmp,~] = cgg_generateFolderAndPath('Data_Normalized','Data_Normalized',cfg_tmp);
+cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch=cfg_tmp;
+
+end % End for whether to make the Normalized Data Folder
+end % End for whether this is being called within a function
+
+if isfunction
+AreaPlot = CheckVararginPairs('AreaPlot', '', varargin{:});
+if ~isempty(AreaPlot)
+% Make the Plots output folder names.
+cfg_tmp=cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch;
+[cfg_tmp,~] = cgg_generateFolderAndPath('Plots','Plots',cfg_tmp);
+cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch=cfg_tmp;
+
+% Make the Area output folder names.
+cfg_tmp=cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch.Plots;
+[cfg_tmp,~] = cgg_generateFolderAndPath(AreaPlot,'AreaPlot',cfg_tmp);
+cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch.Plots=cfg_tmp;
+end
+end
+
 end
 

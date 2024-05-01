@@ -1,7 +1,7 @@
 clc; clear; close all;
 
 Epoch = 'Decision';
-FoldStart = 1; FoldEnd = 1;
+FoldStart = 1; FoldEnd = 10;
 NumFolds = numel(FoldStart:FoldEnd); 
 SamplingFrequency=1000;
 
@@ -113,3 +113,6 @@ Accuracy_Title=sprintf('Accuracy over %d Iterations and %d Folds',NumIterations,
 title(Accuracy_Title,'FontSize',Title_Size);
 
 xticks([1,Tick_Size:Tick_Size:NumIterations]);
+
+
+

@@ -3,6 +3,16 @@ function [AllOutData,TrialNumbers,Data_Unsmoothed] = cgg_getAllTrialDataFromTime
 %   Detailed explanation goes here
 
 isfunction=exist('varargin','var');
+
+%% Varargin Options
+
+if isfunction
+SmoothType = CheckVararginPairs('SmoothType', 'gaussian', varargin{:});
+else
+if ~(exist('SmoothType','var'))
+SmoothType='gaussian';
+end
+end
 %%
 
 if isfunction
@@ -76,7 +86,7 @@ parfor tidx=1:NumTrials
     for sidx=1:this_NumSections
         [this_AllOutData_tmp{sidx},this_Data_Unsmoothed{sidx}] = cgg_getSingleTrialDataFromTimeSegments_v2(...
     this_Start_IDX(sidx),this_End_IDX(sidx),fullfilename,this_trial_index,...
-    Smooth_Factor);
+    Smooth_Factor,'SmoothType',SmoothType);
 
     [this_NumChannels,this_NumSamples]=size(this_AllOutData_tmp{sidx});
     this_NumChannels_tmp=max([this_NumChannels_tmp,this_NumChannels]);

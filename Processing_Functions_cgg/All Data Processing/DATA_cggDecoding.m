@@ -7,10 +7,13 @@ clc; clear; close all;
 Fold_Start=1;
 Fold_End=10;
 
+Decoder='Logistic';
+WindowStride=10;
+
 % warning('on','all');
 
 for fidx=Fold_Start:Fold_End
 Fold=fidx;
 
-cgg_runDecoder(Fold)
+cgg_runDecoder_v3(Fold,Decoder,'WindowStride',WindowStride);
 end

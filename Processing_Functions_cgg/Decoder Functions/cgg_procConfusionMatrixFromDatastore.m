@@ -1,20 +1,30 @@
-function [Window_Accuracy,Accuracy,Window_CM,Full_CM,CM_Cell,CM_Table] = cgg_procConfusionMatrixFromDatastore(InDatastore,Mdl,ClassNames)
+function [Window_Accuracy,Accuracy,Window_CM,Full_CM,CM_Cell,CM_Table] = cgg_procConfusionMatrixFromDatastore(InDatastore,Mdl,ClassNames,varargin)
 %CGG_PROCCONFUSIONMATRIXFROMDATASTORE Summary of this function goes here
 %   Detailed explanation goes here
+
+isfunction=exist('varargin','var');
+
+if isfunction
+DimensionNumber = CheckVararginPairs('DimensionNumber', 1, varargin{:});
+else
+if ~(exist('DimensionNumber','var'))
+DimensionNumber=1;
+end
+end
 
 NumDatastore=numpartitions(InDatastore);
 
 % DataNumber=cell(1,NumDatastore);
 
 wantTable=true;
-
+%%
 parfor didx=1:NumDatastore
     this_tmp_Datastore=partition(InDatastore,NumDatastore,didx);
     this_Values=read(this_tmp_Datastore);
     % reset(this_tmp_Datastore);
     % [~,~,this_DataNumber] = cgg_getTrialVariablesFromDatastore(this_tmp_Datastore,'Data Number');
     FileName=this_tmp_Datastore.UnderlyingDatastores{1}.Files;
-    [this_DataNumber,~] = cgg_getNumberFromFileName(FileName)
+    [this_DataNumber,~] = cgg_getNumberFromFileName(FileName);
     % this_DataNumber=DataNumber{didx};
     this_X=this_Values{1};
     [NumWindows,~]=size(this_X);
@@ -24,7 +34,8 @@ parfor didx=1:NumDatastore
 
     Y_predicted = predict(Mdl,this_X(widx,:));
 %     CM_Cell{widx}(didx,:) = [this_Values{2},Y_predicted];
-    CM_Cell{didx}{widx,1} = [this_Values{2},Y_predicted,this_DataNumber];
+
+    CM_Cell{didx}{widx,1} = [this_Values{2}(DimensionNumber),Y_predicted,this_DataNumber];
 
     end
 

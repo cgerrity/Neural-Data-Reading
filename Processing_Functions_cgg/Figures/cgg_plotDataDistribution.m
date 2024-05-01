@@ -3,9 +3,18 @@ function cgg_plotDataDistribution(FullDataTable,InVariableName,InEpoch,InSavePlo
 %   Detailed explanation goes here
 
 
+% fig_activity=figure;
+% fig_activity.WindowState='maximized';
+% fig_activity.PaperSize=[20 10];
 fig_activity=figure;
-fig_activity.WindowState='maximized';
-fig_activity.PaperSize=[20 10];
+fig_activity.Units="normalized";
+fig_activity.Position=[0,0,1,1];
+fig_activity.Units="inches";
+fig_activity.PaperUnits="inches";
+PlotPaperSize=fig_activity.Position;
+PlotPaperSize(1:2)=[];
+fig_activity.PaperSize=PlotPaperSize;
+% InFigure.Visible='off';
 
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 

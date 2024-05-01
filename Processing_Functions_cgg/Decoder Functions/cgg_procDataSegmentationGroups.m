@@ -1,4 +1,4 @@
-function [OutputIDX,OutputNames] = cgg_procDataSegmentationGroups(Dimension_Each,CorrectTrial,PreviousTrialCorrect,Dimensionality,Gain,Loss,Learned,ProbeProcessing,TrialChosen,SessionName,DataNumber)
+function [OutputIDX,OutputNames] = cgg_procDataSegmentationGroups(Dimension_Each,CorrectTrial,PreviousTrialCorrect,Dimensionality,Gain,Loss,Learned,ProbeProcessing,TargetFeature,ReactionTime,TrialChosen,SessionName,DataNumber,SharedFeatureCoding)
 %CGG_PROCDATASEGMENTATIONGROUPS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -57,6 +57,16 @@ OutputIDX(Counter_IDX)=any(strcmp(this_Area,AreasInSession));
 OutputNames(Counter_IDX)=string(this_Area);
 end
 
+% Target Feature
+Counter_IDX=Counter_IDX+1;
+OutputIDX(Counter_IDX)=TargetFeature;
+OutputNames(Counter_IDX)="Target Feature";
+
+% Reaction Time
+Counter_IDX=Counter_IDX+1;
+OutputIDX(Counter_IDX)=ReactionTime;
+OutputNames(Counter_IDX)="Reaction Time";
+
 % TrialChosen
 Counter_IDX=Counter_IDX+1;
 OutputIDX(Counter_IDX)=TrialChosen;
@@ -74,6 +84,11 @@ OutputNames(Counter_IDX)="Session Name";
 Counter_IDX=Counter_IDX+1;
 OutputIDX(Counter_IDX)=DataNumber;
 OutputNames(Counter_IDX)="Data Number";
+
+% SharedFeatureCoding
+Counter_IDX=Counter_IDX+1;
+OutputIDX(Counter_IDX)=SharedFeatureCoding;
+OutputNames(Counter_IDX)="Shared Feature Coding";
 
 end
 
