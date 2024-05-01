@@ -18,16 +18,22 @@ switch Root_Directory
         % Add a new case here for a new user
         switch Current_User
             case 'cgerrity'
+                if cgg_checkACCREMounted('/Users/cgerrity/Documents')
+        inputfolder_base='/Users/cgerrity/Documents/ACCRE';
+        outputfolder_base='/Users/cgerrity/Documents/ACCRE';
+        temporaryfolder_base='/Users/cgerrity/Documents/ACCRE_NoBackup';
+                else
         inputfolder_base='/Volumes/Womelsdorf Lab';
         outputfolder_base='/Volumes/gerritcg''s home';
         temporaryfolder_base='/Volumes/gerritcg''s home';
+                end
             case 'newuser'
         inputfolder_base='/Volumes/Womelsdorf Lab'; 
         % Folder where 'Data_neural' is accessed from your computer
         outputfolder_base='/Volumes/gerritcg''s home';
         % Folder where you would like all of the processing to go
         temporaryfolder_base='/Volumes/gerritcg''s home';   
-        % Folder where any temporary files shoudl go
+        % Folder where any temporary files should go
         end
     case "data"
         Current_System="TEBA";

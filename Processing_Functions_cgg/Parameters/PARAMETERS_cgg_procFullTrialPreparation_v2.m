@@ -10,7 +10,8 @@ Count_Sel_Trial=30;
 
 probe_area='ACC_001';
 Activity_Type='MUA';
-Smooth_Factor=250;
+Smooth_Factor=50;
+SmoothType='gaussian';
 want_all_Probes=true;
 
 Increment_Time=25; %Value in ms

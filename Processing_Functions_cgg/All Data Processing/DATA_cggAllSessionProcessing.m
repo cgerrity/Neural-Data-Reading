@@ -4,7 +4,7 @@ clc; clear; close all;
 
 [cfg] = DATA_cggAllSessionInformationConfiguration;
 
-Epoch='Epoch_2';
+Epoch='Decision';
 
 %%
 

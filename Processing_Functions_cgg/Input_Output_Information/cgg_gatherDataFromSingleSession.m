@@ -6,8 +6,16 @@ function cgg_gatherDataFromSingleSession(SessionFolder,Epoch,TargetDir,varargin)
 isfunction=exist('varargin','var');
 
 if isfunction
+Data_Normalized = CheckVararginPairs('Data_Normalized', false, varargin{:});
+else
+if ~(exist('Data_Normalized','var'))
+Data_Normalized=false;
+end
+end
+
+if isfunction
 [cfg] = cgg_generateSessionAggregationFolders('TargetDir',TargetDir,...
-    'Epoch',Epoch);
+    'Epoch',Epoch,'Data_Normalized',Data_Normalized);
 else
     Existence_Array = [exist('TargetDir','var'), ...
         exist('Epoch','var')];
@@ -15,15 +23,15 @@ else
     
     switch Existence_Value
         case 3 % TargetDir, Epoch
-            [cfg, TargetDir] = cgg_generateSessionAggregationFolders('TargetDir',TargetDir,'Epoch',Epoch);
+            [cfg, TargetDir] = cgg_generateSessionAggregationFolders('TargetDir',TargetDir,'Epoch',Epoch,'Data_Normalized',Data_Normalized);
         case 2 % TargetDir, ~Epoch
-            [cfg, TargetDir] = cgg_generateSessionAggregationFolders('TargetDir',TargetDir);
+            [cfg, TargetDir] = cgg_generateSessionAggregationFolders('TargetDir',TargetDir,'Data_Normalized',Data_Normalized);
         case 1 % ~TargetDir, Epoch
-            [cfg, TargetDir] = cgg_generateSessionAggregationFolders('Epoch',Epoch);
+            [cfg, TargetDir] = cgg_generateSessionAggregationFolders('Epoch',Epoch,'Data_Normalized',Data_Normalized);
         case 0 % ~TargetDir, ~Epoch
-            [cfg, TargetDir] = cgg_generateSessionAggregationFolders;
+            [cfg, TargetDir] = cgg_generateSessionAggregationFolders('Data_Normalized',Data_Normalized);
         otherwise
-            [cfg, TargetDir] = cgg_generateSessionAggregationFolders;
+            [cfg, TargetDir] = cgg_generateSessionAggregationFolders('Data_Normalized',Data_Normalized);
     end % End for what directory variables are in the workspace currently
 end % End for whether this is being called within a function
 
@@ -35,11 +43,23 @@ DataDir=[EpochDir filesep 'Data'];
 TargetDir=[EpochDir filesep 'Target'];
 ProcessingDir=[EpochDir filesep 'Processing'];
 
+if Data_Normalized
+    DataNormalizedDir=[EpochDir filesep 'Data_Normalized'];
+end
+
 [~,SessionName,~]=fileparts(SessionFolder);
 
 SessionName = strrep(SessionName, '-', '_');
 
 IsSessionProcessed = cgg_checkSessionProcessed(SessionName,cfg);
+
+%% Filenames for the processing parameters
+ParameterProcessing_NameExt='Parameters_Processing.yaml';
+
+ParameterProcessing_PathNameExt=[ProcessingDir filesep ...
+    ParameterProcessing_NameExt];
+ParameterProcessingAggregate_PathNameExt=[ProcessingDir filesep ...
+    SessionName '_' ParameterProcessing_NameExt];
 
 %%
 if ~IsSessionProcessed
@@ -47,6 +67,10 @@ if ~IsSessionProcessed
 DataAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Data.path;
 TargetAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Target.path;
 ProcessingAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Processing.path;
+
+if Data_Normalized
+    DataNormalizedAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Data_Normalized.path;
+end
 
 TargetAggregate_PathNameExt=[TargetAggregateDir filesep 'Target_%07d.mat'];
 TargetInformation_PathNameExt=[ProcessingAggregateDir filesep 'Target_Information.mat'];
@@ -94,6 +118,10 @@ Target=Target.Target;
 ProbeProcessing=load([ProcessingDir filesep 'Probe_Processing_Information.mat']);
 ProbeProcessing=ProbeProcessing.ProbeProcessing;
 
+if isfile(ParameterProcessing_PathNameExt)
+copyfile(ParameterProcessing_PathNameExt,...
+    ParameterProcessingAggregate_PathNameExt);
+end
 %%
 
 existTargetInformation=isfile(TargetInformation_PathNameExt);
@@ -159,6 +187,10 @@ DataAggregate_Number_tmp=cell(NumData,1);
 parfor didx=1:NumData
     this_Data_NameExt=Data_NameExt{didx};
     this_Data_PathNameExt=[DataDir filesep this_Data_NameExt];
+
+    if Data_Normalized
+        this_DataNormalized_PathNameExt=[DataNormalizedDir filesep this_Data_NameExt];
+    end
     
     [~,this_Data_Name,this_Data_Ext]=fileparts(this_Data_PathNameExt);
     
@@ -182,6 +214,12 @@ parfor didx=1:NumData
         this_DataAggregate_PathNameExt=[DataAggregateDir filesep ...
             this_DataAggregate_NameExt];
         copyfile(this_Data_PathNameExt, this_DataAggregate_PathNameExt);
+
+        if Data_Normalized
+            this_DataNormalizedAggregate_PathNameExt=[DataNormalizedAggregateDir filesep ...
+            this_DataAggregate_NameExt];
+            copyfile(this_DataNormalized_PathNameExt, this_DataNormalizedAggregate_PathNameExt);
+        end
         
         this_TargetAggregate_PathNameExt = sprintf(...
             TargetAggregate_PathNameExt,this_DataAggregate_Number);

@@ -2,9 +2,9 @@ function [fig_plot,p_Plots,p_Error] = cgg_plotTimeSeriesPlot(InData,varargin)
 %CGG_PLOTTIMESERIESPLOT Summary of this function goes here
 %   Detailed explanation goes here
 
-fig_plot=figure;
-fig_plot.WindowState='maximized';
-fig_plot.PaperSize=[20 10];
+% fig_plot=figure;
+% fig_plot.WindowState='maximized';
+% fig_plot.PaperSize=[20 10];
 
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 
@@ -122,6 +122,68 @@ PlotColors=MATLABPlotColors;
 end
 end
 
+if isfunction
+wantTiled = CheckVararginPairs('wantTiled', false, varargin{:});
+else
+if ~(exist('wantTiled','var'))
+wantTiled=false;
+end
+end
+
+if isfunction
+wantSubPlot = CheckVararginPairs('wantSubPlot', false, varargin{:});
+else
+if ~(exist('wantSubPlot','var'))
+wantSubPlot=false;
+end
+end
+
+if isfunction
+InFigure = CheckVararginPairs('InFigure', '', varargin{:});
+else
+if ~(exist('InFigure','var'))
+InFigure='';
+end
+end
+
+if isfunction
+DecisionIndicatorLabelOrientation = CheckVararginPairs('DecisionIndicatorLabelOrientation', 'horizontal', varargin{:});
+else
+if ~(exist('DecisionIndicatorLabelOrientation','var'))
+DecisionIndicatorLabelOrientation='horizontal';
+end
+end
+
+if isfunction
+wantFeedbackIndicators = CheckVararginPairs('wantFeedbackIndicators', false, varargin{:});
+else
+if ~(exist('wantFeedbackIndicators','var'))
+wantFeedbackIndicators=false;
+end
+end
+%%
+if ~isempty(InFigure)
+fig_plot=InFigure;
+clf(InFigure);
+elseif ~wantSubPlot
+fig_plot=figure;
+fig_plot.Units="normalized";
+fig_plot.Position=[0,0,1,1];
+fig_plot.Units="inches";
+fig_plot.PaperUnits="inches";
+PlotPaperSize=fig_plot.Position;
+PlotPaperSize(1:2)=[];
+fig_plot.PaperSize=PlotPaperSize;
+else
+fig_plot=gcf;
+end
+%%
+
+if wantTiled
+    tiledlayout(1,1)
+    nexttile
+end
+
 %% Get Information from Input Data
 % Get the information like number of times series to average, number of
 % windows, and number of plots
@@ -130,8 +192,8 @@ SameNumWindows=true;
 if isnumeric(InData)
     [NumExamples,NumWindows,NumPlots] = size(InData);
 elseif iscell(InData)
-    NumPlots = size(InData);
-    NumExamples=NaN(1,NumPLots);
+    NumPlots = length(InData);
+    NumExamples=NaN(1,NumPlots);
     NumWindows=NaN(1,NumPlots);
     for pidx=1:NumPlots
         [NumExamples(pidx),NumWindows(pidx)] = size(InData{pidx});
@@ -178,6 +240,9 @@ end
 p_Plots = NaN(1,NumPlots);
 p_Error = NaN(1,NumPlots);
 
+p_Plots = [];
+p_Error = [];
+
 YMax=-Inf;
 YMin=Inf;
 
@@ -197,8 +262,10 @@ YMin=Inf;
     this_p_Plot.DisplayName = PlotNames{pidx};
     YMax = max([YMax,this_p_Plot.YData]);
     YMin = min([YMin,this_p_Plot.YData]);
-    p_Plots(pidx) = this_p_Plot;
-    p_Error(pidx) = this_p_Error;
+    % p_Plots(pidx) = this_p_Plot;
+    % p_Error(pidx) = this_p_Error;
+    p_Plots = [p_Plots,this_p_Plot];
+    p_Error = [p_Error,this_p_Error];
     end
     hold off
 
@@ -207,7 +274,10 @@ YMin=Inf;
     YLower=YMin-(RangeFactorLower*YRange);
 
     if wantDecisionIndicators
-    cgg_plotDecisionEpochIndicators(DecisionIndicatorColors);
+    cgg_plotDecisionEpochIndicators(DecisionIndicatorColors,...
+        'DecisionIndicatorLabelOrientation',...
+        DecisionIndicatorLabelOrientation,...
+        'wantFeedbackIndicators',wantFeedbackIndicators);
     end
 
     legend(p_Plots,'Location','best','FontSize',Legend_Size);
@@ -215,6 +285,8 @@ YMin=Inf;
     xlabel(X_Name,'FontSize',X_Name_Size);
     ylabel(Y_Name,'FontSize',Y_Name_Size);
     title(PlotTitle,'FontSize',Title_Size);
+
+%%
 
     fig_plot.CurrentAxes.XAxis.FontSize=Label_Size;
     fig_plot.CurrentAxes.YAxis.FontSize=Label_Size;

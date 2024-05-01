@@ -1,7 +1,34 @@
-function [p_record,p_fixation,p_choice] = cgg_plotDecisionEpochIndicators(LineColors)
+function [p_record,p_fixation,p_choice,p_audio,p_move,p_complete] = cgg_plotDecisionEpochIndicators(LineColors,varargin)
 %CGG_PLOTDECISIONEPOCHINDICATORS Summary of this function goes here
 %   Detailed explanation goes here
 
+%% Varargin Options
+
+isfunction=exist('varargin','var');
+
+if isfunction
+DecisionIndicatorLabelOrientation = CheckVararginPairs('DecisionIndicatorLabelOrientation', 'horizontal', varargin{:});
+else
+if ~(exist('DecisionIndicatorLabelOrientation','var'))
+DecisionIndicatorLabelOrientation='horizontal';
+end
+end
+
+if isfunction
+wantFeedbackIndicators = CheckVararginPairs('wantFeedbackIndicators', false, varargin{:});
+else
+if ~(exist('wantFeedbackIndicators','var'))
+wantFeedbackIndicators=false;
+end
+end
+%%
+if ~wantFeedbackIndicators
+p_audio = [];
+p_move = [];
+p_complete = [];
+end
+
+%%
 
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 
@@ -10,27 +37,41 @@ cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 xline_record = cfg_Plotting.xline_record;
 xline_fixation = cfg_Plotting.xline_fixation;
 xline_choice = cfg_Plotting.xline_choice;
+
+xline_audio = cfg_Plotting.xline_audio;
+xline_move = cfg_Plotting.xline_move;
+xline_complete = cfg_Plotting.xline_complete;
+
 xline_width = cfg_Plotting.xline_width;
 
-Label_Size = cfg_Plotting.Label_Size;
+Indicator_Size = cfg_Plotting.Indicator_Size;
 
 %%
 
 Label_Record = cfg_Plotting.Label_Record;
 Label_Fixation = cfg_Plotting.Label_Fixation;
 Label_Choice = cfg_Plotting.Label_Choice;
+Label_Audio = cfg_Plotting.Label_Audio;
+Label_Move = cfg_Plotting.Label_Move;
+Label_Complete = cfg_Plotting.Label_Complete;
 
 %%
 
 LineSpec_Record = cfg_Plotting.LineSpec_Record;
 LineSpec_Fixation = cfg_Plotting.LineSpec_Fixation;
 LineSpec_Choice = cfg_Plotting.LineSpec_Choice;
+LineSpec_Audio = cfg_Plotting.LineSpec_Audio;
+LineSpec_Move = cfg_Plotting.LineSpec_Move;
+LineSpec_Complete = cfg_Plotting.LineSpec_Complete;
 
 %%
 
 DisplayName_Record = cfg_Plotting.DisplayName_Record;
 DisplayName_Fixation = cfg_Plotting.DisplayName_Fixation;
 DisplayName_Choice = cfg_Plotting.DisplayName_Choice;
+DisplayName_Audio = cfg_Plotting.DisplayName_Audio;
+DisplayName_Move = cfg_Plotting.DisplayName_Move;
+DisplayName_Complete = cfg_Plotting.DisplayName_Complete;
 
 %%
 
@@ -45,35 +86,72 @@ p_fixation = xline(xline_fixation,LineSpec_Fixation,Label_Fixation,'Color',LineC
 p_choice = xline(xline_choice,LineSpec_Choice,Label_Choice,'Color',LineColors{3});
 end
 
+if wantFeedbackIndicators
+if verLessThan('matlab','9.5')
+InYLim = [-1e10,1e10];
+p_audio = plot([xline_audio,xline_audio],InYLim,'Color',LineColors{1});
+p_move = plot([xline_move,xline_move],InYLim,'Color',LineColors{2});
+p_complete = plot([xline_complete,xline_complete],InYLim,'Color',LineColors{3});
+else
+p_audio = xline(xline_audio,LineSpec_Audio,Label_Audio,'Color',LineColors{1});
+p_move = xline(xline_move,LineSpec_Move,Label_Move,'Color',LineColors{2});
+p_complete = xline(xline_complete,LineSpec_Complete,Label_Complete,'Color',LineColors{3});
+end
+end
 %% Line Width Assignment
 
 p_record.LineWidth = xline_width;
 p_fixation.LineWidth = xline_width;
 p_choice.LineWidth = xline_width;
+if wantFeedbackIndicators
+p_audio.LineWidth = xline_width;
+p_move.LineWidth = xline_width;
+p_complete.LineWidth = xline_width;
+end
 
 %% Display Name Assignment
 
 p_record.DisplayName = DisplayName_Record;
 p_fixation.DisplayName = DisplayName_Fixation;
 p_choice.DisplayName = DisplayName_Choice;
+if wantFeedbackIndicators
+p_audio.DisplayName = DisplayName_Audio;
+p_move.DisplayName = DisplayName_Move;
+p_complete.DisplayName = DisplayName_Complete;
+end
 
 %% Label Orientation Assignment
 
-p_record.LabelOrientation = 'horizontal';
-p_fixation.LabelOrientation = 'horizontal';
-p_choice.LabelOrientation = 'horizontal';
+p_record.LabelOrientation = DecisionIndicatorLabelOrientation;
+p_fixation.LabelOrientation = DecisionIndicatorLabelOrientation;
+p_choice.LabelOrientation = DecisionIndicatorLabelOrientation;
+if wantFeedbackIndicators
+p_audio.LabelOrientation = DecisionIndicatorLabelOrientation;
+p_move.LabelOrientation = DecisionIndicatorLabelOrientation;
+p_complete.LabelOrientation = DecisionIndicatorLabelOrientation;
+end
 
 %% Label Horizontal Alignment Assignment
 
 p_record.LabelHorizontalAlignment = 'center';
 p_fixation.LabelHorizontalAlignment = 'center';
 p_choice.LabelHorizontalAlignment = 'center';
+if wantFeedbackIndicators
+p_audio.LabelHorizontalAlignment = 'center';
+p_move.LabelHorizontalAlignment = 'center';
+p_complete.LabelHorizontalAlignment = 'center';
+end
 
 %% Font Size Assignment
 
-p_record.FontSize = Label_Size;
-p_fixation.FontSize = Label_Size;
-p_choice.FontSize = Label_Size;
+p_record.FontSize = Indicator_Size;
+p_fixation.FontSize = Indicator_Size;
+p_choice.FontSize = Indicator_Size;
+if wantFeedbackIndicators
+p_audio.FontSize = Indicator_Size;
+p_move.FontSize = Indicator_Size;
+p_complete.FontSize = Indicator_Size;
+end
 
 end
 

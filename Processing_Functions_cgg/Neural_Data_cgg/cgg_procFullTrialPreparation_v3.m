@@ -14,6 +14,7 @@ TrialDuration_Minimum=cfg_param.TrialDuration_Minimum;
 probe_area=cfg_param.probe_area;
 Activity_Type=cfg_param.Activity_Type;
 Smooth_Factor=cfg_param.Smooth_Factor;
+SmoothType=cfg_param.SmoothType;
 want_all_Probes=cfg_param.want_all_Probes;
 
 Frame_Event_Selection_Data=cfg_param.Frame_Event_Selection_Data;
@@ -129,10 +130,10 @@ fullfilename = cgg_generateActivityFullFileName('inputfolder',inputfolder,'outda
 %% Get the segmented data and smooth it
 
 [Segmented_Data,TrialNumbers_Data,~] = cgg_getAllTrialDataFromTimeSegments_v2(Start_IDX_Data,End_IDX_Data,fullfilename,Smooth_Factor,'inputfolder',inputfolder,...
-    'outdatadir',outdatadir);
+    'outdatadir',outdatadir,'SmoothType',SmoothType);
 
 [Segmented_Baseline,TrialNumbers_Baseline,~] = cgg_getAllTrialDataFromTimeSegments_v2(Start_IDX_Base,End_IDX_Base,fullfilename,Smooth_Factor,'inputfolder',inputfolder,...
-    'outdatadir',outdatadir);
+    'outdatadir',outdatadir,'SmoothType',SmoothType);
 
 %% Detrend the data according to the baseline period
 
@@ -229,7 +230,7 @@ Output(2).Significant_Channels=Significant_Channels;
 Output(3).Significant_Channels=NotSignificant_Channels;
 
 %% 
-SizeIssue = cgg_saveTrialEpochs(Output,this_probe_area,trialVariables,Epoch,Probe_Order,cfg_directories);
+SizeIssue = cgg_saveTrialEpochs(Output,this_probe_area,trialVariables,Epoch,Probe_Order,cfg_directories,cfg_param);
 
 if SizeIssue
     SessionIssue=true;

@@ -9,13 +9,23 @@ Epoch='Decision';
 %%
 
 Decoder={'Logistic','SVM','Gaussian-Logistic','Gaussian-SVM','NaiveBayes'};
-Dimension = 3;
+Dimension = 1:4;
 
-DataWidth = 100;
+wantZeroFeatureDetector=false;
+
+DataWidth = 50;
 StartingIDX = 'All';
 EndingIDX = 'All';
 WindowStride = 50;
 NumFolds = 10;
+
+WantRandomize = false;
+
+ARModelOrder=10;
+
+cfg_PreProcessing = PARAMETERS_cgg_proc_NeuralDataPreparation('SessionName','none');
+
+SamplingFrequency = cfg_PreProcessing.rect_samprate;
 
 %% K-Fold Splitting
 
@@ -65,18 +75,20 @@ AllSplitNames{7}=SplitNames;
 %%
 NumIter=4;
 
-wantIA = false;
-
-wantTrain = false;
+wantTrain = true;
 wantTest = true;
+
+MatchType = 'combinedaccuracy';
 
 %%
 SubsetAmount=940;
+SessionSubset='Fr_Probe_03_22_07_13_002_01';
 
 NumKPartitions=20;
 
-NumObsPerChunk = 250;
+NumObsPerChunk = 100;
 NumChunks = 4;
+NumEpochs = 1;
 
 %%
 wantSubset = true;
@@ -84,6 +96,12 @@ wantSubset = true;
 wantStratifiedPartition = true;
 
 wantTrialChosen = false;
+
+%% Importance Analysis
+
+wantIA = false;
+
+IADecoder = 'SVM';
 
 %%
 

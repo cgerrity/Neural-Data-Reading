@@ -962,6 +962,15 @@ cgg_procTrialTimeCourses('inputfolder',inputfolder,...
 
 %%
 
+% Save Session Preprocessing Parameters
+ParameterDir=cfg_directories.outdatadir.Experiment.Session.Parameters.path;
+ParameterPreProcessing_SaveName='Parameters_Preprocessing.yaml';
+
+ParameterPreProcessing_SaveNameFull=[ParameterDir filesep ParameterPreProcessing_SaveName];
+WriteYaml(ParameterPreProcessing_SaveNameFull, cfg);
+
+%%
+
 % Done.
 
 %% Helper functions.

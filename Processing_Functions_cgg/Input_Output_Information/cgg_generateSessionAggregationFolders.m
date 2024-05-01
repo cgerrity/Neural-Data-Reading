@@ -66,6 +66,18 @@ cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
 [cfg_tmp,~] = cgg_generateFolderAndPath('Decoding','Decoding',cfg_tmp);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
+if isfunction
+Data_Normalized = CheckVararginPairs('Data_Normalized', false, varargin{:});
+if Data_Normalized
+
+% Make the Normalized Data output folder names.
+cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
+[cfg_tmp,~] = cgg_generateFolderAndPath('Data_Normalized','Data_Normalized',cfg_tmp);
+cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
+
+end % End for whether to make the Normalized Data Folder
+end % End for whether this is being called within a function
+
 
 end % End for whether there exists any input for the Epoch
 end % End for whether this is being called within a function
@@ -95,6 +107,31 @@ cfg.TargetDir.Aggregate_Data.Plots.Activity=cfg_tmp;
 end % End for looping through all sub folders of activity
 end % End for whether there exists any input for the subfolders and the 
     % activity type
+end % End for whether this is being called within a function
+
+%% Generic Folder with input Name
+
+% Make the Generic folder names.
+if isfunction
+Folder = CheckVararginPairs('Folder', '', varargin{:});
+if ~isempty(Folder)
+cfg_tmp=cfg.TargetDir.Aggregate_Data;
+[cfg_tmp,~] = cgg_generateFolderAndPath(Folder,'Folder',cfg_tmp);
+cfg.TargetDir.Aggregate_Data=cfg_tmp;
+
+% Make the Generic sub folder names.
+if isfunction
+SubFolder = CheckVararginPairs('SubFolder', '', varargin{:});
+if ~isempty(SubFolder)
+
+cfg_tmp=cfg.TargetDir.Aggregate_Data.Folder;
+[cfg_tmp,~] = cgg_generateFolderAndPath(SubFolder,'SubFolder',cfg_tmp);
+cfg.TargetDir.Aggregate_Data.Folder=cfg_tmp;
+
+end % End for whether there exists any input for the new sub folder
+end % End for whether this is being called within a function
+
+end % End for whether there exists any input for the new folder
 end % End for whether this is being called within a function
 
 end

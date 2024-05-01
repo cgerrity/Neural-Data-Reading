@@ -11,10 +11,20 @@ SamplingFrequency=1000;
 wantSubset = true;
 wantStratifiedPartition = true;
 
+wantZeroFeatureDetector=false;
+ARModelOrder=10;
+
 VariableName='Correct Trial';
 
 X_Name='Time (s)';
 Y_Name='Accuracy';
+
+%% Parameters
+cfg_NameParameters = NAMEPARAMETERS_cgg_nameVariables;
+
+ExtraSaveTermSubset=cfg_NameParameters.ExtraSaveTermSubset;
+ExtraSaveTermZeroFeature=cfg_NameParameters.ExtraSaveTermZeroFeature;
+ExtraSaveTermAR=cfg_NameParameters.ExtraSaveTermAR;
 
 
 %%
@@ -37,6 +47,7 @@ DataWidth = cfg_Decoder.DataWidth/SamplingFrequency;
 WindowStride = cfg_Decoder.WindowStride/SamplingFrequency;
 
 Decoders = cfg_Decoder.Decoder;
+Decoders={'SVM','Logistic'};
 NumDecoders = length(Decoders);
 
 if strcmp(Epoch,'Decision')
@@ -47,20 +58,36 @@ end
 
 outdatadir=cfg_Sessions(1).outdatadir;
 TargetDir=outdatadir;
+ResultsDir=cfg_Sessions(1).temporarydir;
 
+ExtraSaveTerm='';
 if wantSubset
-    if wantStratifiedPartition
-Partition_NameExt = 'KFoldPartition_Subset.mat';
-    else
-Partition_NameExt = 'KFoldPartition_Subset_NS.mat';
-    end
-else
-    if wantStratifiedPartition
-Partition_NameExt = 'KFoldPartition.mat';
-    else
-Partition_NameExt = 'KFoldPartition_NS.mat';
-    end
+ExtraSaveTerm=[ExtraSaveTerm '_' ExtraSaveTermSubset];
 end
+if wantZeroFeatureDetector
+ExtraSaveTerm=[ExtraSaveTerm '_' ExtraSaveTermZeroFeature];
+end
+if ~isempty(ARModelOrder)
+ExtraSaveTerm=[ExtraSaveTerm '_' ExtraSaveTermAR];
+end
+
+% if wantSubset
+%     if wantStratifiedPartition
+% Partition_NameExt = 'KFoldPartition_Subset.mat';
+%     else
+% Partition_NameExt = 'KFoldPartition_Subset_NS.mat';
+%     end
+% else
+%     if wantStratifiedPartition
+% Partition_NameExt = 'KFoldPartition.mat';
+%     else
+% Partition_NameExt = 'KFoldPartition_NS.mat';
+%     end
+% end
+
+Accuracy_All=cell(NumDecoders,NumFolds);
+Window_Accuracy_All=cell(NumDecoders,NumFolds);
+CM_Table_All=cell(NumDecoders,NumFolds);
 
 Each_Prediction=cell(NumDecoders,NumFolds);
 EachIdentifiers=cell(NumDecoders,NumFolds);
@@ -73,34 +100,35 @@ for fidx=FoldStart:FoldEnd
     Fold = fidx;
     Decoder = Decoders{didx};
 
-    if wantSubset
-cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
-    'Epoch',Epoch,'Decoder',[Decoder,'_Subset'],'Fold',Fold);
-    else
 cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
     'Epoch',Epoch,'Decoder',Decoder,'Fold',Fold);
-    end
+cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+    'Epoch',Epoch,'Decoder',Decoder,'Fold',Fold);
+cfg.ResultsDir=cfg_Results.TargetDir;
 
-Decoding_Dir = cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Decoding.Decoder.Fold.path;
 
-Partition_Dir = cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Decoding.path;
+this_cfg_Decoder = cgg_generateDecoderVariableSaveNames_v2(Decoder,cfg,'ExtraSaveTerm',ExtraSaveTerm);
 
-Partition_PathNameExt = [Partition_Dir filesep Partition_NameExt];
+Model_PathNameExt = this_cfg_Decoder.Model;
+Accuracy_PathNameExt = this_cfg_Decoder.Accuracy;
+Importance_PathNameExt = this_cfg_Decoder.Importance;
+Partition_PathNameExt = this_cfg_Decoder.Partition;
+
+% Accuracy_PathNameExt = [Decoding_Dir filesep Accuracy_NameExt];
+
+m_Accuracy = matfile(Accuracy_PathNameExt,'Writable',false);
+% Each_Prediction{didx,fidx} = m_Accuracy.Each_Prediction;
+this_Accuracy = m_Accuracy.Accuracy;
+this_Window_Accuracy = m_Accuracy.Window_Accuracy;
+this_CM_Table = m_Accuracy.CM_Table;
+
+Accuracy_All{didx,fidx}=this_Accuracy;
+Window_Accuracy_All{didx,fidx}=this_Window_Accuracy;
+CM_Table_All{didx,fidx} = this_CM_Table;
 
 m_Partition = matfile(Partition_PathNameExt,'Writable',false);
 KFoldPartition=m_Partition.KFoldPartition;
 KFoldPartition=KFoldPartition(1);
-
-if wantSubset
-Accuracy_NameExt = sprintf('%s_Accuracy_Subset.mat',Decoder);
-else
-Accuracy_NameExt = sprintf('%s_Accuracy.mat',Decoder);
-end
-
-Accuracy_PathNameExt = [Decoding_Dir filesep Accuracy_NameExt];
-
-m_Accuracy = matfile(Accuracy_PathNameExt,'Writable',false);
-Each_Prediction{didx,fidx} = m_Accuracy.Each_Prediction;
 
 this_TestingIDX=test(KFoldPartition,fidx);
 
@@ -108,13 +136,23 @@ EachIdentifiers{didx,fidx}=Identifiers(this_TestingIDX);
 
 end
 
-this_ClassNames=cell2mat(transpose(cellfun(@(x2) cell2mat(x2),Each_Prediction{1,fidx},'UniformOutput',false)));
-this_ClassNames=this_ClassNames(:,1);
-this_ClassNames=unique(this_ClassNames);
-ClassNames=unique([ClassNames;this_ClassNames]);
+% this_ClassNames=cell2mat(transpose(cellfun(@(x2) cell2mat(x2),Each_Prediction{1,fidx},'UniformOutput',false)));
+% this_ClassNames=this_ClassNames(:,1);
+% this_ClassNames=unique(this_ClassNames);
+% ClassNames=unique([ClassNames;this_ClassNames]);
+
 end
 
 InSavePlotCFG = cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Decoding.Decoder.Plots;
+
+TrueValue=this_CM_Table.TrueValue;
+
+[~,NumDimension]=size(TrueValue);
+ClassNames=cell(1,NumDimension);
+for didx=1:NumDimension
+this_ClassNames=unique(TrueValue(:,didx));
+ClassNames{didx}=unique(this_ClassNames);
+end
 %%
 
 this_fidx=1;
@@ -242,3 +280,23 @@ end
 % 
 % title(VariableName);
 % ylabel('Accuracy');
+
+%%
+
+% aaa=dir('/Volumes/gerritcg''s home/Data_Neural/Aggregate Data/Epoched Data/Decision/Data');
+% 
+% for aidx=3:length(aaa)
+% 
+% SavePathNameExt=[aaa(aidx).folder filesep aaa(aidx).name];
+% 
+% m_test=matfile(SavePathNameExt,"Writable",false);
+% 
+% SaveVariables=m_test.Data;
+% SaveVariablesName='Data';
+% [SavePath, SaveName, SaveExt]=fileparts(SavePathNameExt);
+% 
+% SaveTMPPathNameExt=[SavePath filesep SaveName SaveExt];
+% 
+% cgg_saveVariableUsingMatfile({SaveVariables},{SaveVariablesName},SaveTMPPathNameExt);
+% 
+% end

@@ -29,6 +29,14 @@ FilterValue=NaN;
 end
 end
 
+if isfunction
+MatchType = CheckVararginPairs('MatchType', 'combinedaccuracy', varargin{:});
+else
+if ~(exist('MatchType','var'))
+MatchType='combinedaccuracy';
+end
+end
+
 %%
 
 VariableNames=CM_Table.Properties.VariableNames;
@@ -58,13 +66,35 @@ end
 
 Accuracy=NaN(NumIterations,1);
 
+if iscell(ClassNames)
+CM=zeros(2,2,NumIterations);
+else
 CM=zeros(length(ClassNames),length(ClassNames),NumIterations);
+end
 
 TrueValue=CM_Table.TrueValue;
 
+if all(~strcmp(FilterColumn,'All') & ~strcmp(FilterColumn,'Target Feature'))
+    FilterRowIDX=all((CM_Table{:,FilterColumn}==FilterValue),2);
+    TrueValue=TrueValue(FilterRowIDX,:);
+end
+
+if any(strcmp(FilterColumn,'Target Feature'))
+    SelectDimension=CM_Table.('Target Feature');
+    TrueValue=TrueValue(sub2ind(size(TrueValue),1:size(TrueValue,1),SelectDimension'))';
+    MatchType='exact';
+end
+
+[NumInstances,NumDimension]=size(TrueValue);
+
 %%
 for idx=1:NumIterations
+
+    if iscell(ClassNames)
+        this_Full_CM=zeros(2);
+    else
     this_Full_CM=zeros(length(ClassNames));
+    end
 
     if hasIterationColumn
     this_idx=IterationValues(idx);
@@ -74,32 +104,65 @@ for idx=1:NumIterations
     this_CM_Table=CM_Table;
     end
 
-    if ~strcmp(FilterColumn,'All')
-        this_CM_Table=...
-        this_CM_Table(:,this_CM_Table.(FilterColumn)==FilterValue);
+    if all(~strcmp(FilterColumn,'All') & ~strcmp(FilterColumn,'Target Feature'))
+        % this_CM_Table=...
+        % this_CM_Table((this_CM_Table.(FilterColumn)==FilterValue),:);
+        this_CM_Table=this_CM_Table(FilterRowIDX,:);
     end
 
     NumPredictions=numel(PredictionIndices);
+
+    CombinedPrediction=NaN(NumInstances*NumPredictions,NumDimension);
+    CombinedTrueValue=NaN(NumInstances*NumPredictions,NumDimension);
 
     for pidx=1:NumPredictions
         this_PredictionIndex=PredictionIndices(pidx);
         if hasIterationColumn
         this_Prediction=this_CM_Table{:,this_PredictionIndex};
         else
-        this_Prediction=this_CM_Table{:,this_PredictionIndex}.Variables;
-        this_Prediction=this_Prediction(:,idx);
+        this_Prediction=this_CM_Table{:,this_PredictionIndex};
+        this_Prediction=this_Prediction{:,idx};
         end
 
-        this_CM = confusionmat(TrueValue,this_Prediction,'Order',ClassNames);
-        this_Full_CM = this_Full_CM+this_CM;
+        CombinedIndices_Start=NumInstances*(pidx-1)+1;
+        CombinedIndices_End=NumInstances*(pidx);
+
+        CombinedIndices=CombinedIndices_Start:CombinedIndices_End;
+
+        if any(strcmp(FilterColumn,'Target Feature'))
+%             this_Prediction=this_Prediction(:,SelectDimension);
+            this_Prediction=this_Prediction(sub2ind(size(this_Prediction),1:size(this_Prediction,1),SelectDimension'))';
+        end
+
+        CombinedPrediction(CombinedIndices,:)=this_Prediction;
+        CombinedTrueValue(CombinedIndices,:)=TrueValue;
+
     end
 
-    TruePositives = trace(this_Full_CM);
-    TotalObservations = sum(this_Full_CM(:));
-    Accuracy(idx) = TruePositives/TotalObservations;
-
-    CM(:,:,idx)=this_Full_CM;
-
+    switch MatchType
+        case 'exact'
+            if iscell(ClassNames)
+                this_CM_tmp=CombinedTrueValue==CombinedPrediction;
+                this_CM_tmp=all(this_CM_tmp,2);
+                this_CM=[sum(this_CM_tmp==1),0;sum(this_CM_tmp==0),0];
+            else
+                this_CM = confusionmat(CombinedTrueValue,...
+                    CombinedPrediction,'Order',ClassNames);
+            end
+                this_Full_CM = this_CM;
+        
+                TruePositives = trace(this_Full_CM);
+                TotalObservations = sum(this_Full_CM(:));
+                Accuracy(idx) = TruePositives/TotalObservations;
+            
+                CM(:,:,idx)=this_Full_CM;
+        
+        case 'macroaccuracy'
+            [Accuracy(idx)] = cgg_calcMacroAccuracy(CombinedTrueValue,CombinedPrediction,ClassNames);
+        case 'combinedaccuracy'
+            [Accuracy(idx)] = cgg_calcCombinedAccuracy(CombinedTrueValue,CombinedPrediction,ClassNames);
+        otherwise
+    end
 end
 
 MeanAccuracy=mean(Accuracy);

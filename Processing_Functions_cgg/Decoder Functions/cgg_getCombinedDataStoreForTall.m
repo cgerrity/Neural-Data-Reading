@@ -8,10 +8,11 @@ TargetAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Target.path;
 
 %%
 ChannelRemoval = CheckVararginPairs('ChannelRemoval', [], varargin{:});
+WantRandomize = CheckVararginPairs('WantRandomize', false, varargin{:});
 
 %%
 
-Data_Fun=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,false,true,true,true);
+Data_Fun=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,false,WantRandomize,true,true,varargin{:});
 Target_Fun=@(x) cgg_loadTargetArray(x,varargin{:});
 
 Data_ds = fileDatastore(DataAggregateDir,"ReadFcn",Data_Fun);

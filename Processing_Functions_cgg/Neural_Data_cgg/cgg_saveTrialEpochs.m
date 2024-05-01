@@ -1,4 +1,4 @@
-function SizeIssue = cgg_saveTrialEpochs(Input,Probe_Area,trialVariables,Epoch,Probe_Order,cfg)
+function SizeIssue = cgg_saveTrialEpochs(Input,Probe_Area,trialVariables,Epoch,Probe_Order,cfg,cfg_param)
 %CGG_SAVETRIALEPOCHS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -22,11 +22,13 @@ ProcessingDir=cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch.Processing.pa
 Data_SaveName='%s_Data_%06d.mat';
 Target_SaveName='Target_Information.mat';
 ProbeProcessing_SaveName='Probe_Processing_Information.mat';
+ParameterProcessing_SaveName='Parameters_Processing.yaml';
 SessionProcessing_SaveName='Session_Processing_Information.mat';
 
 Data_SaveNameFull=[DataDir filesep Data_SaveName];
 Target_SaveNameFull=[TargetDir filesep Target_SaveName];
 ProbeProcessing_SaveNameFull=[ProcessingDir filesep ProbeProcessing_SaveName];
+ParameterProcessing_SaveNameFull=[ProcessingDir filesep ParameterProcessing_SaveName];
 
 %%
 
@@ -53,6 +55,27 @@ TrialChosen=num2cell(TrialChosen);
 
 Disconnected_Channels=Input(3).Connected_Channels;
 NotSignificant_Channels=Input(3).Significant_Channels;
+
+%%
+
+[cfg_Session] = DATA_cggAllSessionInformationConfiguration;
+
+ResultsDir=cfg_Session(1).outdatadir;
+
+Folder='Variables';
+SubFolder='Connected';
+
+[cfg_Common] = cgg_generateSessionAggregationFolders(...
+                'TargetDir',ResultsDir,'Folder',Folder,...
+                'SubFolder',SubFolder);
+
+ClusteringDir=cfg_Common.TargetDir.Aggregate_Data.Folder.SubFolder.path;
+
+CommonNameExt='CommonBadChannels.mat';
+CommonPathNameExt=[ClusteringDir filesep CommonNameExt];
+
+m_CommonClustering=matfile(CommonPathNameExt,"Writable",false);
+CommonDisconnectedChannels=m_CommonClustering.CommonDisconnectedChannels;
 
 %%
 
@@ -83,10 +106,12 @@ parfor didx=1:NumData
     this_Data=Input(2).Trials(:,:,didx);
     end
     this_Data_SaveName=sprintf(Data_SaveNameFull,Epoch,didx);
-    [this_NumChannels,this_NumSamples]=size(this_Data);
     
     this_Data(Disconnected_Channels,:)=NaN;
     this_Data(NotSignificant_Channels,:)=NaN;
+    this_Data(CommonDisconnectedChannels,:)=[];
+
+    [this_NumChannels,this_NumSamples]=size(this_Data);
     
     this_trialVariablesNumber=find([trialVariables.TrialNumber]==this_TrialNumber);
     
@@ -160,6 +185,9 @@ Target=trialVariables(Target_IDX);
     m_Probe = matfile(ProbeProcessing_SaveNameFull,'Writable',true);
     m_Probe.ProbeProcessing=ProbeProcessing;
     end
+
+% Save Session Processing Parameters
+WriteYaml(ParameterProcessing_SaveNameFull, cfg_param);
     
     
 function nUpdateWaitbar(~)

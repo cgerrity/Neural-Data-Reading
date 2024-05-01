@@ -43,8 +43,8 @@ spike_minfreq = 100;
 % band-pass filtered, then rectified (absolute value), then low-pass filtered
 % at a frequency well below the lower corner, then downsampled.
 
-rect_bandfreqs = [ 750 5000 ];
-rect_lowpassfreq = 300;
+rect_bandfreqs = [ 300 5000 ];
+rect_lowpassfreq = 500;
 rect_samprate = lfp_samprate;
 
 

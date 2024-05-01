@@ -2,13 +2,11 @@
 
 clc; clear; close all;
 
-% cgg_getKFoldPartitions;
-
 Fold_Start=1;
-Fold_End=4;
+Fold_End=10;
 
 for fidx=Fold_Start:Fold_End
 Fold=fidx;
 
-cgg_runDecoder(Fold)
+cgg_runAutoEncoder(Fold);
 end
