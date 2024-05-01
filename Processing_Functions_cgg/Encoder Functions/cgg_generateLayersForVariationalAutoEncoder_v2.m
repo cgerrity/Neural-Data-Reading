@@ -1,10 +1,20 @@
-function [Layers_VariationalAutoEncoder,Layers_Custom] = cgg_generateLayersForVariationalAutoEncoder_v2(InputSize,HiddenSizes,NumTimeWindows,DataFormat)
+function [Layers_VariationalAutoEncoder,Layers_Custom] = cgg_generateLayersForVariationalAutoEncoder_v2(InputSize,HiddenSizes,NumTimeWindows,DataFormat,varargin)
 %CGG_GENERATELAYERSFORAUTOENCODER Summary of this function goes here
 %   Detailed explanation goes here
 
-InputSize1D=prod(InputSize,"all");
+isfunction=exist('varargin','var');
 
-DropoutPercent=0.5;
+if isfunction
+Dropout = CheckVararginPairs('Dropout', 0.5, varargin{:});
+else
+if ~(exist('Dropout','var'))
+Dropout=0.5;
+end
+end
+%%
+DropoutPercent=Dropout;
+
+InputSize1D=prod(InputSize,"all");
 
 ReshapeInputSize=[InputSize,NumTimeWindows,0];
 

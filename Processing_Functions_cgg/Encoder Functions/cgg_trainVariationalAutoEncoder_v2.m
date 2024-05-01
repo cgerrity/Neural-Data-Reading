@@ -7,7 +7,7 @@ NumEpochsBase=cfg_Encoder.NumEpochsBase;
 miniBatchSize=cfg_Encoder.miniBatchSize;
 GradientThreshold=cfg_Encoder.GradientThreshold;
 NumEpochsSession=cfg_Encoder.NumEpochsSession;
-InitialLearnngRate=cfg_Encoder.InitialLearnngRate;
+InitialLearningRate=cfg_Encoder.InitialLearningRate;
 
 NumEpochsBase=1;
 NumEpochsSession=1;
@@ -101,7 +101,7 @@ end
         'GradientThreshold', GradientThreshold,'NumEpochs', NumEpochs,...
         'ValidationFrequency', ValidationFrequency,...
         'MiniBatchSize', MiniBatchSize,'DataFormat', DataFormat,...
-        'InitialLearnngRate',InitialLearnngRate);
+        'InitialLearnngRate',InitialLearningRate,'SaveDirPlot',Encoding_Dir);
 
 % [NetFinal] = cgg_trainCustomTrainingParallelMultipleOutput(InputNet,InDataStore,DataStore_Testing,DataFormat,NumEpochsFinal,miniBatchSize,GradientThreshold,LossType,OutputNames,ClassNames);
 

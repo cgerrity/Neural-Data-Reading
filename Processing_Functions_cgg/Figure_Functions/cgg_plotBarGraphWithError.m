@@ -129,6 +129,11 @@ b_Error.Color = [0 0 0];
 b_Error.LineStyle = 'none';  
 hold off
 
+ylabel(Y_Name);
+
+if ~isempty(YRange)
+ylim(YRange);
+end
 % xlabel(InVariableName,'FontSize',X_Name_Size);
 % ylabel('Number of Trials','FontSize',Y_Name_Size);
 

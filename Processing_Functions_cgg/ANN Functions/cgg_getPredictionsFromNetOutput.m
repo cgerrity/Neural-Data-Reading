@@ -1,4 +1,4 @@
-function [Prediction] = cgg_getPredictionsFromNetOutput(TargetProbabilities,ClassNames)
+function [Prediction] = cgg_getPredictionsFromNetOutput(TargetProbabilities,ClassNames,IsQuaddle)
 %CGG_GETPREDICTIONSFROMNETOUTPUT Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -41,8 +41,9 @@ wantZeroFeatureDetector=false;
 for eidx=1:NumExamples
     this_Prediction=Prediction(eidx,:);
     this_ClassConfidence=cellfun(@(x) x(:,eidx), ClassConfidenceTMP,"UniformOutput",false);
-
-[this_Prediction] = cgg_procQuaddleInterpreter(this_Prediction,ClassNames,this_ClassConfidence,wantZeroFeatureDetector);
+    if IsQuaddle
+    [this_Prediction] = cgg_procQuaddleInterpreter(this_Prediction,ClassNames,this_ClassConfidence,wantZeroFeatureDetector);
+    end
     Prediction(eidx,:)=this_Prediction;
 end
 

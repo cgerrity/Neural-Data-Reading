@@ -16,7 +16,7 @@ RandomChance=NaN(1,NumIterRand);
 parfor idx=1:NumIterRand
 Prediction=NaN(size(TrueValue));
 for tidx=1:NumTrials
-Prediction(tidx,:) = cgg_getRandomPrediction(ClassNames);
+Prediction(tidx,:) = cgg_getRandomPrediction(ClassNames,IsQuaddle);
 end
 RandomChance(idx) = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType);
 end
@@ -29,7 +29,8 @@ ModeTargetIDX = mode(UniqueValues);
 ModeTarget = UniqueTarget(ModeTargetIDX,:); %# the first output argument
 MostCommonPrediction=ModeTarget;
 
-    case 'combinedaccuracy'
+    % case 'combinedaccuracy'
+    otherwise
 
         ClassConfidence = cell(1, length(ClassNames));
         PredictionTMP=NaN(1,length(ClassNames));

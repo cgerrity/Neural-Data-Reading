@@ -23,6 +23,8 @@ switch MatchType
         [Accuracy] = cgg_calcMacroAccuracy(TrueValue,Prediction,ClassNames);
     case 'combinedaccuracy'
         [Accuracy] = cgg_calcCombinedAccuracy(TrueValue,Prediction,ClassNames);
+    case 'macroF1'
+        [Accuracy] = cgg_calcMacroF1(TrueValue,Prediction,ClassNames);
     otherwise
 end
 

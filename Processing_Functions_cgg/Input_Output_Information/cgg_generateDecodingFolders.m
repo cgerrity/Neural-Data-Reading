@@ -119,17 +119,29 @@ cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 if isfunction
+Target = CheckVararginPairs('Target', '', varargin{:});
+if ~isempty(Target)
+
+% Make the Target folder names.
+cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding;
+[cfg_tmp,~] = cgg_generateFolderAndPath(Target,'Target',cfg_tmp);
+cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding=cfg_tmp;
+
+if isfunction
 Fold = CheckVararginPairs('Fold', '', varargin{:});
 if ~isempty(Fold)
 
 FoldName=sprintf('Fold_%d',Fold);
 
 % Make the Fold folder names.
-cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding;
+cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.Target;
 [cfg_tmp,~] = cgg_generateFolderAndPath(FoldName,'Fold',cfg_tmp);
-cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding=cfg_tmp;
+cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.Target=cfg_tmp;
 
 end % End for whether there exists any input for the Fold
+end % End for whether this is being called within a function
+
+end % End for whether there exists any input for the Target
 end % End for whether this is being called within a function
 
 end % End for whether there exists any input for the Encoding

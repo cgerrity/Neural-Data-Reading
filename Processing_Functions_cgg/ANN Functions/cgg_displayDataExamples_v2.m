@@ -1,4 +1,4 @@
-function cgg_displayDataExamples(InputNet,XTraining,TTraining,XValidation,TValidation,ClassNames,OutputInformation,Iteration,InFigure,varargin)
+function cgg_displayDataExamples_v2(InputNet,TrainingMbq,ValidationMbq,ClassNames,OutputInformation,Iteration,InFigure,varargin)
 %CGG_DISPLAYDATAEXAMPLES Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -51,17 +51,56 @@ if ~(exist('WantActivations','var'))
 WantActivations=false;
 end
 end
+
+if isfunction
+ReconstructionMonitor = CheckVararginPairs('ReconstructionMonitor', '', varargin{:});
+else
+if ~(exist('ReconstructionMonitor','var'))
+ReconstructionMonitor='';
+end
+end
+
+if isfunction
+IsQuaddle = CheckVararginPairs('IsQuaddle', false, varargin{:});
+else
+if ~(exist('IsQuaddle','var'))
+IsQuaddle=false;
+end
+end
+
+if isfunction
+NumExamples = CheckVararginPairs('NumExamples', 3, varargin{:});
+else
+if ~(exist('NumExamples','var'))
+NumExamples=3;
+end
+end
 %%
 
 % figure(InFigure);
 % clf;
 clf(InFigure);
+
+%%
+reset(ValidationMbq);
+reset(TrainingMbq);
+
+NumShuffle = randi(10);
+
+for idx = 1:NumShuffle
+shuffle(ValidationMbq);
+shuffle(TrainingMbq);
+end
+
+[XValidation,TValidation] = next(ValidationMbq);
+[XTraining,TTraining] = next(TrainingMbq);
 %%
 
 % [NumChannels,NumSamples,NumAreas,NumBatches,NumWindows]=size(XTraining);
 [NumChannels,~,NumAreas,NumBatches,NumWindows]=size(XTraining);
+% [NumChannels,~,NumAreas,~,NumWindows]=size(XTraining);
 
-NumExamples=NumBatches;
+% NumExamples=NumBatches;
 BatchIDX=1:NumExamples;
 ChannelIDX=randi(NumChannels,[1,NumExamples]);
 AreaIDX=randi(NumAreas,[1,NumExamples]);
@@ -91,6 +130,23 @@ Y_Reconstruction_Validation=Y_Validation{NumClassifiers+1:end};
 
 %%
 
+NumReconstructionMonitorExamples = 10;
+
+if ~isempty(ReconstructionMonitor)
+
+T_Reconstruction_Training = XTraining;
+T_Reconstruction_Validation = XValidation;
+T_Classification_Training = TTraining;
+T_Classification_Validation = TValidation;
+
+for idx = 1:NumReconstructionMonitorExamples
+    this_BatchIDX=mod(idx-1,NumBatches)+1;
+
+cgg_displayReconstructionMonitor(ReconstructionMonitor,Y_Classification_Training,Y_Reconstruction_Training,T_Classification_Training,T_Reconstruction_Training,Y_Classification_Validation,Y_Reconstruction_Validation,T_Classification_Validation,T_Reconstruction_Validation,ClassNames,Iteration,this_BatchIDX);
+end
+end
+%%
+
 selectionFun_Training=@(x_array) dlarray(cell2mat(arrayfun(@(x1,x2) extractdata(x_array(:,x1,x2)),BatchIDX,WindowIDX_Training,"UniformOutput",false)),'CBT');
 TargetProbabilities_Training=cellfun(@(x) selectionFun_Training(x),Y_Classification_Training,"UniformOutput",false);
 
@@ -100,8 +156,8 @@ TargetProbabilities_Validation=cellfun(@(x) selectionFun_Validation(x),Y_Classif
 %%
 
 if NumClassifiers~=0
-[Prediction_Training] = cgg_getPredictionsFromNetOutput(TargetProbabilities_Training,ClassNames);
-[Prediction_Validation] = cgg_getPredictionsFromNetOutput(TargetProbabilities_Validation,ClassNames);
+[Prediction_Training] = cgg_getPredictionsFromNetOutput(TargetProbabilities_Training,ClassNames,IsQuaddle);
+[Prediction_Validation] = cgg_getPredictionsFromNetOutput(TargetProbabilities_Validation,ClassNames,IsQuaddle);
 end
 
 %%
@@ -128,7 +184,8 @@ NumAdditionalColumns=max([NumClassifierColumns,2]);
 NumColumns=(NumExamples)*Example_Width+NumAdditionalColumns;
 NumRows=(NumClassifierRows==1)*2+(NumClassifierRows==2)*3*2+(NumClassifierRows==0)*2;
 
-Tiled_Plot=tiledlayout(NumRows,NumColumns);
+% Tiled_Plot=tiledlayout(NumRows,NumColumns);
+Tiled_Plot=tiledlayout(InFigure,NumRows,NumColumns);
 
 RowsPerExample=NumRows/2;
 ColumnsPerExample=(NumColumns-NumAdditionalColumns)/NumExamples;
@@ -141,6 +198,15 @@ ColumnsPerAdditional=1;
 %%
 
 Title_Plot=sprintf('Iteration %d',Iteration);
+
+Title_Feature = '[%d';
+for didx = 2:NumClassifiers
+    Title_Feature = [Title_Feature ',%d'];
+end
+Title_Feature = [Title_Feature ']'];
+
+SubTitle_True = ['True: ' Title_Feature];
+SubTitle_Prediction = ['Prediction: ' Title_Feature];
 
 title(Tiled_Plot,Title_Plot);
 
@@ -162,7 +228,7 @@ this_X_Plot=1:length(this_Y);
 
 this_TileIDX=tilenum(Tiled_Plot,1,(eidx-1)*ColumnsPerExample+1);
 
-nexttile(this_TileIDX,[RowsPerExample,ColumnsPerExample]);
+nexttile(Tiled_Plot,this_TileIDX,[RowsPerExample,ColumnsPerExample]);
 plot(this_X_Plot,this_Y,this_X_Plot,this_Y_Reconstruction);
 
 if ~isempty(RangeAll)
@@ -171,7 +237,7 @@ end
 
 if NumClassifiers~=0
 % this_Title=sprintf('True: [%d,%d,%d,%d] Prediction: [%d,%d,%d,%d], Area: %d',FeaturesTrueTraining,FeaturesPredictionTraining,sel_Area);
-this_Title={sprintf('True: [%d,%d,%d,%d]',FeaturesTrueTraining), sprintf('Prediction: [%d,%d,%d,%d]',FeaturesPredictionTraining), sprintf('Area: %d, Window: %d%%',sel_Area,round(sel_Window/NumWindows*100))};
+this_Title={sprintf(SubTitle_True,FeaturesTrueTraining), sprintf(SubTitle_Prediction,FeaturesPredictionTraining), sprintf('Area: %d, Channel: %d, Window: %d%%',sel_Area,sel_Channel,round(sel_Window/NumWindows*100))};
 % this_Title={sprintf('True: [%d,%d,%d,%d] Prediction: [%d,%d,%d,%d]',FeaturesTrueTraining,FeaturesPredictionTraining), sprintf('Area: %d, Window: %d%%',sel_Area,round(sel_Window/NumWindows*100))};
 title(this_Title);
 end
@@ -197,7 +263,7 @@ this_X_Plot=1:length(this_Y);
 this_TileIDX=tilenum(Tiled_Plot,RowsPerExample+1,(eidx-1)*ColumnsPerExample+1);
 
 % nexttile(eidx+NumColumns,[RowsPerExample,ColumnsPerExample]);
-nexttile(this_TileIDX,[RowsPerExample,ColumnsPerExample]);
+nexttile(Tiled_Plot,this_TileIDX,[RowsPerExample,ColumnsPerExample]);
 plot(this_X_Plot,this_Y,this_X_Plot,this_Y_Reconstruction);
 
 if ~isempty(RangeAll)
@@ -206,7 +272,7 @@ end
 
 if NumClassifiers~=0
 % this_Title=sprintf('True: [%d,%d,%d,%d] Prediction: [%d,%d,%d,%d], Area: %d',FeaturesTrueValidation,FeaturesPredictionValidation,sel_Area);
-this_Title={sprintf('True: [%d,%d,%d,%d]',FeaturesTrueValidation), sprintf('Prediction: [%d,%d,%d,%d]',FeaturesPredictionValidation), sprintf('Area: %d, Window: %d%%',sel_Area,round(sel_Window/NumWindows*100))};
+this_Title={sprintf(SubTitle_True,FeaturesTrueValidation), sprintf(SubTitle_Prediction,FeaturesPredictionValidation), sprintf('Area: %d, Channel: %d, Window: %d%%',sel_Area,sel_Channel,round(sel_Window/NumWindows*100))};
 % this_Title={sprintf('True: [%d,%d,%d,%d] Prediction: [%d,%d,%d,%d]',FeaturesTrueValidation,FeaturesPredictionValidation), sprintf('Area: %d, Window: %d%%',sel_Area,round(sel_Window/NumWindows*100))};
 title(this_Title);
 end
@@ -219,8 +285,12 @@ end
 
 %%
 
+IDX_Classifier = contains(InputNet.Learnables.Layer,"Dim");
+
 IsSkip=any(contains({InputNet.Layers(:).Name},"concatenation_Skip"));
-IsRecurrent=any(contains(InputNet.Learnables.Parameter,"Recurrent"));
+IDXAutoEnocderReccurent = contains(InputNet.Learnables.Parameter,"Reccurent");
+
+IsRecurrent=any(~IDX_Classifier & IDXAutoEnocderReccurent);
 IsConvolutional=any(contains({InputNet.Layers(:).Name},"convolutional"));
 
 OutputIDX=InputNet.Learnables.Layer=="fc_Decoder_Out";
@@ -228,6 +298,7 @@ if IsConvolutional
 OutputIDX=contains(InputNet.Learnables.Layer,"point-wise_convolutional_Decoder_1");
 end
 WeightIDX=InputNet.Learnables.Parameter=="Weights";
+WeightIDX=contains(InputNet.Learnables.Parameter,"Weights");
 OutputWeightIDX=OutputIDX & WeightIDX;
 
 BottleNeckIDX=contains(InputNet.Learnables.Layer,"Encoder");
@@ -270,7 +341,7 @@ end
 
 this_TileIDX=tilenum(Tiled_Plot,1,ColumnsPerExample*NumExamples+1);
 
-nexttile(this_TileIDX,[RowsPerAdditional,ColumnsPerAdditional]);
+nexttile(Tiled_Plot,this_TileIDX,[RowsPerAdditional,ColumnsPerAdditional]);
 
 h_first=histogram(ReconstructionWeights,HistBinCount,'Normalization','pdf');
 title({'Reconstruction Path', 'Output Weights'});
@@ -280,7 +351,7 @@ ylim([0,ceil(max(h_first.Values/5))*5]);
 this_TileIDX=tilenum(Tiled_Plot,1,ColumnsPerExample*NumExamples+ColumnsPerAdditional+1);
 
 % nexttile(NumColumns+NumExamples+1);
-nexttile(this_TileIDX,[RowsPerAdditional,ColumnsPerAdditional]);
+nexttile(Tiled_Plot,this_TileIDX,[RowsPerAdditional,ColumnsPerAdditional]);
 
 if WantActivations
     h_second=histogram(Y_Activation_Training,'Normalization','pdf');
@@ -314,8 +385,14 @@ this_LayerName=InputNet.Connections.Source(this_ConnectionIDX);
 
 this_OutputIDX=InputNet.Learnables.Layer==this_LayerName;
 this_OutputWeightIDX=this_OutputIDX & WeightIDX;
+this_OutputWeightIDX = find(this_OutputWeightIDX,1,"first");
 
 this_OutputWeights=double(extractdata(InputNet.Learnables.Value{this_OutputWeightIDX,1}));
+
+% this_ClassifierIDX = contains(InputNet.Learnables.Layer,sprintf("Dim_%d",cidx));
+% this_ClassifierWeightIDX=this_ClassifierIDX & WeightIDX;
+% this_ClassifierWeights = {InputNet.Learnables.Value{this_ClassifierWeightIDX,1}};
+% this_ClassifierWeights = cellfun(@(x) extractdata(x),this_ClassifierWeights,"UniformOutput",false);
 
 [this_NumClasses,~] = size(this_OutputWeights);
 
@@ -333,7 +410,7 @@ tilenum(Tiled_Plot,this_RowinClassifier,(NumExamples+1)+this_ColumninClassifier)
 this_TileIDX=tilenum(Tiled_Plot,this_RowinClassifier*RowsPerAdditional+1,...
     ColumnsPerExample*NumExamples+this_ColumninClassifier);
 
-nexttile(this_TileIDX,[RowsPerAdditional,ColumnsPerAdditional]);
+nexttile(Tiled_Plot,this_TileIDX,[RowsPerAdditional,ColumnsPerAdditional]);
 
 for ccidx=1:this_NumClasses
     if ccidx==2

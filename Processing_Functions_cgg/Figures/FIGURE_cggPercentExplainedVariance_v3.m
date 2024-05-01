@@ -17,6 +17,8 @@ WantPlotExplainedVariance = false;
 WantPlotSignificant = true;
 WantPlotCombinedExplainedVariance = true;
 
+WantAllVersion = true;
+
 wantSignificant = false;
 
 AreaNameCheck='ACC';
@@ -271,7 +273,9 @@ Plotcfg=cfg_Save.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.PlotFolder.S
     for acidx=1:length(AreaNameCheck)
         this_AreaNameCheck=AreaNameCheck{acidx};
         this_InputTable=InputTable{acidx};
-        cgg_plotSignificantRegression(this_InputTable,SignificanceValue,this_AreaNameCheck,Plotcfg);
+        % cgg_plotSignificantRegression(this_InputTable,SignificanceValue,this_AreaNameCheck,Plotcfg);
+        % cgg_plotSignificantRegression_v2(this_InputTable,SignificanceValue,this_AreaNameCheck,Plotcfg);
+        cgg_plotSignificantRegression_v3(this_InputTable,SignificanceValue,this_AreaNameCheck,Plotcfg);
     end
 
 % cgg_plotSignificantRegression(InputTable,SignificanceValue,AreaNameCheck,Plotcfg);
@@ -297,7 +301,9 @@ Plotcfg=cfg_Save.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.PlotFolder.S
     for acidx=1:length(AreaNameCheck)
         this_AreaNameCheck=AreaNameCheck{acidx};
         this_InputTable=InputTable{acidx};
-        cgg_plotCoefficientValuesRegression(this_InputTable,SignificanceValue,this_AreaNameCheck,Plotcfg,'wantSignificant',wantSignificant);
+        % cgg_plotCoefficientValuesRegression(this_InputTable,SignificanceValue,this_AreaNameCheck,Plotcfg,'wantSignificant',wantSignificant);
+        % cgg_plotCoefficientValuesRegression_v2(this_InputTable,SignificanceValue,this_AreaNameCheck,Plotcfg,'wantSignificant',wantSignificant);
+        cgg_plotCoefficientValuesRegression_v3(this_InputTable,SignificanceValue,this_AreaNameCheck,Plotcfg,'wantSignificant',wantSignificant);
     end
 
 

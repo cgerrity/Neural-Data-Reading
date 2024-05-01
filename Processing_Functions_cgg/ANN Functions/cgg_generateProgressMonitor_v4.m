@@ -87,9 +87,13 @@ X_Name_Size = cfg_Plot.X_Name_Size;
 Y_Name_Size = cfg_Plot.Y_Name_Size;
 
 Label_Size = cfg_Plot.Label_Size;
-Line_Width = cfg_Plot.Line_Width;
+Line_Width_ProgressMonitor = cfg_Plot.Line_Width_ProgressMonitor;
 
 Text_Size = cfg_Plot.Text_Size;
+
+if ~isempty(SaveTerm)
+SaveTerm = ['_' SaveTerm];
+end
 
 %
 
@@ -122,14 +126,15 @@ Tiled_Plot=tiledlayout(NumLossPlots,PlotSplit,"TileSpacing","tight");
 if NumLossPlots==2
     nexttile(Tiled_Plot,1,[1,PlotSplit-InformationSpan]);
     
-    p_AccuracyTraining=plot(NaN,NaN,'DisplayName','Training Accuracy','LineWidth',Line_Width);
+    p_AccuracyTraining=plot(NaN,NaN,'DisplayName','Training Accuracy','LineWidth',Line_Width_ProgressMonitor);
     hold on
-    p_AccuracyValidation=plot(NaN,NaN,'DisplayName','Validation Accuracy','LineWidth',Line_Width);
-    p_MajorityClass=plot(NaN,NaN,'DisplayName','Majority Class','LineWidth',Line_Width);
-    p_RandomChance=plot(NaN,NaN,'DisplayName','Random Chance','LineWidth',Line_Width);
+    p_AccuracyValidation=plot(NaN,NaN,'DisplayName','Validation Accuracy','LineWidth',Line_Width_ProgressMonitor);
+    p_MajorityClass=plot(NaN,NaN,'DisplayName','Majority Class','LineWidth',Line_Width_ProgressMonitor);
+    p_RandomChance=plot(NaN,NaN,'DisplayName','Random Chance','LineWidth',Line_Width_ProgressMonitor);
     hold off
 
     box off
+    ylim([0,1]);
     legend([p_AccuracyTraining,p_AccuracyValidation,p_MajorityClass,...
         p_RandomChance],"Location","best");
     xlabel('Iteration','FontSize',X_Name_Size);
@@ -139,9 +144,9 @@ if NumLossPlots==2
     
     nexttile(Tiled_Plot,PlotSplit+1,[1,PlotSplit-InformationSpan]);
     
-    p_LossTraining=plot(NaN,NaN,'DisplayName','Training Loss','LineWidth',Line_Width);
+    p_LossTraining=plot(NaN,NaN,'DisplayName','Training Loss','LineWidth',Line_Width_ProgressMonitor);
     hold on
-    p_LossValidation=plot(NaN,NaN,'DisplayName','Validation Loss','LineWidth',Line_Width);
+    p_LossValidation=plot(NaN,NaN,'DisplayName','Validation Loss','LineWidth',Line_Width_ProgressMonitor);
     hold off
 
     box off
@@ -158,9 +163,9 @@ if NumLossPlots==2
 elseif NumLossPlots==1
     nexttile(Tiled_Plot,1,[1,PlotSplit-InformationSpan]);
     
-    p_LossTraining=plot(NaN,NaN,'DisplayName','Training Loss','LineWidth',Line_Width);
+    p_LossTraining=plot(NaN,NaN,'DisplayName','Training Loss','LineWidth',Line_Width_ProgressMonitor);
     hold on
-    p_LossValidation=plot(NaN,NaN,'DisplayName','Validation Loss','LineWidth',Line_Width);
+    p_LossValidation=plot(NaN,NaN,'DisplayName','Validation Loss','LineWidth',Line_Width_ProgressMonitor);
     hold off
 
     box off
@@ -405,8 +410,8 @@ monitor.SaveTerm = SaveTerm;
                 iteration=iteration{1};
             end
             SavePathNameExt = [monitor.SaveDir filesep ...
-                'Progress-Monitor_Iteration-' num2str(iteration) ...
-                monitor.SaveTerm '.pdf'];
+                'Progress-Monitor' monitor.SaveTerm '_Iteration-' ...
+                num2str(iteration) '.pdf'];
             saveas(monitor.Figure,SavePathNameExt);
         end
     end

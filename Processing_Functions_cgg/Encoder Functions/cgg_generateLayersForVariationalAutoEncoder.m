@@ -1,6 +1,19 @@
-function [Layers_VariationalAutoEncoder,Layers_Custom] = cgg_generateLayersForVariationalAutoEncoder(InputSize,HiddenSizes,NumTimeWindows,DataFormat)
+function [Layers_VariationalAutoEncoder,Layers_Custom] = cgg_generateLayersForVariationalAutoEncoder(InputSize,HiddenSizes,NumTimeWindows,DataFormat,varargin)
 %CGG_GENERATELAYERSFORAUTOENCODER Summary of this function goes here
 %   Detailed explanation goes here
+
+isfunction=exist('varargin','var');
+
+if isfunction
+Dropout = CheckVararginPairs('Dropout', 0.5, varargin{:});
+else
+if ~(exist('Dropout','var'))
+Dropout=0.5;
+end
+end
+%%
+
+DropoutPercent_Main=Dropout;
 
 InputSize1D=prod(InputSize,"all");
 
@@ -49,12 +62,12 @@ for stidx=NumStacks:-1:1
     this_Layer_Encoder = [
         fullyConnectedLayer(this_HiddenSize,"Name",this_Encoder_FullyConnectedName)
         layerNormalizationLayer('Name',this_Encoder_NormalizationName)
-        dropoutLayer(0.5,'Name',this_Encoder_DropOutName)
+        dropoutLayer(DropoutPercent_Main,'Name',this_Encoder_DropOutName)
         softplusLayer("Name",this_Encoder_ActivationName)];
     this_Layer_Decoder = [
         fullyConnectedLayer(this_HiddenSize,"Name",this_Decoder_FullyConnectedName)
         layerNormalizationLayer('Name',this_Decoder_NormalizationName)
-        dropoutLayer(0.5,'Name',this_Decoder_DropOutName)
+        dropoutLayer(DropoutPercent_Main,'Name',this_Decoder_DropOutName)
         softplusLayer("Name",this_Decoder_ActivationName)];
     % if stidx==NumStacks
     %     this_Layer_Decoder=[];
