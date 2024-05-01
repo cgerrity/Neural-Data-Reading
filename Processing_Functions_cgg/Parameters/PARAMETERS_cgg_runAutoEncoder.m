@@ -4,34 +4,46 @@ function cfg = PARAMETERS_cgg_runAutoEncoder(varargin)
 
 %%
 
+% Epoch='Synthetic';
 Epoch='Decision';
+% Target = 'SharedFeatureCoding';
+Target = 'Dimension';
 
 %%
 
 % DataWidth = 400;
-DataWidth = 100;
+DataWidth = 2;
 % StartingIDX = ((-0.4+1.5)/3*3000);
 % EndingIDX = StartingIDX;
 StartingIDX = 'All';
 EndingIDX = 'All';
 % WindowStride = 'All';
-WindowStride = 50;
+WindowStride = 1;
 
 %%
 
+ModelName = 'LSTM';
+ClassifierName = 'Deep LSTM';
+
 % HiddenSizes=[5000,2500,1000,500];
-HiddenSizes=[50,10];
+HiddenSizes=[1000,500];
+ClassifierHiddenSize=[500,500,1];
 NumEpochsBase=500;
-miniBatchSize=10;
-GradientThreshold=1;
+MiniBatchSize=200;
+GradientThreshold=100;
 NumEpochsSession=500;
-InitialLearnngRate = 0.1;
+InitialLearningRate = 0.001;
+LossFactorReconstruction = 1000;
+LossFactorKL = NaN;
+WeightedLoss = 'Inverse'; % Name of type of weighted loss ['', 'Inverse']
 
 %%
 
 wantSubset = true;
 
 wantStratifiedPartition = true;
+
+MatchType_Accuracy_Measure = 'macroF1';
 
 %%
 

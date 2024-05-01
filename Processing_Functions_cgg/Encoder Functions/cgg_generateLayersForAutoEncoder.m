@@ -1,8 +1,18 @@
-function [Layers_AutoEncoder,Layers_Custom] = cgg_generateLayersForAutoEncoder(InputSize,HiddenSizes,NumTimeWindows,DataFormat)
+function [Layers_AutoEncoder,Layers_Custom] = cgg_generateLayersForAutoEncoder(InputSize,HiddenSizes,NumTimeWindows,DataFormat,varargin)
 %CGG_GENERATELAYERSFORAUTOENCODER Summary of this function goes here
 %   Detailed explanation goes here
 
-DropoutPercent_Main=0.5;
+isfunction=exist('varargin','var');
+
+if isfunction
+Dropout = CheckVararginPairs('Dropout', 0.5, varargin{:});
+else
+if ~(exist('Dropout','var'))
+Dropout=0.5;
+end
+end
+%%
+DropoutPercent_Main=Dropout;
 
 InputSize1D=prod(InputSize,"all");
 

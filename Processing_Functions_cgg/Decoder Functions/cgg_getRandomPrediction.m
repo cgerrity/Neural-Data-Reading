@@ -1,4 +1,4 @@
-function Prediction = cgg_getRandomPrediction(ClassNames)
+function Prediction = cgg_getRandomPrediction(ClassNames,IsQuaddle)
 %CGG_GETRANDOMPREDICTION Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -21,7 +21,7 @@ while IncreaseFeatures||DecreaseFeatures
     Prediction(fdidx)=this_Classes(randi(NumClasses));
     end
     
-    if NumDimension==4
+    if IsQuaddle
     QuaddleCheck=~(Prediction==[0,0,0,0]);
     NumDim=sum(QuaddleCheck);
     

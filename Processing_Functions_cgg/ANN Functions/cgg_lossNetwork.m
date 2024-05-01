@@ -1,4 +1,4 @@
-function [Loss,Gradients,State,Accuracy,LossReconstruction,LossClassification,LossKL] = cgg_lossNetwork(net,X,T,LossType,OutputInformation,ClassNames,varargin)
+function [Loss,Gradients,State,Accuracy,LossReconstruction,LossClassification,LossKL,Window_Accuracy,Combined_Accuracy_Measure] = cgg_lossNetwork(net,X,T,LossType,OutputInformation,ClassNames,varargin)
 %CGG_LOSSNETWORK Summary of this function goes here
 %   Detailed explanation goes here
 isfunction=exist('varargin','var');
@@ -19,10 +19,56 @@ IsQuaddle=true;
 end
 end
 
+if isfunction
+WeightReconstruction = CheckVararginPairs('WeightReconstruction', NaN, varargin{:});
+else
+if ~(exist('WeightReconstruction','var'))
+WeightReconstruction=NaN;
+end
+end
+
+if isfunction
+WeightKL = CheckVararginPairs('WeightKL', NaN, varargin{:});
+else
+if ~(exist('WeightKL','var'))
+WeightKL=NaN;
+end
+end
+
+if isfunction
+WantGradient = CheckVararginPairs('WantGradient', true, varargin{:});
+else
+if ~(exist('WantGradient','var'))
+WantGradient=true;
+end
+end
+
+if isfunction
+MatchType = CheckVararginPairs('MatchType', 'macroF1', varargin{:});
+else
+if ~(exist('MatchType','var'))
+MatchType='macroF1';
+end
+end
+
+if isfunction
+Weights = CheckVararginPairs('Weights', cell(0), varargin{:});
+else
+if ~(exist('Weights','var'))
+Weights=cell(0);
+end
+end
+
 %%
-WeightReconstruction=1;
-WeightKL=1;
+if isnan(WeightReconstruction)
+    WeightReconstruction=1;
+end
+if isnan(WeightKL)
+    WeightKL=1;
+end
 WeightClassification=1;
+
+IsWeightedLoss = iscell(Weights) && ~isempty(Weights);
 
 %%
 
@@ -83,13 +129,19 @@ end
 Prediction=NaN(NumExamples,NumDimensions);
 TrueValue=NaN(NumExamples,NumDimensions);
 
-if NumDimensions==1
-T_tmp=ones([1,size(T)]);
-T_tmp(1,:)=T;
-T=T_tmp;
-end
+Window_Prediction = NaN(NumDimensions,NumBatches,NumTimeSteps);
+Window_TrueValue = NaN(NumDimensions,NumBatches,NumTimeSteps);
+
+% if NumDimensions==1
+% T_tmp=ones([1,size(T)]);
+% T_tmp(1,:)=T;
+% T=T_tmp;
+% end
 
 ClassConfidenceTMP=cell(1,NumDimensions);
+Window_ClassConfidenceTMP=cell(1,NumDimensions);
+
+%%
 
 for didx=1:NumDimensions
 
@@ -97,6 +149,11 @@ for didx=1:NumDimensions
     this_T=T(didx,:,:);
     this_ClassNames=ClassNames{didx};
     this_NumClassNames=length(this_ClassNames);
+    if IsWeightedLoss
+        this_Weights = Weights{didx};
+    else
+        this_Weights = NaN;
+    end
 
 switch LossType
     case 'Regression'
@@ -133,14 +190,22 @@ switch LossType
         Prediction(:,didx)=this_Prediction;
 
     case 'Classification'
+        
     this_T=onehotencode(this_T,1,'ClassNames',ClassNames{didx});
     this_T=repmat(this_T,1,1,NumTimeSteps);
     this_T=dlarray(this_T,this_Y.dims);
+    if isnan(this_Weights)
     loss = crossentropy(this_Y,this_T);
+    else
+    loss = crossentropy(this_Y,this_T,this_Weights);
+    end
 
     this_ClassConfidenceTMP=double(extractdata(this_Y));
     this_ClassConfidenceTMP=this_ClassConfidenceTMP(:,:);
     ClassConfidenceTMP{didx}=this_ClassConfidenceTMP;
+
+    this_Window_ClassConfidenceTMP=double(extractdata(this_Y));
+    Window_ClassConfidenceTMP{didx}=this_Window_ClassConfidenceTMP;
     
     this_T_Decoded = onehotdecode(this_T,ClassNames{didx},1);
     this_Y_Decoded = onehotdecode(this_Y,ClassNames{didx},1);
@@ -148,8 +213,14 @@ switch LossType
     this_TrueValue=ClassNames{didx}(this_T_Decoded(:));
     this_Prediction=ClassNames{didx}(this_Y_Decoded(:));
 
+    this_Window_TrueValue=ClassNames{didx}(this_T_Decoded);
+    this_Window_Prediction=ClassNames{didx}(this_Y_Decoded);
+
     TrueValue(:,didx)=this_TrueValue;
     Prediction(:,didx)=this_Prediction;
+
+    Window_TrueValue(didx,:,:) = this_Window_TrueValue;
+    Window_Prediction(didx,:,:) = this_Window_Prediction;
 
 end
 
@@ -168,30 +239,60 @@ if IsQuaddle
 [this_Prediction] = cgg_procQuaddleInterpreter(this_Prediction,ClassNames,this_ClassConfidence,wantZeroFeatureDetector);
         Prediction(eidx,:)=this_Prediction;
     end
+    for bidx=1:NumBatches
+        for tidx=1:NumTimeSteps
+            this_Window_Prediction = Window_Prediction(:,bidx,tidx)';
+            this_Window_ClassConfidence = cellfun(@(x) x(:,bidx,tidx), Window_ClassConfidenceTMP,"UniformOutput",false);
+        
+            [this_Window_Prediction] = cgg_procQuaddleInterpreter(this_Window_Prediction,ClassNames,this_Window_ClassConfidence,wantZeroFeatureDetector);
+            Window_Prediction(:,bidx,tidx) = this_Window_Prediction';
+        end
+    end
 end
 
 %%
 
 [lossReconstruction,lossKL] = cgg_lossELBO_v2(Y_Reconstruction,T_Reconstruction,mu,logSigmaSq);
 
-LossReconstruction=dlarray(0);
-LossKL=dlarray(0);
-LossClassification=dlarray(0);
+WeightedLossReconstruction=dlarray(0);
+WeightedLossKL=dlarray(0);
+WeightedLossClassification=dlarray(0);
 
 if NumReconstruction>0
-LossReconstruction=WeightReconstruction*lossReconstruction;
+WeightedLossReconstruction=WeightReconstruction*lossReconstruction;
 end
 if NumMean>0 && NumLogVar>0
-LossKL=WeightKL*lossKL;
+WeightedLossKL=WeightKL*lossKL;
 end
 if NumDimensions>0
-LossClassification=WeightClassification*lossClassification;
+WeightedLossClassification=WeightClassification*lossClassification;
 end
 
-Loss=LossReconstruction+LossKL+LossClassification;
+Loss=WeightedLossReconstruction+WeightedLossKL+WeightedLossClassification;
+
+LossReconstruction = {WeightedLossReconstruction,lossReconstruction};
+LossKL = {WeightedLossKL,lossKL};
+LossClassification = {WeightedLossClassification,lossClassification};
+
 
 [Accuracy] = cgg_calcCombinedAccuracy(TrueValue,Prediction,ClassNames);
+[Accuracy_Measure] = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType);
+
+Window_Accuracy = NaN(1,NumTimeSteps);
+Window_Accuracy_Measure = NaN(1,NumTimeSteps);
+for tidx = 1:NumTimeSteps
+    [Window_Accuracy(tidx)] = cgg_calcCombinedAccuracy(Window_TrueValue(:,:,tidx)', Window_Prediction(:,:,tidx)',ClassNames);
+    [Window_Accuracy_Measure(tidx)] = cgg_calcAllAccuracyTypes(Window_TrueValue(:,:,tidx)', Window_Prediction(:,:,tidx)',ClassNames,MatchType);
+end
+
 %%
-Gradients = dlgradient(Loss,net.Learnables);
+
+Combined_Accuracy_Measure = {Accuracy_Measure,Window_Accuracy_Measure};
+%%
+if WantGradient
+    Gradients = dlgradient(Loss,net.Learnables);
+else
+    Gradients = [];
+end
 end
 

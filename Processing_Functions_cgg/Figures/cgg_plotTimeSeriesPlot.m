@@ -82,11 +82,49 @@ Y_Name='Value';
 end
 end
 
+if iscell(Y_Name)
+Y_Name_PlotTitle = Y_Name{1};
+else
+Y_Name_PlotTitle = Y_Name;
+end
+
 if isfunction
-PlotTitle = CheckVararginPairs('PlotTitle', sprintf('%s over Time',Y_Name), varargin{:});
+Y_Ticks = CheckVararginPairs('Y_Ticks', '', varargin{:});
+else
+if ~(exist('Y_Ticks','var'))
+Y_Ticks='';
+end
+end
+
+if isfunction
+X_Ticks = CheckVararginPairs('X_Ticks', '', varargin{:});
+else
+if ~(exist('X_Ticks','var'))
+X_Ticks='';
+end
+end
+
+if isfunction
+Y_TickDir = CheckVararginPairs('Y_TickDir', '', varargin{:});
+else
+if ~(exist('Y_TickDir','var'))
+Y_TickDir='';
+end
+end
+
+if isfunction
+X_TickDir = CheckVararginPairs('X_TickDir', '', varargin{:});
+else
+if ~(exist('X_TickDir','var'))
+X_TickDir='';
+end
+end
+
+if isfunction
+PlotTitle = CheckVararginPairs('PlotTitle', sprintf('%s over Time',Y_Name_PlotTitle), varargin{:});
 else
 if ~(exist('PlotTitle','var'))
-PlotTitle=sprintf('%s over Time',Y_Name);
+PlotTitle=sprintf('%s over Time',Y_Name_PlotTitle);
 end
 end
 
@@ -159,6 +197,14 @@ wantFeedbackIndicators = CheckVararginPairs('wantFeedbackIndicators', false, var
 else
 if ~(exist('wantFeedbackIndicators','var'))
 wantFeedbackIndicators=false;
+end
+end
+
+if isfunction
+wantIndicatorNames = CheckVararginPairs('wantIndicatorNames', true, varargin{:});
+else
+if ~(exist('wantIndicatorNames','var'))
+wantIndicatorNames=true;
 end
 end
 %%
@@ -235,6 +281,8 @@ else
     end
 end
 
+TimeOffset = Time_Start+1.5;
+
 %% Plotting
 
 p_Plots = NaN(1,NumPlots);
@@ -277,7 +325,8 @@ YMin=Inf;
     cgg_plotDecisionEpochIndicators(DecisionIndicatorColors,...
         'DecisionIndicatorLabelOrientation',...
         DecisionIndicatorLabelOrientation,...
-        'wantFeedbackIndicators',wantFeedbackIndicators);
+        'wantFeedbackIndicators',wantFeedbackIndicators,...
+        'TimeOffset',TimeOffset,'wantIndicatorNames',wantIndicatorNames);
     end
 
     legend(p_Plots,'Location','best','FontSize',Legend_Size);
@@ -292,6 +341,19 @@ YMin=Inf;
     fig_plot.CurrentAxes.YAxis.FontSize=Label_Size;
 
     ylim([YLower,YUpper]);
+    if ~isempty(Y_Ticks)
+    yticks(Y_Ticks);
+    end
+    if ~isempty(X_Ticks)
+    xticks(X_Ticks);
+    end
+
+    if ~isempty(Y_TickDir)
+    fig_plot.CurrentAxes.YAxis.TickDirection=Y_TickDir;
+    end
+    if ~isempty(X_TickDir)
+    fig_plot.CurrentAxes.XAxis.TickDirection=X_TickDir;
+    end
 
 end
 

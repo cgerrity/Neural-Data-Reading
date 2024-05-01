@@ -16,6 +16,8 @@ MacroDimensionF1=NaN(NumDimension,1);
 
 MacroDimensionTotalAccuracy=NaN(NumDimension,1);
 
+IsValidCM = true;
+
 for didx=1:NumDimension
     DimensionCM=FullClassCM{1,didx}{1};
     [NumClasses,~]=size(DimensionCM);
@@ -38,6 +40,10 @@ for didx=1:NumDimension
         TN=ClassCM.TN;
         FP=ClassCM.FP;
         FN=ClassCM.FN;
+
+        if TP+TN+FP+FN < 1
+            IsValidCM = false;
+        end
 
         ClassAccuracy=(TP+TN)/(TP+TN+FP+FN);
         ClassPrecision=(TP)/(TP+FP);
@@ -83,6 +89,18 @@ MacroAccuracy=mean(MacroDimensionAccuracy);
 MacroPrecision=mean(MacroDimensionPrecision);
 MacroRecall=mean(MacroDimensionRecall);
 MacroF1=mean(MacroDimensionF1);
+
+%% Fix catastrophic predictions
+
+if isnan(MacroPrecision) && IsValidCM
+MacroPrecision = 0;
+end
+if isnan(MacroRecall) && IsValidCM
+MacroRecall = 0;
+end
+if isnan(MacroF1) && IsValidCM
+MacroF1 = 0;
+end
 
 %%
 

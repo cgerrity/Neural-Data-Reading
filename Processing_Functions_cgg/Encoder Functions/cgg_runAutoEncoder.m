@@ -4,26 +4,53 @@ function cgg_runAutoEncoder(Fold,varargin)
 
 isfunction=exist('varargin','var');
 
+if isfunction
+SLURMChoice = CheckVararginPairs('SLURMChoice', NaN, varargin{:});
+else
+if ~(exist('SLURMChoice','var'))
+SLURMChoice=NaN;
+end
+end
+
+if isfunction
+SLURMIDX = CheckVararginPairs('SLURMIDX', NaN, varargin{:});
+else
+if ~(exist('SLURMIDX','var'))
+SLURMIDX=NaN;
+end
+end
+
+%%
+
 cfg_Session = DATA_cggAllSessionInformationConfiguration;
 
 cfg_param_Decoder = PARAMETERS_cgg_procSimpleDecoders_v2;
 
-cfg_Encoder = PARAMETERS_cgg_runAutoEncoder;
-
 if isfunction
-cfg_param = PARAMETERS_cgg_runAutoEncoder(varargin{:});
+cfg_Encoder = PARAMETERS_cgg_runAutoEncoder(varargin{:});
 else
-cfg_param = PARAMETERS_cgg_runAutoEncoder();
+cfg_Encoder = PARAMETERS_cgg_runAutoEncoder();
 end
 
-Epoch=cfg_param.Epoch;
+if ~isnan(SLURMIDX) && ~isnan(SLURMChoice)
+TableSLURM = SLURMPARAMETERS_cgg_runAutoEncoder(SLURMChoice,SLURMIDX);
+[Fold,cfg_Encoder] = cgg_assignSLURMEncoderParameters(cfg_Encoder,TableSLURM);
+end
+
+cfg_Encoder.Fold = Fold;
+Epoch=cfg_Encoder.Epoch;
+%%
+cfg_TimeStart = PARAMETERS_cgg_procFullTrialPreparation_v2(Epoch);
+cfg_Encoder.Time_Start = -cfg_TimeStart.Window_Before_Data;
+cfg_PreProcessing = PARAMETERS_cgg_proc_NeuralDataPreparation('SessionName','none');
+cfg_Encoder.SamplingRate = cfg_PreProcessing.rect_samprate;
 
 %%
 
 if ~isempty(getenv('SLURM_JOB_CPUS_PER_NODE'))
 cores = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
 p=gcp("nocreate");
-if isempty(p) || p.NumWorkers ~= cores
+if isempty(p)
 parpool(cores);
 end
 end
@@ -39,18 +66,28 @@ ResultsDir=cfg_Session(1).temporarydir;
 Data_Normalized=true;
 
 cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
-    'Epoch',Epoch,'Encoding',true,'Fold',Fold,'Data_Normalized',Data_Normalized);
+    'Epoch',Epoch,'Encoding',true,'Target',cfg_Encoder.Target,'Fold',Fold,'Data_Normalized',Data_Normalized);
 cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
-    'Epoch',Epoch,'Encoding',true,'Fold',Fold,'Data_Normalized',Data_Normalized);
+    'Epoch',Epoch,'Encoding',true,'Target',cfg_Encoder.Target,'Fold',Fold,'Data_Normalized',Data_Normalized);
 cfg.ResultsDir=cfg_Results.TargetDir;
 
 %%
 
-DataWidth = cfg_param.DataWidth;
-StartingIDX = cfg_param.StartingIDX;
-EndingIDX = cfg_param.EndingIDX;
-WindowStride = cfg_param.WindowStride;
-wantSubset = cfg_param.wantSubset;
+%%
+
+DataWidth = cfg_Encoder.DataWidth;
+StartingIDX = cfg_Encoder.StartingIDX;
+EndingIDX = cfg_Encoder.EndingIDX;
+WindowStride = cfg_Encoder.WindowStride;
+wantSubset = cfg_Encoder.wantSubset;
+
+ModelName = cfg_Encoder.ModelName;
+HiddenSizes = cfg_Encoder.HiddenSizes;
+InitialLearningRate = cfg_Encoder.InitialLearningRate;
+
+MiniBatchSize = cfg_Encoder.MiniBatchSize;
+LossFactorReconstruction = cfg_Encoder.LossFactorReconstruction;
+LossFactorKL = cfg_Encoder.LossFactorKL;
 
 SubsetAmount = cfg_param_Decoder.SubsetAmount;
 
@@ -61,6 +98,33 @@ WindowStride = CheckVararginPairs('WindowStride', WindowStride, varargin{:});
 end
 if isfunction
 DataWidth = CheckVararginPairs('DataWidth', DataWidth, varargin{:});
+end
+if isfunction
+cfg_Encoder.ModelName = CheckVararginPairs('ModelName', ModelName, varargin{:});
+end
+if isfunction
+cfg_Encoder.HiddenSizes = CheckVararginPairs('HiddenSizes', HiddenSizes, varargin{:});
+end
+if isfunction
+cfg_Encoder.InitialLearningRate = CheckVararginPairs('InitialLearningRate', InitialLearningRate, varargin{:});
+end
+if isfunction
+cfg_Encoder.MiniBatchSize = CheckVararginPairs('MiniBatchSize', MiniBatchSize, varargin{:});
+end
+if isfunction
+cfg_Encoder.LossFactorReconstruction = CheckVararginPairs('LossFactorReconstruction', LossFactorReconstruction, varargin{:});
+end
+if isfunction
+cfg_Encoder.LossFactorKL = CheckVararginPairs('LossFactorKL', LossFactorKL, varargin{:});
+end
+
+%%
+cfg_Encoder.IsQuaddle = true;
+if ~strcmp(cfg_Encoder.Target,'Dimension')
+cfg_Encoder.IsQuaddle = false;
+end
+if strcmp(cfg_Encoder.Epoch,'Synthetic')
+cfg_Encoder.IsQuaddle = false;
 end
 
 %%

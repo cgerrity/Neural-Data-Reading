@@ -1,9 +1,27 @@
-function [Layers_AutoEncoder,Layers_Custom] = cgg_generateLayersForAutoEncoder_v2(InputSize,HiddenSizes,NumTimeWindows,DataFormat)
+function [Layers_AutoEncoder,Layers_Custom] = cgg_generateLayersForAutoEncoder_v2(InputSize,HiddenSizes,NumTimeWindows,DataFormat,varargin)
 %CGG_GENERATELAYERSFORAUTOENCODER Summary of this function goes here
 %   Detailed explanation goes here
 
-DropoutPercent_Skip=0.9;
-DropoutPercent_Main=0.5;
+isfunction=exist('varargin','var');
+
+if isfunction
+Dropout_Main = CheckVararginPairs('Dropout_Main', 0.5, varargin{:});
+else
+if ~(exist('Dropout_Main','var'))
+Dropout_Main=0.5;
+end
+end
+
+if isfunction
+Dropout_Skip = CheckVararginPairs('Dropout_Skip', 0.9, varargin{:});
+else
+if ~(exist('Dropout_Skip','var'))
+Dropout_Skip=0.9;
+end
+end
+%%
+DropoutPercent_Skip=Dropout_Skip;
+DropoutPercent_Main=Dropout_Main;
 
 InputSize1D=prod(InputSize,"all");
 
@@ -45,7 +63,7 @@ for stidx=NumStacks:-1:1
     this_Encoder_DropOutName=sprintf("dropout_Encoder_%d",stidx);
     this_Encoder_ActivationName=sprintf("activation_Encoder_%d",stidx);
     % this_Encoder_DropOutName=sprintf("dropout_Encoder_%d",stidx);
-    this_Decoder_ConcatenationName=sprintf("concatenation_Decoder_%d",stidx);
+    this_Decoder_ConcatenationName=sprintf("concatenation_Skip_Decoder_%d",stidx);
     this_Decoder_FullyConnectedName=sprintf("fc_Decoder_%d",stidx);
     this_Decoder_DropOutName=sprintf("dropout_Decoder_%d",stidx);
     this_Decoder_ActivationName=sprintf("activation_Decoder_%d",stidx);
@@ -81,7 +99,7 @@ end
 for stidx=NumStacks:-1:1
 
     this_Encoder_FullyConnectedName=sprintf("fc_Encoder_%d",stidx);
-    this_Decoder_ConcatenationName=sprintf("concatenation_Decoder_%d",stidx);
+    this_Decoder_ConcatenationName=sprintf("concatenation_Skip_Decoder_%d",stidx);
     this_Skip_DropoutName=sprintf("dropout_Skip_%d",stidx);
 
 

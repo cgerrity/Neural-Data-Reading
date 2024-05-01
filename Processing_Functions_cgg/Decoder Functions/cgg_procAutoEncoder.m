@@ -67,7 +67,28 @@ ExtraSaveTerm = cgg_generateExtraSaveTerm('wantSubset',wantSubset,...
 %     'Epoch',Epoch,'Encoding',true,'Fold',Fold);
 % cfg.ResultsDir=cfg_Results.TargetDir;
 
-Encoding_Dir=cfg.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.Fold.path;
+HiddenSize=cfg_Encoder.HiddenSizes;
+InitialLearningRate=cfg_Encoder.InitialLearningRate;
+ModelName = cfg_Encoder.ModelName;
+ClassifierName = cfg_Encoder.ClassifierName;
+ClassifierHiddenSize = cfg_Encoder.ClassifierHiddenSize;
+MiniBatchSize = cfg_Encoder.MiniBatchSize;
+LossFactorReconstruction = cfg_Encoder.LossFactorReconstruction;
+LossFactorKL = cfg_Encoder.LossFactorKL;
+WeightedLoss = cfg_Encoder.WeightedLoss;
+GradientThreshold = cfg_Encoder.GradientThreshold;
+
+Target = cfg_Encoder.Target;
+
+Encoding_Dir=cfg.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.Target.Fold.path;
+
+cfg_tmp = cgg_generateEncoderSubFolders(Encoding_Dir,ModelName,DataWidth,WindowStride,HiddenSize,InitialLearningRate,LossFactorReconstruction,LossFactorKL,MiniBatchSize,wantSubset,WeightedLoss,GradientThreshold,ClassifierName,ClassifierHiddenSize);
+
+Encoding_Dir = cfg_tmp.EncodingDir.ModelName.WidthStride.HiddenSize.Learning.Loss.MiniBatchSize.Classifier.IsSubset.path;
+
+NetworkParametersPathNameExt = [Encoding_Dir filesep 'EncodingParameters.yaml'];
+
+WriteYaml(NetworkParametersPathNameExt, cfg_Encoder);
 
 %%
 
@@ -82,7 +103,11 @@ KFoldPartition=m_Partition.KFoldPartition;
 KFoldPartition=KFoldPartition(1);
 IndicesPartition=m_Partition.Indices;
 
+NumFolds = KFoldPartition.NumTestSets;
+
+Validation_IDX=test(KFoldPartition,mod(kidx,NumFolds)+1);
 Training_IDX=training(KFoldPartition,kidx);
+Training_IDX = (Training_IDX-Validation_IDX)==1;
 Testing_IDX=test(KFoldPartition,kidx);
 
 DataAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Data.path;
@@ -99,8 +124,14 @@ WantNaNZeroed=true;
 Want1DVector=false;
 
 Data_Fun=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector);
-Target_Fun=@(x) cgg_loadTargetArray(x,'Dimension',Dimension);
-% Target_Fun=@(x) cgg_loadTargetArray(x,'SharedFeatureCoding',true);
+
+switch Target
+    case 'Dimension'
+    Target_Fun=@(x) cgg_loadTargetArray(x,'Dimension',Dimension);
+    otherwise
+    Target_Fun=@(x) cgg_loadTargetArray(x,Target,true);
+end
+
 
 Data_ds = fileDatastore(DataAggregateDir,"ReadFcn",Data_Fun);
 Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun);
@@ -113,6 +144,7 @@ DataStore=subset(DataStore,IndicesPartition);
 end
 
 DataStore_Training=subset(DataStore,Training_IDX);
+DataStore_Validation=subset(DataStore,Validation_IDX);
 DataStore_Testing=subset(DataStore,Testing_IDX);
 
 InDataStore=DataStore_Training;
@@ -220,7 +252,7 @@ SessionsList=SessionList_Training;
 
 %% Train Base AutoEncoder and Session Specific
 
-cgg_trainVariationalAutoEncoder_v2(InDataStore,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,Encoding_Dir);
+cgg_trainAllAutoEncoder(InDataStore,DataStore_Validation,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,Encoding_Dir);
 
 
 %% All Session Encoder Tuning
