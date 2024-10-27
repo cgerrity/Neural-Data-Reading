@@ -37,6 +37,14 @@ MatchType='combinedaccuracy';
 end
 end
 
+if isfunction
+IsQuaddle = CheckVararginPairs('IsQuaddle', true, varargin{:});
+else
+if ~(exist('IsQuaddle','var'))
+IsQuaddle=true;
+end
+end
+
 %%
 
 VariableNames=CM_Table.Properties.VariableNames;
@@ -61,7 +69,8 @@ IterationValues=unique(CM_Table.IterationNumber);
 NumIterations=length(IterationValues);
 
 else
-[~,NumIterations]=size(CM_Table{1,PredictionIndices(1)});
+% [~,NumIterations]=size(CM_Table{1,PredictionIndices(1)});
+[NumIterations,~]=size(CM_Table{1,PredictionIndices(1)});
 end
 
 Accuracy=NaN(NumIterations,1);
@@ -117,12 +126,14 @@ for idx=1:NumIterations
 
     for pidx=1:NumPredictions
         this_PredictionIndex=PredictionIndices(pidx);
-        if hasIterationColumn
         this_Prediction=this_CM_Table{:,this_PredictionIndex};
-        else
-        this_Prediction=this_CM_Table{:,this_PredictionIndex};
-        this_Prediction=this_Prediction{:,idx};
-        end
+
+        % if hasIterationColumn
+        % this_Prediction=this_CM_Table{:,this_PredictionIndex};
+        % else
+        % this_Prediction=this_CM_Table{:,this_PredictionIndex};
+        % this_Prediction=this_Prediction{:,idx};
+        % end
 
         CombinedIndices_Start=NumInstances*(pidx-1)+1;
         CombinedIndices_End=NumInstances*(pidx);
@@ -139,30 +150,42 @@ for idx=1:NumIterations
 
     end
 
-    switch MatchType
-        case 'exact'
-            if iscell(ClassNames)
-                this_CM_tmp=CombinedTrueValue==CombinedPrediction;
-                this_CM_tmp=all(this_CM_tmp,2);
-                this_CM=[sum(this_CM_tmp==1),0;sum(this_CM_tmp==0),0];
-            else
-                this_CM = confusionmat(CombinedTrueValue,...
-                    CombinedPrediction,'Order',ClassNames);
-            end
-                this_Full_CM = this_CM;
-        
-                TruePositives = trace(this_Full_CM);
-                TotalObservations = sum(this_Full_CM(:));
-                Accuracy(idx) = TruePositives/TotalObservations;
-            
-                CM(:,:,idx)=this_Full_CM;
-        
-        case 'macroaccuracy'
-            [Accuracy(idx)] = cgg_calcMacroAccuracy(CombinedTrueValue,CombinedPrediction,ClassNames);
-        case 'combinedaccuracy'
-            [Accuracy(idx)] = cgg_calcCombinedAccuracy(CombinedTrueValue,CombinedPrediction,ClassNames);
-        otherwise
+    if isfunction
+    [Accuracy(idx)] = cgg_calcAllPerformanceMetrics(...
+    CombinedTrueValue,CombinedPrediction,ClassNames,'MatchType',...
+    MatchType,'IsQuaddle',IsQuaddle,varargin{:});
+    else
+    [Accuracy(idx)] = cgg_calcAllPerformanceMetrics(...
+    CombinedTrueValue,CombinedPrediction,ClassNames,'MatchType',...
+    MatchType,'IsQuaddle',IsQuaddle);
     end
+
+    % [Accuracy(idx)] = cgg_calcAllAccuracyTypes(CombinedTrueValue,CombinedPrediction,ClassNames,MatchType);
+
+    % switch MatchType
+    %     case 'exact'
+    %         if iscell(ClassNames)
+    %             this_CM_tmp=CombinedTrueValue==CombinedPrediction;
+    %             this_CM_tmp=all(this_CM_tmp,2);
+    %             this_CM=[sum(this_CM_tmp==1),0;sum(this_CM_tmp==0),0];
+    %         else
+    %             this_CM = confusionmat(CombinedTrueValue,...
+    %                 CombinedPrediction,'Order',ClassNames);
+    %         end
+    %             this_Full_CM = this_CM;
+    % 
+    %             TruePositives = trace(this_Full_CM);
+    %             TotalObservations = sum(this_Full_CM(:));
+    %             Accuracy(idx) = TruePositives/TotalObservations;
+    % 
+    %             CM(:,:,idx)=this_Full_CM;
+    % 
+    %     case 'macroaccuracy'
+    %         [Accuracy(idx)] = cgg_calcMacroAccuracy(CombinedTrueValue,CombinedPrediction,ClassNames);
+    %     case 'combinedaccuracy'
+    %         [Accuracy(idx)] = cgg_calcCombinedAccuracy(CombinedTrueValue,CombinedPrediction,ClassNames);
+    %     otherwise
+    % end
 end
 
 MeanAccuracy=mean(Accuracy);

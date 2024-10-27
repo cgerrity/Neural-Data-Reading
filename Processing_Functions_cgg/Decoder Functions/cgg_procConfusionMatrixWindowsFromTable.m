@@ -21,7 +21,11 @@ for widx=1:NumWindows
         MeanAccuracy=zeros(1,NumWindows);
     end
 
+    if numel(size(CM))==3
+    CM(:,:,widx)=this_CM;
+    else
     CM(:,:,:,widx)=this_CM;
+    end
     Accuracy(:,widx)=this_Accuracy;
     MeanAccuracy(widx)=this_MeanAccuracy;
 

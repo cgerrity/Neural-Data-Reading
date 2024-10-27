@@ -62,7 +62,7 @@ Minimum_Length=50;
 %%
 
 Probe_Order={'ACC_001','ACC_002','PFC_001','PFC_002','CD_001','CD_002'};
-
+FeatureValues_Names=categorical({'Shape','Pattern','Color','Texture','Arms'});
 %%
 
 w = whos;

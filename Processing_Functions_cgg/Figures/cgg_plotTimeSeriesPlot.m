@@ -8,14 +8,14 @@ function [fig_plot,p_Plots,p_Error] = cgg_plotTimeSeriesPlot(InData,varargin)
 
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 
-Line_Width = cfg_Plotting.Line_Width;
+% Line_Width = cfg_Plotting.Line_Width;
 
-X_Name_Size = cfg_Plotting.X_Name_Size;
-Y_Name_Size = cfg_Plotting.Y_Name_Size;
-Title_Size = cfg_Plotting.Title_Size;
+% X_Name_Size = cfg_Plotting.X_Name_Size;
+% Y_Name_Size = cfg_Plotting.Y_Name_Size;
+% Title_Size = cfg_Plotting.Title_Size;
 
 Label_Size = cfg_Plotting.Label_Size;
-Legend_Size = cfg_Plotting.Legend_Size;
+% Legend_Size = cfg_Plotting.Legend_Size;
 
 RangeFactorUpper = cfg_Plotting.RangeFactorUpper;
 RangeFactorLower = cfg_Plotting.RangeFactorLower;
@@ -101,6 +101,22 @@ X_Ticks = CheckVararginPairs('X_Ticks', '', varargin{:});
 else
 if ~(exist('X_Ticks','var'))
 X_Ticks='';
+end
+end
+
+if isfunction
+Y_Tick_Label_Size = CheckVararginPairs('Y_Tick_Label_Size', cfg_Plotting.Label_Size, varargin{:});
+else
+if ~(exist('Y_Tick_Label_Size','var'))
+Y_Tick_Label_Size=cfg_Plotting.Label_Size;
+end
+end
+
+if isfunction
+X_Tick_Label_Size = CheckVararginPairs('X_Tick_Label_Size', cfg_Plotting.Label_Size, varargin{:});
+else
+if ~(exist('X_Tick_Label_Size','var'))
+X_Tick_Label_Size=cfg_Plotting.Label_Size;
 end
 end
 
@@ -207,6 +223,126 @@ if ~(exist('wantIndicatorNames','var'))
 wantIndicatorNames=true;
 end
 end
+
+if isfunction
+wantCI = CheckVararginPairs('wantCI', true, varargin{:});
+else
+if ~(exist('wantCI','var'))
+wantCI=true;
+end
+end
+
+if isfunction
+SignificanceValue = CheckVararginPairs('SignificanceValue', 0.05, varargin{:});
+else
+if ~(exist('SignificanceValue','var'))
+SignificanceValue=0.05;
+end
+end
+
+if isfunction
+YValues_STD = CheckVararginPairs('YValues_STD', '', varargin{:});
+else
+if ~(exist('YValues_STD','var'))
+YValues_STD='';
+end
+end
+
+if isfunction
+CountPerSample = CheckVararginPairs('CountPerSample', '', varargin{:});
+else
+if ~(exist('CountPerSample','var'))
+CountPerSample='';
+end
+end
+
+if isfunction
+DataTransform = CheckVararginPairs('DataTransform', '', varargin{:});
+else
+if ~(exist('DataTransform','var'))
+DataTransform='';
+end
+end
+
+if isfunction
+ErrorMetric = CheckVararginPairs('ErrorMetric', '', varargin{:});
+else
+if ~(exist('ErrorMetric','var'))
+ErrorMetric='';
+end
+end
+
+if isfunction
+Line_Width = CheckVararginPairs('Line_Width', cfg_Plotting.Line_Width, varargin{:});
+else
+if ~(exist('Line_Width','var'))
+Line_Width=cfg_Plotting.Line_Width;
+end
+end
+
+if isfunction
+Title_Size = CheckVararginPairs('Title_Size', cfg_Plotting.Title_Size, varargin{:});
+else
+if ~(exist('Title_Size','var'))
+Title_Size=cfg_Plotting.Title_Size;
+end
+end
+
+if isfunction
+Y_Name_Size = CheckVararginPairs('Y_Name_Size', cfg_Plotting.Y_Name_Size, varargin{:});
+else
+if ~(exist('Y_Name_Size','var'))
+Y_Name_Size=cfg_Plotting.Y_Name_Size;
+end
+end
+
+if isfunction
+X_Name_Size = CheckVararginPairs('X_Name_Size', cfg_Plotting.X_Name_Size, varargin{:});
+else
+if ~(exist('X_Name_Size','var'))
+X_Name_Size=cfg_Plotting.X_Name_Size;
+end
+end
+
+if isfunction
+WantLegend = CheckVararginPairs('WantLegend', true, varargin{:});
+else
+if ~(exist('WantLegend','var'))
+WantLegend=true;
+end
+end
+
+if isfunction
+Error_FaceAlpha = CheckVararginPairs('Error_FaceAlpha', cfg_Plotting.Error_FaceAlpha, varargin{:});
+else
+if ~(exist('Error_FaceAlpha','var'))
+Error_FaceAlpha=cfg_Plotting.Error_FaceAlpha;
+end
+end
+
+if isfunction
+Error_EdgeAlpha = CheckVararginPairs('Error_EdgeAlpha', cfg_Plotting.Error_EdgeAlpha, varargin{:});
+else
+if ~(exist('Error_EdgeAlpha','var'))
+Error_EdgeAlpha=cfg_Plotting.Error_EdgeAlpha;
+end
+end
+
+if isfunction
+Legend_Size = CheckVararginPairs('Legend_Size', cfg_Plotting.Legend_Size, varargin{:});
+else
+if ~(exist('Legend_Size','var'))
+Legend_Size=cfg_Plotting.Legend_Size;
+end
+end
+
+if isfunction
+Indicator_Size = CheckVararginPairs('Indicator_Size', cfg_Plotting.Indicator_Size, varargin{:});
+else
+if ~(exist('Indicator_Size','var'))
+Indicator_Size=cfg_Plotting.Indicator_Size;
+end
+end
 %%
 if ~isempty(InFigure)
 fig_plot=InFigure;
@@ -302,8 +438,15 @@ YMin=Inf;
         elseif iscell(InData)
             this_Data=InData{pidx};
         end
+        if isnumeric(ErrorMetric)
+            this_ErrorMetric=ErrorMetric(:,:,pidx);
+        elseif iscell(ErrorMetric)
+            this_ErrorMetric=ErrorMetric{pidx};
+        else
+            this_ErrorMetric = ErrorMetric;
+        end
 
-    [this_p_Plot,this_p_Error] = cgg_plotLinePlotWithShadedError(this_Time,this_Data,PlotColors{pidx});
+    [this_p_Plot,this_p_Error] = cgg_plotLinePlotWithShadedError(this_Time,this_Data,PlotColors{pidx},'wantCI',wantCI,'SignificanceValue',SignificanceValue,'YValues_STD',YValues_STD,'CountPerSample',CountPerSample,'DataTransform',DataTransform,'ErrorMetric',this_ErrorMetric,'Error_FaceAlpha',Error_FaceAlpha,'Error_EdgeAlpha',Error_EdgeAlpha);
 
     this_p_Plot.LineWidth = Line_Width;
     this_p_Plot.Color = PlotColors{pidx};
@@ -326,25 +469,61 @@ YMin=Inf;
         'DecisionIndicatorLabelOrientation',...
         DecisionIndicatorLabelOrientation,...
         'wantFeedbackIndicators',wantFeedbackIndicators,...
-        'TimeOffset',TimeOffset,'wantIndicatorNames',wantIndicatorNames);
+        'TimeOffset',TimeOffset,...
+        'wantIndicatorNames',wantIndicatorNames,...
+        'Line_Width',Line_Width,'Indicator_Size',Indicator_Size);
     end
 
+    if WantLegend
     legend(p_Plots,'Location','best','FontSize',Legend_Size);
+    end
 
-    xlabel(X_Name,'FontSize',X_Name_Size);
-    ylabel(Y_Name,'FontSize',Y_Name_Size);
-    title(PlotTitle,'FontSize',Title_Size);
+    %%
+
+    if iscell(Y_Name)
+        Y_Label = cell(1,length(Y_Name));
+        for yidx = 1:length(Y_Name)
+            Y_Label{yidx} = sprintf('{\\fontsize{%d}%s}',Y_Name_Size,Y_Name{yidx});
+        end
+    else
+        Y_Label = sprintf('{\\fontsize{%d}%s}',Y_Name_Size,Y_Name);
+    end
+    if iscell(X_Name)
+        X_Label = cell(1,length(X_Name));
+        for xidx = 1:length(X_Name)
+            X_Label{xidx} = sprintf('{\\fontsize{%d}%s}',X_Name_Size,X_Name{xidx});
+        end
+    else
+        X_Label = sprintf('{\\fontsize{%d}%s}',X_Name_Size,X_Name);
+    end
+    if iscell(PlotTitle)
+        Title_Label = cell(1,length(PlotTitle));
+        for tidx = 1:length(PlotTitle)
+            Title_Label{tidx} = sprintf('{\\fontsize{%d}%s}',Title_Size,PlotTitle{tidx});
+        end
+    else
+        Title_Label = sprintf('\\fontsize{%d}%s',Title_Size,PlotTitle);
+    end
+
+    % xlabel(X_Name,'FontSize',X_Name_Size);
+    % ylabel(Y_Name,'FontSize',Y_Name_Size);
+    % title(PlotTitle,'FontSize',Title_Size);
+    xlabel(X_Label);
+    ylabel(Y_Label);
+    if ~isempty(PlotTitle)
+    title(Title_Label);
+    end
 
 %%
 
-    fig_plot.CurrentAxes.XAxis.FontSize=Label_Size;
-    fig_plot.CurrentAxes.YAxis.FontSize=Label_Size;
+    % fig_plot.CurrentAxes.XAxis.FontSize=X_Tick_Label_Size;
+    % fig_plot.CurrentAxes.YAxis.FontSize=Y_Tick_Label_Size;
 
     ylim([YLower,YUpper]);
-    if ~isempty(Y_Ticks)
+    if ~(isempty(Y_Ticks) || any(isnan(Y_Ticks)))
     yticks(Y_Ticks);
     end
-    if ~isempty(X_Ticks)
+    if ~(isempty(X_Ticks) || any(isnan(X_Ticks)))
     xticks(X_Ticks);
     end
 
@@ -353,6 +532,17 @@ YMin=Inf;
     end
     if ~isempty(X_TickDir)
     fig_plot.CurrentAxes.XAxis.TickDirection=X_TickDir;
+    end
+
+    if isempty(X_Tick_Label_Size)
+        xticklabels({});
+    else
+    fig_plot.CurrentAxes.XAxis.FontSize=X_Tick_Label_Size;
+    end
+    if isempty(Y_Tick_Label_Size)
+        yticklabels({});
+    else
+    fig_plot.CurrentAxes.YAxis.FontSize=Y_Tick_Label_Size;
     end
 
 end

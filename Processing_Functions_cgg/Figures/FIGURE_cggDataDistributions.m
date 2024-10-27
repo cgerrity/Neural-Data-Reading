@@ -5,7 +5,26 @@ end
 
 %% Chosen Parameters
 
-VariableName='Shared Feature Coding';
+% VariableName='Shared Feature Coding';
+% VariableName='Dimension 1';
+% VariableName='Dimension 2';
+% VariableName='Dimension 3';
+% VariableName='Dimension 4';
+% VariableName='Gain';
+% VariableName='Loss';
+% VariableName='Correct Trial';
+% VariableName='Learned';
+% VariableName='ACC_001';
+% VariableName='ACC_002';
+% VariableName='PFC_001';
+% VariableName='PFC_002';
+% VariableName='CD_001';
+% VariableName='CD_002';
+% VariableName='Target Feature';
+% VariableName='Trials From Learning Point';
+VariableName = 'Trials From Learning Point Category';
+% VariableName='Session Name';
+% VariableName='Dimensionality';
 wantSubset = false;
 % wantBar = false;
 % wantDifference = true;
@@ -17,33 +36,125 @@ else
 end
 
 cfg_param = PARAMETERS_cgg_procSimpleDecoders_v2;
-cfg_Sessions = DATA_cggAllSessionInformationConfiguration;
+% cfg_Sessions = DATA_cggAllSessionInformationConfiguration;
 
 Epoch=cfg_param.Epoch;
-Decoder=cfg_param.Decoder;
+% Decoder=cfg_param.Decoder;
 
-outdatadir=cfg_Sessions(1).outdatadir;
-TargetDir=outdatadir;
+% outdatadir=cfg_Sessions(1).outdatadir;
+% TargetDir=outdatadir;
 
 DistributionType=VariableName;
 
-cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+% cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+%     'Epoch',Epoch,'DistributionType',DistributionType);
+[~,outputfolder_base,temporaryfolder_base,~] = cgg_getBaseFolders();
+
+ResultsDir = [temporaryfolder_base filesep 'Data_Neural'];
+
+cfg = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
     'Epoch',Epoch,'DistributionType',DistributionType);
 
 %%
 
-% if strcmp(VariableName,'Shared Feature Coding')
-% FullDataTable.Name=string(FullDataTable.Name);
-% FullDataTable.Name(FullDataTable.Name=="1")='EC_Shared';
-% FullDataTable.Name(FullDataTable.Name=="2")='EC_NonShared';
-% FullDataTable.Name(FullDataTable.Name=="3")='EE_Shared';
-% FullDataTable.Name(FullDataTable.Name=="4")='EE_NonShared';
-% FullDataTable.Name(FullDataTable.Name=="5")='CC_Shared';
-% FullDataTable.Name(FullDataTable.Name=="6")='CC_NonShared';
-% FullDataTable.Name(FullDataTable.Name=="7")='CE_Shared';
-% FullDataTable.Name(FullDataTable.Name=="8")='CE_NonShared';
-% FullDataTable.Name(FullDataTable.Name=="9")='Start';
-% end
+switch VariableName
+    case 'Shared Feature Coding'
+FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=categorical({'EC Shared'});
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="2")=categorical({'EC NonShared'});
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="3")=categorical({'EE Shared'});
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="4")=categorical({'EE NonShared'});
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="5")=categorical({'CC Shared'});
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="6")=categorical({'CC NonShared'});
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="7")=categorical({'CE Shared'});
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="8")=categorical({'CE NonShared'});
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="9")=categorical({'Start'});
+
+FeatureValueOrder = {'EC Shared','EC NonShared','EE Shared','EE NonShared','CC Shared','CC NonShared','CE Shared','CE NonShared','Start'};
+FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue,FeatureValueOrder);
+    case 'Target Feature'
+FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
+FeatureValueOrder = {'Shape', 'Pattern', 'Color', 'Arms'};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=FeatureValueOrder{1};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="2")=FeatureValueOrder{2};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="3")=FeatureValueOrder{3};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="4")=FeatureValueOrder{4};
+
+FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue,FeatureValueOrder);
+
+    case 'Correct Trial'
+FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
+FeatureValueOrder = {'Error', 'Correct'};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="0")=FeatureValueOrder{1};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=FeatureValueOrder{2};
+
+FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue,FeatureValueOrder);
+    case 'Learned'
+FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
+FeatureValueOrder = {'Not Learned', 'Learned','Non Learned Block'};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="0")=FeatureValueOrder{1};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=FeatureValueOrder{2};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="-1")=FeatureValueOrder{3};
+
+FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue,FeatureValueOrder);
+    case 'Trials From Learning Point Category'
+FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
+FeatureValueOrder = {'Not Learned', 'fewer than 5','-5 to -1','0 to 9','10 to 19', 'more than 20'};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=FeatureValueOrder{1};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="2")=FeatureValueOrder{2};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="3")=FeatureValueOrder{3};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="4")=FeatureValueOrder{4};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="5")=FeatureValueOrder{5};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="6")=FeatureValueOrder{6};
+
+FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue,FeatureValueOrder);
+    case 'ACC_001'
+FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
+FeatureValueOrder = {'Not Included', 'Included'};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="0")=FeatureValueOrder{1};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=FeatureValueOrder{2};
+
+FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue,FeatureValueOrder);
+    case 'ACC_002'
+FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
+FeatureValueOrder = {'Not Included', 'Included'};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="0")=FeatureValueOrder{1};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=FeatureValueOrder{2};
+
+FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue,FeatureValueOrder);
+    case 'PFC_001'
+FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
+FeatureValueOrder = {'Not Included', 'Included'};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="0")=FeatureValueOrder{1};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=FeatureValueOrder{2};
+
+FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue,FeatureValueOrder);
+    case 'PFC_002'
+FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
+FeatureValueOrder = {'Not Included', 'Included'};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="0")=FeatureValueOrder{1};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=FeatureValueOrder{2};
+
+FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue,FeatureValueOrder);
+    case 'CD_001'
+FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
+FeatureValueOrder = {'Not Included', 'Included'};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="0")=FeatureValueOrder{1};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=FeatureValueOrder{2};
+
+FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue,FeatureValueOrder);
+    case 'CD_002'
+FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
+FeatureValueOrder = {'Not Included', 'Included'};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="0")=FeatureValueOrder{1};
+FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=FeatureValueOrder{2};
+
+FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue,FeatureValueOrder);
+    case 'Session Name'
+
+FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue);
+
+end
 
 InVariableName=VariableName;
 InEpoch=Epoch;

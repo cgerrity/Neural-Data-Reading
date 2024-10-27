@@ -1,4 +1,7 @@
-function [Loss,Gradients,State,Accuracy,LossReconstruction,LossClassification,LossKL,Window_Accuracy,Combined_Accuracy_Measure] = cgg_lossNetwork(net,X,T,LossType,OutputInformation,ClassNames,varargin)
+function [Loss,Gradients,State,Accuracy,LossReconstruction,...
+    LossClassification,LossKL,Window_Accuracy,Combined_Accuracy_Measure,...
+    ClassifierOutput] = cgg_lossNetwork(net,X,T,LossType,...
+    OutputInformation,ClassNames,varargin)
 %CGG_LOSSNETWORK Summary of this function goes here
 %   Detailed explanation goes here
 isfunction=exist('varargin','var');
@@ -36,6 +39,14 @@ end
 end
 
 if isfunction
+WeightClassification = CheckVararginPairs('WeightClassification', NaN, varargin{:});
+else
+if ~(exist('WeightClassification','var'))
+WeightClassification=NaN;
+end
+end
+
+if isfunction
 WantGradient = CheckVararginPairs('WantGradient', true, varargin{:});
 else
 if ~(exist('WantGradient','var'))
@@ -60,13 +71,18 @@ end
 end
 
 %%
+WeightClassification=1;
 if isnan(WeightReconstruction)
     WeightReconstruction=1;
+elseif WeightReconstruction == Inf 
+    % How much more to weight reconstruction over classification is
+    % infinite, meaning there should be no classification
+    WeightReconstruction=1;
+    WeightClassification=0;
 end
 if isnan(WeightKL)
     WeightKL=1;
 end
-WeightClassification=1;
 
 IsWeightedLoss = iscell(Weights) && ~isempty(Weights);
 
@@ -156,8 +172,6 @@ for didx=1:NumDimensions
     end
 
 switch LossType
-    case 'Regression'
-    loss = mse(Y_Reconstruction,T_Reconstruction);
     case 'CTC'
         
         this_T_tmp=onehotencode(this_T,1,'ClassNames',this_ClassNames);
@@ -230,6 +244,7 @@ end
 
 %%
 
+if NumDimensions==4
 if IsQuaddle
     wantZeroFeatureDetector=false;
     for eidx=1:NumExamples
@@ -249,10 +264,10 @@ if IsQuaddle
         end
     end
 end
-
+end
 %%
 
-[lossReconstruction,lossKL] = cgg_lossELBO_v2(Y_Reconstruction,T_Reconstruction,mu,logSigmaSq);
+[lossReconstruction,lossKL,loss_Reconstruction_perchannel] = cgg_lossELBO_v2(Y_Reconstruction,T_Reconstruction,mu,logSigmaSq);
 
 WeightedLossReconstruction=dlarray(0);
 WeightedLossKL=dlarray(0);
@@ -260,6 +275,7 @@ WeightedLossClassification=dlarray(0);
 
 if NumReconstruction>0
 WeightedLossReconstruction=WeightReconstruction*lossReconstruction;
+WeightedLossReconstructionPerChannel = WeightReconstruction*loss_Reconstruction_perchannel;
 end
 if NumMean>0 && NumLogVar>0
 WeightedLossKL=WeightKL*lossKL;
@@ -270,7 +286,7 @@ end
 
 Loss=WeightedLossReconstruction+WeightedLossKL+WeightedLossClassification;
 
-LossReconstruction = {WeightedLossReconstruction,lossReconstruction};
+LossReconstruction = {WeightedLossReconstruction,lossReconstruction,WeightedLossReconstructionPerChannel};
 LossKL = {WeightedLossKL,lossKL};
 LossClassification = {WeightedLossClassification,lossClassification};
 
@@ -288,6 +304,8 @@ end
 %%
 
 Combined_Accuracy_Measure = {Accuracy_Measure,Window_Accuracy_Measure};
+
+ClassifierOutput = {Window_TrueValue,Window_Prediction};
 %%
 if WantGradient
     Gradients = dlgradient(Loss,net.Learnables);

@@ -36,6 +36,37 @@ Data_Normalized=true;
 end
 end
 
+if isfunction
+Normalization = CheckVararginPairs('Normalization', 'None', varargin{:});
+else
+if ~(exist('Normalization','var'))
+Normalization='None';
+end
+end
+
+if isfunction
+NormalizationTable = CheckVararginPairs('NormalizationTable', NaN, varargin{:});
+else
+if ~(exist('NormalizationTable','var'))
+NormalizationTable=NaN;
+end
+end
+
+if isfunction
+ClassLowerCount = CheckVararginPairs('ClassLowerCount', 20, varargin{:});
+else
+if ~(exist('ClassLowerCount','var'))
+ClassLowerCount=20;
+end
+end
+
+if isfunction
+NetworkTrainingVersion = CheckVararginPairs('NetworkTrainingVersion', 'Version 2', varargin{:});
+else
+if ~(exist('NetworkTrainingVersion','var'))
+NetworkTrainingVersion='Version 2';
+end
+end
 %%
 
 % NumStacks=1;
@@ -73,18 +104,33 @@ ModelName = cfg_Encoder.ModelName;
 ClassifierName = cfg_Encoder.ClassifierName;
 ClassifierHiddenSize = cfg_Encoder.ClassifierHiddenSize;
 MiniBatchSize = cfg_Encoder.MiniBatchSize;
-LossFactorReconstruction = cfg_Encoder.LossFactorReconstruction;
-LossFactorKL = cfg_Encoder.LossFactorKL;
+NumEpochsAutoEncoder = cfg_Encoder.NumEpochsAutoEncoder;
+WeightReconstruction = cfg_Encoder.WeightReconstruction;
+WeightKL = cfg_Encoder.WeightKL;
+WeightClassification = cfg_Encoder.WeightClassification;
 WeightedLoss = cfg_Encoder.WeightedLoss;
 GradientThreshold = cfg_Encoder.GradientThreshold;
+Optimizer = cfg_Encoder.Optimizer;
+Normalization = cfg_Encoder.Normalization;
+LossType_Decoder = cfg_Encoder.LossType_Decoder;
+
+STDChannelOffset = cfg_Encoder.STDChannelOffset;
+STDWhiteNoise = cfg_Encoder.STDWhiteNoise;
+STDRandomWalk = cfg_Encoder.STDRandomWalk;
 
 Target = cfg_Encoder.Target;
 
-Encoding_Dir=cfg.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.Target.Fold.path;
+% Encoding_Dir=cfg.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.Target.Fold.path;
+Encoding_Dir = cgg_getDirectory(cfg.ResultsDir,'Fold');
 
-cfg_tmp = cgg_generateEncoderSubFolders(Encoding_Dir,ModelName,DataWidth,WindowStride,HiddenSize,InitialLearningRate,LossFactorReconstruction,LossFactorKL,MiniBatchSize,wantSubset,WeightedLoss,GradientThreshold,ClassifierName,ClassifierHiddenSize);
+cfg_Network = cgg_generateEncoderSubFolders(Encoding_Dir,ModelName,DataWidth,WindowStride,HiddenSize,InitialLearningRate,WeightReconstruction,WeightKL,WeightClassification,MiniBatchSize,wantSubset,WeightedLoss,GradientThreshold,ClassifierName,ClassifierHiddenSize,STDChannelOffset,STDWhiteNoise,STDRandomWalk,Optimizer,NumEpochsAutoEncoder,Normalization,LossType_Decoder);
 
-Encoding_Dir = cfg_tmp.EncodingDir.ModelName.WidthStride.HiddenSize.Learning.Loss.MiniBatchSize.Classifier.IsSubset.path;
+Encoding_Dir = cgg_getDirectory(cfg_Network,'Classifier');
+AutoEncoding_Dir = cgg_getDirectory(cfg_Network,'AutoEncoderInformation');
+
+% Encoding_Dir = cfg_tmp.EncodingDir.ModelName.WidthStride.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset.Loss.Classifier.path;
+
+% AutoEncoding_Dir = cfg_tmp.EncodingDir.ModelName.WidthStride.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset.path;
 
 NetworkParametersPathNameExt = [Encoding_Dir filesep 'EncodingParameters.yaml'];
 
@@ -101,7 +147,10 @@ Partition_PathNameExt = cfg_partition.Partition;
 m_Partition = matfile(Partition_PathNameExt,'Writable',false);
 KFoldPartition=m_Partition.KFoldPartition;
 KFoldPartition=KFoldPartition(1);
+
+if ismember(who(m_Partition),'Indices')
 IndicesPartition=m_Partition.Indices;
+end
 
 NumFolds = KFoldPartition.NumTestSets;
 
@@ -110,80 +159,109 @@ Training_IDX=training(KFoldPartition,kidx);
 Training_IDX = (Training_IDX-Validation_IDX)==1;
 Testing_IDX=test(KFoldPartition,kidx);
 
-DataAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Data.path;
-TargetAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Target.path;
+% DataAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Data.path;
+% TargetAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Target.path;
 
-if Data_Normalized
-DataAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Data_Normalized.path;
-end
+DataAggregateDir = cgg_getDirectory(cfg.TargetDir,'Data');
+TargetAggregateDir = cgg_getDirectory(cfg.TargetDir,'Target');
+
+% if Data_Normalized
+% % DataAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Data_Normalized.path;
+% DataAggregateDir = cgg_getDirectory(cfg.TargetDir,'Data_Normalized');
+% end
+
+TargetSession_Fun=@(x) cgg_loadTargetArray(x,'SessionName',true);
+SessionNameDataStore = fileDatastore(TargetAggregateDir,"ReadFcn",TargetSession_Fun);
 
 ChannelRemoval=[];
 WantDisp=false;
 WantRandomize=false;
-WantNaNZeroed=true;
+WantNaNZeroed=false;
 Want1DVector=false;
 
-Data_Fun=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector);
+Data_Fun=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'Normalization',Normalization,'NormalizationTable','');
+Data_Fun_Augmented=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'STDChannelOffset',STDChannelOffset,'STDWhiteNoise',STDWhiteNoise,'STDRandomWalk',STDRandomWalk,'Normalization',Normalization,'NormalizationTable','');
 
 switch Target
     case 'Dimension'
     Target_Fun=@(x) cgg_loadTargetArray(x,'Dimension',Dimension);
+    case 'Trial Outcome'
+    Target_Fun=@(x) double(cgg_loadTargetArray(x,'CorrectTrial',true));
     otherwise
     Target_Fun=@(x) cgg_loadTargetArray(x,Target,true);
 end
 
+DataNumber_Fun=@(x) cgg_loadTargetArray(x,'DataNumber',true);
 
 Data_ds = fileDatastore(DataAggregateDir,"ReadFcn",Data_Fun);
 Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun);
+DataNumber_ds = fileDatastore(TargetAggregateDir,"ReadFcn",DataNumber_Fun);
 
 %
-DataStore=combine(Data_ds,Target_ds);
+% DataStore=combine(Data_ds,Target_ds);
+DataStore=combine(Data_ds,Target_ds,DataNumber_ds);
 
 if wantSubset
 DataStore=subset(DataStore,IndicesPartition);
 end
 
+%% Remove Examples that represent very few targets
+[DataIndex] = cgg_getDataIndexToRemoveFromDataStore(DataStore,ClassLowerCount);
+DataStore=subset(DataStore,~DataIndex);
+
+Training_IDX = Training_IDX(~DataIndex);
+Validation_IDX = Validation_IDX(~DataIndex);
+Testing_IDX = Testing_IDX(~DataIndex);
+%%
+
 DataStore_Training=subset(DataStore,Training_IDX);
 DataStore_Validation=subset(DataStore,Validation_IDX);
 DataStore_Testing=subset(DataStore,Testing_IDX);
 
-InDataStore=DataStore_Training;
+% Set the data augmentation read function
+DataStore_Training.UnderlyingDatastores{1}.ReadFcn = Data_Fun_Augmented;
 
-TargetSession_Fun=@(x) cgg_loadTargetArray(x,'SessionName',true);
-SessionNameDataStore = fileDatastore(TargetAggregateDir,"ReadFcn",TargetSession_Fun);
+% Set the custom preview function if the datastore supports it
+if isprop(DataStore_Training.UnderlyingDatastores{1}, 'PreviewFcn')
+    DataStore_Training.UnderlyingDatastores{1}.PreviewFcn = Data_Fun_Augmented;
+else
+    warning('The datastore does not support custom PreviewFcn.');
+end
+
+InDataStore=DataStore_Training;
 
 if wantSubset
 SessionNameDataStore=subset(SessionNameDataStore,IndicesPartition);
 end
 
-%%
-
-
-
-NumClasses=[];
-evalc('NumClasses=gather(tall(DataStore.UnderlyingDatastores{2}));');
-if iscell(NumClasses)
-if isnumeric(NumClasses{1})
-    [Dim1,Dim2]=size(NumClasses{1});
-    [Dim3,Dim4]=size(NumClasses);
-if (Dim1>1&&Dim3>1)||(Dim2>1&&Dim4>1)
-    NumClasses=NumClasses';
-end
-    NumClasses=cell2mat(NumClasses);
-    [Dim1,Dim2]=size(NumClasses);
-if Dim1<Dim2
-    NumClasses=NumClasses';
-end
-end
-end
-
-[~,NumDimensions]=size(NumClasses);
-
-ClassNames=cell(1,NumDimensions);
-for fdidx=1:NumDimensions
-ClassNames{fdidx}=unique(NumClasses(:,fdidx));
-end
-NumClasses=cellfun(@(x) length(x),ClassNames);
+% %%
+% 
+% 
+% 
+% NumClasses=[];
+% evalc('NumClasses=gather(tall(DataStore.UnderlyingDatastores{2}));');
+% if iscell(NumClasses)
+% if isnumeric(NumClasses{1})
+%     [Dim1,Dim2]=size(NumClasses{1});
+%     [Dim3,Dim4]=size(NumClasses);
+% if (Dim1>1&&Dim3>1)||(Dim2>1&&Dim4>1)
+%     NumClasses=NumClasses';
+% end
+%     NumClasses=cell2mat(NumClasses);
+%     [Dim1,Dim2]=size(NumClasses);
+% if Dim1<Dim2
+%     NumClasses=NumClasses';
+% end
+% end
+% end
+% 
+% [~,NumDimensions]=size(NumClasses);
+% 
+% ClassNames=cell(1,NumDimensions);
+% for fdidx=1:NumDimensions
+% ClassNames{fdidx}=unique(NumClasses(:,fdidx));
+% end
+% NumClasses=cellfun(@(x) length(x),ClassNames);
 
 %%
 
@@ -252,8 +330,15 @@ SessionsList=SessionList_Training;
 
 %% Train Base AutoEncoder and Session Specific
 
-cgg_trainAllAutoEncoder(InDataStore,DataStore_Validation,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,Encoding_Dir);
 
+switch NetworkTrainingVersion
+    case 'Version 1'
+        cgg_trainAllAutoEncoder(InDataStore,DataStore_Validation,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,cfg_Network);
+    case 'Version 2'
+        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network);
+    otherwise
+        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network);
+end
 
 %% All Session Encoder Tuning
 

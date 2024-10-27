@@ -13,7 +13,9 @@ inputfolder_base='/Volumes/Womelsdorf Lab';
 outputfolder_base='/Volumes/gerritcg''s home';
 end
 
-inputfolder=[inputfolder_base '/DATA_neural/Wotan/Wotan_FLToken_Probe_01/Wo_Probe_01_23-02-23_008_01'];
+SessionName = 'Wo_Probe_01_23-02-23_008_01';
+
+inputfolder=[inputfolder_base '/DATA_neural/Wotan/Wotan_FLToken_Probe_01/' SessionName];
 outdatadir=[outputfolder_base '/Data_Neural_gerritcg'];
 probe_area_ACC='ACC_001';
 probe_area_CD='CD_001';
@@ -23,20 +25,31 @@ Start_Time=0;
 End_Time=0.25;
 
 Alignment_Type='Decision';
-Smooth_Factor=10;
+% Smooth_Factor=10;
 
 Sel_Trial=5;
 Sel_Channel=1:64;
 
-Count_Sel_Trial=30;
-rereference_type='median';
+% Count_Sel_Trial=30;
+% rereference_type='median';
 
+cfg_Preprocessing = PARAMETERS_cgg_proc_NeuralDataPreparation('SessionName',SessionName);
+cfg_Processing = PARAMETERS_cgg_procFullTrialPreparation_v2(Alignment_Type);
 
+Count_Sel_Trial = cfg_Preprocessing.clustering_trial_count;
+rereference_type = cfg_Preprocessing.rereference_type;
+
+rect_bandfreqs = cfg_Preprocessing.rect_bandfreqs;
+rect_lowpassfreq = cfg_Preprocessing.rect_lowpassfreq;
+rect_samprate = cfg_Preprocessing.rect_samprate;
+
+Smooth_Factor = cfg_Processing.Smooth_Factor;
+SmoothType = cfg_Processing.SmoothType;
 %%
 
-rect_bandfreqs = [ 750 5000 ];
-rect_lowpassfreq = 300;
-rect_samprate = 1000;
+% rect_bandfreqs = [ 750 5000 ];
+% rect_lowpassfreq = 300;
+% rect_samprate = 1000;
 
 want_quiet=false;
 

@@ -90,7 +90,11 @@ TargetNameExt=[TargetName '_%s' MatExt];
 for aidx=1:length(Area_Names)
     this_Area=Area_Names{aidx};
     this_AreaDir=[AreasDir filesep this_Area];
+    if isempty(SubAreaDir)
+    this_MatPath=this_AreaDir;
+    else
     this_MatPath=[this_AreaDir filesep SubAreaDir];
+    end
 
     this_MatNameExt=sprintf(MatNameExt,this_Area);
     this_MatPathNameExt=[this_MatPath filesep this_MatNameExt];

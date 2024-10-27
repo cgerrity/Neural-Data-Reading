@@ -36,8 +36,12 @@ SamplingFrequency=cfg.SamplingFrequency;
 DataWidth=cfg.DataWidth/SamplingFrequency;
 WindowStride=cfg.WindowStride/SamplingFrequency;
 X_Name='Time (s)';
-Y_Name='Accuracy';
-PlotTitle='Accuracy Over Time';
+Y_Name = 'Accuracy';
+PlotTitle = 'Accuracy Over Time';
+if contains(cfg.MatchType,'Scaled')
+Y_Name = 'Normalized Accuracy';
+PlotTitle = 'Normalized Accuracy Over Time';
+end
 
 Window_Accuracy_All=FullTable.('Window Accuracy');
 PlotNames=FullTable.Properties.RowNames;
@@ -56,16 +60,22 @@ p_Random.LineWidth = Line_Width;
 p_MostCommon.DisplayName = 'Most Common';
 p_Random.DisplayName = 'Random Chance';
 
-p_Plots(NumLoops+1)=p_MostCommon;
-p_Plots(NumLoops+2)=p_Random;
+% p_Plots(NumLoops+1)=p_MostCommon;
+% p_Plots(NumLoops+2)=p_Random;
 
+if NumLoops > 1
 legend(p_Plots,'Location','best','FontSize',Legend_Size);
+else
+    legend([],'Location','best','FontSize',Legend_Size);
+    legend off;
+end
 
 YLimLower=RangeAccuracyLower;
 YLimUpper=RangeAccuracyUpper;
 
 ylim([YLimLower,YLimUpper]);
-
+ylim([0,1]);
+ylim([-0.05,0.3]);
 drawnow;
 
 %%

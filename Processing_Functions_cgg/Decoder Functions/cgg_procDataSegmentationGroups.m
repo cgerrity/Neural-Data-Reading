@@ -1,4 +1,4 @@
-function [OutputIDX,OutputNames] = cgg_procDataSegmentationGroups(Dimension_Each,CorrectTrial,PreviousTrialCorrect,Dimensionality,Gain,Loss,Learned,ProbeProcessing,TargetFeature,ReactionTime,TrialChosen,SessionName,DataNumber,SharedFeatureCoding)
+function [OutputIDX,OutputNames] = cgg_procDataSegmentationGroups(Dimension_Each,CorrectTrial,PreviousTrialCorrect,Dimensionality,Gain,Loss,Learned,ProbeProcessing,TargetFeature,ReactionTime,TrialChosen,SessionName,DataNumber,SharedFeatureCoding,TrialsFromLP,TrialsFromLPCategory)
 %CGG_PROCDATASEGMENTATIONGROUPS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -72,12 +72,26 @@ Counter_IDX=Counter_IDX+1;
 OutputIDX(Counter_IDX)=TrialChosen;
 OutputNames(Counter_IDX)="Trial Chosen";
 
+% Trials From Learning Point
+Counter_IDX=Counter_IDX+1;
+OutputIDX(Counter_IDX)=TrialsFromLP;
+OutputNames(Counter_IDX)="Trials From Learning Point";
+
+% Trials From Learning Point
+Counter_IDX=Counter_IDX+1;
+OutputIDX(Counter_IDX)=TrialsFromLPCategory;
+OutputNames(Counter_IDX)="Trials From Learning Point Category";
+
 % SessionName
 
 [cfg] = DATA_cggAllSessionInformationConfiguration;
 AllSessionNames=replace({cfg.SessionName},'-','_');
 Counter_IDX=Counter_IDX+1;
-OutputIDX(Counter_IDX)=find(strcmp(AllSessionNames,SessionName));
+SessionNumber = find(strcmp(AllSessionNames,SessionName));
+if isempty(SessionNumber)
+    SessionNumber = -1;
+end
+OutputIDX(Counter_IDX)=SessionNumber;
 OutputNames(Counter_IDX)="Session Name";
 
 % DataNumber

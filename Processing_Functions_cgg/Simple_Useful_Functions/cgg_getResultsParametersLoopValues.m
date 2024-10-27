@@ -11,6 +11,7 @@ wantSubset = CheckVararginPairs('wantSubset', true, varargin{:});
 DataWidth = CheckVararginPairs('DataWidth', 100, varargin{:});
 WindowStride = CheckVararginPairs('WindowStride', 50, varargin{:});
 MatchType = CheckVararginPairs('MatchType', 'combinedaccuracy', varargin{:});
+IsBest = CheckVararginPairs('IsBest', false, varargin{:});
 
 NumEpochName = 1;
 if iscell(EpochName)
@@ -65,6 +66,11 @@ elseif NumMatchType>1
     NumLoops=NumMatchType;
     LoopNames=MatchType;
     LoopTitle=cfg_Names.LoopTitleMatchType;
+elseif IsBest
+    LoopType=cfg_Names.LoopBest;
+    NumLoops=1;
+    LoopNames={'Best Model'};
+    LoopTitle=cfg_Names.LoopTitleBest;
 else
     LoopType=cfg_Names.LoopUnknown;
     NumLoops=1;

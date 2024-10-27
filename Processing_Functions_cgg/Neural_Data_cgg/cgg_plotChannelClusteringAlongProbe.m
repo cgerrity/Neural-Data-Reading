@@ -16,6 +16,8 @@ figure(fig_cluster);
 
 InArea_Label=replace(InArea,'_',' ');
 
+cfg_clustering = PARAMETERS_cgg_getDisconnectedChannels();
+
 %%
 Main_Title='Clustering of Each Channel';
 % Main_SubTitle=sprintf('Area: %s Trials:',InArea_Label);
@@ -50,10 +52,16 @@ end
 
 % NumGroups=2;
 NumGroups=10;
-NumReplicates=10;
-InDistance='sqeuclidean';
+% NumReplicates=10;
+% InDistance='sqeuclidean';
+% NumComponents = 5;
+NumComponents = cfg_clustering.NumIterations;
+
+NumReplicates=cfg_clustering.NumReplicates;
+InDistance=cfg_clustering.InDistance;
 
 [Group_Labels,Data_Reduced,Group_Distance] = cgg_procChannelClustering(InData,NumGroups,NumReplicates,InDistance);
+[Group_Labels,Group_Distance,SCORE] = cgg_procChannelClustering_v4(InData,NumGroups,NumReplicates,InDistance,NumComponents);
 %%
 NumChannels=length(Group_Labels);
 

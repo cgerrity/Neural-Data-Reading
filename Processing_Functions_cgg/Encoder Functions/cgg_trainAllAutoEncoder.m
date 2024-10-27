@@ -1,9 +1,10 @@
-function cgg_trainAllAutoEncoder(InDataStore,DataStore_Validation,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,Encoding_Dir)
+function cgg_trainAllAutoEncoder(InDataStore,DataStore_Validation,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,cfg_Network)
 %CGG_TRAINALLAUTOENCODER Summary of this function goes here
 %   Detailed explanation goes here
 
 HiddenSizes=cfg_Encoder.HiddenSizes;
 NumEpochsBase=cfg_Encoder.NumEpochsBase;
+NumEpochsAutoEncoder = cfg_Encoder.NumEpochsAutoEncoder;
 MiniBatchSize=cfg_Encoder.MiniBatchSize;
 GradientThreshold=cfg_Encoder.GradientThreshold;
 NumEpochsSession=cfg_Encoder.NumEpochsSession;
@@ -11,9 +12,11 @@ InitialLearningRate=cfg_Encoder.InitialLearningRate;
 ModelName=cfg_Encoder.ModelName;
 LossFactorReconstruction=cfg_Encoder.LossFactorReconstruction;
 LossFactorKL=cfg_Encoder.LossFactorKL;
+RescaleLossEpoch = cfg_Encoder.RescaleLossEpoch;
 WeightedLoss = cfg_Encoder.WeightedLoss;
 ClassifierName = cfg_Encoder.ClassifierName;
 ClassifierHiddenSize = cfg_Encoder.ClassifierHiddenSize;
+Optimizer = cfg_Encoder.Optimizer;
 
 Time_Start=cfg_Encoder.Time_Start;
 DataWidth=cfg_Encoder.DataWidth;
@@ -24,11 +27,20 @@ IsQuaddle=cfg_Encoder.IsQuaddle;
 
 MatchType_Accuracy_Measure = cfg_Encoder.MatchType_Accuracy_Measure;
 
-NumEpochsBase=1;
-NumEpochsSession=1;
-NumEpochsFinal=500;
+WantSaveNet = cfg_Encoder.WantSaveNet;
+
+% NumEpochsSession=1;
+NumEpochsFinal=NumEpochsSession;
 LossType='Classification';
 
+DataStore_Training=InDataStore;
+ValidationFrequency=2;
+
+%% Directories
+
+Encoding_Dir = cgg_getDirectory(cfg_Network,'Classifier');
+AutoEncoding_Dir = cgg_getDirectory(cfg_Network,'AutoEncoderInformation');
+% AutoEncoding_Dir = cgg_getDirectory(cfg_Network,'AutoEncoder');
 
 %%
 
@@ -67,23 +79,62 @@ else
 DataFormat={DataFormat_AutoEncoder{1},'BCT'};
 end
 
+DataFormat{3} = '';
+DataFormat_AutoEncoder{3} = '';
+
 %%
 
-WindowMonitor = cgg_generateFullAccuracyProgressMonitor('SaveDir',Encoding_Dir,'Time_Start',Time_Start,'DataWidth',DataWidth/SamplingRate,'WindowStride',WindowStride/SamplingRate,'NumWindows',NumWindows,'SamplingRate',SamplingRate);
-WindowMonitor_Accuracy_Measure = cgg_generateFullAccuracyProgressMonitor('SaveDir',Encoding_Dir,'Time_Start',Time_Start,'DataWidth',DataWidth/SamplingRate,'WindowStride',WindowStride/SamplingRate,'NumWindows',NumWindows,'SamplingRate',SamplingRate,'SaveTerm',MatchType_Accuracy_Measure);
+WindowMonitor_Full = cgg_generateFullAccuracyProgressMonitor('SaveDir',Encoding_Dir,'Time_Start',Time_Start,'DataWidth',DataWidth/SamplingRate,'WindowStride',WindowStride/SamplingRate,'NumWindows',NumWindows,'SamplingRate',SamplingRate);
+WindowMonitor_Full_Accuracy_Measure = cgg_generateFullAccuracyProgressMonitor('SaveDir',Encoding_Dir,'Time_Start',Time_Start,'DataWidth',DataWidth/SamplingRate,'WindowStride',WindowStride/SamplingRate,'NumWindows',NumWindows,'SamplingRate',SamplingRate,'SaveTerm',MatchType_Accuracy_Measure);
 
 ReconstructionMonitor = cgg_generateFullReconstructionAndClassificationMonitor('SaveDir',Encoding_Dir,'Time_Start',Time_Start,'DataWidth',DataWidth/SamplingRate,'WindowStride',WindowStride/SamplingRate,'NumWindows',NumWindows,'SamplingRate',SamplingRate,'NumDimensions',length(ClassNames));
+ReconstructionMonitor_AutoEncoder = cgg_generateFullReconstructionAndClassificationMonitor('SaveDir',AutoEncoding_Dir,'Time_Start',Time_Start,'DataWidth',DataWidth/SamplingRate,'WindowStride',WindowStride/SamplingRate,'NumWindows',NumWindows,'SamplingRate',SamplingRate,'NumDimensions',0);
 
-GradientMonitor = cgg_generateGradientMonitor('SaveDir',Encoding_Dir);
+GradientMonitor_Full = cgg_generateGradientMonitor('SaveDir',Encoding_Dir);
+GradientMonitor_AutoEncoder = cgg_generateGradientMonitor('SaveDir',AutoEncoding_Dir);
 %%
+
+AutoEncoderSavePathNameExt = [AutoEncoding_Dir filesep 'AutoEncoder.mat'];
 
 % FinalSavePathNameExt=sprintf([Encoding_Dir filesep 'VariationalFinalNet' ExtraSaveTerm '.mat']);
 FinalSavePathNameExt = [Encoding_Dir filesep 'FinalNet.mat'];
-
+% FinalSavePathNameExt = [Encoding_Dir filesep 'FullNetwork.mat'];
+%%
 if isfile(FinalSavePathNameExt)
     m_NetFinal=matfile(FinalSavePathNameExt,"Writable",false);
-    NetFinal=m_NetFinal.Encoder;
+    NetFinal=m_NetFinal.Network;
 else
+
+if ~isfile(AutoEncoderSavePathNameExt)
+    Layers_Custom = cgg_selectAutoEncoder(ModelName,DataSize,HiddenSizes,NumWindows,DataFormat_Reshape);
+    NetAutoEncoder= initialize(Layers_Custom);
+    
+%% Train AutoEncoder
+
+    NetAutoEncoder = cgg_trainNetworkParallel(NetAutoEncoder,DataStore_Training,...
+        DataStore_Validation,DataStore_Testing,...
+        'GradientThreshold', GradientThreshold,'NumEpochs', NumEpochsAutoEncoder,...
+        'ValidationFrequency', ValidationFrequency,...
+        'MiniBatchSize', MiniBatchSize,'DataFormat', DataFormat,...
+        'InitialLearningRate',InitialLearningRate,...
+        'SaveDirPlot',AutoEncoding_Dir,...
+        'LossFactorReconstruction',LossFactorReconstruction,...
+        'LossFactorKL',LossFactorKL,...
+        'WeightedLoss',WeightedLoss,...
+        'GradientMonitor',GradientMonitor_AutoEncoder,...
+        'MatchType_Accuracy_Measure',MatchType_Accuracy_Measure,...
+        'WantSaveNet',WantSaveNet,'Optimizer',Optimizer,...
+        'ReconstructionMonitor',ReconstructionMonitor_AutoEncoder);
+
+%%
+
+AutoEncoderSaveVariables={NetAutoEncoder};
+AutoEncoderSaveVariablesName={'AutoEncoder'};
+cgg_saveVariableUsingMatfile(AutoEncoderSaveVariables,AutoEncoderSaveVariablesName,AutoEncoderSavePathNameExt);
+else
+    m_AutoEncoder = matfile(AutoEncoderSavePathNameExt,"Writable",false);
+    NetAutoEncoder = m_AutoEncoder.AutoEncoder;
+end
 
 % TuningSavePathNameExt=sprintf([Encoding_Dir filesep 'VariationalTuning' ExtraSaveTerm '.mat']);
 ClassifierSavePathNameExt = [Encoding_Dir filesep 'Classifier.mat'];
@@ -115,13 +166,13 @@ end
 %     [~,Layers_Custom]=cgg_generateLayersForAutoEncoder(DataSize,HiddenSizes,NumWindows,DataFormat_Reshape);
 %     [~,Layers_Custom]=cgg_generateLayersForAutoEncoder_v2(DataSize,HiddenSizes,NumWindows,DataFormat_Reshape);
     % Layers_Custom = cgg_generateLayersForReccurentEncoder(DataSize,HiddenSizes,NumWindows,DataFormat_Reshape);
-    Layers_Custom = cgg_selectAutoEncoder(ModelName,DataSize,HiddenSizes,NumWindows,DataFormat_Reshape);
-    NetBase= initialize(Layers_Custom);
+    % Layers_Custom = cgg_selectAutoEncoder(ModelName,DataSize,HiddenSizes,NumWindows,DataFormat_Reshape);
+    % NetAutoEncoder= initialize(Layers_Custom);
 
 %%
 
     % NetFullTuning = cgg_getTuningNetFromFullVariationalAutoEncoder(NetBase,LayerGraph_Tuning);
-    NetFull = cgg_constructClassifierNetwork_v2(NetBase,Layers_Classifier);
+    NetFull = cgg_constructClassifierNetwork_v2(NetAutoEncoder,Layers_Classifier);
 %     NetFullTuning = NetBase;
 
     Layer_Names_All={NetFull.Layers(:).Name};
@@ -147,17 +198,23 @@ end
         'SaveDirPlot',Encoding_Dir,...
         'LossFactorReconstruction',LossFactorReconstruction,...
         'LossFactorKL',LossFactorKL,...
-        'WeightedLoss',WeightedLoss,'WindowMonitor',WindowMonitor,...
+        'WeightedLoss',WeightedLoss,'WindowMonitor',WindowMonitor_Full,...
         'ReconstructionMonitor',ReconstructionMonitor,...
-        'GradientMonitor',GradientMonitor,...
+        'GradientMonitor',GradientMonitor_Full,...
         'MatchType_Accuracy_Measure',MatchType_Accuracy_Measure,...
-        'WindowMonitor_Accuracy_Measure',WindowMonitor_Accuracy_Measure);
+        'WindowMonitor_Accuracy_Measure',WindowMonitor_Full_Accuracy_Measure,...
+        'WantSaveNet',WantSaveNet,'Optimizer',Optimizer,...
+        'RescaleLossEpoch',RescaleLossEpoch);
 
 % [NetFinal] = cgg_trainCustomTrainingParallelMultipleOutput(InputNet,InDataStore,DataStore_Testing,DataFormat,NumEpochsFinal,miniBatchSize,GradientThreshold,LossType,OutputNames,ClassNames);
 
 FinalSaveVariables={NetFinal};
-FinalSaveVariablesName={'Encoder'};
+FinalSaveVariablesName={'Network'};
 cgg_saveVariableUsingMatfile(FinalSaveVariables,FinalSaveVariablesName,FinalSavePathNameExt);
 end
+
+%%
+
+% cgg_saveCMTableFromNetwork(DataStore_Testing,NetFinal,ClassNames,Encoding_Dir);
 
 end

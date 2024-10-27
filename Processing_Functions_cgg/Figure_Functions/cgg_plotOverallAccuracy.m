@@ -49,8 +49,13 @@ LoopNames_Cat = categorical(LoopNames);
 LoopNames_Cat = reordercats(LoopNames_Cat,LoopNames);
 
 fig_accuracy=figure;
-fig_accuracy.WindowState='maximized';
-fig_accuracy.PaperSize=[20 10];
+fig_accuracy.Units="normalized";
+fig_accuracy.Position=[0,0,1,1];
+fig_accuracy.Units="inches";
+fig_accuracy.PaperUnits="inches";
+PlotPaperSize=fig_accuracy.Position;
+PlotPaperSize(1:2)=[];
+fig_accuracy.PaperSize=PlotPaperSize;
 
 if NumLoops<8
 PlotColor(1,:)=[0 0.4470 0.7410];
@@ -155,13 +160,19 @@ ColorOrder=cell2mat(ColorOrder);
 
 legend(p_Mean,'Location','best','FontSize',Legend_Size);
 
+Y_Name = 'Accuracy';
+if contains(cfg.MatchType,'Scaled')
+Y_Name = 'Normalized Accuracy';
+end
+
 xlabel('Iteration','FontSize',X_Name_Size);
-ylabel('Accuracy','FontSize',Y_Name_Size);
+ylabel(Y_Name,'FontSize',Y_Name_Size);
 Accuracy_Title=sprintf('Accuracy over %d Iterations and %d Folds',NumIterations,NumFolds);
 title(Accuracy_Title,'FontSize',Title_Size);
 
 xticks([1,Tick_Size:Tick_Size:NumIterations]);
 ylim([YLimLower,YLimUpper]);
+ylim([0,1]);
 
 %%
 
@@ -187,10 +198,17 @@ close all
 %% Bar Graph
 
 fig_accuracy_bar=figure;
-fig_accuracy_bar.WindowState='maximized';
-fig_accuracy_bar.PaperSize=[20 10];
+fig_accuracy_bar.Units="normalized";
+fig_accuracy_bar.Position=[0,0,1,1];
+fig_accuracy_bar.Units="inches";
+fig_accuracy_bar.PaperUnits="inches";
+PlotPaperSize=fig_accuracy_bar.Position;
+PlotPaperSize(1:2)=[];
+fig_accuracy_bar.PaperSize=PlotPaperSize;
 
-[b_Plot] = cgg_plotBarGraphWithError(Values,ValueNames,'ColorOrder',ColorOrder,'X_TickFontSize',20,'ErrorLineWidth',Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',true);
+LabelAngle = 30;
+
+[b_Plot] = cgg_plotBarGraphWithError(Values,ValueNames,'ColorOrder',ColorOrder,'X_TickFontSize',20,'ErrorLineWidth',Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',true,'LabelAngle',LabelAngle);
 
 p_MostCommon=yline(MostCommon,"-",'Most Common');
 p_Random=yline(RandomChance,"-",'Random Chance');
@@ -206,13 +224,19 @@ p_Random.LabelVerticalAlignment = 'middle';
 p_Random.LabelHorizontalAlignment = 'left';
 p_Random.FontSize = Label_Size;
 
-ylabel('Accuracy','FontSize',Y_Name_Size);
+Y_Name = 'Accuracy';
+if contains(cfg.MatchType,'Scaled')
+Y_Name = 'Normalized Accuracy';
+end
+
+ylabel(Y_Name,'FontSize',Y_Name_Size);
 
 Bar_Title=sprintf('Accuracy of %s over %d Folds',cfg.LoopTitle,NumFolds);
 title(Bar_Title,'FontSize',Title_Size);
 
 % ylim([0,Y_Upper*(1+RangeFactorUpper)]);
 ylim([YLimLower,YLimUpper]);
+ylim([0,1]);
 
 drawnow;
 

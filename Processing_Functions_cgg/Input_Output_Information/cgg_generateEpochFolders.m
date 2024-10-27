@@ -79,6 +79,18 @@ end % End for whether to make the Normalized Data Folder
 end % End for whether this is being called within a function
 
 if isfunction
+NormalizationInformation = CheckVararginPairs('NormalizationInformation', false, varargin{:});
+if NormalizationInformation
+
+% Make the Normalization Information output folder names.
+cfg_tmp=cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch;
+[cfg_tmp,~] = cgg_generateFolderAndPath('Normalization Information','NormalizationInformation',cfg_tmp);
+cfg.outdatadir.Experiment.Session.Epoched_Data.Epoch=cfg_tmp;
+
+end % End for whether to make the Normalization Information Folder
+end % End for whether this is being called within a function
+
+if isfunction
 AreaPlot = CheckVararginPairs('AreaPlot', '', varargin{:});
 if ~isempty(AreaPlot)
 % Make the Plots output folder names.

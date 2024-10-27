@@ -5,10 +5,10 @@ function cgg_displayDataExamples_v2(InputNet,TrainingMbq,ValidationMbq,ClassName
 isfunction=exist('varargin','var');
 
 if isfunction
-RangeAll = CheckVararginPairs('RangeAll', [-4,4], varargin{:});
+RangeAll = CheckVararginPairs('RangeAll', [-1,1], varargin{:});
 else
 if ~(exist('RangeAll','var'))
-RangeAll=[-4,4];
+RangeAll=[-1,1];
 end
 end
 
@@ -75,11 +75,24 @@ if ~(exist('NumExamples','var'))
 NumExamples=3;
 end
 end
+
+if isfunction
+IsOptimal = CheckVararginPairs('IsOptimal', false, varargin{:});
+else
+if ~(exist('IsOptimal','var'))
+IsOptimal=false;
+end
+end
 %%
 
 % figure(InFigure);
 % clf;
 clf(InFigure);
+
+% InSaveTerm = 'Current';
+% if IsOptimal
+% InSaveTerm = 'Optimal';
+% end
 
 %%
 reset(ValidationMbq);
@@ -139,11 +152,14 @@ T_Reconstruction_Validation = XValidation;
 T_Classification_Training = TTraining;
 T_Classification_Validation = TValidation;
 
+ExampleNumber = 0;
+
 for idx = 1:NumReconstructionMonitorExamples
     this_BatchIDX=mod(idx-1,NumBatches)+1;
-
-cgg_displayReconstructionMonitor(ReconstructionMonitor,Y_Classification_Training,Y_Reconstruction_Training,T_Classification_Training,T_Reconstruction_Training,Y_Classification_Validation,Y_Reconstruction_Validation,T_Classification_Validation,T_Reconstruction_Validation,ClassNames,Iteration,this_BatchIDX);
+    ExampleNumber = ExampleNumber + 1;
+cgg_displayReconstructionMonitor(ReconstructionMonitor,Y_Classification_Training,Y_Reconstruction_Training,T_Classification_Training,T_Reconstruction_Training,Y_Classification_Validation,Y_Reconstruction_Validation,T_Classification_Validation,T_Reconstruction_Validation,ClassNames,Iteration,this_BatchIDX,IsOptimal,ExampleNumber);
 end
+resetExampleTerm(ReconstructionMonitor);
 end
 %%
 

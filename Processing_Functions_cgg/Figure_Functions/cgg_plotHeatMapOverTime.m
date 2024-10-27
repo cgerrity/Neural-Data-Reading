@@ -2,6 +2,7 @@ function [fig_plot,p_Plots,c_Plot] = cgg_plotHeatMapOverTime(InData,varargin)
 %CGG_PLOTHEATMAPOVERTIME Summary of this function goes here
 %   Detailed explanation goes here
 
+cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 %% Varargin Options
 
 isfunction=exist('varargin','var');
@@ -142,6 +143,78 @@ InFigure='';
 end
 end
 
+if isfunction
+TimeOffset = CheckVararginPairs('TimeOffset', 0, varargin{:});
+else
+if ~(exist('TimeOffset','var'))
+TimeOffset=0;
+end
+end
+
+if isfunction
+DecisionIndicatorLabelOrientation = CheckVararginPairs('DecisionIndicatorLabelOrientation', 'horizontal', varargin{:});
+else
+if ~(exist('DecisionIndicatorLabelOrientation','var'))
+DecisionIndicatorLabelOrientation='horizontal';
+end
+end
+
+if isfunction
+wantFeedbackIndicators = CheckVararginPairs('wantFeedbackIndicators', false, varargin{:});
+else
+if ~(exist('wantFeedbackIndicators','var'))
+wantFeedbackIndicators=false;
+end
+end
+
+if isfunction
+wantIndicatorNames = CheckVararginPairs('wantIndicatorNames', true, varargin{:});
+else
+if ~(exist('wantIndicatorNames','var'))
+wantIndicatorNames=true;
+end
+end
+
+if isfunction
+Line_Width = CheckVararginPairs('Line_Width', cfg_Plotting.Line_Width, varargin{:});
+else
+if ~(exist('Line_Width','var'))
+Line_Width=cfg_Plotting.Line_Width;
+end
+end
+
+if isfunction
+Tick_Size_Time = CheckVararginPairs('Tick_Size_Time', cfg_Plotting.Tick_Size_Time, varargin{:});
+else
+if ~(exist('Tick_Size_Time','var'))
+Tick_Size_Time=cfg_Plotting.Tick_Size_Time;
+end
+end
+
+if isfunction
+Tick_Size_Z = CheckVararginPairs('Tick_Size_Z', cfg_Plotting.Tick_Size_Z, varargin{:});
+else
+if ~(exist('Tick_Size_Z','var'))
+Tick_Size_Z=cfg_Plotting.Tick_Size_Z;
+end
+end
+
+if isfunction
+Y_Tick_Label_Size = CheckVararginPairs('Y_Tick_Label_Size', cfg_Plotting.Label_Size, varargin{:});
+else
+if ~(exist('Y_Tick_Label_Size','var'))
+Y_Tick_Label_Size=cfg_Plotting.Label_Size;
+end
+end
+
+if isfunction
+X_Tick_Label_Size = CheckVararginPairs('X_Tick_Label_Size', cfg_Plotting.Label_Size, varargin{:});
+else
+if ~(exist('X_Tick_Label_Size','var'))
+X_Tick_Label_Size=cfg_Plotting.Label_Size;
+end
+end
+
 %% Parameters
 
 if ~isempty(InFigure)
@@ -169,7 +242,7 @@ Title_Size = cfg_Plotting.Title_Size;
 Label_Size = cfg_Plotting.Label_Size;
 
 Tick_Size_Channels=cfg_Plotting.Tick_Size_Channels;
-Tick_Size_Time=cfg_Plotting.Tick_Size_Time;
+% Tick_Size_Time=cfg_Plotting.Tick_Size_Time;
 
 RangeFactorHeatUpper = cfg_Plotting.RangeFactorHeatUpper;
 RangeFactorHeatLower = cfg_Plotting.RangeFactorHeatLower;
@@ -198,7 +271,7 @@ end
 %%
 
 if isempty(Time_End)
-    Time_Start_Adjusted = Time_Start+DataWidth/2;
+    Time_Start_Adjusted = Time_Start+DataWidth/2+TimeOffset;
     if SameNumWindows
         this_Time = Time_Start_Adjusted+((1:NumWindows)-1)*WindowStride;
     else
@@ -206,7 +279,7 @@ if isempty(Time_End)
     end
 else
     if SameNumWindows
-        this_Time = linspace(Time_Start,Time_End,NumWindows);
+        this_Time = linspace(Time_Start+TimeOffset,Time_End+TimeOffset,NumWindows);
     else
         % Insert time for different window lengths
     end
@@ -261,15 +334,24 @@ fig_plot.CurrentAxes.XAxis.FontSize=Label_Size;
 fig_plot.CurrentAxes.YAxis.FontSize=Label_Size;
 view(2);
 % c_Plot = colorbar('vert','FontSize',Label_Size,'Direction','reverse');
+Z_Ticks = ZLower:Tick_Size_Z:ZUpper;
 c_Plot=colorbar('vert');
 c_Plot.Label.String = Z_Name;
 c_Plot.Label.FontSize = Y_Name_Size;
+c_Plot.FontSize = X_Tick_Label_Size;
+c_Plot.Ticks = Z_Ticks;
 clim([ZLower,ZUpper]);
 
-xticks(Time_Start:Tick_Size_Time:this_Time(end));
-yticks(Y_Ticks);
+X_Ticks = Time_Start:Tick_Size_Time:this_Time(end);
 
+xticks(X_Ticks);
+if ~isnan(Y_Ticks)
+yticks(Y_Ticks);
+end
+
+if ~isnan(Y_TickLabel)
 fig_plot.CurrentAxes.YAxis.TickLabel=Y_TickLabel;
+end
 
 % fig_plot.CurrentAxes.YDir='normal';
 % fig_plot.CurrentAxes.XDir='normal';
@@ -287,9 +369,26 @@ ylabel(Y_Name,'FontSize',Y_Name_Size);
 
 hold on
 if wantDecisionIndicators
-    cgg_plotDecisionEpochIndicators(DecisionIndicatorColors);
+    cgg_plotDecisionEpochIndicators(DecisionIndicatorColors,...
+        'DecisionIndicatorLabelOrientation',...
+        DecisionIndicatorLabelOrientation,...
+        'wantFeedbackIndicators',wantFeedbackIndicators,...
+        'TimeOffset',TimeOffset,...
+        'wantIndicatorNames',wantIndicatorNames,...
+        'Line_Width',Line_Width);
 end
 hold off
+
+    if isempty(X_Tick_Label_Size)
+        xticklabels({});
+    else
+    fig_plot.CurrentAxes.XAxis.FontSize=X_Tick_Label_Size;
+    end
+    if isempty(Y_Tick_Label_Size)
+        yticklabels({});
+    else
+    fig_plot.CurrentAxes.YAxis.FontSize=Y_Tick_Label_Size;
+    end
 
 Main_Title=PlotTitle;
 % Main_SubTitle=sprintf('Area: %s Trials:',InArea_Label);

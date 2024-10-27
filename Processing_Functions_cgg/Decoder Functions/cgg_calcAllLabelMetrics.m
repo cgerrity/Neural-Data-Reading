@@ -12,7 +12,9 @@ Global_FN=0;
 MacroDimensionAccuracy=NaN(NumDimension,1);
 MacroDimensionPrecision=NaN(NumDimension,1);
 MacroDimensionRecall=NaN(NumDimension,1);
+MacroDimensionSpecificity=NaN(NumDimension,1);
 MacroDimensionF1=NaN(NumDimension,1);
+MacroDimensionBalancedAccuracy=NaN(NumDimension,1);
 
 MacroDimensionTotalAccuracy=NaN(NumDimension,1);
 
@@ -25,7 +27,9 @@ for didx=1:NumDimension
     MacroClassAccuracy=NaN(NumClasses,1);
     MacroClassPrecision=NaN(NumClasses,1);
     MacroClassRecall=NaN(NumClasses,1);
+    MacroClassSpecificity=NaN(NumClasses,1);
     MacroClassF1=NaN(NumClasses,1);
+    MacroClassBalancedAccuracy=NaN(NumClasses,1);
 
     MacroClassTP=NaN(NumClasses,1);
     MacroClassTN=NaN(NumClasses,1);
@@ -48,18 +52,32 @@ for didx=1:NumDimension
         ClassAccuracy=(TP+TN)/(TP+TN+FP+FN);
         ClassPrecision=(TP)/(TP+FP);
         ClassRecall=(TP)/(TP+FN);
+        ClassSpecificity=(TN)/(TN+FP);
         ClassF1=2*(ClassPrecision*ClassRecall)/...
             (ClassPrecision+ClassRecall);
+        ClassBalancedAccuracy=0.5*(ClassRecall+ClassSpecificity);
 
         Global_TP=Global_TP+TP;
         Global_TN=Global_TN+TN;
         Global_FP=Global_FP+FP;
         Global_FN=Global_FN+FN;
 
+%        if isnan(ClassPrecision) && IsValidCM
+%        ClassPrecision = 0;
+%        end
+%        if isnan(ClassRecall) && IsValidCM
+%        ClassRecall = 0;
+%        end
+%        if isnan(ClassF1) && IsValidCM
+%        ClassF1 = 0;
+%        end
+
         MacroClassAccuracy(cidx)=ClassAccuracy;
         MacroClassPrecision(cidx)=ClassPrecision;
         MacroClassRecall(cidx)=ClassRecall;
+        MacroClassSpecificity(cidx)=ClassSpecificity;
         MacroClassF1(cidx)=ClassF1;
+        MacroClassBalancedAccuracy(cidx)=ClassBalancedAccuracy;
 
         MacroClassTP(cidx)=TP;
         MacroClassTN(cidx)=TN;
@@ -71,10 +89,16 @@ for didx=1:NumDimension
 
     MacroDimensionTotalAccuracy(didx)=sum(MacroClassTP)/MacroClassTotal;
 
-    MacroDimensionAccuracy(didx)=mean(MacroClassAccuracy);
-    MacroDimensionPrecision(didx)=mean(MacroClassPrecision);
-    MacroDimensionRecall(didx)=mean(MacroClassRecall);
+    MacroDimensionAccuracy(didx)=mean(MacroClassAccuracy,"omitnan");
+    MacroDimensionPrecision(didx)=mean(MacroClassPrecision,"omitnan");
+    MacroDimensionRecall(didx)=mean(MacroClassRecall,"omitnan");
+    MacroDimensionSpecificity(didx)=mean(MacroClassSpecificity,"omitnan");
+    % MacroDimensionAccuracy(didx)=mean(MacroClassAccuracy);
+    % MacroDimensionPrecision(didx)=mean(MacroClassPrecision);
+    % MacroDimensionRecall(didx)=mean(MacroClassRecall);
+    % MacroDimensionSpecificity(didx)=mean(MacroClassSpecificity);
     MacroDimensionF1(didx)=mean(MacroClassF1);
+    MacroDimensionBalancedAccuracy(didx)=mean(MacroClassBalancedAccuracy);
 
 end
 
@@ -88,7 +112,9 @@ MacroTotalAccuracy=mean(MacroDimensionTotalAccuracy);
 MacroAccuracy=mean(MacroDimensionAccuracy);
 MacroPrecision=mean(MacroDimensionPrecision);
 MacroRecall=mean(MacroDimensionRecall);
+MacroSpecificity=mean(MacroDimensionSpecificity);
 MacroF1=mean(MacroDimensionF1);
+MacroBalancedAccuracy=mean(MacroDimensionBalancedAccuracy);
 
 %% Fix catastrophic predictions
 
@@ -114,7 +140,9 @@ LabelMetrics.MicroF1=MicroF1;
 LabelMetrics.MacroAccuracy=MacroAccuracy;
 LabelMetrics.MacroPrecision=MacroPrecision;
 LabelMetrics.MacroRecall=MacroRecall;
+LabelMetrics.MacroSpecificity=MacroSpecificity;
 LabelMetrics.MacroF1=MacroF1;
+LabelMetrics.MacroBalancedAccuracy=MacroBalancedAccuracy;
 
 LabelMetrics.MacroTotalAccuracy=MacroTotalAccuracy;
 

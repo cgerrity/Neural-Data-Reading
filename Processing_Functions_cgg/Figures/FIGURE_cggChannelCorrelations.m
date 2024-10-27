@@ -18,8 +18,11 @@ outdatadir=[outputfolder_base '/Data_Neural_gerritcg'];
 All_probe_area={'ACC_001','ACC_002','CD_001','CD_002','PFC_001'};
 Activity_Type='WideBand';
 
+cfg_clustering = PARAMETERS_cgg_getDisconnectedChannels();
+cfg=PARAMETERS_cgg_proc_NeuralDataPreparation();
+
 % Sel_Trial=[100];
-Count_Sel_Trial=30;
+Count_Sel_Trial=cfg.clustering_trial_count;
 
 %%
 

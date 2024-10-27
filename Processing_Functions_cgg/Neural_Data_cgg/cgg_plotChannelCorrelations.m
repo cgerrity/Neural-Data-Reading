@@ -42,7 +42,7 @@ view(2);
 c_Baseline=colorbar('vert');
 c_Baseline.Label.String = 'Correlation';
 c_Baseline.Label.FontSize = Y_Name_Size;
-caxis([YLim_Lower,YLim_Upper]);
+clim([YLim_Lower,YLim_Upper]);
 
 xticks(0:Tick_Size:NumChannels);
 yticks(0:Tick_Size:NumChannels);
@@ -111,7 +111,9 @@ saveas(fig_mean,this_figure_save_name,'pdf');
 %%
 
 % Get the anti-diagonal of the matrix
-Average_OffDiagonal = mean(diag(flipud(this_DataCorr),1));
+% Average_OffDiagonal = mean(diag(flipud(this_DataCorr),1));
+Average_OffDiagonal = this_DataCorr + diag(NaN(length(this_DataCorr),1));
+Average_OffDiagonal = mean(Average_OffDiagonal,"all","omitmissing");
 
 Zoomx2_Range=YLim_Upper_Zoomx2-YLim_Lower_Zoomx2;
 Zoomx4_Range=YLim_Upper_Zoomx4-YLim_Lower_Zoomx4;

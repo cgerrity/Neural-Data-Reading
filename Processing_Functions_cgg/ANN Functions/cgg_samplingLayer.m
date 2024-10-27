@@ -58,7 +58,8 @@ classdef cgg_samplingLayer < nnet.layer.Layer
 
             % Data dimensions.
 
-            numLatentChannels = size(X,layer.ChannelDimension)/2;
+            IsnumLatentChannelsOdd = mod(size(X,layer.ChannelDimension),2);
+            numLatentChannels = floor(size(X,layer.ChannelDimension)/2);
             miniBatchSize = size(X,layer.BatchDimension);
             SizeTime = size(X,layer.TimeDimension);
 
@@ -74,7 +75,7 @@ classdef cgg_samplingLayer < nnet.layer.Layer
 
             % Split statistics.
             mu = X(1:numLatentChannels,:,:);
-            logSigmaSq = X(numLatentChannels+1:end,:,:);
+            logSigmaSq = X(numLatentChannels+1:(end-IsnumLatentChannelsOdd),:,:);
 
             % Sample output.
             epsilon = randn(numLatentChannels,miniBatchSize,SizeTime,"like",X);
