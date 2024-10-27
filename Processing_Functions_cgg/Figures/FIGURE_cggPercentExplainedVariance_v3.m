@@ -2,18 +2,22 @@
 
 clc; clear; close all;
 
+%%
+
 Epoch='Decision';
 
 InIncrement=1;
 
 % EVType='Chosen Feature';
-EVType='Shared Feature';
+% EVType='Shared Feature';
 % EVType='Previous Correct Shared';
 % EVType='Correct';
+EVType='Prediction Error';
 
-Data_Location = "Backup";
+Data_Location = "Main";
 
 WantPlotExplainedVariance = false;
+WantPlotCorrelation = true;
 WantPlotSignificant = true;
 WantPlotCombinedExplainedVariance = true;
 
@@ -47,6 +51,8 @@ switch EVType
         PlotSubFolder='Previous Correct Shared';
     case 'Correct'
         PlotSubFolder='Correct';
+    case 'Prediction Error'
+        PlotSubFolder='Prediction Error';
 end
 
 cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
@@ -66,6 +72,8 @@ NumSessions=length(cfg_Session);
 
 SessionComplete=table(false(NumSessions,1),...
     'VariableNames',"IsSessionComplete",'RowNames',SessionsName);
+
+%%
 
 for sidx=1:NumSessions
 this_SessionName=SessionsName{sidx};
@@ -90,7 +98,7 @@ end
 
 AllSessionComplete=all(SessionComplete{:,:});
 
-
+%%
 if ~AllSessionComplete
 %%
 
@@ -140,6 +148,9 @@ switch EVType
         Target_Fun=@(x) [Target_Fun_Previous(x), Target_Fun_Correct(x), Target_Fun_Shared(x)];
     case 'Correct'
         Target_Fun=@(x) cgg_loadTargetArray(x,'CorrectTrial',true);
+    case 'Prediction Error'
+        Target_Fun=@(x) mean(cgg_loadTargetArray(x,'PredictionError',true));
+
 end
 
 %%
@@ -200,7 +211,7 @@ MatchArray=cell2mat(readall(this_Target_ds));
 
 %%
 
-InFunction=@(x,y) cgg_procRegressionValues(x,y,MatchArray,InIncrement,Probe_Order,InSavePathNameExt);
+InFunction=@(x,y) cgg_procRegressionValues(x,y,MatchArray,InIncrement,Probe_Order,EVType,InSavePathNameExt);
 
 NumOutputs=0;
 
@@ -231,6 +242,14 @@ cfg_Save.ResultsDir=cfg_Results.TargetDir;
 
 Plotcfg=cfg_Save.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.PlotFolder.SubFolder_1;
 
+cfg_Correlation_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+    'Epoch',Epoch,'PlotFolder','Correlation',...
+    'PlotSubFolder',PlotSubFolder,...
+    'PlotSubSubFolder',{'High Zoom','Medium Zoom','Low Zoom'});
+cfg_Correlation_Save.ResultsDir=cfg_Correlation_Results.TargetDir;
+
+Plotcfg_Correlation=cfg_Correlation_Save.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.PlotFolder.SubFolder_1;
+
 % InputTable=[];
 InputTable=cell(1,length(AreaNameCheck));
 
@@ -249,6 +268,10 @@ for aidx=1:length(AreaNames)
 
     if WantPlotExplainedVariance
         cgg_plotExplainedVariance_v2(this_PlotDataPathNameExt,Plotcfg,'InFigure',InFigure);
+    end
+
+    if WantPlotCorrelation
+        cgg_plotCorrelation(this_PlotDataPathNameExt,Plotcfg_Correlation,'InFigure',InFigure)
     end
 
     for acidx=1:length(AreaNameCheck)

@@ -2,10 +2,12 @@ function [blockData, trialData] = AddLpInfo(blockData,trialData)
 
 LP = nan(height(blockData),1);
 TrialsFromLP = nan(height(trialData),1);
+NotAbort_Trials = (trialData.AbortCode == 0);
 
 for iBlock = 1:height(blockData)
     blockNum = blockData.Block(iBlock);
     trialRows = trialData.Block == blockNum;
+    trialRows = trialRows & NotAbort_Trials;
     acc = strcmpi(trialData.isHighestProbReward(trialRows), 'true');
     lp = FindLp(acc, 'slidingWindow', 10, 0.8);
     LP(iBlock) = lp;

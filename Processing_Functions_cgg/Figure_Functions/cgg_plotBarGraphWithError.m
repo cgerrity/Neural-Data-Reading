@@ -1,4 +1,4 @@
-function [b_Plot] = cgg_plotBarGraphWithError(Values,ValueNames,varargin)
+function [b_Plot,b_Error] = cgg_plotBarGraphWithError(Values,ValueNames,varargin)
 %CGG_PLOTBARGRAPH Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -23,10 +23,12 @@ end
 end
 
 if isfunction
-PlotTitle = CheckVararginPairs('PlotTitle', sprintf('%s over Time',Y_Name), varargin{:});
+% PlotTitle = CheckVararginPairs('PlotTitle', sprintf('%s over Time',Y_Name), varargin{:});
+PlotTitle = CheckVararginPairs('PlotTitle', '', varargin{:});
 else
 if ~(exist('PlotTitle','var'))
-PlotTitle=sprintf('%s over Time',Y_Name);
+% PlotTitle=sprintf('%s over Time',Y_Name);
+PlotTitle='';
 end
 end
 
@@ -78,44 +80,216 @@ wantCI=false;
 end
 end
 
+if isfunction
+SignificanceValue = CheckVararginPairs('SignificanceValue', 0.05, varargin{:});
+else
+if ~(exist('SignificanceValue','var'))
+SignificanceValue=0.05;
+end
+end
+
+if isfunction
+ErrorMetric = CheckVararginPairs('ErrorMetric', '', varargin{:});
+else
+if ~(exist('ErrorMetric','var'))
+ErrorMetric='';
+end
+end
+
+if isfunction
+IsGrouped = CheckVararginPairs('IsGrouped', false, varargin{:});
+else
+if ~(exist('IsGrouped','var'))
+IsGrouped=false;
+end
+end
+
+if isfunction
+GroupNames = CheckVararginPairs('GroupNames', {}, varargin{:});
+else
+if ~(exist('GroupNames','var'))
+GroupNames={};
+end
+end
+
+if isfunction
+WantLegend = CheckVararginPairs('WantLegend', false, varargin{:});
+else
+if ~(exist('WantLegend','var'))
+WantLegend=false;
+end
+end
+
+if isfunction
+SignificanceTable = CheckVararginPairs('SignificanceTable', [], varargin{:});
+else
+if ~(exist('SignificanceTable','var'))
+SignificanceTable=[];
+end
+end
+
+if isfunction
+SignificanceFontSize = CheckVararginPairs('SignificanceFontSize', 6, varargin{:});
+else
+if ~(exist('SignificanceFontSize','var'))
+SignificanceFontSize=6;
+end
+end
+
+if isfunction
+WantBarNames = CheckVararginPairs('WantBarNames', true, varargin{:});
+else
+if ~(exist('WantBarNames','var'))
+WantBarNames=true;
+end
+end
+
+if isfunction
+WantHorizontal = CheckVararginPairs('WantHorizontal', false, varargin{:});
+else
+if ~(exist('WantHorizontal','var'))
+WantHorizontal=false;
+end
+end
+
+if isfunction
+Legend_Size = CheckVararginPairs('Legend_Size', [], varargin{:});
+else
+if ~(exist('Legend_Size','var'))
+Legend_Size=[];
+end
+end
+
+if isfunction
+LabelAngle = CheckVararginPairs('LabelAngle', 0, varargin{:});
+else
+if ~(exist('LabelAngle','var'))
+LabelAngle=0;
+end
+end
 %%
 ValueNames_Cat = categorical(ValueNames);
 ValueNames_Cat = reordercats(ValueNames_Cat,ValueNames);
 
 %%
+
+if IsGrouped
+    % NumGroups = length(Values{1});
+    NumGroups = length(Values);
+else
+    NumGroups = 1;
+end
+
+
+% NumBars=length(Values);
+if IsGrouped
+NumBars=length(Values{1});
+else
 NumBars=length(Values);
+end
 
-Bar_Mean=NaN(1,NumBars);
-Bar_STD=NaN(1,NumBars);
-Bar_Count=NaN(1,NumBars);
+% Bar_Mean=NaN(NumBars,NumGroups);
+% Bar_STD=NaN(NumBars,NumGroups);
+% Bar_Count=NaN(NumBars,NumGroups);
+% Bar_ErrorMetric=NaN(NumBars,NumGroups);
 
-ValueNames_Resized=cell(1,NumBars);
+Bar_Mean=NaN(NumGroups,NumBars);
+Bar_STD=NaN(NumGroups,NumBars);
+Bar_Count=NaN(NumGroups,NumBars);
+Bar_ErrorMetric=NaN(NumGroups,NumBars);
 
-for bidx=1:NumBars
-    this_Values=Values{bidx};
-    Bar_Mean(bidx)=mean(this_Values,"omitnan");
-    Bar_STD(bidx)=std(this_Values,[],"omitnan");
-    Bar_Count(bidx)=sum(~isnan(this_Values));
+% ValueNames_Resized=cell(1,NumBars);
+ValueNames_Resized=cell(1,NumGroups);
 
-    ValueNames_Resized{bidx}=['{\' sprintf(['fontsize{%d}' ValueNames{bidx} '}'],X_TickFontSize)];
+% for bidx=1:NumBars
+%     this_Values=Values{bidx};
+%     Bar_Mean(bidx)=mean(this_Values,"omitnan");
+%     Bar_STD(bidx)=std(this_Values,[],"omitnan");
+%     Bar_Count(bidx)=sum(~isnan(this_Values));
+% 
+%     if IsGrouped
+%         Bar_Mean(bidx,:) = this_Values;
+%         if ~isempty(ErrorMetric)
+%         Bar_ErrorMetric(bidx,:) = ErrorMetric{bidx};
+%         end
+%     end
+% 
+%     ValueNames_Resized{bidx}=['{\' sprintf(['fontsize{%d}' ValueNames{bidx} '}'],X_TickFontSize)];
+% 
+% end
+
+% for gidx=1:NumGroups
+for vidx=1:length(Values)
+    this_Values=Values{vidx};
+    % Bar_Mean(gidx)=mean(this_Values,"omitnan");
+    % Bar_STD(gidx)=std(this_Values,[],"omitnan");
+    % Bar_Count(gidx)=sum(~isnan(this_Values));
+
+    if IsGrouped
+        Bar_Mean(vidx,:) = this_Values;
+        if ~isempty(ErrorMetric)
+        Bar_ErrorMetric(vidx,:) = ErrorMetric{vidx};
+        end
+    else
+        Bar_Mean(vidx)=mean(this_Values,"omitnan");
+        Bar_STD(vidx)=std(this_Values,[],"omitnan");
+        Bar_Count(vidx)=sum(~isnan(this_Values));
+    end
+
+    ValueNames_Resized{vidx}=['{\' sprintf(['fontsize{%d}' ValueNames{vidx} '}'],X_TickFontSize)];
 
 end
 
 Bar_STE=Bar_STD./sqrt(Bar_Count);
 
-ts = tinv(0.975,Bar_Count-1);
+ts = tinv(1-SignificanceValue/2,Bar_Count-1);
 BarCI = ts.*Bar_STE;
 
 %%
 
 b_Plot=bar(ValueNames_Cat,Bar_Mean);
-b_Plot.FaceColor="flat";
-
-if ~isempty(ColorOrder)
-b_Plot.CData=ColorOrder;
+Num_b_Plot = length(b_Plot);
+% if NumBars == 1
+%     Num_b_Plot = NumBars;
+% end
+for bidx = 1:Num_b_Plot
+b_Plot(bidx).FaceColor="flat";
+b_Plot(bidx).Horizontal=WantHorizontal;
 end
 
-xticklabels(ValueNames_Resized);
+if ~isempty(ColorOrder)
+    if IsGrouped
+        for bidx = 1:Num_b_Plot
+        b_Plot(bidx).CData=repmat(ColorOrder(bidx,:),[NumGroups,1]);
+        end
+    else
+        for bidx = 1:NumBars
+        b_Plot.CData(bidx,:)=repmat(ColorOrder(bidx,:),[NumGroups,1]);
+        end
+    end
+end
+
+if ~isempty(GroupNames)
+for bidx = 1:Num_b_Plot
+b_Plot(bidx).DisplayName=GroupNames{bidx};
+end
+end
+
+if WantHorizontal
+    yticklabels(ValueNames_Resized);
+    ytickangle(LabelAngle);
+else
+    xticklabels(ValueNames_Resized);
+    xtickangle(LabelAngle);
+end
+
+if ~WantBarNames
+if WantHorizontal
+    yticklabels([]);
+else
+    xticklabels([]);
+end
+end
 
 hold on
 
@@ -124,22 +298,77 @@ if wantCI
     this_ErrorMetric=BarCI;
 end
 
-b_Error = errorbar(1:NumBars,Bar_Mean,this_ErrorMetric,this_ErrorMetric,'LineWidth',ErrorLineWidth,'CapSize',ErrorCapSize);
-b_Error.Color = [0 0 0];                            
-b_Error.LineStyle = 'none';  
+if ~isempty(ErrorMetric)
+this_ErrorMetric = Bar_ErrorMetric;
+end
+
+if IsGrouped
+Bar_Top = NaN(Num_b_Plot, NumGroups);
+for bidx = 1:Num_b_Plot
+    Bar_Top(bidx,:) = b_Plot(bidx).XEndPoints;
+end
+else
+Bar_Top = NaN(NumBars, NumGroups);
+for bidx = 1:NumBars
+    Bar_Top(bidx,:) = b_Plot.XEndPoints(bidx);
+end
+end
+
+if WantHorizontal
+ErrorBar_X = Bar_Mean;
+ErrorBar_Y = Bar_Top';
+ErrorBar_Orientation = "horizontal";
+else
+ErrorBar_X = Bar_Top';
+ErrorBar_Y = Bar_Mean;
+ErrorBar_Orientation = "vertical";
+end
+
+b_Error = errorbar(ErrorBar_X,ErrorBar_Y,this_ErrorMetric,this_ErrorMetric,ErrorBar_Orientation,'LineWidth',ErrorLineWidth,'CapSize',ErrorCapSize);
+
+for bidx = 1:Num_b_Plot
+b_Error(bidx).Color=[0 0 0];
+b_Error(bidx).LineStyle='none';
+end
 hold off
 
+if ~isempty(SignificanceTable)
+cgg_plotSignificanceBar(b_Plot,b_Error,SignificanceTable,'SignificanceFontSize',SignificanceFontSize,'WantHorizontal',WantHorizontal,'YRange',YRange);
+end
+
+if ~isempty(Y_Name)
 ylabel(Y_Name);
+end
+
+if ~isempty(X_Name)
+xlabel(X_Name);
+end
+
+if ~isempty(PlotTitle)
+title(PlotTitle);
+end
 
 if ~isempty(YRange)
-ylim(YRange);
+
+if WantHorizontal
+    xlim(YRange);
+else
+    ylim(YRange);
 end
+end
+
+if ~isempty(GroupNames) && WantLegend
+    if isempty(Legend_Size)
+        legend(b_Plot,'Location','best');
+    else
+        legend(b_Plot,'Location','best','FontSize',Legend_Size);
+    end
+end
+
 % xlabel(InVariableName,'FontSize',X_Name_Size);
 % ylabel('Number of Trials','FontSize',Y_Name_Size);
 
 % title('Count of Each Type','FontSize',Title_Size);
-
-
 
 end
 

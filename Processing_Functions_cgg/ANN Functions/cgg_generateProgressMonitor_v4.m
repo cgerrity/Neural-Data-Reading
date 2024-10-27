@@ -16,12 +16,26 @@ classdef cgg_generateProgressMonitor_v4 < handle
         Progress
         SaveDir
         SaveTerm
+        OutlierWindow
+        OutlierThreshold
+        RangeFactor
+        DataNames
+        MatchType
+        RunTerm
     end
 
     methods
-        function monitor = cgg_generateProgressMonitor_v4(varargin)
+        function [monitor,DataNames] = cgg_generateProgressMonitor_v4(varargin)
 
 isfunction=exist('varargin','var');
+
+if isfunction
+MatchType = CheckVararginPairs('MatchType', 'combinedaccuracy', varargin{:});
+else
+if ~(exist('MatchType','var'))
+MatchType='combinedaccuracy';
+end
+end
 
 if isfunction
 LossType = CheckVararginPairs('LossType', 'Classification', varargin{:});
@@ -79,6 +93,37 @@ SaveTerm='';
 end
 end
 
+if isfunction
+OutlierWindow = CheckVararginPairs('OutlierWindow', 50, varargin{:});
+else
+if ~(exist('OutlierWindow','var'))
+OutlierWindow=50;
+end
+end
+
+if isfunction
+OutlierThreshold = CheckVararginPairs('OutlierThreshold', 100, varargin{:});
+else
+if ~(exist('OutlierThreshold','var'))
+OutlierThreshold=100;
+end
+end
+
+if isfunction
+RangeFactor = CheckVararginPairs('RangeFactor', 0.07, varargin{:});
+else
+if ~(exist('RangeFactor','var'))
+RangeFactor=0.07;
+end
+end
+
+if isfunction
+Run = CheckVararginPairs('Run', 1, varargin{:});
+else
+if ~(exist('Run','var'))
+Run=1;
+end
+end
 %%
 
 cfg_Plot = PLOTPARAMETERS_cgg_plotPlotStyle;
@@ -112,6 +157,9 @@ switch LossType
     case 'Classification'
         % MetricNames=["MajorityClass","RandomChance","LossTraining","LossValidation","AccuracyTraining","AccuracyValidation"];
         NumLossPlots = 2;
+    case 'CTC'
+        % MetricNames=["MajorityClass","RandomChance","LossTraining","LossValidation","AccuracyTraining","AccuracyValidation"];
+        NumLossPlots = 2;
     case 'Regression'
         % MetricNames=["LossTraining","LossValidation"];
         NumLossPlots = 1;
@@ -124,7 +172,7 @@ InformationSpan=1;
 Tiled_Plot=tiledlayout(NumLossPlots,PlotSplit,"TileSpacing","tight");
 
 if NumLossPlots==2
-    nexttile(Tiled_Plot,1,[1,PlotSplit-InformationSpan]);
+    Tile_Accuracy = nexttile(Tiled_Plot,1,[1,PlotSplit-InformationSpan]);
     
     p_AccuracyTraining=plot(NaN,NaN,'DisplayName','Training Accuracy','LineWidth',Line_Width_ProgressMonitor);
     hold on
@@ -142,7 +190,7 @@ if NumLossPlots==2
     InFigure.CurrentAxes.XAxis.FontSize=Label_Size;
     InFigure.CurrentAxes.YAxis.FontSize=Label_Size;
     
-    nexttile(Tiled_Plot,PlotSplit+1,[1,PlotSplit-InformationSpan]);
+    Tile_Loss = nexttile(Tiled_Plot,PlotSplit+1,[1,PlotSplit-InformationSpan]);
     
     p_LossTraining=plot(NaN,NaN,'DisplayName','Training Loss','LineWidth',Line_Width_ProgressMonitor);
     hold on
@@ -160,8 +208,12 @@ if NumLossPlots==2
         p_RandomChance,p_LossTraining,p_LossValidation};
     PlotName={'AccuracyTraining','AccuracyValidation','MajorityClass',...
         'RandomChance','LossTraining','LossValidation'};
+    PlotTile = {Tile_Accuracy,Tile_Accuracy,Tile_Accuracy,...
+        Tile_Accuracy,Tile_Loss,Tile_Loss};
+    PlotGroup = {1,1,1,1,2,2};
+    PlotValues = {[],[],[],[],[],[]};
 elseif NumLossPlots==1
-    nexttile(Tiled_Plot,1,[1,PlotSplit-InformationSpan]);
+    Tile_Loss = nexttile(Tiled_Plot,1,[1,PlotSplit-InformationSpan]);
     
     p_LossTraining=plot(NaN,NaN,'DisplayName','Training Loss','LineWidth',Line_Width_ProgressMonitor);
     hold on
@@ -177,10 +229,13 @@ elseif NumLossPlots==1
 
     PlotCell={p_LossTraining,p_LossValidation};
     PlotName={'LossTraining','LossValidation'};
+    PlotTile = {Tile_Loss,Tile_Loss};
+    PlotGroup = {2,2};
+    PlotValues = {[],[]};
 end
 
-PlotTable=table(PlotCell','VariableNames',...
-    {'Plot'},'RowNames',PlotName');
+PlotTable=table(PlotCell',PlotGroup',PlotValues',PlotTile','VariableNames',...
+    {'Plot','Group','Values','Tile'},'RowNames',PlotName');
 
 monitor.PlotTable = PlotTable;
 
@@ -352,6 +407,23 @@ monitor.IDX_TimeElapsed = IDX_TimeElapsed;
 
 monitor.TimerValue=tic;
 
+
+%%
+
+DataNames = cell(0);
+
+DataNames{1} = 'epoch';
+DataNames{2} = 'iteration';
+DataNames{3} = 'learningrate';
+DataNames{4} = 'lossTraining';
+DataNames{5} = 'lossValidation';
+DataNames{6} = 'accuracyTrain';
+DataNames{7} = 'accuracyValidation';
+DataNames{8} = 'majorityclass';
+DataNames{9} = 'randomchance';
+DataNames{10} = 'Loss_Reconstruction';
+DataNames{11} = 'Loss_KL';
+DataNames{12} = 'Loss_Classification';
 %%
 
 drawnow;
@@ -363,6 +435,13 @@ monitor.LossTransform = LossTransform;
 monitor.Progress = 0;
 monitor.SaveDir = SaveDir;
 monitor.SaveTerm = SaveTerm;
+monitor.OutlierWindow = OutlierWindow;
+monitor.OutlierThreshold = OutlierThreshold;
+monitor.RangeFactor = RangeFactor;
+monitor.DataNames = DataNames;
+monitor.MatchType = MatchType;
+monitor.RunTerm = sprintf('_Run-%d',Run);
+
         end
 
         
@@ -398,22 +477,187 @@ monitor.SaveTerm = SaveTerm;
         end
         function updatePlot(monitor,PlotName,PlotUpdate)
             this_Plot = monitor.PlotTable{PlotName,"Plot"};
+            this_Tile = monitor.PlotTable{PlotName,"Tile"};
             if iscell(this_Plot)
                 this_Plot=this_Plot{1};
             end
+            if iscell(this_Tile)
+                this_Tile=this_Tile{1};
+            end
             this_Plot.XData=[this_Plot.XData,PlotUpdate(1)];
             this_Plot.YData=[this_Plot.YData,PlotUpdate(2)];
+
+            monitor.PlotTable{PlotName,"Values"}{1} = this_Plot.YData;
+            this_Group = monitor.PlotTable{PlotName,"Group"}{1};
+            this_GroupIDX = cell2mat(monitor.PlotTable.Group)==this_Group;
+            this_GroupValues = monitor.PlotTable{this_GroupIDX,"Values"};
+
+            DataLimits = cgg_getPlotRangeFromData(this_GroupValues,monitor.RangeFactor,monitor.OutlierWindow,monitor.OutlierThreshold);
+            
+            if DataLimits(2) > 0
+            DataLimits(1)=0;
+            end
+
+            if any(contains(PlotName,"Accuracy")) || any(contains(PlotName,"Random")) || any(contains(PlotName,"Majority"))
+                this_GroupValues_Max = cellfun(@(x) max(x,[],"all","omitmissing"),this_GroupValues,'UniformOutput',false);
+                this_GroupValues_Max = cell2mat(this_GroupValues_Max);
+                this_Max = max(this_GroupValues_Max,[],"all","omitmissing");
+                if this_Max > 0
+                DataLimits(2)=this_Max;
+                end
+            end
+
+            if ~any(isnan(DataLimits))
+            this_Tile.YLim = DataLimits;
+            end
         end
-        function savePlot(monitor)
-            iteration = monitor.InformationTable{'Iteration',"Value"};
-            if iscell(iteration)
-                iteration=iteration{1};
+        % function savePlot(monitor)
+        %     iteration = monitor.InformationTable{'Iteration',"Value"};
+        %     if iscell(iteration)
+        %         iteration=iteration{1};
+        %     end
+        %     SavePathNameExt = [monitor.SaveDir filesep ...
+        %         'Progress-Monitor' monitor.SaveTerm '_Iteration-' ...
+        %         num2str(iteration) '.pdf'];
+        %     saveas(monitor.Figure,SavePathNameExt);
+        % end
+        function savePlot(monitor,IsOptimal)
+            InSaveTerm = 'Current';
+            if IsOptimal
+            InSaveTerm = 'Optimal';
             end
             SavePathNameExt = [monitor.SaveDir filesep ...
                 'Progress-Monitor' monitor.SaveTerm '_Iteration-' ...
-                num2str(iteration) '.pdf'];
+                InSaveTerm monitor.RunTerm '.pdf'];
             saveas(monitor.Figure,SavePathNameExt);
         end
+
+        function data = generateData(monitor,MonitorUpdate)
+            NumData = length(monitor.DataNames);
+            data = NaN(1,NumData);
+            for didx = 1:NumData
+                this_DataName = monitor.DataNames{didx};
+                data(didx) = MonitorUpdate.(this_DataName);
+            end
+        end
+
+        function MonitorUpdate = calcMonitorUpdate(monitor,Monitor_Values)
+            LossInformation_Training = Monitor_Values.LossInformation_Training;
+            LossInformation_Validation = Monitor_Values.LossInformation_Validation;
+            CM_Table_Training = Monitor_Values.CM_Table_Training;
+            CM_Table_Validation = Monitor_Values.CM_Table_Validation;
+            ClassNames = Monitor_Values.ClassNames;
+            MonitorUpdate = struct();
+            
+            MonitorUpdate.epoch = Monitor_Values.epoch;
+            MonitorUpdate.iteration = Monitor_Values.iteration;
+            MonitorUpdate.learningrate = Monitor_Values.learningrate;
+            MonitorUpdate.lossTraining = ...
+                extractdata(LossInformation_Training.Loss_Encoder);
+
+            FieldName_MostCommon_Training = ...
+                sprintf('MostCommon_%s_Training',monitor.MatchType);
+            FieldName_RandomChance_Training = ...
+                sprintf('RandomChance_%s_Training',monitor.MatchType);
+            RandomChance_Baseline_Training = ...
+                Monitor_Values.(FieldName_RandomChance_Training);
+            MostCommon_Baseline_Training = ...
+                Monitor_Values.(FieldName_MostCommon_Training);
+            FieldName_MostCommon_Validation = ...
+                sprintf('MostCommon_%s_Validation',monitor.MatchType);
+            FieldName_RandomChance_Validation = ...
+                sprintf('RandomChance_%s_Validation',monitor.MatchType);
+            RandomChance_Baseline_Validation = ...
+                Monitor_Values.(FieldName_RandomChance_Validation);
+            MostCommon_Baseline_Validation = ...
+                Monitor_Values.(FieldName_MostCommon_Validation);
+
+            FieldName_IsScaled_Training = ...
+                sprintf('IsScaled_%s_Training',monitor.MatchType);
+            IsScaled_Training = ...
+                Monitor_Values.(FieldName_IsScaled_Training);
+            FieldName_IsScaled_Validation = ...
+                sprintf('IsScaled_%s_Validation',monitor.MatchType);
+            IsScaled_Validation = ...
+                Monitor_Values.(FieldName_IsScaled_Validation);
+
+            HasTrainingCM_Table = istable(CM_Table_Training);
+
+            if HasTrainingCM_Table
+            [~,~,accuracyTraining] = ...
+                cgg_procConfusionMatrixFromTable(CM_Table_Training,...
+                ClassNames,'MatchType',monitor.MatchType,...
+                'IsQuaddle',Monitor_Values.IsQuaddle,...
+                'RandomChance',RandomChance_Baseline_Training,...
+                'MostCommon',MostCommon_Baseline_Training);
+            else
+                accuracyTraining = NaN;
+            end
+
+            MonitorUpdate.accuracyTrain = accuracyTraining;
+
+            if IsScaled_Validation
+            ChanceLevel_Validation = max([MostCommon_Baseline_Validation,RandomChance_Baseline_Validation]);
+            MostCommon_Validation = (MostCommon_Baseline_Validation-ChanceLevel_Validation)/(1-ChanceLevel_Validation);
+            RandomChance_Validation = (RandomChance_Baseline_Validation-ChanceLevel_Validation)/(1-ChanceLevel_Validation);
+            else
+            MostCommon_Validation = MostCommon_Baseline_Validation;
+            RandomChance_Validation = RandomChance_Baseline_Validation;  
+            end
+            
+            MonitorUpdate.majorityclass = MostCommon_Validation;
+            MonitorUpdate.randomchance = RandomChance_Validation;
+
+            % MonitorUpdate.Loss_Reconstruction = LossInformation_Training.Loss_Reconstruction; 
+            % MonitorUpdate.Loss_KL = LossInformation_Training.Loss_KL;
+            % MonitorUpdate.Loss_Classification = LossInformation_Training.Loss_Classification;
+
+            if isdlarray(LossInformation_Training.Loss_Reconstruction_Weighted)
+                MonitorUpdate.Loss_Reconstruction = extractdata(...
+                    LossInformation_Training.Loss_Reconstruction_Weighted); 
+            else
+                MonitorUpdate.Loss_Reconstruction = ...
+                    LossInformation_Training.Loss_Reconstruction_Weighted;
+            end
+            if isdlarray(LossInformation_Training.Loss_KL_Weighted)
+                MonitorUpdate.Loss_KL = extractdata(...
+                    LossInformation_Training.Loss_KL_Weighted); 
+            else
+                MonitorUpdate.Loss_KL = ...
+                    LossInformation_Training.Loss_KL_Weighted;
+            end
+            if isdlarray(LossInformation_Training.Loss_Classification_Weighted)
+                MonitorUpdate.Loss_Classification = extractdata(...
+                    LossInformation_Training.Loss_Classification_Weighted); 
+            else
+                MonitorUpdate.Loss_Classification = ...
+                    LossInformation_Training.Loss_Classification_Weighted;
+            end
+
+            MonitorUpdate.lossValidation = NaN;
+            MonitorUpdate.accuracyValidation = NaN;
+
+            HasValidationLoss = isstruct(LossInformation_Validation);
+            HasValidationCM_Table = istable(CM_Table_Validation);
+
+            if HasValidationLoss
+                MonitorUpdate.lossValidation = ...
+                    extractdata(LossInformation_Validation.Loss_Encoder);
+            end
+
+            if HasValidationCM_Table
+                [~,~,accuracyValidation] = ...
+                    cgg_procConfusionMatrixFromTable(CM_Table_Validation,...
+                    ClassNames,'MatchType',monitor.MatchType,...
+                    'IsQuaddle',Monitor_Values.IsQuaddle,...
+                    'RandomChance',RandomChance_Baseline_Validation,...
+                    'MostCommon',MostCommon_Baseline_Validation);
+
+            MonitorUpdate.accuracyValidation = accuracyValidation;
+            end
+
+        end
+
     end
 end
 

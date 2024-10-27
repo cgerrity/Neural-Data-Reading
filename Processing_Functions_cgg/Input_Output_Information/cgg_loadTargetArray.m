@@ -106,6 +106,22 @@ end
 end
 
 if isfunction
+TrialsFromLP = CheckVararginPairs('TrialsFromLP', false, varargin{:});
+else
+if ~(exist('TrialsFromLP','var'))
+TrialsFromLP=false;
+end
+end
+
+if isfunction
+TrialsFromLPCategory = CheckVararginPairs('TrialsFromLPCategory', false, varargin{:});
+else
+if ~(exist('TrialsFromLPCategory','var'))
+TrialsFromLPCategory=false;
+end
+end
+
+if isfunction
 SharedFeatureCoding = CheckVararginPairs('SharedFeatureCoding', false, varargin{:});
 else
 if ~(exist('SharedFeatureCoding','var'))
@@ -145,6 +161,32 @@ AllTargets=false;
 end
 end
 
+% Learning Model Targets
+
+if isfunction
+PredictionError = CheckVararginPairs('PredictionError', false, varargin{:});
+else
+if ~(exist('PredictionError','var'))
+PredictionError=false;
+end
+end
+
+if isfunction
+ChoiceProbability = CheckVararginPairs('ChoiceProbability', false, varargin{:});
+else
+if ~(exist('ChoiceProbability','var'))
+ChoiceProbability=false;
+end
+end
+
+if isfunction
+OtherValue = CheckVararginPairs('OtherValue', '', varargin{:});
+else
+if ~(exist('OtherValue','var'))
+OtherValue='';
+end
+end
+
 %%
 
 if ~isempty(Dimension)
@@ -169,6 +211,10 @@ elseif ReactionTime
 TargetType='ReactionTime';
 elseif ~isempty(TrialChosen)
 TargetType='TrialChosen';
+elseif TrialsFromLP
+TargetType='TrialsFromLP';
+elseif TrialsFromLPCategory
+TargetType='TrialsFromLPCategory';
 elseif SharedFeatureCoding
 TargetType='SharedFeatureCoding';
 elseif SharedFeature
@@ -177,6 +223,12 @@ elseif ~isempty(SessionName)
 TargetType='SessionName';
 elseif DataNumber
 TargetType='DataNumber';
+elseif PredictionError
+TargetType='PredictionError';
+elseif ChoiceProbability
+TargetType='ChoiceProbability';
+elseif ~isempty(OtherValue)
+TargetType='OtherValue';
 else
 TargetType='AllTargets'; AllTargets=true;
 end
@@ -227,8 +279,11 @@ end
 % Selecting Learned
 
 if Learned||AllTargets
-TrialsFromLP=Target.TrialsFromLP;
-this_Learned = TrialsFromLP>-1;
+this_TrialsFromLP=Target.TrialsFromLP;
+this_Learned = this_TrialsFromLP>-1;
+if isnan(this_TrialsFromLP)
+this_Learned=-1;
+end
 end
 
 % Selecting Probe Processing Information
@@ -259,13 +314,32 @@ this_TrialChosen = true;
 end
 end
 
+% Selecting Trials from Learning Point
+
+if TrialsFromLP||AllTargets
+this_TrialsFromLP=Target.TrialsFromLP;
+if isnan(this_TrialsFromLP)
+this_TrialsFromLP=-Inf;
+end
+end
+
+% Selecting Trials from Learning Point Category
+
+if TrialsFromLPCategory||AllTargets
+this_TrialsFromLP=Target.TrialsFromLP;
+if isnan(this_TrialsFromLP)
+this_TrialsFromLP=-Inf;
+end
+this_TrialsFromLPCategory = cgg_calcTrialsFromLPCategories(this_TrialsFromLP);
+end
+
 % Selecting Shared Feature Coding
 
 if SharedFeatureCoding||AllTargets
 this_SharedFeatureCoding=Target.SharedFeatureCoding;
 end
 
-% Selecting Shared Feature Coding
+% Selecting Shared Feature
 
 if SharedFeature||AllTargets
 this_SharedFeature=Target.SharedFeature;
@@ -282,6 +356,24 @@ end
 if DataNumber||AllTargets
     [~,TargetName,~]=fileparts(FileName);
 this_DataNumber = str2num(extractAfter(TargetName,'_'));
+end
+
+% Selecting Prediction Error
+
+if PredictionError
+this_PredictionError=Target.PE_ObjectChosen;
+end
+
+% Selecting Choice Probability
+
+if ChoiceProbability
+this_ChoiceProbability=Target.ChoiceProbability_ObjectChosen_WM_RL_CMB;
+end
+
+% Selecting Other Value
+
+if ~isempty(OtherValue)
+this_OtherValue=Target.(OtherValue);
 end
 
 %% Assigning the Target
@@ -309,6 +401,10 @@ switch TargetType
         Target = this_ReactionTime;
     case 'TrialChosen'
         Target = this_TrialChosen;
+    case 'TrialsFromLP'
+        Target = this_TrialsFromLP;
+    case 'TrialsFromLPCategory'
+        Target = this_TrialsFromLPCategory;
     case 'SharedFeatureCoding'
         Target = this_SharedFeatureCoding;
     case 'SharedFeature'
@@ -317,9 +413,15 @@ switch TargetType
         Target = this_SessionName;
     case 'DataNumber'
         Target = this_DataNumber;
+    case 'PredictionError'
+        Target = this_PredictionError;
+    case 'ChoiceProbability'
+        Target = this_ChoiceProbability;
+    case 'OtherValue'
+        Target = this_OtherValue;
     case 'AllTargets'
         Target=cell(1,2);
-        [Target{1},Target{2}] = cgg_procDataSegmentationGroups(this_Dimension_Each,this_CorrectTrial,this_PreviousTrialCorrect,this_Dimensionality,this_Gain,this_Loss,this_Learned,this_ProbeProcessing,this_TargetFeature,this_ReactionTime,this_TrialChosen,this_SessionName,this_DataNumber,this_SharedFeatureCoding);
+        [Target{1},Target{2}] = cgg_procDataSegmentationGroups(this_Dimension_Each,this_CorrectTrial,this_PreviousTrialCorrect,this_Dimensionality,this_Gain,this_Loss,this_Learned,this_ProbeProcessing,this_TargetFeature,this_ReactionTime,this_TrialChosen,this_SessionName,this_DataNumber,this_SharedFeatureCoding,this_TrialsFromLP,this_TrialsFromLPCategory);
     otherwise
 end
 

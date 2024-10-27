@@ -6,6 +6,14 @@ function net = cgg_trainNetworkParallel(InputNet,DataStore_Training,DataStore_Va
 isfunction=exist('varargin','var');
 
 if isfunction
+Optimizer = CheckVararginPairs('Optimizer', 'ADAM', varargin{:});
+else
+if ~(exist('Optimizer','var'))
+Optimizer='ADAM';
+end
+end
+
+if isfunction
 MatchType = CheckVararginPairs('MatchType', 'combinedaccuracy', varargin{:});
 else
 if ~(exist('MatchType','var'))
@@ -46,10 +54,10 @@ end
 end
 
 if isfunction
-SaveFrequency = CheckVararginPairs('SaveFrequency', 5, varargin{:});
+SaveFrequency = CheckVararginPairs('SaveFrequency', ValidationFrequency, varargin{:});
 else
 if ~(exist('SaveFrequency','var'))
-SaveFrequency=5;
+SaveFrequency=ValidationFrequency;
 end
 end
 
@@ -78,10 +86,10 @@ end
 end
 
 if isfunction
-DataFormat = CheckVararginPairs('DataFormat', {'SSCTB','CBT'}, varargin{:});
+DataFormat = CheckVararginPairs('DataFormat', {'SSCTB','CBT',''}, varargin{:});
 else
 if ~(exist('DataFormat','var'))
-DataFormat={'SSCTB','CBT'};
+DataFormat={'SSCTB','CBT',''};
 end
 end
 
@@ -105,7 +113,7 @@ if isfunction
 LearningRateEpochDrop = CheckVararginPairs('LearningRateEpochDrop', 30, varargin{:});
 else
 if ~(exist('LearningRateEpochDrop','var'))
-LearningRateEpochDrop=10;
+LearningRateEpochDrop=30;
 end
 end
 
@@ -130,6 +138,14 @@ LossFactorKL = CheckVararginPairs('LossFactorKL', NaN, varargin{:});
 else
 if ~(exist('LossFactorKL','var'))
 LossFactorKL=NaN;
+end
+end
+
+if isfunction
+RescaleLossEpoch = CheckVararginPairs('RescaleLossEpoch', 1, varargin{:});
+else
+if ~(exist('RescaleLossEpoch','var'))
+RescaleLossEpoch=1;
 end
 end
 
@@ -194,6 +210,30 @@ WeightedLoss = CheckVararginPairs('WeightedLoss', 'Inverse', varargin{:});
 else
 if ~(exist('WeightedLoss','var'))
 WeightedLoss='Inverse';
+end
+end
+
+if isfunction
+NumIterationsAutoEncoder = CheckVararginPairs('NumIterationsAutoEncoder', 1, varargin{:});
+else
+if ~(exist('NumIterationsAutoEncoder','var'))
+NumIterationsAutoEncoder=1;
+end
+end
+
+if isfunction
+WantComponentMonitor = CheckVararginPairs('WantComponentMonitor', true, varargin{:});
+else
+if ~(exist('WantComponentMonitor','var'))
+WantComponentMonitor=true;
+end
+end
+
+if isfunction
+WantAccuracyMonitor = CheckVararginPairs('WantAccuracyMonitor', false, varargin{:});
+else
+if ~(exist('WantAccuracyMonitor','var'))
+WantAccuracyMonitor=false;
 end
 end
 %%
@@ -261,6 +301,10 @@ if ~isempty(GradientMonitor)
     HasGradientMonitor = true;
 end
 
+% HasWindowMonitor = exist('WindowMonitor','var');
+% HasWindowMonitor_Accuracy_Measure = exist('WindowMonitor_Accuracy_Measure','var');
+% HasGradientMonitor = exist('GradientMonitor','var');
+
 % HasReconstructionMonitor = false;
 % if ~isempty(ReconstructionMonitor)
 %     HasReconstructionMonitor = true;
@@ -292,17 +336,33 @@ WeightIDX = contains(net.Learnables.Parameter,"Weights");
 GradientValuesNames = net.Learnables.Layer(WeightIDX) + "-" + net.Learnables.Parameter(WeightIDX);
 end
 %%
-
-velocity = [];
-momentum=0.9;
+switch Optimizer
+    case 'SGD'
+        velocity = [];
+        momentum=0.9;
+        workerVelocity = velocity;
+    case 'ADAM'
+        averageGrad = [];
+        averageSqGrad = [];
+    otherwise
+end
 
 if executionEnvironment == "gpu"
      MiniBatchSize = MiniBatchSize .* numWorkers;
 end
 
+% maxworkerMiniBatchSize = 10;
+% numWorkers = ceil(MiniBatchSize/maxworkerMiniBatchSize);
+
 workerMiniBatchSize = floor(MiniBatchSize ./ repmat(numWorkers,1,numWorkers));
 remainder = MiniBatchSize - sum(workerMiniBatchSize);
 workerMiniBatchSize = workerMiniBatchSize + [ones(1,remainder) zeros(1,numWorkers-remainder)];
+
+% NumTrials = numpartitions(DataStore_Training);
+% Iteration_DataStoreIDX = cgg_getIndicesIntoGroups(MiniBatchSize,NumTrials);
+% IterationsPerEpoch = length(Iteration_DataStoreIDX);
+
+%%
 
 % batchNormLayers = arrayfun(@(l)isa(l,"nnet.cnn.layer.BatchNormalizationLayer"),net.Layers);
 % batchNormLayersNames = string({net.Layers(batchNormLayers).Name});
@@ -358,10 +418,11 @@ DisplayFigure.Visible='off';
 
 dataQueue_Plot = parallel.pool.DataQueue;
 % plotFcn = @(x,iter) cgg_displayDataExamples(x,XTraining_Display,TTraining_Display,XValidation_Display,TValidation_Display,ClassNames,OutputInformation,iter,DisplayFigure);
-plotFcn = @(x,iter) cgg_displayDataExamples_v2(x,TrainingMbq_Display,ValidationMbq_Display,ClassNames,OutputInformation,iter,DisplayFigure,'ReconstructionMonitor',ReconstructionMonitor,'IsQuaddle',IsQuaddle,'NumExamples',3);
-plotFcn_wrapped = @(x) plotFcn(x{1},x{2});
+plotFcn = @(x,iter,IsOptimal) cgg_displayDataExamples_v2(x,TrainingMbq_Display,ValidationMbq_Display,ClassNames,OutputInformation,iter,DisplayFigure,'ReconstructionMonitor',ReconstructionMonitor,'IsQuaddle',IsQuaddle,'NumExamples',3,'IsOptimal',IsOptimal);
+plotFcn_wrapped = @(x) plotFcn(x{1},x{2},x{3});
 
-PlotSavePathNameExt = [SaveDirPlot filesep 'Example-Monitor_Iteration-%d' SaveTerm '.pdf'];
+% PlotSavePathNameExt = [SaveDirPlot filesep 'Example-Monitor_Iteration-%d' SaveTerm '.pdf'];
+PlotSavePathNameExt = [SaveDirPlot filesep 'Example-Monitor_Iteration-%s' SaveTerm '.pdf'];
 plotFcn_savePlot = @(x) saveas(DisplayFigure, sprintf(PlotSavePathNameExt,x));
 
 afterEach(dataQueue_Plot,plotFcn_wrapped)
@@ -407,6 +468,10 @@ ValidationLoss=@(x1,x2,x3) cgg_lossNetwork(x1,ValidationX,ValidationT,LossType,O
 TestingLoss=@(x1,x2,x3) cgg_lossNetwork(x1,TestingX,TestingT,LossType,OutputInformation,ClassNames,'IsQuaddle',IsQuaddle,'wantPredict',true,'WeightReconstruction',x2*LossFactorReconstruction,'WeightKL',x3*LossFactorKL,'WantGradient',false,'WeightedLoss',WeightedLoss,'Weights',Weights);
 
 
+if HasClassifier
+    CM_Table_Function=@(InDatastore,InputNet) cgg_procPredictionsFromDatastoreNetwork(InDatastore,InputNet,ClassNames,varargin{:});
+end
+
 %%
 MostCommon=NaN;
 RandomChance=NaN;
@@ -420,9 +485,12 @@ end
 
 MostCommon_Testing=NaN;
 RandomChance_Testing=NaN;
+MostCommon_Accuracy_Measure_Testing=NaN;
+RandomChance_Accuracy_Measure_Testing=NaN;
 if HasClassifier
 TrueValue_Testing=double(extractdata(TestingT)');
 [MostCommon_Testing,RandomChance_Testing] = cgg_getBaselineAccuracyMeasures(TrueValue_Testing,ClassNames,MatchType,IsQuaddle);
+[MostCommon_Accuracy_Measure_Testing,RandomChance_Accuracy_Measure_Testing] = cgg_getBaselineAccuracyMeasures(TrueValue_Testing,ClassNames,MatchType_Accuracy_Measure,IsQuaddle);
 end
 
 %%
@@ -433,8 +501,8 @@ InitializeMbq = minibatchqueue(DataStore_Training,...
 
 [InitializeX,InitializeT] = next(InitializeMbq);
 
-% [~,~,~,~,InitialLossReconstruction,InitialLossClassification,InitialLossKL,~,~] = dlfeval(ModelLoss,net,InitializeX,InitializeT,NaN,NaN);
-[~,~,~,~,InitialLossReconstruction,InitialLossClassification,InitialLossKL,~,~] = ModelLoss_Initial(net,InitializeX,InitializeT,NaN,NaN);
+% [~,~,~,~,InitialLossReconstruction,InitialLossClassification,InitialLossKL,~,~,~] = dlfeval(ModelLoss,net,InitializeX,InitializeT,NaN,NaN);
+[~,~,~,~,InitialLossReconstruction,InitialLossClassification,InitialLossKL,~,~,~] = ModelLoss_Initial(net,InitializeX,InitializeT,NaN,NaN);
 
 if IsVariational
     UnweigtedLossKL = extractdata(InitialLossKL{2});
@@ -457,9 +525,24 @@ LossRatioKL=UnweigtedLossClassification/UnweigtedLossKL;
 
 %%
 
+if WantComponentMonitor
+
+SizeData = size(InitializeX);
+NumAreas = SizeData(finddim(InitializeX,"C"));
+monitor_Component = cgg_generateComponentProgressMonitor('WantKLLoss',IsVariational,'WantReconstructionLoss',HasReconstruction,'WantClassificationLoss',HasClassifier,'SaveDir',SaveDirPlot,'NumAreas',NumAreas);
+
+dataQueue_Component = parallel.pool.DataQueue;
+displayFcn_Component = @(x) cgg_displayTrainingLossComponentUpdate(x,monitor_Component);
+afterEach(dataQueue_Component,displayFcn_Component)
+
+end
+%%
+
 MaximumValidationAccuracy = -Inf;
+MinimumValidationLoss = Inf;
+wantClassification = false;
 SavePathNameExt = [SaveDirPlot filesep 'Optimal_Results.mat'];
-SaveVariablesName = {'ValidationAccuracy','TestingAccuracy','ValidationMostCommon','ValidationRandomChance','TestingMostCommon','TestingRandomChance','Iteration','ElapsedTime','Window_AccuracyValidation','Combined_Accuracy_MeasureValidation','Window_AccuracyTesting','Combined_Accuracy_MeasureTesting'};
+SaveVariablesName = {'ValidationAccuracy','TestingAccuracy','ValidationMostCommon','ValidationRandomChance','TestingMostCommon','TestingRandomChance','Iteration','ElapsedTime','Window_AccuracyValidation','Combined_Accuracy_MeasureValidation','Window_AccuracyTesting','Combined_Accuracy_MeasureTesting','ValidationMostCommon_Accuracy_Measure','ValidationRandomChance_Accuracy_Measure','TestingMostCommon_Accuracy_Measure','TestingRandomChance_Accuracy_Measure'};
 TimerStart = tic;
 NetworkPathNameExt = [SaveDirPlot filesep 'FullNetwork.mat'];
 IterationPathNameExt = [SaveDirPlot filesep 'CurrentIteration.mat'];
@@ -473,14 +556,14 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
     % this_workerIDX=1;
 
     % Partition the datastore.
-    workerImds = partition(DataStore_Training,numWorkers,this_workerIDX);
+    this_DataStore_Training = partition(DataStore_Training,numWorkers,this_workerIDX);
 
     % Create minibatchqueue using partitioned datastore on each worker.
-    workerMbq = minibatchqueue(workerImds,...
+    workerMbq = minibatchqueue(this_DataStore_Training,...
         MiniBatchSize=workerMiniBatchSize(this_workerIDX),...
         MiniBatchFormat=DataFormat);
 
-    workerVelocity = velocity;
+    
     epoch = 0;
     iteration = 0;
     stopRequest = false;
@@ -493,6 +576,12 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
         learningrate = InitialLearningRate * (LearningRateDecay)^floor(...
             epoch / LearningRateEpochDrop);
 
+%        EpochIDX = mod(iteration-1,IterationsPerEpoch)+1;
+%        DataStore_Training = shuffle(DataStore_Training);
+%        IterationDataStore = subset(DataStore_Training,Iteration_DataStoreIDX{EpochIDX});
+%
+%        cgg_calcNetworkLossFromDataStore(net,IterationDataStore,DataFormat,LossFunction,varargin)
+
         %% Loop over mini-batches.
         while spmdReduce(@and,hasdata(workerMbq)) && ~stopRequest
         % while hasdata(workerMbq) && ~stopRequest
@@ -500,13 +589,22 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
             iteration = iteration + 1;
             net=resetState(net);
 
+            % Determine if Classification is wanted
+            if iteration == NumIterationsAutoEncoder
+            wantClassification = true;
+            learningrate = InitialLearningRate;
+            end
+            if ~wantClassification
+                LossRatioReconstruction = Inf;
+            end
+
             % Read a mini-batch of data.
             [workerX,workerT] = next(workerMbq);
 
             % Evaluate the model loss and gradients on the worker.
             % [workerLoss,workerGradients,~,workerAccuracy,workerLossReconstruction,workerLossClassification,workerLossKL] = dlfeval(ModelLoss,net,workerX,workerT);
-            [workerLoss,workerGradients,~,workerAccuracy,workerLossReconstruction,workerLossClassification,workerLossKL,workerWindow_Accuracy,workerCombined_Accuracy_Measure] = dlfeval(ModelLoss,net,workerX,workerT,LossRatioReconstruction,LossRatioKL);
-            
+            [workerLoss,workerGradients,~,workerAccuracy,workerLossReconstruction,workerLossClassification,workerLossKL,workerWindow_Accuracy,workerCombined_Accuracy_Measure,workerClassifierOutput] = dlfeval(ModelLoss,net,workerX,workerT,LossRatioReconstruction,LossRatioKL);
+            %%
             % Aggregate the losses on all workers.
             workerNormalizationFactor = workerMiniBatchSize(this_workerIDX)./MiniBatchSize;
             loss = spmdPlus(workerNormalizationFactor*extractdata(workerLoss));
@@ -514,6 +612,7 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
             LossClassification = spmdPlus(workerNormalizationFactor*extractdata(workerLossClassification{1}));
             LossKL = spmdPlus(workerNormalizationFactor*extractdata(workerLossKL{1}));
 
+            LossReconstructionPerArea = spmdPlus(workerNormalizationFactor*extractdata(workerLossReconstruction{3}));
             % Aggregate the accuracy on all workers.
             accuracyTrain = spmdPlus(workerNormalizationFactor*workerAccuracy);
             Window_AccuracyTrain = spmdPlus(workerNormalizationFactor*workerWindow_Accuracy);
@@ -564,6 +663,13 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
             Window_AccuracyValidation = NaN;
             Accuracy_MeasureValidation = NaN;
             Window_Accuracy_MeasureValidation = NaN;
+            IsOptimal = false;
+            InSaveTerm = 'Current';
+            Loss_KLValidation = NaN;
+            Loss_ClassificationValidation = NaN;
+            Loss_ReconstructionValidation = NaN;
+            Loss_ReconstructionValidationPerArea = NaN;
+
 
             if ~IsVariational
                 LossKL = NaN;
@@ -576,18 +682,43 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
             end
             
             %%
+            switch Optimizer
+                case 'SGD'
             % Update the network parameters using the SGDM optimizer.
-            [net,workerVelocity] = sgdmupdate(net,workerGradients,workerVelocity,learningrate,momentum);
-%%
+                [net,workerVelocity] = sgdmupdate(net,workerGradients,workerVelocity,learningrate,momentum);
+                case 'ADAM'
+                % Update the network parameters using the ADAM optimizer.
+                [net,averageGrad,averageSqGrad] = adamupdate(net,workerGradients,averageGrad,averageSqGrad,iteration,learningrate);
+                otherwise
+            end
+            %%
             % Send training progress information to the client.
             if this_workerIDX == 1
 
                 if mod(iteration,ValidationFrequency)==1
                 net=resetState(net);
-                [lossValidation,~,~,accuracyValidation,~,~,~,Window_AccuracyValidation,Combined_Accuracy_MeasureValidation] = ValidationLoss(net,LossRatioReconstruction,LossRatioKL);
+                [lossValidation,~,~,accuracyValidation,Loss_ReconstructionValidation,Loss_ClassificationValidation,Loss_KLValidation,Window_AccuracyValidation,Combined_Accuracy_MeasureValidation,ClassifierOutputValidation] = ValidationLoss(net,LossRatioReconstruction,LossRatioKL);
                 % [lossValidation,~,~,accuracyValidation,~,~,~] = dlfeval(ValidationLoss,net,LossRatioReconstruction,LossRatioKL);
                 Accuracy_MeasureValidation = Combined_Accuracy_MeasureValidation{1};
                 Window_Accuracy_MeasureValidation = Combined_Accuracy_MeasureValidation{1};
+                if WantComponentMonitor
+                    Loss_ReconstructionValidationPerArea = Loss_ReconstructionValidation{3};
+                    Loss_ReconstructionValidation = Loss_ReconstructionValidation{1};
+                    Loss_KLValidation = Loss_KLValidation{1};
+                    Loss_ClassificationValidation = Loss_ClassificationValidation{1};
+                    if isdlarray(Loss_ReconstructionValidation)
+                        Loss_ReconstructionValidation=extractdata(Loss_ReconstructionValidation);
+                    end
+                    if isdlarray(Loss_ReconstructionValidationPerArea)
+                        Loss_ReconstructionValidationPerArea=extractdata(Loss_ReconstructionValidationPerArea);
+                    end
+                    if isdlarray(Loss_KLValidation)
+                        Loss_KLValidation=extractdata(Loss_KLValidation);
+                    end
+                    if isdlarray(Loss_ClassificationValidation)
+                        Loss_ClassificationValidation=extractdata(Loss_ClassificationValidation);
+                    end
+                end
                 if isdlarray(lossValidation)
                 lossValidation=extractdata(lossValidation);
                 end
@@ -612,21 +743,9 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
                 data_Window_Accuracy_Measure = {MeanGradient,STDGradient,MeanThresholdGradient,STDThresholdGradient};
                 send(dataQueue_GradientMonitor,data_Window_Accuracy_Measure);
                 end
-
-                if mod(iteration,SaveFrequency)==1
-                    send(dataQueue_Plot,{net,gather(iteration)});
-                    savePlot(monitor);
-                    savePlot(monitor_Accuracy_Measure);
-                    plotFcn_savePlot(iteration);
-                    if HasWindowMonitor
-                    savePlot(WindowMonitor);
-                    end
-                    if HasWindowMonitor_Accuracy_Measure
-                    savePlot(WindowMonitor_Accuracy_Measure);
-                    end
-                    if HasGradientMonitor
-                    savePlot(GradientMonitor);
-                    end
+                if WantComponentMonitor
+                data_Component = {iteration, LossReconstruction,LossKL,LossClassification,Loss_ReconstructionValidation,Loss_KLValidation,Loss_ClassificationValidation,LossReconstructionPerArea,Loss_ReconstructionValidationPerArea};
+                send(dataQueue_Component,data_Component);
                 end
 
                 if mod(iteration,IterationSaveFrequency)==1
@@ -634,12 +753,32 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
                     cgg_saveVariableUsingMatfile(IterationVariables,IterationVariablesName,IterationPathNameExt);
                 end
 
-                if accuracyValidation > MaximumValidationAccuracy
-                    MaximumValidationAccuracy = accuracyValidation;
+                if HasClassifier
+                    if max(Window_AccuracyValidation) > MaximumValidationAccuracy
+                        IsOptimal = true;
+                        MaximumValidationAccuracy = max(Window_AccuracyValidation);
+                    end
+                else
+                    if lossValidation < MinimumValidationLoss
+                        IsOptimal = true;
+                        MinimumValidationLoss = lossValidation;
+                    end
+                end
+
+                % if accuracyValidation > MaximumValidationAccuracy
+                % if max(Window_AccuracyValidation) > MaximumValidationAccuracy
+                if IsOptimal
+                    % IsOptimal = true;
+                    InSaveTerm = 'Optimal';
+                    % MaximumValidationAccuracy = accuracyValidation;
+                    MaximumValidationAccuracy = max(Window_AccuracyValidation);
                     net=resetState(net);
-                    [~,~,~,TestingAccuracy,~,~,~,Window_AccuracyTesting,Combined_Accuracy_MeasureTesting] = TestingLoss(net,LossRatioReconstruction,LossRatioKL);
+                    if HasClassifier
+                    cgg_saveCMTableFromNetwork(DataStore_Testing,net,ClassNames,SaveDirPlot,varargin{:});
+                    end
+                    [~,~,~,TestingAccuracy,~,~,~,Window_AccuracyTesting,Combined_Accuracy_MeasureTesting,ClassifierOutputTesting] = TestingLoss(net,LossRatioReconstruction,LossRatioKL);
                     % [~,~,~,TestingAccuracy,~,~,~] = dlfeval(TestingLoss,net,LossRatioReconstruction,LossRatioKL);
-                    SaveVariables = {MaximumValidationAccuracy,TestingAccuracy,MostCommon,RandomChance,MostCommon_Testing,RandomChance_Testing,iteration,toc(TimerStart),Window_AccuracyValidation,Combined_Accuracy_MeasureValidation,Window_AccuracyTesting,Combined_Accuracy_MeasureTesting};
+                    SaveVariables = {MaximumValidationAccuracy,TestingAccuracy,MostCommon,RandomChance,MostCommon_Testing,RandomChance_Testing,iteration,toc(TimerStart),Window_AccuracyValidation,Combined_Accuracy_MeasureValidation,Window_AccuracyTesting,Combined_Accuracy_MeasureTesting,MostCommon_Accuracy_Measure,RandomChance_Accuracy_Measure,MostCommon_Accuracy_Measure_Testing,RandomChance_Accuracy_Measure_Testing};
                     cgg_saveVariableUsingMatfile(SaveVariables,SaveVariablesName,SavePathNameExt);
                 
                     if WantSaveNet
@@ -651,11 +790,63 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
                     NetSave=resetState(NetSave);
                     cgg_saveVariableUsingMatfile({NetSave},{'Network'},NetworkPathNameExt);
                     end
+
+                    %% Optimal Plot Saving
+                    if WantAccuracyMonitor
+                        CM_Table_Validation=CM_Table_Function(DataStore_Validation,net);
+                        CM_Table_Training=CM_Table_Function(this_DataStore_Training,net);
+                    end
+
+                    send(dataQueue_Plot,{net,gather(iteration),IsOptimal});
+                    savePlot(monitor,IsOptimal);
+                    savePlot(monitor_Accuracy_Measure,IsOptimal);
+                    plotFcn_savePlot(InSaveTerm);
+                    if HasWindowMonitor
+                    savePlot(WindowMonitor,IsOptimal);
+                    end
+                    if HasWindowMonitor_Accuracy_Measure
+                    savePlot(WindowMonitor_Accuracy_Measure,IsOptimal);
+                    end
+                    if HasGradientMonitor
+                    savePlot(GradientMonitor,IsOptimal);
+                    end
+                    if WantComponentMonitor
+                    savePlot(monitor_Component,IsOptimal);
+                    end
+                    
                 end
+
+                %% Current Plot Saving
+                if mod(iteration,SaveFrequency)==1
+                    IsOptimal = false;
+                    InSaveTerm = 'Current';
+                    if WantAccuracyMonitor
+                        CM_Table_Validation=CM_Table_Function(DataStore_Validation,net);
+                        CM_Table_Training=CM_Table_Function(this_DataStore_Training,net);
+                    end
+
+                    send(dataQueue_Plot,{net,gather(iteration),IsOptimal});
+                    savePlot(monitor,IsOptimal);
+                    savePlot(monitor_Accuracy_Measure,IsOptimal);
+                    plotFcn_savePlot(InSaveTerm);
+                    if HasWindowMonitor
+                    savePlot(WindowMonitor,IsOptimal);
+                    end
+                    if HasWindowMonitor_Accuracy_Measure
+                    savePlot(WindowMonitor_Accuracy_Measure,IsOptimal);
+                    end
+                    if HasGradientMonitor
+                    savePlot(GradientMonitor,IsOptimal);
+                    end
+                    if WantComponentMonitor
+                    savePlot(monitor_Component,IsOptimal);
+                    end
+                end
+
             end
         end
 
-        if mod(epoch+1,round(LearningRateEpochDrop/4))==1
+        if mod(epoch+1,RescaleLossEpoch) == 1 || RescaleLossEpoch == 1
         if IsVariational
             UnweigtedLossKL = spmdPlus(workerNormalizationFactor*extractdata(workerLossKL{2}));
         else

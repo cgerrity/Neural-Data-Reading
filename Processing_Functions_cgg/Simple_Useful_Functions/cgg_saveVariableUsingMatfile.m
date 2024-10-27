@@ -10,6 +10,10 @@ SaveTMPName=[SaveName '_tmp'];
 
 SaveTMPPathNameExt=[SavePath filesep SaveTMPName SaveExt];
 
+if isfile(SaveTMPPathNameExt)
+    delete(SaveTMPPathNameExt);
+end
+
 m_Save = matfile(SaveTMPPathNameExt,'Writable',true);
 
 for vidx=1:NumVariables

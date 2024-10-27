@@ -1,26 +1,28 @@
 %% FIGURE_cggChannelCorrelations
 
+clc; clear; close all;
+
 want_ui_selection=false;
 probe_mapping='mapped';
 
 Total_Time=0.1; %min
 
 NumPlots=10;
-NumTimeSegments=10;
+NumTimeSegments=30;
 % Activity='WideBand';
 Activity_Types={'WideBand','LFP','Spike','MUA'};
 
 Start_Group=2;
-End_Group=9;
+End_Group=15;
 Disconnected_Threshold=0.5;
 NumReplicates=10; %10
 InDistance='sqeuclidean';
 NumIterations=20;
 Disconnected_Channels_GT=[30,60:64];
 
-% Monkey_Name='Wotan';
-% ExperimentName='Wotan_FLToken_Probe_01';
-% SessionName='Wo_Probe_01_23-02-13_003_01';
+Monkey_Name='Wotan';
+ExperimentName='Wotan_FLToken_Probe_01';
+SessionName='Wo_Probe_01_23-02-13_003_01';
 
 %%
 
@@ -42,7 +44,7 @@ end
 
 inputfolder=[inputfolder_base '/DATA_neural/' Monkey_Name filesep ...
     ExperimentName filesep SessionName];
-outdatadir=[outputfolder_base '/Data_Neural_gerritcg'];
+outdatadir=[outputfolder_base '/Data_Neural'];
 end
 
 %%
@@ -171,9 +173,16 @@ if have_chanmap
 %   recdata_wideband.hdr.label = newlabels_in_order;
 %   rechdr.label = newlabels_in_order;
   
+    [ recdata_lfp, recdata_spike, recdata_activity ] = ...
+        euFT_getDerivedSignals( recdata_wideband, lfp_maxfreq, ...
+        lfp_samprate, spike_minfreq, rect_bandfreqs, rect_lowpassfreq, ...
+        rect_samprate, false);
   
   this_trial_count=length(recdata_wideband.trial);
   recdata_wideband_tmp=recdata_wideband;
+  recdata_lfp_tmp=recdata_lfp;
+  recdata_spike_tmp=recdata_spike;
+  recdata_activity_tmp=recdata_activity;
   
   for ttidx=1:this_trial_count
       
@@ -183,14 +192,42 @@ if have_chanmap
           recdata_wideband_tmp.trial{ttidx}(newlabels_order_unmapped,:);
       recdata_wideband_recorded.trial{ttidx}=...
           recdata_wideband_tmp.trial{ttidx}(newlabels_order_recorded,:);
+
+      recdata_lfp.trial{ttidx}=...
+          recdata_lfp_tmp.trial{ttidx}(newlabels_order,:);
+      recdata_lfp_unmapped.trial{ttidx}=...
+          recdata_lfp_tmp.trial{ttidx}(newlabels_order_unmapped,:);
+      recdata_lfp_recorded.trial{ttidx}=...
+          recdata_lfp_tmp.trial{ttidx}(newlabels_order_recorded,:);
+
+      recdata_spike.trial{ttidx}=...
+          recdata_spike_tmp.trial{ttidx}(newlabels_order,:);
+      recdata_spike_unmapped.trial{ttidx}=...
+          recdata_spike_tmp.trial{ttidx}(newlabels_order_unmapped,:);
+      recdata_spike_recorded.trial{ttidx}=...
+          recdata_spike_tmp.trial{ttidx}(newlabels_order_recorded,:);
+
+      recdata_activity.trial{ttidx}=...
+          recdata_activity_tmp.trial{ttidx}(newlabels_order,:);
+      recdata_activity_unmapped.trial{ttidx}=...
+          recdata_activity_tmp.trial{ttidx}(newlabels_order_unmapped,:);
+      recdata_activity_recorded.trial{ttidx}=...
+          recdata_activity_tmp.trial{ttidx}(newlabels_order_recorded,:);
+
   end
 
-end
-
-    [ recdata_lfp, recdata_spike, recdata_activity ] = ...
+else
+        [ recdata_lfp, recdata_spike, recdata_activity ] = ...
         euFT_getDerivedSignals( recdata_wideband, lfp_maxfreq, ...
         lfp_samprate, spike_minfreq, rect_bandfreqs, rect_lowpassfreq, ...
         rect_samprate, false);
+end
+
+    % [ recdata_lfp, recdata_spike, recdata_activity ] = ...
+    %     euFT_getDerivedSignals( recdata_wideband, lfp_maxfreq, ...
+    %     lfp_samprate, spike_minfreq, rect_bandfreqs, rect_lowpassfreq, ...
+    %     rect_samprate, false);
+
 
 %%
 
@@ -206,26 +243,36 @@ this_Data_recorded=cell(1);
 switch Activity
     case 'WideBand'
         this_recdata=recdata_wideband;
+        this_recdata_unmapped=recdata_wideband_unmapped;
+        this_recdata_recorded=recdata_wideband_recorded;
         YLimFactor=0.1;
     case 'MUA'
         this_recdata=recdata_activity;
+        this_recdata_unmapped=recdata_activity_unmapped;
+        this_recdata_recorded=recdata_activity_recorded;
         YLimFactor=0.2;
     case 'LFP'
         this_recdata=recdata_lfp;
+        this_recdata_unmapped=recdata_lfp_unmapped;
+        this_recdata_recorded=recdata_lfp_recorded;
         YLimFactor=0.2;
     case 'Spike'
         this_recdata=recdata_spike;
+        this_recdata_unmapped=recdata_spike_unmapped;
+        this_recdata_recorded=recdata_spike_recorded;
         YLimFactor=0.2;
     otherwise
         this_recdata=recdata_wideband;
+        this_recdata_unmapped=recdata_wideband_unmapped;
+        this_recdata_recorded=recdata_wideband_recorded;
         YLimFactor=0.1;
 end
 
 
 for tidx=1:length(this_recdata.trial)
 this_Data{tidx}=this_recdata.trial{tidx};
-this_Data_unmapped{tidx}=recdata_wideband_unmapped.trial{tidx};
-this_Data_recorded{tidx}=recdata_wideband_recorded.trial{tidx};
+this_Data_unmapped{tidx}=this_recdata_unmapped.trial{tidx};
+this_Data_recorded{tidx}=this_recdata_recorded.trial{tidx};
 end
 this_Data=cell2mat(this_Data);
 this_Data_unmapped=cell2mat(this_Data_unmapped);
@@ -241,25 +288,25 @@ InSavePlotCFG=cfg_outplotdir.outdatadir.Experiment.Session.Plots.Area.Activity.C
 InSaveName=[sprintf('Channel_Correlations_Mapped_Time_%u_Segments_%u',Total_Time*100,NumTimeSegments), '_%s_%s'];
 %%
 cgg_plotChannelCorrelations(InData,InArea,InTrials,InSavePlotCFG,InSaveName)
-% %%
-% InData=this_Data_unmapped;
-% InArea=this_probe_area;
-% InTrials=1;
-% InSavePlotCFG=cfg_outplotdir.outdatadir.Experiment.Session.Plots.Area.Activity.Channel_Mapping;
-% % InSaveName='Channel_Correlations_Mapped_Time_%s_%s';
-% InSaveName=[sprintf('Channel_Correlations_Unmapped_Time_%u',Total_Time*100), '_%s_%s'];
-% %%
-% cgg_plotChannelCorrelations(InData,InArea,InTrials,InSavePlotCFG,InSaveName)
-% %%
-% InData=this_Data_recorded;
-% InArea=this_probe_area;
-% InTrials=1;
-% InSavePlotCFG=cfg_outplotdir.outdatadir.Experiment.Session.Plots.Area.Activity.Channel_Mapping;
-% % InSaveName='Channel_Correlations_Mapped_Time_%s_%s';
-% InSaveName=[sprintf('Channel_Correlations_Recorded_Time_%u',Total_Time*100), '_%s_%s'];
-% %%
-% cgg_plotChannelCorrelations(InData,InArea,InTrials,InSavePlotCFG,InSaveName)
-% 
+%%
+InData=this_Data_unmapped;
+InArea=this_probe_area;
+InTrials=1;
+InSavePlotCFG=cfg_outplotdir.outdatadir.Experiment.Session.Plots.Area.Activity.Channel_Mapping;
+% InSaveName='Channel_Correlations_Mapped_Time_%s_%s';
+InSaveName=[sprintf('Channel_Correlations_Unmapped_Time_%u',Total_Time*100), '_%s_%s'];
+%%
+cgg_plotChannelCorrelations(InData,InArea,InTrials,InSavePlotCFG,InSaveName)
+%%
+InData=this_Data_recorded;
+InArea=this_probe_area;
+InTrials=1;
+InSavePlotCFG=cfg_outplotdir.outdatadir.Experiment.Session.Plots.Area.Activity.Channel_Mapping;
+% InSaveName='Channel_Correlations_Mapped_Time_%s_%s';
+InSaveName=[sprintf('Channel_Correlations_Recorded_Time_%u',Total_Time*100), '_%s_%s'];
+%%
+cgg_plotChannelCorrelations(InData,InArea,InTrials,InSavePlotCFG,InSaveName)
+
 %% K-Means
 InData=this_Data;
 InArea=this_probe_area;
@@ -268,8 +315,8 @@ InSavePlotCFG=cfg_outplotdir.outdatadir.Experiment.Session.Plots.Area.Activity.C
 InSaveName='Channel_Clustering_%s_Mapped_Clusters_%d_%s';
 
 %%
-for gidx=2:15
-cgg_plotChannelClusteringAlongProbe_v2(InData,gidx,InArea,InTrials,InSavePlotCFG,InSaveName)
+parfor gidx=Start_Group:End_Group
+cgg_plotChannelClusteringAlongProbe_v2(InData,gidx,InArea,InTrials,InSavePlotCFG,InSaveName);
 end
 
 % %%
@@ -315,39 +362,39 @@ end
 
 %%
 
-InYLim=[min(this_Data(:)),max(this_Data(:))]*YLimFactor;
-
-SamplingRate=this_recdata.fsample;
-
-Window_S=0.2;
-
-for sidx=1:NumTimeSegments
-for pidx=1:NumPlots
-sel_tidx=sidx;
-
-Start_IDX=1+round(Window_S*SamplingRate)*(pidx-1);
-End_IDX=round(Window_S*SamplingRate)*(pidx);
-
-InData=this_recdata.trial{sel_tidx}(:,Start_IDX:End_IDX);
-InData_Time=this_recdata.time{sel_tidx}(Start_IDX:End_IDX);
-X_Name='Time (s)';
-Y_Name='';
-InData_Title='Verification of Channel Activity';
-% InYLim=InYLim;
-Channel_Group=1:64;
-InSavePlotCFG=cfg_outplotdir.outdatadir.Experiment.Session.Plots.Area.Activity.Activity_Example;
-InSaveName=[sprintf('Channel_Verification_%s_%d_%d',this_probe_area,sidx,pidx),'_%s'];
-InSaveArea=this_probe_area;
-
-cgg_plotDataProcessingStepsInGroups(InData,InData_Time,X_Name,Y_Name,InData_Title,InYLim,Channel_Group,InSavePlotCFG,InSaveName,InSaveArea)
-end
-end
-
-[Connected_Channels{taidx,aidx},Disconnected_Channels{taidx,aidx},Debugging_Info{taidx,aidx}] = ...
-    cgg_getDisconnectedChannelsIteration(InData,NumReplicates,...
-    InDistance,Start_Group,End_Group,Disconnected_Channels_GT,...
-    Disconnected_Threshold,NumIterations);
-
+% InYLim=[min(this_Data(:)),max(this_Data(:))]*YLimFactor;
+% 
+% SamplingRate=this_recdata.fsample;
+% 
+% Window_S=0.2;
+% 
+% for sidx=1:NumTimeSegments
+% for pidx=1:NumPlots
+% sel_tidx=sidx;
+% 
+% Start_IDX=1+round(Window_S*SamplingRate)*(pidx-1);
+% End_IDX=round(Window_S*SamplingRate)*(pidx);
+% 
+% InData=this_recdata.trial{sel_tidx}(:,Start_IDX:End_IDX);
+% InData_Time=this_recdata.time{sel_tidx}(Start_IDX:End_IDX);
+% X_Name='Time (s)';
+% Y_Name='';
+% InData_Title='Verification of Channel Activity';
+% % InYLim=InYLim;
+% Channel_Group=1:64;
+% InSavePlotCFG=cfg_outplotdir.outdatadir.Experiment.Session.Plots.Area.Activity.Activity_Example;
+% InSaveName=[sprintf('Channel_Verification_%s_%d_%d',this_probe_area,sidx,pidx),'_%s'];
+% InSaveArea=this_probe_area;
+% 
+% cgg_plotDataProcessingStepsInGroups(InData,InData_Time,X_Name,Y_Name,InData_Title,InYLim,Channel_Group,InSavePlotCFG,InSaveName,InSaveArea)
+% end
+% end
+% 
+% [Connected_Channels{taidx,aidx},Disconnected_Channels{taidx,aidx},Debugging_Info{taidx,aidx}] = ...
+%     cgg_getDisconnectedChannelsIteration(InData,NumReplicates,...
+%     InDistance,Start_Group,End_Group,Disconnected_Channels_GT,...
+%     Disconnected_Threshold,NumIterations);
+% 
 end
 
 end

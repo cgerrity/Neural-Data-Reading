@@ -1,4 +1,4 @@
-function cgg_displayReconstructionMonitor(monitor,Y_Classification_Training,Y_Reconstruction_Training,T_Classification_Training,T_Reconstruction_Training,Y_Classification_Validation,Y_Reconstruction_Validation,T_Classification_Validation,T_Reconstruction_Validation,ClassNames,Iteration,BatchIDX)
+function cgg_displayReconstructionMonitor(monitor,Y_Classification_Training,Y_Reconstruction_Training,T_Classification_Training,T_Reconstruction_Training,Y_Classification_Validation,Y_Reconstruction_Validation,T_Classification_Validation,T_Reconstruction_Validation,ClassNames,Iteration,BatchIDX,IsOptimal,ExampleNumber)
 %CGG_DISPLAYRECONSTRUCTIONMONITOR Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -49,10 +49,20 @@ updatePlotReconstruction(monitor,"ReconstructionValidation",PlotUpdate_Validatio
 
 NumDimensions = length(ClassNames);
 
+WantDimensions = ~isempty(Y_Classification_Training);
+
+if WantDimensions
+if NumDimensions~=0
+FeaturesTrueTraining=squeeze(extractdata(T_Classification_Training(:,this_Batch,:)));
+FeaturesTrueValidation=squeeze(extractdata(T_Classification_Validation(:,this_Batch,:)));
+end
+
 
 for didx = 1:NumDimensions
 
    NumClasses = length(ClassNames{didx});
+   this_FeaturesTrueTraining = FeaturesTrueTraining(didx);
+   this_FeaturesTrueValidation = FeaturesTrueValidation(didx);
 
    this_Data_Classification_Training = Y_Classification_Training{didx};
    this_Data_Classification_Training = this_Data_Classification_Training(:,this_Batch,:);
@@ -76,8 +86,8 @@ for didx = 1:NumDimensions
 
     %%
 
-updatePlotSingleClassification(monitor,"DimensionTraining",PlotUpdate_Training,didx);
-updatePlotSingleClassification(monitor,"DimensionValidation",PlotUpdate_Validation,didx);
+updatePlotSingleClassification(monitor,"DimensionTraining",PlotUpdate_Training,didx,this_FeaturesTrueTraining);
+updatePlotSingleClassification(monitor,"DimensionValidation",PlotUpdate_Validation,didx,this_FeaturesTrueValidation);
 
 end
 
@@ -86,10 +96,10 @@ end
 % disp(T_Classification_Training.dims)
 % disp(size(T_Classification_Training))
 
-if NumDimensions~=0
-FeaturesTrueTraining=squeeze(extractdata(T_Classification_Training(:,this_Batch,:)));
-FeaturesTrueValidation=squeeze(extractdata(T_Classification_Validation(:,this_Batch,:)));
-end
+% if NumDimensions~=0
+% FeaturesTrueTraining=squeeze(extractdata(T_Classification_Training(:,this_Batch,:)));
+% FeaturesTrueValidation=squeeze(extractdata(T_Classification_Validation(:,this_Batch,:)));
+% end
 
 SubTitle_Training = 'Training: [%d';
 SubTitle_Validation = 'Validation: [%d';
@@ -100,17 +110,25 @@ end
 SubTitle_Training = [SubTitle_Training ']'];
 SubTitle_Validation = [SubTitle_Validation ']'];
 
-this_Title={sprintf(SubTitle_Training,FeaturesTrueTraining), sprintf(SubTitle_Validation,FeaturesTrueValidation), sprintf('Area: %d, Channel: %d',this_Area,this_Channel)};
+this_Title={sprintf(SubTitle_Training,FeaturesTrueTraining), sprintf(SubTitle_Validation,FeaturesTrueValidation), sprintf('Area: %d, Channel: %d, Iteration: %d',this_Area,this_Channel,Iteration)};
+else
+this_Title={sprintf('Area: %d, Channel: %d, Iteration: %d',this_Area,this_Channel,Iteration)};
+end
 
 %%
-updatePlotTitle(monitor,this_Title)
+updatePlotTitle(monitor,this_Title);
+% updateSaveTerm(monitor,IsOptimal)
 
 %%
-
+drawnow;
 %%
 
 updateIteration(monitor,Iteration);
-savePlot(monitor);
+setExampleTerm(monitor,ExampleNumber);
+% if IsOptimal
+% savePlot(monitor,false);
+% end
+savePlot(monitor,IsOptimal);
 
 end
 

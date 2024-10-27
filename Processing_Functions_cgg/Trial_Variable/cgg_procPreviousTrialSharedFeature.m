@@ -2,6 +2,8 @@ function NewTarget = cgg_procPreviousTrialSharedFeature(OldTarget)
 %CGG_PROCPREVIOUSTRIALSHAREDFEATURE Summary of this function goes here
 %   Detailed explanation goes here
 
+% [Current Correct, Previous Correct, Has Shared Feature]
+
 CodingOrder(1,:)=[0,1,1];
 CodingOrder(2,:)=[0,1,0];
 CodingOrder(3,:)=[0,0,1];

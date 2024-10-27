@@ -1,24 +1,95 @@
-function KFoldPartition = cgg_getKFoldPartitions
+function KFoldPartition = cgg_getKFoldPartitions(varargin)
 %CGG_GETKFOLDPARTITIONS Summary of this function goes here
 %   Detailed explanation goes here
+
+isfunction=exist('varargin','var');
+
+if isfunction
+Epoch = CheckVararginPairs('Epoch', NaN, varargin{:});
+else
+if ~(exist('Epoch','var'))
+Epoch=NaN;
+end
+end
+
+if isfunction
+SessionSubset = CheckVararginPairs('SessionSubset', NaN, varargin{:});
+else
+if ~(exist('SessionSubset','var'))
+SessionSubset=NaN;
+end
+end
+
+if isfunction
+NumFolds = CheckVararginPairs('NumFolds', NaN, varargin{:});
+else
+if ~(exist('NumFolds','var'))
+NumFolds=NaN;
+end
+end
+
+if isfunction
+wantSubset = CheckVararginPairs('wantSubset', NaN, varargin{:});
+else
+if ~(exist('wantSubset','var'))
+wantSubset=NaN;
+end
+end
+
+if isfunction
+wantStratifiedPartition = CheckVararginPairs('wantStratifiedPartition', NaN, varargin{:});
+else
+if ~(exist('wantStratifiedPartition','var'))
+wantStratifiedPartition=NaN;
+end
+end
+
+if isfunction
+NumKPartitions = CheckVararginPairs('NumKPartitions', NaN, varargin{:});
+else
+if ~(exist('NumKPartitions','var'))
+NumKPartitions=NaN;
+end
+end
+
+if isfunction
+SubsetAmount = CheckVararginPairs('SubsetAmount', NaN, varargin{:});
+else
+if ~(exist('SubsetAmount','var'))
+SubsetAmount=NaN;
+end
+end
 
 %%
 cfg_Sessions = DATA_cggAllSessionInformationConfiguration;
 cfg_param = PARAMETERS_cgg_procSimpleDecoders_v2;
 
 %%
-
+if isnan(SubsetAmount)
 SubsetAmount=cfg_param.SubsetAmount;
+end
+if isnan(SessionSubset)
 SessionSubset=cfg_param.SessionSubset;
+end
+if isnan(NumFolds)
 NumFolds=cfg_param.NumFolds;
+end
 % Dimension = cfg_param.Dimension;
+if isnan(wantSubset)
 wantSubset = cfg_param.wantSubset;
+end
+if isnan(wantStratifiedPartition)
 wantStratifiedPartition = cfg_param.wantStratifiedPartition;
+end
+if isnan(NumKPartitions)
 NumKPartitions = cfg_param.NumKPartitions;
+end
 
 %%
 
+if isnan(Epoch)
 Epoch=cfg_param.Epoch;
+end
 % Decoder=cfg_param.Decoder;
 
 outdatadir=cfg_Sessions(1).outdatadir;

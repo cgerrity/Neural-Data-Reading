@@ -5,6 +5,7 @@ function cfg = PARAMETERS_cgg_procSimpleDecoders_v2
 %%
 
 Epoch='Decision';
+% Epoch='Synthetic_2';
 
 %%
 
@@ -83,6 +84,7 @@ MatchType = 'combinedaccuracy';
 %%
 SubsetAmount=940;
 SessionSubset='Fr_Probe_03_22_07_13_002_01';
+% SessionSubset='Synthetic';
 
 NumKPartitions=20;
 

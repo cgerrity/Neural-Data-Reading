@@ -63,186 +63,255 @@ Fold = 1;
 ModelName = 'Variational GRU - Dropout 0.5';
 DataWidth = 100;
 WindowStride = 50;
-HiddenSizes = [500,250];
-InitialLearningRate = 0.001;
-LossFactorReconstruction = NaN;
-LossFactorKL = NaN;
-MiniBatchSize = 10;
+HiddenSizes = [1000,500,250];
+InitialLearningRate = 0.01;
+WeightReconstruction = 100;
+WeightKL = 1;
+WeightClassification = 1;
+MiniBatchSize = 512;
 GradientThreshold=100;
-Subset = true;
+Subset = false;
+Epoch = 'Decision';
 Target = 'Dimension';
 WeightedLoss = 'Inverse';
-ClassifierName = 'LSTM';
-ClassifierHiddenSize=[1];
+Optimizer = 'ADAM';
+ClassifierName = 'Deep LSTM - Dropout 0.5';
+ClassifierHiddenSize=[250,100,50];
+STDChannelOffset = 0.3;
+STDWhiteNoise = 0.15;
+STDRandomWalk = 0.007;
+NumEpochsAutoEncoder=0;
+NumEpochsFull = 500;
+Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
+LossType_Decoder = 'MSE';
+LossType_Classifier='CrossEntropy';
+maxworkerMiniBatchSize=100;
 
-MiniBatchSize = [1,2,5,10,20,25,50,75,100,200];
-MiniBatchSize = num2cell(MiniBatchSize');
+Fold = {1;2;3;4;5;6;7;8;9;10};
 
 %% SLURM Choice 2
     case 2
 Fold = 1;
-ModelName = 'LSTM';
-DataWidth = 2;
-WindowStride = 1;
-HiddenSizes = [500,250];
-InitialLearningRate = 0.001;
-LossFactorReconstruction = NaN;
-LossFactorKL = NaN;
-MiniBatchSize = 200;
+ModelName = 'Variational GRU - Dropout 0.5';
+DataWidth = 100;
+WindowStride = 50;
+HiddenSizes = [1000,500,250];
+InitialLearningRate = 0.05;
+WeightReconstruction = 1;
+WeightKL = 1e-4;
+WeightClassification = 1;
+MiniBatchSize = 100;
 GradientThreshold=100;
 Subset = true;
+Epoch = 'Decision';
 Target = 'Dimension';
 WeightedLoss = 'Inverse';
-ClassifierName = 'Deep LSTM';
-ClassifierHiddenSize=[250,250,1];
+Optimizer = 'ADAM';
+ClassifierName = 'Deep LSTM - Dropout 0.5';
+ClassifierHiddenSize=[250,100,50];
+STDChannelOffset = 0.3;
+STDWhiteNoise = 0.15;
+STDRandomWalk = 0.007;
+NumEpochsAutoEncoder=0;
+NumEpochsFull = 500;
+Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
+LossType_Decoder = 'MSE';
+LossType_Classifier='CrossEntropy';
+maxworkerMiniBatchSize=100;
 
-HiddenSizes = {[500,250];[2,1,250];[4,2,250];[500,250];[500,250]};
-Target = {'Dimension';'SharedFeatureCoding'};
-ModelName = {'LSTM';'Multi-Filter Convolution';'Convolution';'Variational GRU - Dropout 0.5';'Variational Feedforward - Softplus - Dropout 0.5'};
+Fold = {1;2;3;4;5;6;7;8;9;10};
 
 %% SLURM Choice 3
     case 3
 Fold = 1;
-ModelName = 'LSTM';
+ModelName = 'Variational GRU - Dropout 0.5';
 DataWidth = 100;
 WindowStride = 50;
-HiddenSizes = [500,250];
-InitialLearningRate = 0.001;
-LossFactorReconstruction = NaN;
-LossFactorKL = NaN;
-MiniBatchSize = 10;
-GradientThreshold=10;
+HiddenSizes = [1000,500,250];
+InitialLearningRate = 0.01;
+WeightReconstruction = 100;
+WeightKL = 1;
+WeightClassification = 1;
+MiniBatchSize = 100;
+GradientThreshold=100;
 Subset = true;
+Epoch = 'Decision';
 Target = 'Dimension';
 WeightedLoss = 'Inverse';
-ClassifierName = 'LSTM';
-ClassifierHiddenSize=[1];
+Optimizer = 'ADAM';
+ClassifierName = 'Deep LSTM - Dropout 0.5';
+ClassifierHiddenSize=[250,100,50];
+STDChannelOffset = 0.3;
+STDWhiteNoise = 0.15;
+STDRandomWalk = 0.007;
+NumEpochsAutoEncoder=0;
+NumEpochsFull = 500;
+Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
+LossType_Decoder = 'MSE';
+LossType_Classifier='CrossEntropy';
+maxworkerMiniBatchSize=100;
 
-HiddenSizes = {[500,250];[20,10,250];[20,10,500];[500,250];[500,250]};
-Target = {'Dimension';'SharedFeatureCoding'};
-ModelName = {'LSTM';'Multi-Filter Convolution';'Convolution';'Variational GRU - Dropout 0.5';'Variational Feedforward - Softplus - Dropout 0.5'};
-MiniBatchSize = [50,5,5,50,50];
-MiniBatchSize = num2cell(MiniBatchSize');
+Fold = {1;2;3;4;5;6;7;8;9;10};
 
 %% SLURM Choice 4
     case 4
 Fold = 1;
-ModelName = 'LSTM';
+ModelName = 'Variational GRU - Dropout 0.5';
 DataWidth = 100;
 WindowStride = 50;
-HiddenSizes = [500,250];
-InitialLearningRate = 0.001;
-LossFactorReconstruction = NaN;
-LossFactorKL = NaN;
-MiniBatchSize = 10;
-GradientThreshold=20;
+HiddenSizes = [1000,500,250];
+InitialLearningRate = 0.01;
+WeightReconstruction = 1;
+WeightKL = 1e-4;
+WeightClassification = 1;
+MiniBatchSize = 100;
+GradientThreshold=100;
 Subset = true;
+Epoch = 'Decision';
 Target = 'Dimension';
 WeightedLoss = 'Inverse';
-ClassifierName = 'LSTM';
-ClassifierHiddenSize=[1];
+Optimizer = 'ADAM';
+ClassifierName = 'Deep LSTM - Dropout 0.5';
+ClassifierHiddenSize=[250,100,50];
+STDChannelOffset = 0.3;
+STDWhiteNoise = 0.15;
+STDRandomWalk = 0.007;
+NumEpochsAutoEncoder=0;
+NumEpochsFull = 500;
+Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
+LossType_Decoder = 'MSE';
+LossType_Classifier='CrossEntropy';
+maxworkerMiniBatchSize=100;
 
-HiddenSizes = {[500,250];[20,10,250];[20,10,500];[500,250];[500,250]};
-Target = {'Dimension';'SharedFeatureCoding'};
-ModelName = {'LSTM';'Multi-Filter Convolution';'Convolution';'Variational GRU - Dropout 0.5';'Variational Feedforward - Softplus - Dropout 0.5'};
-MiniBatchSize = [50,5,5,50,50];
-MiniBatchSize = num2cell(MiniBatchSize');
+Fold = {1;2;3;4;5;6;7;8;9;10};
 
 %% SLURM Choice 5
     case 5
 Fold = 1;
-ModelName = 'LSTM';
-DataWidth = 100;
-WindowStride = 50;
-HiddenSizes = [500,250];
-InitialLearningRate = 0.001;
-LossFactorReconstruction = NaN;
-LossFactorKL = NaN;
-MiniBatchSize = 10;
-GradientThreshold=50;
+ModelName = 'Variational GRU - Dropout 0.5';
+DataWidth = 50;
+WindowStride = 25;
+HiddenSizes = [2000,1000,500,250];
+InitialLearningRate = 0.02;
+WeightReconstruction = 1;
+WeightKL = 1e-4;
+WeightClassification = 1;
+MiniBatchSize = 200;
+GradientThreshold=100;
 Subset = true;
+Epoch = 'Decision';
 Target = 'Dimension';
 WeightedLoss = 'Inverse';
-ClassifierName = 'LSTM';
-ClassifierHiddenSize=[1];
+Optimizer = 'ADAM';
+ClassifierName = 'Deep LSTM - Dropout 0.5';
+ClassifierHiddenSize=[500,250,100];
+STDChannelOffset = 0.3;
+STDWhiteNoise = 0.15;
+STDRandomWalk = 0.007;
+NumEpochsAutoEncoder=50;
+NumEpochsFull = 500;
+Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
+LossType_Decoder = 'MSE';
+LossType_Classifier='CrossEntropy';
+maxworkerMiniBatchSize=100;
 
-HiddenSizes = {[500,250];[20,10,250];[20,10,500];[500,250];[500,250]};
-Target = {'Dimension';'SharedFeatureCoding'};
-ModelName = {'LSTM';'Multi-Filter Convolution';'Convolution';'Variational GRU - Dropout 0.5';'Variational Feedforward - Softplus - Dropout 0.5'};
-MiniBatchSize = [50,5,5,50,50];
-MiniBatchSize = num2cell(MiniBatchSize');
+Fold = {1;2;3;4;5;6;7;8;9;10};
 
 %% SLURM Choice 6
     case 6
 Fold = 1;
-ModelName = 'LSTM';
-DataWidth = 100;
-WindowStride = 50;
-HiddenSizes = [500,250];
-InitialLearningRate = 0.001;
-LossFactorReconstruction = NaN;
-LossFactorKL = NaN;
-MiniBatchSize = 10;
+ModelName = 'Variational Convolutional Resnet 3x3 - Split Area - Leaky ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh';
+DataWidth = 50;
+WindowStride = 25;
+HiddenSizes = [8,16,32,64,100];
+InitialLearningRate = 0.05;
+WeightReconstruction = 1;
+WeightKL = 1e-7;
+WeightClassification = 1;
+MiniBatchSize = 100;
 GradientThreshold=100;
 Subset = true;
+Epoch = 'Decision';
 Target = 'Dimension';
 WeightedLoss = 'Inverse';
-ClassifierName = 'LSTM';
-ClassifierHiddenSize=[1];
+Optimizer = 'ADAM';
+ClassifierName = 'Deep LSTM - Dropout 0.5';
+ClassifierHiddenSize=[100,50,25];
+STDChannelOffset = 0.15;
+STDWhiteNoise = 0.007;
+STDRandomWalk = 0.0003;
+NumEpochsAutoEncoder=0;
+NumEpochsFull = 500;
+Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
+LossType_Decoder = 'MSE';
+LossType_Classifier='CrossEntropy';
+maxworkerMiniBatchSize=2;
 
-HiddenSizes = {[500,250];[20,10,250];[20,10,500];[500,250];[500,250]};
-Target = {'Dimension';'SharedFeatureCoding'};
-ModelName = {'LSTM';'Multi-Filter Convolution';'Convolution';'Variational GRU - Dropout 0.5';'Variational Feedforward - Softplus - Dropout 0.5'};
-MiniBatchSize = [50,5,5,50,50];
-MiniBatchSize = num2cell(MiniBatchSize');
+WeightClassification = {0.01;0.05;0.1;0.5;1;2;3;10;20;30};
 
 %% SLURM Choice 7
     case 7
 Fold = 1;
-ModelName = 'LSTM';
-DataWidth = 100;
-WindowStride = 50;
-HiddenSizes = [500,250];
-InitialLearningRate = 0.001;
-LossFactorReconstruction = NaN;
-LossFactorKL = NaN;
-MiniBatchSize = 10;
-GradientThreshold=200;
+ModelName = 'Variational GRU - Dropout 0.25';
+DataWidth = 50;
+WindowStride = 25;
+HiddenSizes = [1000,500,250,100];
+InitialLearningRate = 0.01;
+WeightReconstruction = 1;
+WeightKL = 1e-10;
+WeightClassification = 5;
+MiniBatchSize = 200;
+GradientThreshold=100;
 Subset = true;
+Epoch = 'Decision';
 Target = 'Dimension';
 WeightedLoss = 'Inverse';
-ClassifierName = 'LSTM';
-ClassifierHiddenSize=[1];
+Optimizer = 'ADAM';
+ClassifierName = 'Deep LSTM - Dropout 0.5';
+ClassifierHiddenSize=[250,100,50];
+STDChannelOffset = 0.15;
+STDWhiteNoise = 0.007;
+STDRandomWalk = 0.0003;
+NumEpochsAutoEncoder=0;
+NumEpochsFull = 500;
+Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
+LossType_Decoder = 'MSE';
+LossType_Classifier='CrossEntropy';
+maxworkerMiniBatchSize=10;
 
-HiddenSizes = {[500,250];[20,10,250];[20,10,500];[500,250];[500,250]};
-Target = {'Dimension';'SharedFeatureCoding'};
-ModelName = {'LSTM';'Multi-Filter Convolution';'Convolution';'Variational GRU - Dropout 0.5';'Variational Feedforward - Softplus - Dropout 0.5'};
-MiniBatchSize = [50,5,5,50,50];
-MiniBatchSize = num2cell(MiniBatchSize');
+HiddenSizes = {[1000,500,250];[2000,1000,500,250];[500,250];[4000,2000,1000,500,250];[1000,500];[500,250,100];[250,100];[1000,500,250,100];[2000,1000,500,250,100];[5000,2500,1000,500]};
 
 %% SLURM Choice 8
     case 8
 Fold = 1;
-ModelName = 'LSTM';
+ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM';
 DataWidth = 100;
 WindowStride = 50;
-HiddenSizes = [500,250];
-InitialLearningRate = 0.001;
-LossFactorReconstruction = NaN;
-LossFactorKL = NaN;
-MiniBatchSize = 10;
-GradientThreshold=500;
+HiddenSizes = [1000,500,250,100];
+InitialLearningRate = 0.01;
+WeightReconstruction = 10;
+WeightKL = 1e-5;
+WeightClassification = 1;
+MiniBatchSize = 100;
+GradientThreshold=100;
 Subset = true;
+Epoch = 'Decision';
 Target = 'Dimension';
 WeightedLoss = 'Inverse';
-ClassifierName = 'LSTM';
-ClassifierHiddenSize=[1];
+Optimizer = 'ADAM';
+ClassifierName = 'Deep LSTM - Dropout 0.5';
+ClassifierHiddenSize=[250,100,50];
+STDChannelOffset = 0.15;
+STDWhiteNoise = 0.007;
+STDRandomWalk = 0.0003;
+NumEpochsAutoEncoder=6;
+NumEpochsFull = 6;
+Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
+LossType_Decoder = 'MSE';
+LossType_Classifier='CrossEntropy';
+maxworkerMiniBatchSize=5;
 
-HiddenSizes = {[500,250];[20,10,250];[20,10,500];[500,250];[500,250]};
-Target = {'Dimension';'SharedFeatureCoding'};
-ModelName = {'LSTM';'Multi-Filter Convolution';'Convolution';'Variational GRU - Dropout 0.5';'Variational Feedforward - Softplus - Dropout 0.5'};
-MiniBatchSize = [50,5,5,50,50];
-MiniBatchSize = num2cell(MiniBatchSize');
+HiddenSizes = {[16,32,64,100];[2,4,8,100];[4,8,16,100];[8,16,32,100];[2,4,8,16,100];[4,8,16,32,100];[8,16,32,64,100];[32,64,100];[16,32,100];[8,16,100]};
 
 %% SLURM Choice Default
     otherwise
@@ -252,22 +321,38 @@ DataWidth = 100;
 WindowStride = 50;
 HiddenSizes = [500,250];
 InitialLearningRate = 0.01;
-LossFactorReconstruction = 1;
-LossFactorKL = NaN;
+WeightReconstruction = 1;
+WeightKL = NaN;
+WeightClassification = 1;
 MiniBatchSize = 10;
 GradientThreshold=1;
 Subset = true;
+Epoch = 'Decision';
 Target = 'Dimension';
 WeightedLoss = 'Inverse';
+Optimizer = 'ADAM';
 ClassifierName = 'LSTM';
 ClassifierHiddenSize=[1];
+STDChannelOffset = 0.3;
+STDWhiteNoise = 0.15;
+STDRandomWalk = 0.007;
+NumEpochsAutoEncoder=50;
+NumEpochsFull = 500;
+Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
+LossType_Decoder = 'MSE';
+LossType_Classifier='CrossEntropy';
+maxworkerMiniBatchSize=5;
 
 end
 
 VariableNames = {'Fold','ModelName','DataWidth','WindowStride',...
-    'HiddenSizes','InitialLearningRate','LossFactorReconstruction',...
-    'LossFactorKL','MiniBatchSize','Subset','Target','WeightedLoss',...
-    'GradientThreshold','ClassifierName','ClassifierHiddenSize'};
+    'HiddenSizes','InitialLearningRate','WeightReconstruction',...
+    'WeightKL','WeightClassification','MiniBatchSize','Subset',...
+    'Target','Epoch','WeightedLoss','GradientThreshold',...
+    'ClassifierName','ClassifierHiddenSize','STDChannelOffset',...
+    'STDWhiteNoise','STDRandomWalk','NumEpochsAutoEncoder',...
+    'NumEpochsFull','Optimizer','Normalization','LossType_Decoder',...
+    'LossType_Classifier','maxworkerMiniBatchSize'};
 
 %%
 
@@ -287,8 +372,8 @@ for vidx = 1:length(VariableNames)
 end
 
 
-disp(cfgSLURM);
-disp(datetime);
+% disp(cfgSLURM);
+% disp(datetime);
 
 end
 

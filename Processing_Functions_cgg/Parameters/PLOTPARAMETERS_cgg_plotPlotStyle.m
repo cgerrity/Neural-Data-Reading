@@ -2,6 +2,24 @@ function cfg = PLOTPARAMETERS_cgg_plotPlotStyle(varargin)
 %PLOTPARAMETERS_CGG_PLOTPLOTSTYLE Summary of this function goes here
 %   Detailed explanation goes here
 
+isfunction=exist('varargin','var');
+
+if isfunction
+WantPaperFormat = CheckVararginPairs('WantPaperFormat', false, varargin{:});
+else
+if ~(exist('WantPaperFormat','var'))
+WantPaperFormat=false;
+end
+end
+
+if isfunction
+WantDecisionCentered = CheckVararginPairs('WantDecisionCentered', false, varargin{:});
+else
+if ~(exist('WantDecisionCentered','var'))
+WantDecisionCentered=false;
+end
+end
+
 X_Name_Size=18;
 Y_Name_Size=18;
 
@@ -18,10 +36,13 @@ Indicator_Size = 8;
 
 Text_Size = 12;
 
-Tick_Size_Channels=8;
+Tick_Size_Channels=16;
 Tick_Size_Time=0.5;
+Tick_Size_Z = 0.025;
 
 ErrorCapSize=50;
+
+X_Name_Size_Pie=12;
 
 %%
 
@@ -103,6 +124,102 @@ RangeFactorHeatLower = 0.3;
 RangeAccuracyUpper = 0.5;
 RangeAccuracyLower = 0.4;
 
+%% Regular Preferences 
+
+Time_Offset = 0;
+
+Limit_Correlation = [NaN,NaN];
+
+Limit_ChannelProportion = [NaN,NaN];
+Limit_ChannelProportion_Large = [NaN,NaN];
+Limit_Time = [NaN,NaN];
+Limit_ChannelProportion_Small = [NaN,NaN];
+
+Limit_LatentProportion = [0,0.12];
+Limit_LatentCorrelation = [0.25,0.4];
+
+Tick_Size_ChannelProportion = NaN;
+Tick_Size_ChannelProportion_Large = NaN;
+% Tick_Size_Time = NaN;
+
+Tick_Size_LatentProportion = 0.02;
+Tick_Size_LatentCorrelation = 0.05;
+
+TickDir = '';
+TickDir_ChannelProportion = '';
+TickDir_Time = '';
+
+WantTitle = true;
+
+wantDecisionIndicators = true;
+wantSubPlot = true;
+wantFeedbackIndicators = false;
+DecisionIndicatorLabelOrientation = 'aligned';
+wantIndicatorNames = true;
+wantPaperSized = false;
+
+%% Paper Preferences 
+
+if WantPaperFormat
+
+Error_FaceAlpha = 0.2;
+Error_EdgeAlpha = 0;
+
+Title_Size = 12;
+Y_Name_Size=12;
+Line_Width = 0.5;
+Time_Offset = 0.7;
+Legend_Size = 4;
+Label_Size=14;
+
+Limit_ChannelProportion = [0,0.3];
+Limit_Time = [-0.3,1.4];
+Limit_ChannelProportion_Small = [0,0.4];
+Limit_ChannelProportion_Medium = [0,0.4];
+Limit_ChannelProportion_Large = [0,0.5];
+Limit_ChannelProportion_Model = [0,0.4];
+Limit_Correlation = [0.05,0.15];
+Limit_Correlation_Large = [0,0.4];
+Limit_ChannelProportion_Difference = [0,0.1];
+Limit_BetaValues = [-0.15,0.3];
+
+Tick_Size_ChannelProportion = 0.1;
+Tick_Size_ChannelProportion_Medium = 0.1;
+Tick_Size_ChannelProportion_Large = 0.25;
+Tick_Size_ChannelProportion_Model = 0.1;
+Tick_Size_Time = 0.3;
+Tick_Size_Correlation = 0.05;
+Tick_Size_ChannelProportion_Difference = 0.05;
+Tick_Size_BetaValues = 0.15;
+
+TickDir = 'out';
+
+TickDir_ChannelProportion = 'out';
+TickDir_Time = 'out';
+TickDir_Correlation = 'out';
+
+WantTitle = false;
+
+wantDecisionIndicators = true;
+wantSubPlot = true;
+wantFeedbackIndicators = true;
+DecisionIndicatorLabelOrientation = 'aligned';
+wantIndicatorNames = false;
+wantPaperSized = true;
+
+Indicator_Size = 4;
+
+end
+
+%% Decision Centered Format
+
+if WantDecisionCentered
+Time_Offset = 0;
+Limit_Time = [-1.5,1.5];
+Tick_Size_Time = 0.5;
+wantFeedbackIndicators = false;
+wantIndicatorNames = true;
+end
 %%
 
 w = whos;

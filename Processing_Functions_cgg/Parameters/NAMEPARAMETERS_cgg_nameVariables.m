@@ -63,6 +63,7 @@ LoopSubset='Subset';
 LoopDataWidth='DataWidth';
 LoopWindowStride='WindowStride';
 LoopMatchType='MatchType';
+LoopBest='Best';
 LoopUnknown='LoopTypeUnknown';
 
 %% Loop Titles
@@ -74,6 +75,7 @@ LoopTitleSubset='Subset';
 LoopTitleDataWidth='Data Width';
 LoopTitleWindowStride='Window Stride';
 LoopTitleMatchType='Match Type';
+LoopTitleBest='Best Model';
 LoopTitleUnknown='Loop Type Unknown';
 
 %%

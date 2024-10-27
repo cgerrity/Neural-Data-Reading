@@ -24,16 +24,18 @@ end
 %%
 
 cfg_param = PARAMETERS_cgg_procSimpleDecoders_v2;
-cfg_Sessions = DATA_cggAllSessionInformationConfiguration;
 
 Epoch=cfg_param.Epoch;
-Decoder=cfg_param.Decoder;
 
-outdatadir=cfg_Sessions(1).outdatadir;
-TargetDir=outdatadir;
+[~,outputfolder_base,temporaryfolder_base,~] = cgg_getBaseFolders();
+
+% ResultsDir = [temporaryfolder_base filesep 'Data_Neural'];
+TargetDir = [outputfolder_base filesep 'Data_Neural'];
 
 cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
-    'Epoch',Epoch,'Decoder',Decoder{1},'Fold',1);
+    'Epoch',Epoch);
+% cfg_Resuts = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+%     'Epoch',Epoch);
 
 %%
 Partition_Dir = cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Partition.path;

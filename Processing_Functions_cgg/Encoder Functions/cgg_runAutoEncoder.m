@@ -39,21 +39,20 @@ end
 
 cfg_Encoder.Fold = Fold;
 Epoch=cfg_Encoder.Epoch;
+
+%%
+
+cfg_Encoder.NumEpochsBase = cfg_Encoder.NumEpochsAutoEncoder;
+cfg_Encoder.NumEpochsSession = cfg_Encoder.NumEpochsFull;
+
+cfg_Encoder.LossFactorReconstruction = cfg_Encoder.WeightReconstruction;
+cfg_Encoder.LossFactorKL = cfg_Encoder.WeightKL;
 %%
 cfg_TimeStart = PARAMETERS_cgg_procFullTrialPreparation_v2(Epoch);
 cfg_Encoder.Time_Start = -cfg_TimeStart.Window_Before_Data;
+cfg_Encoder.Time_End = cfg_TimeStart.Window_After_Data;
 cfg_PreProcessing = PARAMETERS_cgg_proc_NeuralDataPreparation('SessionName','none');
 cfg_Encoder.SamplingRate = cfg_PreProcessing.rect_samprate;
-
-%%
-
-if ~isempty(getenv('SLURM_JOB_CPUS_PER_NODE'))
-cores = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
-p=gcp("nocreate");
-if isempty(p)
-parpool(cores);
-end
-end
 
 %%
 outdatadir=cfg_Session(1).outdatadir;
@@ -123,8 +122,23 @@ cfg_Encoder.IsQuaddle = true;
 if ~strcmp(cfg_Encoder.Target,'Dimension')
 cfg_Encoder.IsQuaddle = false;
 end
-if strcmp(cfg_Encoder.Epoch,'Synthetic')
+if strcmp(cfg_Encoder.Epoch,'Synthetic') || contains(cfg_Encoder.Epoch,'Synthetic')
 cfg_Encoder.IsQuaddle = false;
+end
+
+%%
+
+disp(cfg_Encoder);
+disp(datetime);
+
+%%
+
+if ~isempty(getenv('SLURM_JOB_CPUS_PER_NODE'))
+cores = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
+p=gcp("nocreate");
+if isempty(p)
+parpool(cores);
+end
 end
 
 %%

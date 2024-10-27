@@ -23,6 +23,53 @@ ARModelOrder='';
 end
 end
 
+if isfunction
+STDChannelOffset = CheckVararginPairs('STDChannelOffset', NaN, varargin{:});
+else
+if ~(exist('STDChannelOffset','var'))
+STDChannelOffset=NaN;
+end
+end
+
+if isfunction
+STDWhiteNoise = CheckVararginPairs('STDWhiteNoise', NaN, varargin{:});
+else
+if ~(exist('STDWhiteNoise','var'))
+STDWhiteNoise=NaN;
+end
+end
+
+if isfunction
+STDRandomWalk = CheckVararginPairs('STDRandomWalk', NaN, varargin{:});
+else
+if ~(exist('STDRandomWalk','var'))
+STDRandomWalk=NaN;
+end
+end
+
+if isfunction
+Normalization = CheckVararginPairs('Normalization', 'None', varargin{:});
+else
+if ~(exist('Normalization','var'))
+Normalization='None';
+end
+end
+
+if isfunction
+NormalizationTable = CheckVararginPairs('NormalizationTable', NaN, varargin{:});
+else
+if ~(exist('NormalizationTable','var'))
+NormalizationTable=NaN;
+end
+end
+
+%% Normalize Data
+if ~strcmp(Normalization,'None')
+    if isempty(NormalizationTable)
+        NormalizationTable = cgg_getNormalizationTableFromDataName(FileName);
+    end
+Data = cgg_selectNormalization(Data,NormalizationTable,Normalization);
+end
 %% Data Width
 if isequal(DataWidth,'All')
 this_DataWidth=NumSamples;
@@ -82,13 +129,14 @@ Probe_Order=cfg_param.Probe_Order;
 
 Probe_Names=extractBefore(Probe_Order,'_');
 
-Probe_Total=length(Probe_Names);
+Probe_Total_Recording=length(Probe_Names);
+Probe_Total=NumProbes;
 
 [Probe_Areas,~,Probe_Dimensions]=unique(Probe_Names);
 
 Probe_Order_Random=repmat((1:Probe_Total)',[1,NumWindows]);
 
-if WantRandomize
+if WantRandomize && Probe_Total == Probe_Total_Recording
 for widx=1:NumWindows
 for cidx=1:length(Probe_Areas)
 
@@ -107,6 +155,13 @@ end
 if WantNaNZeroed
     Data(isnan(Data))=0;
 end
+
+%% Data Augmentation
+
+DataAugmentationSignal = cgg_generateDataAugmentationSignal(NumChannels,...
+    NumSamples,NumProbes,STDChannelOffset,STDWhiteNoise,STDRandomWalk);
+
+Data = Data + DataAugmentationSignal;
 
 %% What Data to get
 this_Data=NaN(NumChannels,this_DataWidth,NumProbes,NumWindows);

@@ -2,6 +2,9 @@ function [p_record,p_fixation,p_choice,p_audio,p_move,p_complete] = cgg_plotDeci
 %CGG_PLOTDECISIONEPOCHINDICATORS Summary of this function goes here
 %   Detailed explanation goes here
 
+%%
+
+cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 %% Varargin Options
 
 isfunction=exist('varargin','var');
@@ -37,16 +40,28 @@ if ~(exist('TimeOffset','var'))
 TimeOffset=0;
 end
 end
+
+if isfunction
+Line_Width = CheckVararginPairs('Line_Width', cfg_Plotting.xline_width, varargin{:});
+else
+if ~(exist('Line_Width','var'))
+Line_Width=cfg_Plotting.xline_width;
+end
+end
+
+if isfunction
+Indicator_Size = CheckVararginPairs('Indicator_Size', cfg_Plotting.Indicator_Size, varargin{:});
+else
+if ~(exist('Indicator_Size','var'))
+Indicator_Size=cfg_Plotting.Indicator_Size;
+end
+end
 %%
 if ~wantFeedbackIndicators
 p_audio = [];
 p_move = [];
 p_complete = [];
 end
-
-%%
-
-cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 
 %%
 
@@ -59,9 +74,7 @@ xline_audio = cfg_Plotting.xline_audio + TimeOffset;
 % xline_move = cfg_Plotting.xline_move + TimeOffset;
 xline_complete = cfg_Plotting.xline_complete + TimeOffset;
 
-xline_width = cfg_Plotting.xline_width;
-
-Indicator_Size = cfg_Plotting.Indicator_Size;
+xline_width = Line_Width;
 
 %%
 

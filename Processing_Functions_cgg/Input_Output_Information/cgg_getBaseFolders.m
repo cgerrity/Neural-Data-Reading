@@ -3,6 +3,16 @@ function [inputfolder_base,outputfolder_base,temporaryfolder_base,...
 %CGG_GETBASEFOLDERS Summary of this function goes here
 %   Detailed explanation goes here
 
+isfunction=exist('varargin','var');
+
+if isfunction
+WantTEBA = CheckVararginPairs('WantTEBA', false, varargin{:});
+else
+if ~(exist('WantTEBA','var'))
+WantTEBA=false;
+end
+end
+
 
 [~,Environment_Variables]=system('env');
 Environment_Variables=splitlines(Environment_Variables);
@@ -18,7 +28,7 @@ switch Root_Directory
         % Add a new case here for a new user
         switch Current_User
             case 'cgerrity'
-                if cgg_checkACCREMounted('/Users/cgerrity/Documents')
+                if cgg_checkACCREMounted('/Users/cgerrity/Documents') && ~WantTEBA
         inputfolder_base='/Users/cgerrity/Documents/ACCRE';
         outputfolder_base='/Users/cgerrity/Documents/ACCRE';
         temporaryfolder_base='/Users/cgerrity/Documents/ACCRE_NoBackup';

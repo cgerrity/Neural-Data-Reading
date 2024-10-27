@@ -25,6 +25,10 @@ switch MatchType
         [Accuracy] = cgg_calcCombinedAccuracy(TrueValue,Prediction,ClassNames);
     case 'macroF1'
         [Accuracy] = cgg_calcMacroF1(TrueValue,Prediction,ClassNames);
+    case 'macroRecall'
+        [Accuracy] = cgg_calcMacroRecall(TrueValue,Prediction,ClassNames);
+    case 'BalancedAccuracy'
+        [Accuracy] = cgg_calcMacroRecall(TrueValue,Prediction,ClassNames);
     otherwise
 end
 

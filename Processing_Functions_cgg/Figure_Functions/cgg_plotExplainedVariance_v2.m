@@ -60,7 +60,11 @@ PlotTitle=sprintf('Session: %s, Area: %s',SessionName,ProbeName);
 
 PlotTitle=replace(PlotTitle,'_','-');
 
-[fig,~,~]=cgg_plotHeatMapOverTime(R_Value_Adjusted,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'ZLimits',ZLimits,'PlotTitle',PlotTitle,'Y_Name',Y_Name,'InFigure',InFigure);
+wantIndicatorNames = false;
+Y_Tick_Label_Size = 36;
+X_Tick_Label_Size = 36;
+
+[fig,~,~]=cgg_plotHeatMapOverTime(R_Value_Adjusted,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'ZLimits',ZLimits,'PlotTitle',PlotTitle,'Y_Name',Y_Name,'InFigure',InFigure,'wantIndicatorNames',wantIndicatorNames,'Y_Tick_Label_Size',Y_Tick_Label_Size,'X_Tick_Label_Size',X_Tick_Label_Size);
 % [fig,~,~]=cgg_plotHeatMapOverTime(R_Value,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'ZLimits',ZLimits,'PlotTitle',PlotTitle,'Y_Name',Y_Name);
 
 

@@ -2,18 +2,30 @@
 clc; clear; close all;
 %%
 
-viewTesting = false;
+viewTesting = true;
 Epoch = 'Decision';
-wantRelativeAccuracy = false;
-wantAccuracyMeasure = true;
+Target = 'Dimension';
+% Target = 'SharedFeatureCoding';
+BaselineSelection = "MostCommon"; % "None", "RandomChance", "MostCommon"
+wantRelativeAccuracy = true;
+wantAccuracyMeasure = false;
+wantAccuracyMaximum = true;
 
-ParameterofInterest = "ModelName";
-ParameterofInterestValue = "Variational GRU - Dropout 0.5";
+% ParameterofInterest = "ModelName";
+% ParameterofInterestValue = "Variational GRU - Dropout 0.5";
 
-ParameterSort = "MiniBatchSize";
+% ParameterofInterest = "ClassifierName";
+ParameterofInterest = "All";
+ParameterofInterestValue = "Deep LSTM - Dropout 0.5";
 
-FontSize_Text = 4;
-RowsPerTable = 30;
+ParameterSort = "ValidationAccuracy_Maximum";
+% ParameterSort = "ValidationAccuracy";
+TopResults = 30; % Integer or NaN
+
+FontSize_Text = 10;
+RowsPerTable = 10;
+
+PauseTime = 15;
 
 %%
 % rootdir = '/nobackup/user/gerritcg/Data_Neural/Aggregate Data/Epoched Data/Decision/Encoding/Fold_1';
@@ -21,12 +33,15 @@ RowsPerTable = 30;
 cfg_Session = DATA_cggAllSessionInformationConfiguration;
 ResultsDir=cfg_Session(1).temporarydir;
 cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
-    'Epoch',Epoch,'Encoding',true);
+    'Epoch',Epoch,'Encoding',true,'Target',Target,'PlotFolder','Network Results');
 
-Encoding_Dir = cfg_Results.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.path;
+NetworkResultsDir = cfg_Results.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.Target.path;
+PlotDir = cfg_Results.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots.PlotFolder.path;
 
 %%
-NetworkResults = cgg_getNetworkResultsTable(Encoding_Dir);
+NetworkResults = cgg_getNetworkResultsTable(NetworkResultsDir);
+
+NetworkResults = NetworkResults((~isnan(NetworkResults.OptimalIteration)),:);
 
 %%
 if ~strcmp(ParameterofInterest,"All")
@@ -36,90 +51,54 @@ NetworkResults = NetworkResults(RowsToRemove,:);
 end
 
 if ~strcmp(ParameterSort,"None")
-NetworkResults = sortrows(NetworkResults,ParameterSort);
+NetworkResults = sortrows(NetworkResults,ParameterSort,"descend");
+if ~isnan(TopResults)
+NetworkResults = NetworkResults(1:TopResults,:);
+end
 end
 %%
 
-% %%
-% 
-% filelist = dir(fullfile(Encoding_Dir, '**/EncodingParameters.yaml'));  %get list of files and folders in any subfolder
-% filelist = filelist(~[filelist.isdir]);
-% 
-% FolderList = {filelist.folder};
-% 
-% %%
-% NumFolders = length(FolderList);
-% 
-% All_Accuracy = NaN(1,NumFolders);
-% All_MostCommon = NaN(1,NumFolders);
-% All_Iteration = NaN(1,NumFolders);
-% All_CurrentIteration = NaN(1,NumFolders);
-% All_Parameters = cell(1,NumFolders);
-% 
-% for fidx = 1:length(FolderList)
-%     this_PathNameExt = [FolderList{fidx} filesep 'Optimal_Results.mat'];
-%     this_CurrentPathNameExt = [FolderList{fidx} filesep 'CurrentIteration.mat'];
-% 
-%     if isfile(this_PathNameExt)
-%         m_Optimal_Results = matfile(this_PathNameExt,"Writable",false);
-%         m_Current = matfile(this_CurrentPathNameExt,"Writable",false);
-%         this_TestAccuracy = m_Optimal_Results.TestingAccuracy;
-%         this_TestMostCommon = m_Optimal_Results.TestingMostCommon;
-%         this_ValidationAccuracy = m_Optimal_Results.ValidationAccuracy;
-%         this_ValidationMostCommon = m_Optimal_Results.ValidationMostCommon;
-%         this_Iteration = m_Optimal_Results.Iteration;
-%         this_CurrentIteration = m_Current.CurrentIteration;
-% 
-%         if viewTesting
-%     All_Accuracy(fidx) = this_TestAccuracy;
-%     All_MostCommon(fidx) = this_TestMostCommon;
-%         else
-%     All_Accuracy(fidx) = this_ValidationAccuracy;
-%     All_MostCommon(fidx) = this_ValidationMostCommon;
-%         end
-%     All_Iteration(fidx) = this_Iteration;
-%     All_CurrentIteration(fidx) = this_CurrentIteration;
-% 
-%     end
-%     this_YAMLPathNameExt = [FolderList{fidx} filesep 'EncodingParameters.yaml'];
-%     result = ReadYaml(this_YAMLPathNameExt);
-%     result.HiddenSizes = {cell2mat(result.HiddenSizes)};
-%     result.ModelName = string(result.ModelName);
-%     All_Parameters{fidx} = result;
-% end
-% 
+DisplayType = "";
+Y_Name = "";
 
+if viewTesting
+    DisplayType = DisplayType + "Testing";
+    DataSource = "Testing";
+else
+    DisplayType = DisplayType + "Validation";
+    DataSource = "Validation";
+end
+if wantRelativeAccuracy
+    DisplayType = DisplayType + " - Relative";
+    Y_Name = Y_Name + "Relative";
+else
+    DisplayType = DisplayType + " - Absolute";
+end
+DisplayType = DisplayType + " - " + BaselineSelection;
+if wantAccuracyMaximum
+    DisplayType = DisplayType + " - Maximum Accuracy";
+    Measure = "Accuracy_Maximum";
+elseif wantAccuracyMeasure
+    DisplayType = DisplayType + " - Measure";
+    Measure = "Accuracy_Measure";
+else
+    DisplayType = DisplayType + " - Accuracy";
+    Measure = "Accuracy";
+end
+DisplayType = DisplayType + " - " + string(Target);
+
+DataName = DataSource + Measure;
+BaselineName = DataSource + BaselineSelection;
+
+Y_Name = Y_Name + Measure;
+if ~(BaselineSelection == "None")
+Y_Name = Y_Name + " above Baseline";
+end
 
 %%
-
-% AccuracyOverBaseline = All_Accuracy - All_MostCommon;
-% AccuracyOverBaseline_Relative = AccuracyOverBaseline./(1-All_MostCommon);
-% NaNIndices = isnan(AccuracyOverBaseline);
-% AccuracyOverBaseline = num2cell(AccuracyOverBaseline);
-% AccuracyOverBaseline_Relative = num2cell(AccuracyOverBaseline_Relative);
-% % PlotNames = cellfun(@num2str,num2cell(1:NumFolders),'UniformOutput',false);
-% 
-% 
-% All_Parameters(NaNIndices)=[];
-% AccuracyOverBaseline(NaNIndices)=[];
-% AccuracyOverBaseline_Relative(NaNIndices)=[];
-% All_Iteration(NaNIndices)=[];
-% All_CurrentIteration(NaNIndices)=[];
-% % PlotNames(NaNIndices)=[];
-% PlotNames = cellfun(@num2str,num2cell(1:length(AccuracyOverBaseline)),'UniformOutput',false);
-% 
-% All_Parameters = cellfun(@struct2table,All_Parameters,UniformOutput=false);
-% All_ParametersTable = All_Parameters{1};
-% 
-% for pidx = 2:length(All_Parameters)
-%     this_Table = All_Parameters{pidx};
-%     % this_Table(:,"ModelName") = string(this_Table{:,"ModelName"});
-% All_ParametersTable =[All_ParametersTable;this_Table];
-% end
-
 [NumModels,~] = size(NetworkResults);
 
-DisplayParameterNames = ["ModelName","DataWidth","WindowStride","HiddenSizes_1","HiddenSizes_2","HiddenSizes_3","InitialLearningRate","LossFactorReconstruction","LossFactorKL","MiniBatchSize","Subset","OptimalIterationProgress"];
+DisplayParameterNames = ["ModelName","DataWidth","WindowStride","HiddenSizesString","InitialLearningRate","LossFactorReconstruction","LossFactorKL","MiniBatchSize","ClassifierName","ClassifierHiddenSizeString","Subset","OptimalIterationProgress"];
 PlotNames = cellfun(@num2str,num2cell(1:NumModels),'UniformOutput',false);
 
 Display_Network=cell(NumModels,length(DisplayParameterNames));
@@ -158,43 +137,108 @@ InFigure.PaperSize=PlotPaperSize;
 TileNumbers_Bar = 2;
 TileNumbers_Table = 2;
 
-if wantRelativeAccuracy
-    Y_Name = 'Relative Accuracy above Baseline';
-    if viewTesting
-        BarData = NetworkResults.RelativeTestingAccuracyAboveBaseline;
-        YRange = [-0.05,0.04];
-    else
-        BarData = NetworkResults.RelativeValidationAccuracyAboveBaseline;
-        YRange = [-0.05,0.15];
-    end
+%%
+
+Data = NetworkResults.(DataName);
+if BaselineSelection == "None"
+    Baseline_Subtract = zeros(size(Data));
+    Baseline = zeros(size(Data));
 else
-    Y_Name = 'Accuracy above Baseline';
-    if viewTesting
-        BarData = NetworkResults.TestingAccuracyAboveBaseline;
-        YRange = [-0.025,0.025];
-    else
-        BarData = NetworkResults.ValidationAccuracyAboveBaseline;
-        YRange = [-0.05,0.05];
-    end
+    Baseline_Subtract = NetworkResults.(BaselineName);
+    Baseline = NetworkResults.(BaselineName);
+end
+if ~wantRelativeAccuracy
+    Baseline_Divide = ones(size(Data));
+else
+    Baseline_Divide = NetworkResults.(BaselineName);
 end
 
-if wantAccuracyMeasure
-    Y_Name = 'Accuracy Measure';
-    if viewTesting
-        BarData = NetworkResults.TestingAccuracy_Measure;
-        YRange = [0.4,0.5];
-    else
-        BarData = NetworkResults.ValidationAccuracy_Measure;
-        YRange = [0.4,0.5];
-    end
+BarData = (Data - Baseline_Subtract)./Baseline_Divide;
+BarData_test = (Data - Baseline)./(1-Baseline);
+
+switch DisplayType
+    case "Testing - Relative - MostCommon - Accuracy - Dimension"
+        YRange = [-0.05,0.04];
+    case "Validation - Relative - MostCommon - Accuracy - Dimension"
+        YRange = [-0.05,0.15];
+    case "Testing - Absolute - MostCommon - Accuracy - Dimension"
+        YRange = [-0.05,0.15];
+    case "Validation - Absolute - MostCommon - Accuracy - Dimension"
+        YRange = [-0.05,0.05];
+    case "Testing - Absolute - MostCommon - Measure - Dimension"
+        YRange = [-0.05,0.5];
+    case "Validation - Absolute - MostCommon - Measure - Dimension"
+        YRange = [-0.05,0.5];
+    case "Testing - Absolute - None - Accuracy - Dimension"
+        YRange = [0,1];
+    case "Validation - Absolute - None - Accuracy - Dimension"
+        YRange = [0,1];
+    case "Testing - Relative - RandomChance - Accuracy - Dimension"
+        YRange = [0,0.4];
+    case "Validation - Relative - RandomChance - Accuracy - Dimension"
+        YRange = [0,0.4];
+    case "Testing - Absolute - RandomChance - Accuracy - Dimension"
+        YRange = [0,0.2];
+    case "Validation - Absolute - RandomChance - Accuracy - Dimension"
+        YRange = [0,0.2];
+    case "Testing - Relative - MostCommon - Maximum Accuracy - Dimension"
+        YRange = [0,0.2];
+    case "Validation - Relative - MostCommon - Maximum Accuracy - Dimension"
+        YRange = [-0.05,0.15];
+    otherwise
+        YRange = [0,1];
 end
+
+%%
+
+% if wantRelativeAccuracy
+%     Y_Name = 'Relative Accuracy above Baseline';
+%     if viewTesting
+%         BarDataName = "RelativeTestingAccuracyAboveBaseline";
+%         BarData = NetworkResults.RelativeTestingAccuracyAboveBaseline;
+%         YRange = [-0.05,0.04];
+%     else
+%         BarData = NetworkResults.RelativeValidationAccuracyAboveBaseline;
+%         YRange = [-0.05,0.15];
+%     end
+% else
+%     Y_Name = 'Accuracy above Baseline';
+%     if viewTesting
+%         BarData = NetworkResults.TestingAccuracyAboveBaseline;
+%         YRange = [-0.025,0.025];
+%     else
+%         BarData = NetworkResults.ValidationAccuracyAboveBaseline;
+%         YRange = [-0.05,0.05];
+%     end
+% end
+% 
+% if wantAccuracyMeasure
+%     Y_Name = 'Accuracy Measure';
+%     if viewTesting
+%         BarData = NetworkResults.TestingAccuracy_Measure;
+%         YRange = [0.4,0.5];
+%     else
+%         BarData = NetworkResults.ValidationAccuracy_Measure;
+%         YRange = [0.4,0.5];
+%     end
+% end
 
 BarData = num2cell(BarData);
 
 TiledPlot = tiledlayout(TileNumbers_Bar+TileNumbers_Table,1);
 nexttile(1,[TileNumbers_Bar,1]);
 
+% SkipFactorPlotNames = 10;
+% PlotNames_Reduced = PlotNames(1:SkipFactorPlotNames:length(PlotNames));
+
 [b_Plot] = cgg_plotBarGraphWithError(BarData,PlotNames,'YRange',YRange,'Y_Name',Y_Name);
+
+if strcmp(BaselineSelection,"None")
+    RandomChanceName = DataSource + "RandomChance";
+    RandomChanceName = DataSource + "MostCommon";
+    RandomChanceMean = mean(NetworkResults.(RandomChanceName));
+    yline(RandomChanceMean,"LineWidth",2);
+end
 
 nexttile(TileNumbers_Bar+1,[TileNumbers_Table,1]);
 Ax = gca;
@@ -240,5 +284,9 @@ end
 
 
 drawnow;
-pause(60);
+
+SavePathNameExt = [PlotDir filesep 'Network_Results-(' char(DisplayType) ').pdf'];
+exportgraphics(InFigure,SavePathNameExt,'ContentType','vector');
+
+pause(PauseTime);
 close all

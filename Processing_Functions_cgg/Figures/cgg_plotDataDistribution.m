@@ -21,6 +21,7 @@ cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 Line_Width = cfg_Plotting.Line_Width;
 
 X_Name_Size = cfg_Plotting.X_Name_Size;
+X_Name_Size_Pie = cfg_Plotting.X_Name_Size_Pie;
 Y_Name_Size = cfg_Plotting.Y_Name_Size;
 Title_Size = cfg_Plotting.Title_Size;
 
@@ -49,14 +50,19 @@ DataTableNoFull(strcmp(FullDataTable.Source,'Full Data'),:) = [];
 
 subplot(2,2,3);
 
-p_Full=piechart(FullCount,FullName);
+% p_Full=piechart(FullCount,FullName);
+p_Full=piechart(FullCount);
 
-p_Full.FontSize=X_Name_Size;
+p_Full.FontSize=X_Name_Size_Pie;
+
+if length(FullName) > 6
+p_Full.ColorOrder = hsv(length(FullName));
+end
 
 ColorOrder=p_Full.ColorOrder;
 ColorOrder=[ColorOrder;ColorOrder;ColorOrder;ColorOrder];
 
-title('Fraction of Each Type')
+% title('Fraction of Each Type')
 
 % title('Fraction of Each Type','FontSize',Title_Size);
 
@@ -71,11 +77,21 @@ b_Full.FaceColor="flat";
 
 b_Full.CData(:,:)=ColorOrder(1:NumBars,:);
 
+CurrentAxes = gca;
+XTick_IDX = CurrentAxes.XTick;
+
+if length(XTick_IDX) < length(FullName)
+% disp(FullName(XTick_IDX))
+% xticklabels(FullName(XTick_IDX));
+else
 xticklabels(FullName);
-xlabel(InVariableName,'FontSize',X_Name_Size);
+end
+
+% xticklabels(FullName);
+% xlabel(InVariableName,'FontSize',X_Name_Size);
 ylabel('Number of Trials','FontSize',Y_Name_Size);
 
-title('Count of Each Type','FontSize',Title_Size);
+% title('Count of Each Type','FontSize',Title_Size);
 
 %%
 
@@ -93,7 +109,7 @@ legend(b_Distribution,'Location','best','FontSize',Legend_Size);
 
 ylabel('Difference','FontSize',Y_Name_Size);
 
-title('Spread of Partitions','FontSize',Title_Size);
+% title('Spread of Partitions','FontSize',Title_Size);
 
 %%
 

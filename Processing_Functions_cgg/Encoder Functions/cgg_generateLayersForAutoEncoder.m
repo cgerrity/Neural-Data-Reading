@@ -11,6 +11,22 @@ if ~(exist('Dropout','var'))
 Dropout=0.5;
 end
 end
+
+if isfunction
+Activation = CheckVararginPairs('Activation', 'SoftSign', varargin{:});
+else
+if ~(exist('Activation','var'))
+Activation='SoftSign';
+end
+end
+
+if isfunction
+WantNormalization = CheckVararginPairs('WantNormalization', false, varargin{:});
+else
+if ~(exist('WantNormalization','var'))
+WantNormalization=false;
+end
+end
 %%
 DropoutPercent_Main=Dropout;
 
@@ -56,15 +72,47 @@ for stidx=NumStacks:-1:1
     this_Decoder_DropOutName=sprintf("dropout_Decoder_%d",stidx);
     this_Decoder_ActivationName=sprintf("activation_Decoder_%d",stidx);
     % this_Decoder_DropOutName=sprintf("dropout_Decoder_%d",stidx);
+    if WantNormalization
+        this_Encoder_NormalizationName=sprintf("normalization_Encoder_%d",stidx);
+        this_Decoder_NormalizationName=sprintf("normalization_Decoder_%d",stidx);
+        
+        this_Encoder_NormalizationLayer = layerNormalizationLayer('Name',this_Encoder_NormalizationName);
+        this_Decoder_NormalizationLayer = layerNormalizationLayer('Name',this_Decoder_NormalizationName);
+    else
+        this_Encoder_NormalizationLayer = [];
+        this_Decoder_NormalizationLayer = [];
+    end
 
+    switch Activation
+        case 'SoftSign'
+            this_Encoder_ActivationLayer = softplusLayer("Name",this_Encoder_ActivationName);
+            this_Decoder_ActivationLayer = softplusLayer("Name",this_Decoder_ActivationName);
+        case 'ReLU'
+            this_Encoder_ActivationLayer = reluLayer("Name",this_Encoder_ActivationName);
+            this_Decoder_ActivationLayer = reluLayer("Name",this_Decoder_ActivationName);
+        otherwise
+            this_Encoder_ActivationLayer = softplusLayer("Name",this_Encoder_ActivationName);
+            this_Decoder_ActivationLayer = softplusLayer("Name",this_Decoder_ActivationName);
+    end
+
+    % this_Layer_Encoder = [
+    %     fullyConnectedLayer(this_HiddenSize,"Name",this_Encoder_FullyConnectedName)
+    %     dropoutLayer(DropoutPercent_Main,'Name',this_Encoder_DropOutName)
+    %     softplusLayer("Name",this_Encoder_ActivationName)];
+    % this_Layer_Decoder = [
+    %     fullyConnectedLayer(this_HiddenSize,"Name",this_Decoder_FullyConnectedName)
+    %     dropoutLayer(DropoutPercent_Main,'Name',this_Decoder_DropOutName)
+    %     softplusLayer("Name",this_Decoder_ActivationName)];
     this_Layer_Encoder = [
         fullyConnectedLayer(this_HiddenSize,"Name",this_Encoder_FullyConnectedName)
         dropoutLayer(DropoutPercent_Main,'Name',this_Encoder_DropOutName)
-        softplusLayer("Name",this_Encoder_ActivationName)];
+        this_Encoder_ActivationLayer
+        this_Encoder_NormalizationLayer];
     this_Layer_Decoder = [
         fullyConnectedLayer(this_HiddenSize,"Name",this_Decoder_FullyConnectedName)
         dropoutLayer(DropoutPercent_Main,'Name',this_Decoder_DropOutName)
-        softplusLayer("Name",this_Decoder_ActivationName)];
+        this_Decoder_ActivationLayer
+        this_Decoder_NormalizationLayer];
     % if stidx==NumStacks
     %     this_Layer_Decoder=[];
     % end

@@ -19,10 +19,13 @@ classdef cgg_generateFullReconstructionAndClassificationMonitor < handle
         SaveTerm
         ExampleNumber
         ExampleTerm
+        DataNames
+        CurrentMonitor_Value
+        RunTerm
     end
     
     methods
-        function monitor = cgg_generateFullReconstructionAndClassificationMonitor(varargin)
+        function [monitor,DataNames] = cgg_generateFullReconstructionAndClassificationMonitor(varargin)
             %CGG_GENERATEFULLRECONSTRUCTIONANDCLASSIFICATION Construct an instance of this class
             %   Detailed explanation goes here
 %% Get Variable Arguments
@@ -101,13 +104,20 @@ end
 end
 
 if isfunction
-RangeReconstruction = CheckVararginPairs('RangeReconstruction', [-4,4], varargin{:});
+RangeReconstruction = CheckVararginPairs('RangeReconstruction', [-1,1], varargin{:});
 else
 if ~(exist('RangeReconstruction','var'))
-RangeReconstruction=[-4,4];
+RangeReconstruction=[-1,1];
 end
 end
 
+if isfunction
+Run = CheckVararginPairs('Run', 1, varargin{:});
+else
+if ~(exist('Run','var'))
+Run=1;
+end
+end
 %% Get Time 
 
 if isempty(Time_End)
@@ -131,6 +141,13 @@ Time_Frames{1} = this_Time;
 for widx = 2:NumWindows
 this_Time = this_Time+WindowStride;
 Time_Frames{widx} = this_Time;
+end
+
+%% Want Dimensions
+
+WantDimensions = true;
+if NumDimensions < 1
+    WantDimensions = false;
 end
 
 %% Generate Figure
@@ -160,7 +177,11 @@ Line_Width_ProgressMonitor = 1;
 
 NumExamples = 2;
 HeightReconstructionRatio = 0.5;
+if WantDimensions
 HeightClassification = 1;
+else
+HeightClassification = 0;
+end
 
 % HeightReconstruction = HeightClassification*NumDimensions*(HeightReconstructionRatio/(1-HeightReconstructionRatio));
 HeightReconstruction = 1;
@@ -190,6 +211,8 @@ TileIDX_ReconstructionTraining = this_TileIDX;
 
 %% Training Classification
 
+if WantDimensions
+
 PlotData = cell(1,NumDimensions);
 for didx = 1:NumDimensions
     PlotData{didx} = randn(size(Time));
@@ -201,6 +224,7 @@ InTiledIDX=tilenum(Tiled_Plot,2,1);
 [DimensionPlotsTraining,TileIDX_DimensionTraining_Within,Tiled_Plot_Training] = cgg_plotClassificationProbabilities(PlotData,Time,Tiled_Plot,InTiledIDX,InSpan);
 
 TileIDX_DimensionTraining = InTiledIDX;
+end
 
 % DimensionPlotsTraining = cell(1,NumDimensions);
 % TileIDX_DimensionTraining = cell(1,NumDimensions);
@@ -246,6 +270,7 @@ TileIDX_ReconstructionValidation = this_TileIDX;
 
 %% Validation
 
+if WantDimensions
 PlotData = cell(1,NumDimensions);
 for didx = 1:NumDimensions
     PlotData{didx} = randn(size(Time));
@@ -257,6 +282,7 @@ InTiledIDX=tilenum(Tiled_Plot,2,this_ExampleIDX);
 [DimensionPlotsValidation,TileIDX_DimensionValidation_Within,Tiled_Plot_Validation] = cgg_plotClassificationProbabilities(PlotData,Time,Tiled_Plot,InTiledIDX,InSpan);
 
 TileIDX_DimensionValidation = InTiledIDX;
+end
 
 % 
 % DimensionPlotsValidation = cell(1,NumDimensions);
@@ -280,6 +306,7 @@ TileIDX_DimensionValidation = InTiledIDX;
 % end
 
 %% Plot Saving
+if WantDimensions
 PlotCell={p_GroundTruthTraining,p_ReconstructionTraining,DimensionPlotsTraining,p_GroundTruthValidation,p_ReconstructionValidation,DimensionPlotsValidation};
 PlotName={'GroundTruthTraining','ReconstructionTraining','DimensionTraining','GroundTruthValidation','ReconstructionValidation','DimensionValidation'};
 
@@ -287,7 +314,15 @@ TileIDXCell={TileIDX_ReconstructionTraining,TileIDX_DimensionTraining,TileIDX_Re
 TileIDX_WithinCell={[],TileIDX_DimensionTraining_Within,[],TileIDX_DimensionValidation_Within};
 Tile_PlotsCell={[],Tiled_Plot_Training,[],Tiled_Plot_Validation};
 TileName={'ReconstructionTraining','DimensionTraining','ReconstructionValidation','DimensionValidation'};
+else
+PlotCell={p_GroundTruthTraining,p_ReconstructionTraining,p_GroundTruthValidation,p_ReconstructionValidation};
+PlotName={'GroundTruthTraining','ReconstructionTraining','GroundTruthValidation','ReconstructionValidation'};
 
+TileIDXCell={TileIDX_ReconstructionTraining,TileIDX_ReconstructionValidation};
+TileIDX_WithinCell={[],[]};
+Tile_PlotsCell={[],[]};
+TileName={'ReconstructionTraining','ReconstructionValidation'};
+end
 
 PlotTable=table(PlotCell','VariableNames',...
     {'Plot'},'RowNames',PlotName');
@@ -311,7 +346,27 @@ monitor.NumDimensions = NumDimensions;
 monitor.RangeReconstruction = RangeReconstruction;
 monitor.ExampleNumber = 1;
 monitor.ExampleTerm = ['_Example-' num2str(monitor.ExampleNumber)];
+monitor.CurrentMonitor_Value = [];
+monitor.RunTerm = sprintf('_Run-%d',Run);
 
+%%
+
+DataNames = cell(0);
+
+DataNames{1} = 'ClassNames';
+DataNames{2} = 'Iteration';
+DataNames{3} = 'Y_Classification_Training';
+DataNames{4} = 'Y_Reconstruction_Training';
+DataNames{5} = 'Y_Classification_Validation';
+DataNames{6} = 'Y_Reconstruction_Validation';
+DataNames{7} = 'T_Classification_Training';
+DataNames{8} = 'T_Reconstruction_Training';
+DataNames{9} = 'T_Classification_Validation';
+DataNames{10} = 'T_Reconstruction_Validation';
+DataNames{11} = 'NumReconstructionMonitorExamples';
+DataNames{12} = 'IsOptimal';
+
+monitor.DataNames = DataNames;
         end
 
         function value = isClassification(~,PlotName)
@@ -380,7 +435,7 @@ monitor.ExampleTerm = ['_Example-' num2str(monitor.ExampleNumber)];
 
         end
 
-        function updatePlotSingleClassification(monitor,PlotName,PlotUpdate,DimensionIDX)
+        function updatePlotSingleClassification(monitor,PlotName,PlotUpdate,DimensionIDX,TrueFeature)
             Line_Width_ProgressMonitor = 1;
             
             [TileIDX,TileIDX_Within] = getTileIDX(monitor,PlotName,DimensionIDX);
@@ -399,7 +454,7 @@ monitor.ExampleTerm = ['_Example-' num2str(monitor.ExampleNumber)];
                 LastDim = true;
             end
 
-            ClassPlots = cgg_plotSingleClassificationProbability(PlotUpdate,Time,InTiled_Plot,SubTiled_Plot,TileIDX,TileIDX_Within,[1,1],LastDim);
+            ClassPlots = cgg_plotSingleClassificationProbability(PlotUpdate,Time,InTiled_Plot,SubTiled_Plot,TileIDX,TileIDX_Within,[1,1],LastDim,TrueFeature);
             ylim([0,1]);
 
             % nexttile(TileIDX,[Height,1]);
@@ -450,20 +505,134 @@ monitor.ExampleTerm = ['_Example-' num2str(monitor.ExampleNumber)];
             monitor.ExampleNumber = monitor.ExampleNumber+1;
         end
 
+        function resetExampleTerm(monitor)
+            monitor.ExampleNumber = 1;
+            monitor.ExampleTerm = ['_Example-' num2str(monitor.ExampleNumber)];
+        end
+
+        function setExampleTerm(monitor,ExampleNumber)
+            monitor.ExampleNumber = ExampleNumber;
+            monitor.ExampleTerm = ['_Example-' num2str(monitor.ExampleNumber)];
+        end
+
         function updatePlotTitle(monitor,InTitle)
             title(monitor.Tiled_Plot,InTitle);
         end
 
-        function savePlot(monitor)
-            iteration = monitor.Iteration;
-            if iscell(iteration)
-                iteration=iteration{1};
+        function updateSaveTerm(monitor,InSaveTerm)
+            title(monitor.SaveTerm,InSaveTerm);
+        end
+
+        % function savePlot(monitor)
+        %     iteration = monitor.Iteration;
+        %     if iscell(iteration)
+        %         iteration=iteration{1};
+        %     end
+        %     % SavePathNameExt = [monitor.SaveDir filesep ...
+        %     %     'Reconstruction-Monitor_Iteration-' num2str(iteration) ...
+        %     %     monitor.SaveTerm monitor.ExampleTerm '.pdf'];
+        %     SavePathNameExt = [monitor.SaveDir filesep ...
+        %         'Reconstruction-Monitor_Iteration-' ...
+        %         monitor.SaveTerm monitor.ExampleTerm '.pdf'];
+        %     saveas(monitor.Figure,SavePathNameExt);
+        %     updateExampleTerm(monitor);
+        % end
+
+        function savePlot(monitor,IsOptimal)
+            InSaveTerm = 'Current';
+            if IsOptimal
+            InSaveTerm = 'Optimal';
             end
             SavePathNameExt = [monitor.SaveDir filesep ...
-                'Reconstruction-Monitor_Iteration-' num2str(iteration) ...
-                monitor.SaveTerm monitor.ExampleTerm '.pdf'];
+                'Reconstruction-Monitor_Iteration-' ...
+                InSaveTerm monitor.RunTerm monitor.ExampleTerm '.pdf'];
             saveas(monitor.Figure,SavePathNameExt);
             updateExampleTerm(monitor);
+        end
+
+        function data = generateData(monitor,MonitorUpdate)
+            NumData = length(monitor.DataNames);
+            data = cell(1,NumData);
+            for didx = 1:NumData
+                this_DataName = monitor.DataNames{didx};
+                data{didx} = MonitorUpdate.(this_DataName);
+            end
+        end
+
+        function updateCurrentMonitor_Value(monitor,Monitor_Values)
+            monitor.CurrentMonitor_Value = Monitor_Values;
+        end
+
+        function MonitorUpdate = calcMonitorUpdate(monitor,IsOptimal)
+            % LossInformation_Training = Monitor_Values.LossInformation_Training;
+            % LossInformation_Validation = Monitor_Values.LossInformation_Validation;
+            % CM_Table_Training = Monitor_Values.CM_Table_Training;
+            % CM_Table_Validation = Monitor_Values.CM_Table_Validation;
+            % ClassNames = Monitor_Values.ClassNames;
+            Monitor_Values = monitor.CurrentMonitor_Value;
+            
+
+            Mbq_Display_Training = Monitor_Values.Mbq_Display_Training;
+            Mbq_Display_Validation = Monitor_Values.Mbq_Display_Validation;
+
+            MonitorUpdate = struct();
+
+            MonitorUpdate.NumReconstructionMonitorExamples = Monitor_Values.NumReconstructionMonitorExamples;
+            MonitorUpdate.ClassNames = Monitor_Values.ClassNames;
+            MonitorUpdate.Iteration = Monitor_Values.iteration;
+            MonitorUpdate.IsOptimal = IsOptimal;
+
+            reset(Mbq_Display_Validation);
+            reset(Mbq_Display_Training);
+            
+            NumShuffle = randi(10);
+            
+            for idx = 1:NumShuffle
+            shuffle(Mbq_Display_Validation);
+            shuffle(Mbq_Display_Training);
+            end
+
+            [X_Training,T_Training,~] = next(Mbq_Display_Training);
+            [X_Validation,T_Validation,~] = next(Mbq_Display_Validation);
+
+            MonitorUpdate.T_Classification_Training = T_Training;
+            MonitorUpdate.T_Reconstruction_Training = X_Training;
+            MonitorUpdate.T_Classification_Validation = T_Validation;
+            MonitorUpdate.T_Reconstruction_Validation = X_Validation;
+
+            Monitor_Values.Encoder=resetState(Monitor_Values.Encoder);
+            Encoding_Training = predict(Monitor_Values.Encoder,MonitorUpdate.T_Reconstruction_Training);
+            Encoding_Validation = predict(Monitor_Values.Encoder,MonitorUpdate.T_Reconstruction_Validation);
+
+            if ~isempty(Monitor_Values.Classifier)
+                MonitorUpdate.Y_Classification_Training=cell(monitor.NumDimensions,1);
+                MonitorUpdate.Y_Classification_Validation=cell(monitor.NumDimensions,1);
+                Monitor_Values.Classifier=resetState(Monitor_Values.Classifier);
+                [MonitorUpdate.Y_Classification_Training{:},~] = predict(Monitor_Values.Classifier,Encoding_Training);
+                Monitor_Values.Classifier=resetState(Monitor_Values.Classifier);
+                [MonitorUpdate.Y_Classification_Validation{:},~] = predict(Monitor_Values.Classifier,Encoding_Validation);
+            else
+                MonitorUpdate.Y_Classification_Training = [];
+                MonitorUpdate.Y_Classification_Validation = [];
+            end
+            if ~isempty(Monitor_Values.Decoder)
+                Monitor_Values.Decoder=resetState(Monitor_Values.Decoder);
+                [Y_Reconstruction_Training,~,~] = ...
+                    cgg_getReconstructionOutput(Encoding_Training,...
+                    Monitor_Values.Decoder,true);
+                Monitor_Values.Decoder=resetState(Monitor_Values.Decoder);
+                [Y_Reconstruction_Validation,~,~] = ...
+                    cgg_getReconstructionOutput(Encoding_Validation,...
+                    Monitor_Values.Decoder,true);
+
+                MonitorUpdate.Y_Reconstruction_Training = Y_Reconstruction_Training;
+                MonitorUpdate.Y_Reconstruction_Validation = Y_Reconstruction_Validation;
+            else
+                MonitorUpdate.Y_Reconstruction_Training = [];
+                MonitorUpdate.Y_Reconstruction_Validation = [];
+            end
+
+
         end
 
     end
