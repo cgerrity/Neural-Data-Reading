@@ -19,7 +19,7 @@ WantPlot = WantPlotExplainedVariance || WantPlotCorrelation;
 MainDir=[outputfolder_base filesep 'Data_Neural'];
 ResultsDir=[temporaryfolder_base filesep 'Data_Neural'];
 
-RemovedChannelsDir = [MainDir filesep 'Variables' filesep 'Summary'];
+RemovedChannelsDir = [MainDir filesep 'Aggregate Data' filesep 'Variables' filesep 'Summary'];
 
 BadChannelsPathNameExt = [RemovedChannelsDir filesep 'BadChannels.mat'];
 NotSignificantChannelsPathNameExt = [RemovedChannelsDir filesep ...

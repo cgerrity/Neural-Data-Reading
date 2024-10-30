@@ -191,6 +191,14 @@ if ~(exist('Indicator_Size','var'))
 Indicator_Size=cfg_Paper.Indicator_Size;
 end
 end
+
+if isfunction
+WantLarge = CheckVararginPairs('WantLarge', false, varargin{:});
+else
+if ~(exist('WantLarge','var'))
+WantLarge=false;
+end
+end
 %%
 DataTransform = [];
 wantSubPlot = true;
@@ -217,8 +225,13 @@ Error_EdgeAlpha = cfg_Paper.Error_EdgeAlpha;
 Y_TickDir = cfg_Paper.TickDir;
 X_TickDir = cfg_Paper.TickDir;
 
+if WantLarge
+YLimits = cfg_Paper.Limit_BetaValues_Large;
+Y_Tick_Size = cfg_Paper.Tick_Size_BetaValues_Large;
+else
 YLimits = cfg_Paper.Limit_BetaValues;
 Y_Tick_Size = cfg_Paper.Tick_Size_BetaValues;
+end
 
 XLimits = cfg_Paper.Limit_Time;
 

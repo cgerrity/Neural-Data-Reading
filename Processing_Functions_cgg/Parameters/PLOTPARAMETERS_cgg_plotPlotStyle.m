@@ -132,18 +132,30 @@ Limit_Correlation = [NaN,NaN];
 
 Limit_ChannelProportion = [NaN,NaN];
 Limit_ChannelProportion_Large = [NaN,NaN];
+Limit_ChannelProportion_ExtraLarge = [NaN,NaN];
 Limit_Time = [NaN,NaN];
 Limit_ChannelProportion_Small = [NaN,NaN];
+Limit_ChannelProportion_ExtraSmall = [NaN,NaN];
+
+Limit_ChannelProportion_Regression = [NaN,NaN];
+
+Limit_BetaValues_Large = [NaN,NaN];
 
 Limit_LatentProportion = [0,0.12];
 Limit_LatentCorrelation = [0.25,0.4];
 
 Tick_Size_ChannelProportion = NaN;
 Tick_Size_ChannelProportion_Large = NaN;
+Tick_Size_ChannelProportion_ExtraLarge = NaN;
+Tick_Size_ChannelProportion_ExtraSmall = NaN;
 % Tick_Size_Time = NaN;
 
 Tick_Size_LatentProportion = 0.02;
 Tick_Size_LatentCorrelation = 0.05;
+Tick_Size_ChannelProportion_Regression = 0.25;
+
+Tick_Size_BetaValues_Large = NaN;
+
 
 TickDir = '';
 TickDir_ChannelProportion = '';
@@ -174,23 +186,33 @@ Label_Size=14;
 
 Limit_ChannelProportion = [0,0.3];
 Limit_Time = [-0.3,1.4];
-Limit_ChannelProportion_Small = [0,0.4];
+Limit_ChannelProportion_ExtraSmall = [0,0.1];
+Limit_ChannelProportion_Small = [0,0.2];
 Limit_ChannelProportion_Medium = [0,0.4];
 Limit_ChannelProportion_Large = [0,0.5];
+Limit_ChannelProportion_ExtraLarge = [0.25,0.75];
 Limit_ChannelProportion_Model = [0,0.4];
 Limit_Correlation = [0.05,0.15];
 Limit_Correlation_Large = [0,0.4];
 Limit_ChannelProportion_Difference = [0,0.1];
 Limit_BetaValues = [-0.15,0.3];
+Limit_BetaValues_Large = [-0.2,0.3];
 
+Limit_ChannelProportion_Regression = [0,1];
+
+Tick_Size_ChannelProportion_ExtraSmall = 0.05;
+Tick_Size_ChannelProportion_Small = 0.1;
 Tick_Size_ChannelProportion = 0.1;
 Tick_Size_ChannelProportion_Medium = 0.1;
 Tick_Size_ChannelProportion_Large = 0.25;
+Tick_Size_ChannelProportion_ExtraLarge = 0.25;
 Tick_Size_ChannelProportion_Model = 0.1;
 Tick_Size_Time = 0.3;
 Tick_Size_Correlation = 0.05;
 Tick_Size_ChannelProportion_Difference = 0.05;
 Tick_Size_BetaValues = 0.15;
+Tick_Size_BetaValues_Large = 0.1;
+Tick_Size_ChannelProportion_Regression = 0.25;
 
 TickDir = 'out';
 

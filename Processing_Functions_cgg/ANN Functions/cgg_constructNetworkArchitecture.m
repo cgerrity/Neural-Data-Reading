@@ -21,6 +21,14 @@ HiddenSize=[64,32,16];
 end
 end
 
+if isfunction
+cfg_Encoder = CheckVararginPairs('cfg_Encoder', struct(), varargin{:});
+else
+if ~(exist('cfg_Encoder','var'))
+cfg_Encoder=struct();
+end
+end
+
 %% Parameters for Testing
 
 % NumBatches = 10;
@@ -32,6 +40,27 @@ end
 
 cfg = PARAMETERS_cgg_constructNetworkArchitecture(ArchitectureType);
 cfg.InputSize = InputSize;
+
+%%
+
+if isfield(cfg_Encoder,'Dropout')
+cfg.Dropout = cfg_Encoder.Dropout;
+end
+
+if isfield(cfg_Encoder,'WantNormalization')
+cfg.WantNormalization = cfg_Encoder.WantNormalization;
+end
+
+if isfield(cfg_Encoder,'Activation')
+cfg.Activation = cfg_Encoder.Activation;
+end
+
+if isfield(cfg_Encoder,'IsVariational')
+cfg.IsVariational = cfg_Encoder.IsVariational;
+end
+if isfield(cfg_Encoder,'BottleNeckDepth')
+cfg.BottleNeckDepth = cfg_Encoder.BottleNeckDepth;
+end
 
 %%
 

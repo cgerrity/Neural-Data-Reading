@@ -48,14 +48,24 @@ MonkeyName=join(AreaSessionStrings(MonkeyIDX),'_');
 else
 AreaProbeNumberName=extractAfter(PlotDataName,"Regression_Results_");
 AreaProbeNumberStrings=split(AreaProbeNumberName,"_");
-MonkeySessionName=extractAfter(PlotDataName,"-Regression_Results_");
+MonkeySessionName=extractBefore(PlotDataName,"-Regression_Results_");
 MonkeySessionStrings=split(MonkeySessionName,"_");
 
 AreaNameIDX=1;
+AreaProbeNumberIDX=2;
 MonkeyIDX=1;
+ExperimentIDX=1:3;
+DateIDX=4;
+SessionNumberIDX=5:6;
 
 AreaName=join(AreaProbeNumberStrings(AreaNameIDX),'_');
+AreaProbeNumber=join(AreaProbeNumberStrings(AreaProbeNumberIDX),'_');
 MonkeyName=join(MonkeySessionStrings(MonkeyIDX),'_');
+ExperimentName=join(MonkeySessionStrings(ExperimentIDX),'_');
+DateName=join(MonkeySessionStrings(DateIDX),'-');
+SessionNumber=join(MonkeySessionStrings(SessionNumberIDX),'-');
+
+AreaSessionName = join([AreaName,AreaProbeNumber,ExperimentName,DateName,SessionNumber],'_');
 end
 
 % ProbeName=join([AreaName,AreaProbeNumber],'_');
@@ -70,13 +80,22 @@ MonkeyName = string(MonkeyName{1});
 if strcmp(AreaName,AreaNameCheck)
 
 m_PlotData=matfile(PlotDataPathNameExt,"Writable",false);
-B_Value_Coefficients=m_PlotData.B_Value_Coefficients;
 CoefficientNames=m_PlotData.CoefficientNames;
 P_Value=m_PlotData.P_Value;
 P_Value_Coefficients=m_PlotData.P_Value_Coefficients;
+if ~IsFromProcessing
+B_Value_Coefficients=m_PlotData.B_Value_Coefficients;
 R_Value_Adjusted=m_PlotData.R_Value_Adjusted;
 R_Correlation=m_PlotData.R_Correlation;
 P_Correlation=m_PlotData.P_Correlation;
+CriteriaArray=NaN(size(P_Value));
+else
+CriteriaArray=m_PlotData.CriteriaArray;
+B_Value_Coefficients = NaN(size(P_Value));
+R_Value_Adjusted=NaN(size(P_Value));
+R_Correlation=NaN(size(P_Value));
+P_Correlation=NaN(size(P_Value));
+end
 
 [NumChannels,~] = size(P_Value);
 
@@ -84,7 +103,7 @@ ChannelNumbers = 1:(NumChannels+length(CommonRemovedChannels));
 ChannelNumbers(CommonRemovedChannels) = [];
 ChannelNumbers = ChannelNumbers';
 
-this_Table = table(B_Value_Coefficients,P_Value,P_Value_Coefficients,R_Value_Adjusted,R_Correlation,P_Correlation,ChannelNumbers);
+this_Table = table(B_Value_Coefficients,P_Value,P_Value_Coefficients,R_Value_Adjusted,R_Correlation,P_Correlation,ChannelNumbers,CriteriaArray);
 this_Table.MonkeyName(:) = MonkeyName;
 this_Table.AreaSessionName(:) = string(AreaSessionName);
 

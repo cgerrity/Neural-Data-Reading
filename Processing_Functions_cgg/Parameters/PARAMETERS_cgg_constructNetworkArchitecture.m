@@ -4,6 +4,16 @@ function cfg = PARAMETERS_cgg_constructNetworkArchitecture(ArchitectureType)
 
 
 switch ArchitectureType
+    case 'Feedforward'
+        IsSimple = true;
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'Feedforward';
+        Activation = 'ReLU';
+        IsVariational = false;
+        needReshape = true;
+        OutputFullyConnected = true;
+        BottleNeckDepth = 1;
     case 'Feedforward - ReLU'
         IsSimple = true;
         Dropout = 0;

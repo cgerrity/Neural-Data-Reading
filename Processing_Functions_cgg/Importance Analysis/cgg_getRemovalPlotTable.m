@@ -134,6 +134,11 @@ NumUnitsRemoved = mean(NumUnitsRemoved,2);
 [PeakTime,~,PeakTime_STE,PeakTime_CI] = ...
     cgg_getMeanSTDSeries(PeakTime,'NumCollapseDimension',NumFolds);
 
+% NumChannels = size(AreaRelativePercent,1);
+% 
+% [AreaRelativeBar,~,AreaRelativeBar_STE,AreaRelativeBar_CI] = ...
+%     cgg_getMeanSTDSeries(AreaRelativePercent,'NumCollapseDimension',NumChannels);
+
 NumRemoved = length(NumUnitsRemoved);
 
 %%

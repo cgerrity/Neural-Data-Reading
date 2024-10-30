@@ -19,6 +19,7 @@ ClassifierHiddenSize = cfg_Encoder.ClassifierHiddenSize;
 Optimizer = cfg_Encoder.Optimizer;
 LossType_Decoder = cfg_Encoder.LossType_Decoder;
 LossType_Classifier = cfg_Encoder.LossType_Classifier;
+L2Factor = cfg_Encoder.L2Factor;
 
 maxworkerMiniBatchSize=cfg_Encoder.maxworkerMiniBatchSize;
 
@@ -103,7 +104,7 @@ elseif HasAutoEncoder
     m_AutoEncoder_Decoder = matfile(AutoEncoder_DecoderSavePathNameExt,"Writable",false);
     Decoder=m_AutoEncoder_Decoder.Decoder;
 else
-    [Encoder,Decoder] = cgg_constructNetworkArchitecture(ModelName,'InputSize',InputSize,'HiddenSize',HiddenSizes);
+    [Encoder,Decoder] = cgg_constructNetworkArchitecture(ModelName,'InputSize',InputSize,'HiddenSize',HiddenSizes,'cfg_Encoder',cfg_Encoder);
     Encoder = initialize(Encoder);
     Decoder = initialize(Decoder);
 end
@@ -132,7 +133,8 @@ end
     'WantSaveNet',WantSaveNet,...
     'IterationSaveFrequency',IterationSaveFrequency,...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
-    'RescaleLossEpoch',RescaleLossEpoch,'cfg_Monitor',cfg_Monitor);
+    'RescaleLossEpoch',RescaleLossEpoch,'cfg_Monitor',cfg_Monitor, ...
+    'L2Factor',L2Factor);
 
 %% Full Network (Encoder, Decoder, Classifier)
 
@@ -173,6 +175,7 @@ end
     'WantSaveNet',WantSaveNet,...
     'IterationSaveFrequency',IterationSaveFrequency,...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
-    'RescaleLossEpoch',RescaleLossEpoch,'cfg_Monitor',cfg_Monitor);
+    'RescaleLossEpoch',RescaleLossEpoch,'cfg_Monitor',cfg_Monitor, ...
+    'L2Factor',L2Factor);
 
 end

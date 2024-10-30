@@ -464,6 +464,10 @@ YMin=Inf;
     YUpper=YMax+(RangeFactorUpper*YRange);
     YLower=YMin-(RangeFactorLower*YRange);
 
+    if YUpper == YLower
+        YUpper = YUpper + 0.00001;
+    end
+
     if wantDecisionIndicators
     cgg_plotDecisionEpochIndicators(DecisionIndicatorColors,...
         'DecisionIndicatorLabelOrientation',...

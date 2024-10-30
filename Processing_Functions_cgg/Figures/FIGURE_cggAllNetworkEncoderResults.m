@@ -49,7 +49,7 @@ cgg_plotSplitWindowedAccuracy(FullTable,cfg);
 
 %% Overall Importance Analysis
 
-% cgg_plotOverallImportanceAnalysis;
+% cgg_plotOverallImportanceAnalysis(cfg.RemovalPlotTable,cfg);
 
 %% Split Importance Analysis
 

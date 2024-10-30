@@ -123,7 +123,9 @@ Target = cfg_Encoder.Target;
 % Encoding_Dir=cfg.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.Target.Fold.path;
 Encoding_Dir = cgg_getDirectory(cfg.ResultsDir,'Fold');
 
-cfg_Network = cgg_generateEncoderSubFolders(Encoding_Dir,ModelName,DataWidth,WindowStride,HiddenSize,InitialLearningRate,WeightReconstruction,WeightKL,WeightClassification,MiniBatchSize,wantSubset,WeightedLoss,GradientThreshold,ClassifierName,ClassifierHiddenSize,STDChannelOffset,STDWhiteNoise,STDRandomWalk,Optimizer,NumEpochsAutoEncoder,Normalization,LossType_Decoder);
+% cfg_Network = cgg_generateEncoderSubFolders(Encoding_Dir,ModelName,DataWidth,WindowStride,HiddenSize,InitialLearningRate,WeightReconstruction,WeightKL,WeightClassification,MiniBatchSize,wantSubset,WeightedLoss,GradientThreshold,ClassifierName,ClassifierHiddenSize,STDChannelOffset,STDWhiteNoise,STDRandomWalk,Optimizer,NumEpochsAutoEncoder,Normalization,LossType_Decoder);
+cfg_Network = cgg_generateEncoderSubFolders_v2(Encoding_Dir,cfg_Encoder);
+
 
 Encoding_Dir = cgg_getDirectory(cfg_Network,'Classifier');
 AutoEncoding_Dir = cgg_getDirectory(cfg_Network,'AutoEncoderInformation');
@@ -148,10 +150,10 @@ m_Partition = matfile(Partition_PathNameExt,'Writable',false);
 KFoldPartition=m_Partition.KFoldPartition;
 KFoldPartition=KFoldPartition(1);
 
-if ismember(who(m_Partition),'Indices')
+if any(ismember(who(m_Partition),'Indices'))
 IndicesPartition=m_Partition.Indices;
 end
-
+%%
 NumFolds = KFoldPartition.NumTestSets;
 
 Validation_IDX=test(KFoldPartition,mod(kidx,NumFolds)+1);
