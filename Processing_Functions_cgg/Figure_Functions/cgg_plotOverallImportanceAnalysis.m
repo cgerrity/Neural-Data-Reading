@@ -150,6 +150,9 @@ SingleAreaPlotNames = this_RemovalTypeTable{1,"Area Names"};
 SingleAreaPlotNames = SingleAreaPlotNames{1};
 NumAreas = length(SingleAreaPlotNames);
 
+AreaRelativeBar = cell(1,NumNames);
+AreaRelativeBar_Error = cell(1,NumNames);
+
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle();
 PlotColors = cell(1,NumAreas);
 
@@ -169,7 +172,7 @@ AreaPlotNames = cell(NumAreas,NumNames);
 % AreaPlot_X = cell(1,NumAreas*NumNames);
 % AreaPlot_Error = cell(1,NumAreas*NumNames);
 % AreaPlotNames = cell(1,NumAreas*NumNames);
-
+%%
 for nidx = 1:NumNames
 
 this_Name = Names(nidx);
@@ -222,10 +225,27 @@ Plot_WindowAccuracyTime_Error{nidx} = this_WindowAccuracyMaxTime_Error;
 this_AreaRelativePlot_Y = this_NameTable.("Area Relative Percent");
 this_AreaPlot_Y = this_NameTable.("Area Percent");
 
+NumChannels = size(this_AreaRelativePlot_Y,1);
+
+[this_AreaRelativeBar,~,this_AreaRelativeBar_STE,this_AreaRelativeBar_CI] = ...
+    cgg_getMeanSTDSeries(this_AreaRelativePlot_Y,'NumCollapseDimension',NumChannels);
+
 if ~any(isnan(SmoothWindow_Area))
 this_AreaRelativePlot_Y = smoothdata(this_AreaRelativePlot_Y,1,"gaussian",SmoothWindow_Area);
 this_AreaPlot_Y = smoothdata(this_AreaPlot_Y,1,"gaussian",SmoothWindow_Area);
 end
+
+% [this_AreaRelativeBar,~,this_AreaRelativeBar_STE,this_AreaRelativeBar_CI] = ...
+%     cgg_getMeanSTDSeries(this_AreaRelativePlot_Y,'NumCollapseDimension',NumChannels);
+
+AreaRelativeBar{nidx} = this_AreaRelativeBar;
+
+if WantCI
+AreaRelativeBar_Error{nidx}(nidx) = this_AreaRelativeBar_CI;
+else
+AreaRelativeBar_Error{nidx} = this_AreaRelativeBar_STE;
+end
+
 
 for aidx = 1:NumAreas
     this_AreaName = SingleAreaPlotNames{aidx};
@@ -235,6 +255,14 @@ for aidx = 1:NumAreas
     AreaPlot_X{aidx,nidx} = this_X;
     AreaPlot_Error{aidx,nidx} = NaN(size(this_X));
     AreaPlotNames{aidx,nidx} = sprintf('%s - %s',this_AreaName,this_Name);
+
+    % AreaRelativeBar{aidx}(nidx) = this_AreaRelativeBar(aidx);
+    % 
+    % if WantCI
+    % AreaRelativeBar_Error{aidx}(nidx) = this_AreaRelativeBar_CI(aidx);
+    % else
+    % AreaRelativeBar_Error{aidx}(nidx) = this_AreaRelativeBar_STE(aidx);
+    % end
     % AreaPlot_Y{this_IDX} = this_AreaPlot_Y(:,aidx);
     % AreaPlot_X{this_IDX} = this_X;
     % AreaPlot_Error{this_IDX} = NaN(size(this_X));
@@ -380,6 +408,21 @@ cfg_Results = cgg_generateDecodingFolders('TargetDir',cfg.ResultsDir,...
 PlotPath = cgg_getDirectory(cfg_Results,'SubFolder_1');
 
 PlotName=sprintf('Absolute-Area-Ranking_%s',this_RemovalType);
+PlotPathName=[PlotPath filesep PlotName];
+exportgraphics(InFigure,[PlotPathName, '.pdf'],'ContentType','vector');
+
+close all
+
+%% Bar
+
+[~,~,InFigure] = cgg_plotBarGraphWithError(AreaRelativeBar,Names,'X_Name','Area','Y_Name','','PlotTitle','','IsGrouped',true,'GroupNames',SingleAreaPlotNames,'ErrorMetric',AreaRelativeBar_Error,'WantLegend',true,'ColorOrder',cell2mat(PlotColors'));
+
+%%
+cfg_Results = cgg_generateDecodingFolders('TargetDir',cfg.ResultsDir,...
+    'Epoch',cfg.Epoch,'PlotFolder','Analysis','PlotSubFolder','Importance Analysis');
+PlotPath = cgg_getDirectory(cfg_Results,'SubFolder_1');
+
+PlotName=sprintf('Average_Relative-Ranking_%s',this_RemovalType);
 PlotPathName=[PlotPath filesep PlotName];
 exportgraphics(InFigure,[PlotPathName, '.pdf'],'ContentType','vector');
 

@@ -179,7 +179,7 @@ if isfunction
 Y_Name_Size = CheckVararginPairs('Y_Name_Size', cfg_Paper.Y_Name_Size, varargin{:});
 else
 if ~(exist('Y_Name_Size','var'))
-Y_Name_Size=cfg_Plotting.Y_Name_Size;
+Y_Name_Size=cfg_Paper.Y_Name_Size;
 end
 end
 
@@ -187,7 +187,7 @@ if isfunction
 X_Name_Size = CheckVararginPairs('X_Name_Size', cfg_Paper.X_Name_Size, varargin{:});
 else
 if ~(exist('X_Name_Size','var'))
-X_Name_Size=cfg_Plotting.X_Name_Size;
+X_Name_Size=cfg_Paper.X_Name_Size;
 end
 end
 
@@ -212,6 +212,38 @@ WantMedium = CheckVararginPairs('WantMedium', false, varargin{:});
 else
 if ~(exist('WantMedium','var'))
 WantMedium=false;
+end
+end
+
+if isfunction
+WantFull = CheckVararginPairs('WantFull', false, varargin{:});
+else
+if ~(exist('WantFull','var'))
+WantFull=false;
+end
+end
+
+if isfunction
+WantExtraLarge = CheckVararginPairs('WantExtraLarge', false, varargin{:});
+else
+if ~(exist('WantExtraLarge','var'))
+WantExtraLarge=false;
+end
+end
+
+if isfunction
+WantSmall = CheckVararginPairs('WantSmall', false, varargin{:});
+else
+if ~(exist('WantSmall','var'))
+WantSmall=false;
+end
+end
+
+if isfunction
+WantExtraSmall = CheckVararginPairs('WantExtraSmall', false, varargin{:});
+else
+if ~(exist('WantExtraSmall','var'))
+WantExtraSmall=false;
 end
 end
 
@@ -255,12 +287,24 @@ Error_EdgeAlpha = cfg_Paper.Error_EdgeAlpha;
 Y_TickDir = cfg_Paper.TickDir_ChannelProportion;
 X_TickDir = cfg_Paper.TickDir_Time;
 
-if WantLarge
+if WantExtraLarge
+YLimits = cfg_Paper.Limit_ChannelProportion_ExtraLarge;
+Y_Tick_Size = cfg_Paper.Tick_Size_ChannelProportion_ExtraLarge;
+elseif WantFull
+YLimits = [0,1];
+Y_Tick_Size = 0.25;
+elseif WantLarge
 YLimits = cfg_Paper.Limit_ChannelProportion_Large;
 Y_Tick_Size = cfg_Paper.Tick_Size_ChannelProportion_Large;
 elseif WantMedium
 YLimits = cfg_Paper.Limit_ChannelProportion_Medium;
 Y_Tick_Size = cfg_Paper.Tick_Size_ChannelProportion_Medium;
+elseif WantSmall
+YLimits = cfg_Paper.Limit_ChannelProportion_Small;
+Y_Tick_Size = cfg_Paper.Tick_Size_ChannelProportion_Small;
+elseif WantExtraSmall
+YLimits = cfg_Paper.Limit_ChannelProportion_ExtraSmall;
+Y_Tick_Size = cfg_Paper.Tick_Size_ChannelProportion_ExtraSmall;
 else
 YLimits = cfg_Paper.Limit_ChannelProportion;
 Y_Tick_Size = cfg_Paper.Tick_Size_ChannelProportion;

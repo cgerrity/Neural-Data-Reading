@@ -85,8 +85,10 @@ PFCIndices = strcmp(PlotTable{:,"Area"},"PFC");
 switch Version
     case 'Paper'
 AreaIndices = ACCIndices | CDIndices;
+WantLarge = false;
     case 'Dissertation'
 AreaIndices = ACCIndices | CDIndices | PFCIndices;
+WantLarge = true;
     otherwise
 end
 
@@ -99,13 +101,13 @@ AreaName = PlotTable{this_TableIDX,"Area"};
 PlotData = PlotTable{this_TableIDX,"PlotData"};
 PlotData = PlotData{1};
 
-cgg_plotPaperFigureBetaValues(PlotData,'WantDecisionCentered',WantDecisionCentered,'PlotPath',PlotPath,'AreaName',AreaName,'PlotNames',CoefficientNames,'WantLegend',WantLegend,'PlotTitle',AreaName,'X_Name','');
+cgg_plotPaperFigureBetaValues(PlotData,'WantDecisionCentered',WantDecisionCentered,'PlotPath',PlotPath,'AreaName',AreaName,'PlotNames',CoefficientNames,'WantLegend',WantLegend,'PlotTitle',AreaName,'X_Name','','WantLarge',WantLarge);
 close all
 cgg_plotPaperFigureModelProportion(PlotData,'WantDecisionCentered',WantDecisionCentered,'PlotPath',PlotPath,'AreaName',AreaName,'PlotTitle',AreaName);
 close all
 
 PlotFunc_Model = @(InFigure) cgg_plotPaperFigureModelProportion(PlotData,'WantDecisionCentered',WantDecisionCentered,'InFigure',InFigure,'PlotPath',[],'AreaName',AreaName,'PlotTitle',AreaName,'Y_Name_Size',Y_Name_Size,'X_Name','','X_Tick_Label_Size',[],'Y_Tick_Label_Size',Y_Tick_Label_Size);
-PlotFunc_Beta = @(InFigure) cgg_plotPaperFigureBetaValues(PlotData,'WantDecisionCentered',WantDecisionCentered,'InFigure',InFigure,'PlotPath',PlotPath,'AreaName',AreaName,'PlotNames',CoefficientNames,'WantLegend',WantLegend,'SaveName','Model-Beta','Y_Name_Size',Y_Name_Size,'Legend_Size',Legend_Size,'X_Tick_Label_Size',X_Tick_Label_Size,'Y_Tick_Label_Size',Y_Tick_Label_Size);
+PlotFunc_Beta = @(InFigure) cgg_plotPaperFigureBetaValues(PlotData,'WantDecisionCentered',WantDecisionCentered,'InFigure',InFigure,'PlotPath',PlotPath,'AreaName',AreaName,'PlotNames',CoefficientNames,'WantLegend',WantLegend,'SaveName','Model-Beta','Y_Name_Size',Y_Name_Size,'Legend_Size',Legend_Size,'X_Tick_Label_Size',X_Tick_Label_Size,'Y_Tick_Label_Size',Y_Tick_Label_Size,'WantLarge',WantLarge);
 
 PlotFunc = cell(1,2);
 PlotFunc{1} = PlotFunc_Model;

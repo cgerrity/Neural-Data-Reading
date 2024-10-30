@@ -215,6 +215,14 @@ X_Tick_Label_Size=cfg_Plotting.Label_Size;
 end
 end
 
+if isfunction
+Title_Size = CheckVararginPairs('Title_Size', cfg_Plotting.Title_Size, varargin{:});
+else
+if ~(exist('Title_Size','var'))
+Title_Size=cfg_Plotting.Title_Size;
+end
+end
+
 %% Parameters
 
 if ~isempty(InFigure)
@@ -237,7 +245,7 @@ cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 
 X_Name_Size = cfg_Plotting.X_Name_Size;
 Y_Name_Size = cfg_Plotting.Y_Name_Size;
-Title_Size = cfg_Plotting.Title_Size;
+% Title_Size = cfg_Plotting.Title_Size;
 
 Label_Size = cfg_Plotting.Label_Size;
 

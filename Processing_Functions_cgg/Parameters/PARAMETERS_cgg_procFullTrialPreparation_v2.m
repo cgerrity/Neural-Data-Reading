@@ -62,7 +62,10 @@ Minimum_Length=50;
 %%
 
 Probe_Order={'ACC_001','ACC_002','PFC_001','PFC_002','CD_001','CD_002'};
-FeatureValues_Names=categorical({'Shape','Pattern','Color','Texture','Arms'});
+FeatureValues_Names={'Shape','Pattern','Color','Texture','Arms'};
+Regression_Names = reordercats(categorical(FeatureValues_Names),FeatureValues_Names);
+Regression_Names = {'Intercept','Rewarded','Learned', 'Attention 2', 'Attention 3', 'Gain', 'Loss', 'Previous'};
+Regression_Names = reordercats(categorical(Regression_Names),Regression_Names);
 %%
 
 w = whos;

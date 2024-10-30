@@ -28,12 +28,21 @@ WindowStride = 50;
 % ModelName = 'Variational LSTM - Dropout 0.5';
 % ModelName = 'Feedforward - ReLU';
 ModelName = 'Variational GRU - Dropout 0.5';
+ModelName = 'GRU';
 % ModelName = 'Variational Feedforward - ReLU';
 % ModelName = 'Feedforward - ReLU - Normalized - Dropout 0.5';
 % ModelName = 'Variational Convolutional Multi-Filter [3,5,7] - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM';
 % ClassifierName = 'Deep Feedforward - Dropout 0.5';
 ClassifierName = 'Deep LSTM - Dropout 0.5';
+
+%%
+Dropout = 0.5;
+WantNormalization = false;
+Activation = '';
+IsVariational = true;
+BottleNeckDepth = 1;
+%%
 
 % HiddenSizes=[1500,750,300,150];
 HiddenSizes=[1000,500,250];
@@ -52,6 +61,7 @@ Optimizer = 'ADAM'; % Name of Optimizer ['ADAM', 'SGD']
 Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
 LossType_Decoder = 'MSE';
 LossType_Classifier='CrossEntropy';
+L2Factor = 1e-4;
 
 maxworkerMiniBatchSize=100;
 
@@ -73,13 +83,13 @@ STDRandomWalk = 0.007;
 
 %%
 
-wantSubset = false;
+wantSubset = true;
 
 wantStratifiedPartition = true;
 
 MatchType_Accuracy_Measure = 'macroF1';
 
-WantSaveNet = true;
+WantSaveNet = false;
 
 %% Learning Rate Parameters
 

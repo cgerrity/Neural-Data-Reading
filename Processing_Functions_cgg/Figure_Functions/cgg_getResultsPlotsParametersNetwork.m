@@ -155,6 +155,15 @@ end
 end
 
 %%
+Target = cfg_Encoder.Target;
+EncodingParametersPath = cgg_getDirectory(cfg.ResultsDir,'Encoding');
+EncodingParametersPath = fullfile(EncodingParametersPath,Target);
+% EncodingParametersPathNameExt = [EncodingParametersPath filesep 'EncodingParameters.yaml'];
+EncoderParametersFunc = @(x,y) cgg_getAllEncoderAccuracyTable(x,y,'MatchType',MatchType,'IsQuaddle',IsQuaddle);
+EncoderParameters = cgg_procDirectorySearchAndApply(EncodingParametersPath, ...
+    'EncodingParameters.yaml', EncoderParametersFunc);
+
+%%
 
 FullTablePath=cfg.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.PlotFolder.SubFolder_1.path;
 SplitExtraSaveTerm = cgg_generateExtraSaveTerm('FilterColumn',FilterColumn);
@@ -493,8 +502,8 @@ EpochDir.Main = cgg_getDirectory(cfg.TargetDir,'Epoch');
 EpochDir.Results = cgg_getDirectory(cfg.ResultsDir,'Epoch'); 
 %% Importance Analysis
 NumEntries = 500;
-Full_IA_Table_Accuracy = cgg_procFullImportanceAnalysis(cfg_Encoder,EpochDir,Outcfg,'NumEntries',NumEntries);
-Outcfg.Full_IA_Table_Accuracy = Full_IA_Table_Accuracy;
+RemovalPlotTable = cgg_procFullImportanceAnalysis(cfg_Encoder,EpochDir,Outcfg,'NumEntries',NumEntries);
+Outcfg.RemovalPlotTable = RemovalPlotTable;
 
 %% Correlation Analysis
 
