@@ -262,6 +262,30 @@ if ~(exist('PlotColors','var'))
 PlotColors=cfg_Paper.MATLABPlotColors;
 end
 end
+
+if isfunction
+WantLatent = CheckVararginPairs('WantLatent', false, varargin{:});
+else
+if ~(exist('WantLatent','var'))
+WantLatent=false;
+end
+end
+
+if isfunction
+WantLargeLatent = CheckVararginPairs('WantLargeLatent', false, varargin{:});
+else
+if ~(exist('WantLargeLatent','var'))
+WantLargeLatent=false;
+end
+end
+
+if isfunction
+WantMediumLatent = CheckVararginPairs('WantMediumLatent', false, varargin{:});
+else
+if ~(exist('WantMediumLatent','var'))
+WantMediumLatent=false;
+end
+end
 %%
 DataTransform = [];
 wantSubPlot = true;
@@ -287,7 +311,16 @@ Error_EdgeAlpha = cfg_Paper.Error_EdgeAlpha;
 Y_TickDir = cfg_Paper.TickDir_ChannelProportion;
 X_TickDir = cfg_Paper.TickDir_Time;
 
-if WantExtraLarge
+if WantMediumLatent
+YLimits = cfg_Paper.Limit_LatentProportion_Medium;
+Y_Tick_Size = cfg_Paper.Tick_Size_LatentProportion_Medium;
+elseif WantLargeLatent
+YLimits = cfg_Paper.Limit_LatentProportion_Large;
+Y_Tick_Size = cfg_Paper.Tick_Size_LatentProportion_Large;
+elseif WantLatent
+YLimits = cfg_Paper.Limit_LatentProportion;
+Y_Tick_Size = cfg_Paper.Tick_Size_LatentProportion;
+elseif WantExtraLarge
 YLimits = cfg_Paper.Limit_ChannelProportion_ExtraLarge;
 Y_Tick_Size = cfg_Paper.Tick_Size_ChannelProportion_ExtraLarge;
 elseif WantFull

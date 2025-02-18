@@ -107,7 +107,7 @@ switch DownSampleMethod
         ConvolutionalStride = Stride;
     case 'Separate - Stride'
         DownSampleName="convolutional1x1" + CoderBlock_Name;
-        DownSampleLayer = convolution2dLayer(1,NumFilters,"Name",DownSampleName,"Padding",'same','Stride',[Stride,Stride]);
+        DownSampleLayer = convolution2dLayer(1,NumFilters,"Name",DownSampleName,"Padding",'same','Stride',[Stride,Stride],"WeightsInitializer","he");
         ConvolutionalStride = 1;
     case 'None'
         ConvolutionalStride = 1;
@@ -119,7 +119,7 @@ end
 switch UpSampleMethod
     case 'Transpose Convolution - Point-Wise'
         UpSampleName="transposeconv" + CoderBlock_Name;
-        UpSampleLayer = transposedConv2dLayer(FilterSize,NumFilters,"Name",UpSampleName,'Stride',Stride,"Cropping","same");
+        UpSampleLayer = transposedConv2dLayer(FilterSize,NumFilters,"Name",UpSampleName,'Stride',Stride,"Cropping","same","WeightsInitializer","he");
         CropName="crop" + CoderBlock_Name;
         UpSampleLayer = [UpSampleLayer
             cgg_cropLayer(CropName,CropAmount)];
@@ -127,7 +127,7 @@ switch UpSampleMethod
         ConvolutionalFilterSize = 1;
     case 'Transpose Convolution'
         UpSampleName="transposeconv" + CoderBlock_Name;
-        UpSampleLayer = transposedConv2dLayer(FilterSize,NumFilters,"Name",UpSampleName,'Stride',Stride,"Cropping","same");
+        UpSampleLayer = transposedConv2dLayer(FilterSize,NumFilters,"Name",UpSampleName,'Stride',Stride,"Cropping","same","WeightsInitializer","he");
         CropName="crop" + CoderBlock_Name;
         UpSampleLayer = [UpSampleLayer
             cgg_cropLayer(CropName,CropAmount)];
@@ -141,7 +141,7 @@ end
 
 ConvolutionalName="convolution" + CoderBlock_Name;
 
-ConvolutionalLayer = convolution2dLayer(ConvolutionalFilterSize,NumFilters,"Name",ConvolutionalName,"Padding",'same','Stride',[ConvolutionalStride,ConvolutionalStride]);
+ConvolutionalLayer = convolution2dLayer(ConvolutionalFilterSize,NumFilters,"Name",ConvolutionalName,"Padding",'same','Stride',[ConvolutionalStride,ConvolutionalStride],"WeightsInitializer","he");
 
 % if WantPointWiseConvolution
 %     Name_PointWiseConvolution="point-wise_convolution" + CoderLevel_Name;

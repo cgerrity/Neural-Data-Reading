@@ -223,6 +223,22 @@ Title_Size=cfg_Plotting.Title_Size;
 end
 end
 
+if isfunction
+Y_Name_Size = CheckVararginPairs('Y_Name_Size', cfg_Plotting.Y_Name_Size, varargin{:});
+else
+if ~(exist('Y_Name_Size','var'))
+Y_Name_Size=cfg_Plotting.Y_Name_Size;
+end
+end
+
+if isfunction
+X_Name_Size = CheckVararginPairs('X_Name_Size', cfg_Plotting.X_Name_Size, varargin{:});
+else
+if ~(exist('X_Name_Size','var'))
+X_Name_Size=cfg_Plotting.X_Name_Size;
+end
+end
+
 %% Parameters
 
 if ~isempty(InFigure)
@@ -243,8 +259,8 @@ end
 
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 
-X_Name_Size = cfg_Plotting.X_Name_Size;
-Y_Name_Size = cfg_Plotting.Y_Name_Size;
+% X_Name_Size = cfg_Plotting.X_Name_Size;
+% Y_Name_Size = cfg_Plotting.Y_Name_Size;
 % Title_Size = cfg_Plotting.Title_Size;
 
 Label_Size = cfg_Plotting.Label_Size;
@@ -371,8 +387,29 @@ end
 % % 
 % Y_Name_Full_Title={Y_Name_Full};
 
-xlabel(X_Name,'FontSize',X_Name_Size);
-ylabel(Y_Name,'FontSize',Y_Name_Size);
+if iscell(Y_Name)
+    Y_Label = cell(1,length(Y_Name));
+    for yidx = 1:length(Y_Name)
+        Y_Label{yidx} = sprintf('{\\fontsize{%d}%s}',Y_Name_Size,Y_Name{yidx});
+    end
+else
+    Y_Label = sprintf('{\\fontsize{%d}%s}',Y_Name_Size,Y_Name);
+end
+if iscell(X_Name)
+    X_Label = cell(1,length(X_Name));
+    for xidx = 1:length(X_Name)
+        X_Label{xidx} = sprintf('{\\fontsize{%d}%s}',X_Name_Size,X_Name{xidx});
+    end
+else
+    X_Label = sprintf('{\\fontsize{%d}%s}',X_Name_Size,X_Name);
+end
+
+xlabel(X_Label);
+ylabel(Y_Label);
+
+
+% xlabel(X_Name,'FontSize',X_Name_Size);
+% ylabel(Y_Name,'FontSize',Y_Name_Size);
 % ylabel(Y_Name_Full_Title);
 
 hold on

@@ -222,6 +222,22 @@ if ~(exist('PlotColors','var'))
 PlotColors=cfg_Paper.MATLABPlotColors;
 end
 end
+
+if isfunction
+WantLatent = CheckVararginPairs('WantLatent', false, varargin{:});
+else
+if ~(exist('WantLatent','var'))
+WantLatent=false;
+end
+end
+
+if isfunction
+WantFig = CheckVararginPairs('WantFig', false, varargin{:});
+else
+if ~(exist('WantFig','var'))
+WantFig=false;
+end
+end
 %%
 DataTransform = [];
 wantSubPlot = true;
@@ -247,14 +263,18 @@ Error_EdgeAlpha = cfg_Paper.Error_EdgeAlpha;
 Y_TickDir = cfg_Paper.TickDir_Correlation;
 X_TickDir = cfg_Paper.TickDir_Time;
 
-if WantLarge
+if WantLatent
+YLimits = cfg_Paper.Limit_LatentCorrelation;
+Y_Tick_Size = cfg_Paper.Tick_Size_LatentCorrelation;
+elseif WantLarge
 YLimits = cfg_Paper.Limit_Correlation_Large;
+Y_Tick_Size = cfg_Paper.Tick_Size_Correlation;
 else
 YLimits = cfg_Paper.Limit_Correlation;
+Y_Tick_Size = cfg_Paper.Tick_Size_Correlation;
 end
 XLimits = cfg_Paper.Limit_Time;
 
-Y_Tick_Size = cfg_Paper.Tick_Size_Correlation;
 X_Tick_Size = cfg_Paper.Tick_Size_Time;
 
 Y_Ticks = YLimits(1):Y_Tick_Size:YLimits(2);
@@ -366,7 +386,9 @@ if ~isempty(PlotPath)
         PlotName = SeparatePlotName;
     end
     PlotPathName=[PlotPath filesep PlotName];
+    if WantFig
     saveas(InFigure,[PlotPathName, '.fig']);
+    end
     exportgraphics(InFigure,[PlotPathName, '.pdf'],'ContentType','vector');
 end
 

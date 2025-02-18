@@ -214,6 +214,8 @@ L2Factor=1e-4;
 end
 end
 
+MessageAlreadyTrained = '!!! Network trained to maximum number of epochs\n';
+
 %% No Epochs
 % End the function if the number of training epochs is less than 1
 
@@ -231,9 +233,10 @@ HasClassifier = ~isempty(Classifier);
 % Initialize Epoch and Iteration counters
 [Iteration,Epoch,Run,MaximumValidationAccuracy,...
     MinimumValidationLoss,OptimizerVariables] = ...
-    cgg_getIterationInformation(SaveDir);
+    cgg_getIterationInformation(SaveDir,NumEpochs);
 
 if Epoch > NumEpochs
+    fprintf(MessageAlreadyTrained);
     return
 end
 
@@ -362,7 +365,7 @@ while Epoch <= NumEpochs
 
         %% Get Measures
 
-        if mod(Iteration,ValidationFrequency)==1 || FirstIteration
+        if mod(Iteration,ValidationFrequency)==1 || FirstIteration || ValidationFrequency == 1
         [LossInformation_Validation,CM_Table_Validation,~] = ...
             ModelLoss_Validation(Encoder,Decoder,Classifier,LossInformation_Training);
         FirstIteration = false;
@@ -380,7 +383,7 @@ while Epoch <= NumEpochs
             Gradients,Gradients_PreThreshold);
 
         %%
-        SaveAll = mod(Iteration,SaveFrequency)==1;
+        SaveAll = mod(Iteration,SaveFrequency)==1 || SaveFrequency == 1;
         cgg_updateAllMonitors(MonitorTable,Monitor_Values,SaveAll);
 
         %% Save Monitors when optimal condition is met

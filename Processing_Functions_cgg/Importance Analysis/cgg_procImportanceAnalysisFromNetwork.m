@@ -131,6 +131,7 @@ end
 end
 
 if ~isempty(RemovalTableSaveFunc)
+    
     RemovalTableSaveFunc(RemovalTable);
     RemovalTable = cgg_getRemovalTable(IAPathNameExt);
 end

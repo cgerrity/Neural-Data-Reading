@@ -21,6 +21,10 @@ Root_Directory=Root_Directory{2};
 Current_User=split(Environment_Variables(startsWith(Environment_Variables,"USER")),'=');
 Current_User=Current_User{2};
 
+if strcmp(Root_Directory,'Users')
+Root_Directory = 'usr';
+end
+
 switch Root_Directory
     case "usr"
         Current_System="Personal Computer";

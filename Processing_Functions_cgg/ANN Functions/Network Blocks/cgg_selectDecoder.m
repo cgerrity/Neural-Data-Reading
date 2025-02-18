@@ -7,8 +7,13 @@ function [PreDecoderBlock,DecoderBlocks,PostDecoderBlock] = ...
 
 PreDecoderBlock = [];
 PostDecoderBlock = [];
+DecoderBlocks = [];
 
 Coder = 'Decoder';
+
+if isempty(HiddenSizeAutoEncoder)
+    return
+end
 
 if cfg.IsSimple
     Dropout = cfg.Dropout;

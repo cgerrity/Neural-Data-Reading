@@ -71,5 +71,15 @@ cfg_tmp=cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Processing_Steps;
 [cfg_tmp,~] = cgg_generateFolderAndPath('Average','Average',cfg_tmp);
 cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Processing_Steps=cfg_tmp;
 
+% Processing Steps: Raw
+cfg_tmp=cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Processing_Steps;
+[cfg_tmp,~] = cgg_generateFolderAndPath('Raw','Raw',cfg_tmp);
+cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Processing_Steps=cfg_tmp;
+
+% Processing Steps: Notch
+cfg_tmp=cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Processing_Steps;
+[cfg_tmp,~] = cgg_generateFolderAndPath('Notch','Notch',cfg_tmp);
+cfg.outdatadir.Experiment.Session.Plots.Area.Activity.Processing_Steps=cfg_tmp;
+
 end
 

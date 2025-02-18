@@ -2,6 +2,12 @@ function [Encoder,Decoder,Classifier] = cgg_trainAllAutoEncoder_v2(DataStore_Tra
 %CGG_TRAINALLAUTOENCODER Summary of this function goes here
 %   Detailed explanation goes here
 
+
+MessageUnsupervised = '+++ Unsupervised Training\n';
+MessageSupervised = '+++ Supervised Training\n';
+MessageEnd = '=== End of Run\n';
+%%
+
 HiddenSizes=cfg_Encoder.HiddenSizes;
 NumEpochsAutoEncoder = cfg_Encoder.NumEpochsAutoEncoder;
 MiniBatchSize=cfg_Encoder.MiniBatchSize;
@@ -26,6 +32,7 @@ maxworkerMiniBatchSize=cfg_Encoder.maxworkerMiniBatchSize;
 IsQuaddle=cfg_Encoder.IsQuaddle;
 
 WantSaveNet = cfg_Encoder.WantSaveNet;
+WantSaveNet_tmp = true;
 
 ValidationFrequency = cfg_Encoder.ValidationFrequency;
 SaveFrequency = cfg_Encoder.SaveFrequency;
@@ -110,10 +117,14 @@ else
 end
 
 %%
+if strcmp(LossType_Decoder,'None')
+Decoder = [];
+end
+%%
     cfg_Monitor = cgg_generateMonitorCFG(cfg_Encoder,Encoder,Decoder,[],'SaveDir',AutoEncoding_Dir,'NumEpochs',NumEpochsAutoEncoder);
     
 %% Train AutoEncoder
-
+fprintf(MessageUnsupervised);
 [Encoder,Decoder,~] = cgg_trainNetwork(Encoder,...
     DataStore_Training,DataStore_Validation,DataStore_Testing,...
     'Decoder',Decoder,'Optimizer',Optimizer,'WeightedLoss',WeightedLoss,...
@@ -130,7 +141,7 @@ end
     'LearningRateDecay',LearningRateDecay,...
     'LearningRateEpochDrop',LearningRateEpochDrop,...
     'LearningRateEpochRamp',LearningRateEpochRamp,...
-    'WantSaveNet',WantSaveNet,...
+    'WantSaveNet',WantSaveNet_tmp,...
     'IterationSaveFrequency',IterationSaveFrequency,...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
     'RescaleLossEpoch',RescaleLossEpoch,'cfg_Monitor',cfg_Monitor, ...
@@ -155,6 +166,7 @@ end
         Decoder,Classifier,'SaveDir',Encoding_Dir,...
         'NumEpochs',NumEpochsFull);
     %%
+fprintf(MessageSupervised);
 [Encoder,Decoder,Classifier] = cgg_trainNetwork(Encoder,...
     DataStore_Training,DataStore_Validation,DataStore_Testing,...
     'Decoder',Decoder,'Classifier',Classifier,...
@@ -172,10 +184,34 @@ end
     'LearningRateDecay',LearningRateDecay,...
     'LearningRateEpochDrop',LearningRateEpochDrop,...
     'LearningRateEpochRamp',LearningRateEpochRamp,...
-    'WantSaveNet',WantSaveNet,...
+    'WantSaveNet',WantSaveNet_tmp,...
     'IterationSaveFrequency',IterationSaveFrequency,...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
     'RescaleLossEpoch',RescaleLossEpoch,'cfg_Monitor',cfg_Monitor, ...
     'L2Factor',L2Factor);
+
+
+%%
+if ~WantSaveNet
+    if isfile(FullNetwork_EncoderSavePathNameExt)
+        delete(FullNetwork_EncoderSavePathNameExt);
+    end
+    if isfile(FullNetwork_DecoderSavePathNameExt)
+        delete(FullNetwork_DecoderSavePathNameExt);
+    end
+    if isfile(FullNetwork_ClassifierSavePathNameExt)
+        delete(FullNetwork_ClassifierSavePathNameExt);
+    end
+    if isfile(AutoEncoder_EncoderSavePathNameExt)
+        delete(AutoEncoder_EncoderSavePathNameExt);
+    end
+    if isfile(AutoEncoder_DecoderSavePathNameExt)
+        delete(AutoEncoder_DecoderSavePathNameExt);
+    end
+
+end
+
+%%
+fprintf(MessageEnd);
 
 end

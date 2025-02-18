@@ -5,26 +5,26 @@ end
 
 %% Chosen Parameters
 
-% VariableName='Shared Feature Coding';
-% VariableName='Dimension 1';
-% VariableName='Dimension 2';
-% VariableName='Dimension 3';
-% VariableName='Dimension 4';
-% VariableName='Gain';
-% VariableName='Loss';
-% VariableName='Correct Trial';
-% VariableName='Learned';
-% VariableName='ACC_001';
-% VariableName='ACC_002';
-% VariableName='PFC_001';
-% VariableName='PFC_002';
-% VariableName='CD_001';
-% VariableName='CD_002';
-% VariableName='Target Feature';
-% VariableName='Trials From Learning Point';
-VariableName = 'Trials From Learning Point Category';
-% VariableName='Session Name';
-% VariableName='Dimensionality';
+VariableName='Shared Feature Coding'; Count_Y_Lim = [0,25000];
+% VariableName='Dimension 1'; Count_Y_Lim = [0,20000];
+% VariableName='Dimension 2'; Count_Y_Lim = [0,20000];
+% VariableName='Dimension 3'; Count_Y_Lim = [0,20000];
+% VariableName='Dimension 4'; Count_Y_Lim = [0,20000];
+% VariableName='Gain'; Count_Y_Lim = [0,25000];
+% VariableName='Loss'; Count_Y_Lim = [0,25000];
+% VariableName='Correct Trial'; Count_Y_Lim = [0,25000];
+% VariableName='Learned'; Count_Y_Lim = [0,25000];
+% VariableName='ACC_001'; Count_Y_Lim = [0,30000];
+% VariableName='ACC_002'; Count_Y_Lim = [0,30000];
+% VariableName='PFC_001'; Count_Y_Lim = [0,30000];
+% VariableName='PFC_002'; Count_Y_Lim = [0,30000];
+% VariableName='CD_001'; Count_Y_Lim = [0,30000];
+% VariableName='CD_002'; Count_Y_Lim = [0,30000];
+% VariableName='Target Feature'; Count_Y_Lim = [0,25000];
+% VariableName='Trials From Learning Point'; Count_Y_Lim = [0,25000];
+% VariableName = 'Trials From Learning Point Category'; Count_Y_Lim = [0,25000];
+% VariableName='Session Name'; Count_Y_Lim = [0,25000];
+% VariableName='Dimensionality'; Count_Y_Lim = [0,25000];
 wantSubset = false;
 % wantBar = false;
 % wantDifference = true;
@@ -54,10 +54,26 @@ ResultsDir = [temporaryfolder_base filesep 'Data_Neural'];
 
 cfg = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
     'Epoch',Epoch,'DistributionType',DistributionType);
-
+TitleName = VariableName;
 %%
 
 switch VariableName
+    case 'Dimension 1'
+        cfg_dim = PARAMETERS_cgg_procFullTrialPreparation_v2(Epoch);
+        DimNames = cfg_dim.FeatureValues_Names([1,2,3,5]);
+        TitleName = DimNames{1};
+    case 'Dimension 2'
+        cfg_dim = PARAMETERS_cgg_procFullTrialPreparation_v2(Epoch);
+        DimNames = cfg_dim.FeatureValues_Names([1,2,3,5]);
+        TitleName = DimNames{2};
+    case 'Dimension 3'
+        cfg_dim = PARAMETERS_cgg_procFullTrialPreparation_v2(Epoch);
+        DimNames = cfg_dim.FeatureValues_Names([1,2,3,5]);
+        TitleName = DimNames{3};
+    case 'Dimension 4'
+        cfg_dim = PARAMETERS_cgg_procFullTrialPreparation_v2(Epoch);
+        DimNames = cfg_dim.FeatureValues_Names([1,2,3,5]);
+        TitleName = DimNames{4};
     case 'Shared Feature Coding'
 FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
 FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=categorical({'EC Shared'});
@@ -89,6 +105,7 @@ FullDataTable.FeatureValue(FullDataTable.FeatureValue=="0")=FeatureValueOrder{1}
 FullDataTable.FeatureValue(FullDataTable.FeatureValue=="1")=FeatureValueOrder{2};
 
 FullDataTable.FeatureValue = categorical(FullDataTable.FeatureValue,FeatureValueOrder);
+TitleName = 'Outcome';
     case 'Learned'
 FullDataTable.FeatureValue=string(FullDataTable.FeatureValue);
 FeatureValueOrder = {'Not Learned', 'Learned','Non Learned Block'};
@@ -160,7 +177,8 @@ InVariableName=VariableName;
 InEpoch=Epoch;
 InSavePlotCFG=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Distribution;
 
-cgg_plotDataDistribution(FullDataTable,InVariableName,InEpoch,InSavePlotCFG)
+
+cgg_plotDataDistribution(FullDataTable,InVariableName,InEpoch,InSavePlotCFG,TitleName,Count_Y_Lim)
 
 %%
 

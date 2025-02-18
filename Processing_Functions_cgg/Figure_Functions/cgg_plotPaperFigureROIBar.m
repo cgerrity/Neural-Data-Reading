@@ -61,6 +61,14 @@ end
 end
 
 if isfunction
+ROIName = CheckVararginPairs('ROIName', '', varargin{:});
+else
+if ~(exist('ROIName','var'))
+ROIName='';
+end
+end
+
+if isfunction
 SignificanceValue = CheckVararginPairs('SignificanceValue', 0.05, varargin{:});
 else
 if ~(exist('SignificanceValue','var'))
@@ -290,7 +298,7 @@ IsGrouped = true;
 ColorOrder = [0,0.4470,7410;0.8500,0.3250,0.0980];
 WantHorizontal = false;
 
-[~,~] = cgg_plotBarGraphWithError(Plot_Bar,AreaNames,'X_Name','','Y_Name',Y_Name,'PlotTitle',PlotTitle,'YRange',YLimits,'wantCI',wantCI,'SignificanceValue',SignificanceValue,'ColorOrder',ColorOrder,'IsGrouped',IsGrouped,'GroupNames',GroupNames,'ErrorMetric',PlotError,'WantLegend',WantLegend,'ErrorCapSize',ErrorCapSize,'SignificanceTable',SignificanceTable,'SignificanceFontSize',SignificanceFontSize,'WantBarNames',WantBarNames,'WantHorizontal',WantHorizontal);
+[~,~,InFigure] = cgg_plotBarGraphWithError(Plot_Bar,AreaNames,'X_Name','','Y_Name',Y_Name,'PlotTitle',PlotTitle,'YRange',YLimits,'wantCI',wantCI,'SignificanceValue',SignificanceValue,'ColorOrder',ColorOrder,'IsGrouped',IsGrouped,'GroupNames',GroupNames,'ErrorMetric',PlotError,'WantLegend',WantLegend,'ErrorCapSize',ErrorCapSize,'SignificanceTable',SignificanceTable,'SignificanceFontSize',SignificanceFontSize,'WantBarNames',WantBarNames,'WantHorizontal',WantHorizontal,'InFigure',InFigure);
 % ylim([0,5]);
 %%
     if ~(isempty(Y_Ticks) || any(isnan(Y_Ticks)))
@@ -311,7 +319,10 @@ if ~isempty(PlotPath)
     if ~isempty(MonkeyName)
         MonkeyName = sprintf("-%s",MonkeyName);
     end
-    PlotName=sprintf('ROI_Bar-%s%s',SaveAreaNames,MonkeyName);
+    if ~isempty(ROIName)
+        ROIName = sprintf("-%s",ROIName);
+    end
+    PlotName=sprintf('ROI_Bar-%s%s%s',SaveAreaNames,ROIName,MonkeyName);
     PlotPathName=[PlotPath filesep PlotName];
     saveas(InFigure,[PlotPathName, '.fig']);
     exportgraphics(InFigure,[PlotPathName, '.pdf'],'ContentType','vector');

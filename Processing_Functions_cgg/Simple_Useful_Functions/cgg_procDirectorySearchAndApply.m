@@ -42,7 +42,7 @@ function aggregatedResult = cgg_procDirectorySearchAndApply(folderPath, fileName
         if nargin > 2 && isa(funcHandle, 'function_handle')
             % Update the aggregated result by calling the function
             % disp('FileNumber')
-            % disp(i)
+            % disp(fullFilePath);
             aggregatedResult = funcHandle(aggregatedResult, fullFilePath);
         end
     end

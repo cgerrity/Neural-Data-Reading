@@ -24,6 +24,10 @@ RangeAccuracyLower = cfg_Plotting.RangeAccuracyLower;
 ErrorCapSize = cfg_Plotting.ErrorCapSize;
 
 Tick_Size = 2;
+Y_Tick_Label_Size = 24;
+wantIndicatorNames = false;
+Y_Name_Size = 24;
+Legend_Size = 12;
 
 %%
 RandomChance=cfg.RandomChance;
@@ -39,16 +43,33 @@ X_Name='Time (s)';
 Y_Name = 'Accuracy';
 PlotTitle = 'Accuracy Over Time';
 if contains(cfg.MatchType,'Scaled')
-Y_Name = 'Normalized Accuracy';
+Y_Name = {'Scaled', 'Balanced Accuracy'};
 PlotTitle = 'Normalized Accuracy Over Time';
 end
+PlotTitle = '';
 
 Window_Accuracy_All=FullTable.('Window Accuracy');
 PlotNames=FullTable.Properties.RowNames;
 
 NumLoops=length(PlotNames);
 
-[fig_plot,p_Plots,p_Error] = cgg_plotTimeSeriesPlot(Window_Accuracy_All,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'SamplingRate',SamplingFrequency,'X_Name',X_Name,'Y_Name',Y_Name,'PlotTitle',PlotTitle,'PlotNames',PlotNames);
+MATLABPlotColors = cfg_Plotting.MATLABPlotColors;
+PlotColors=MATLABPlotColors;
+if length(PlotNames) == 6
+PlotColors = num2cell(cfg_Plotting.Rainbow,2);
+end
+
+
+fig_plot=figure;
+fig_plot.Units="normalized";
+fig_plot.Position=[0,0,0.5,0.5];
+fig_plot.Units="inches";
+fig_plot.PaperUnits="inches";
+PlotPaperSize=fig_plot.Position;
+PlotPaperSize(1:2)=[];
+fig_plot.PaperSize=PlotPaperSize;
+
+[fig_plot,p_Plots,p_Error] = cgg_plotTimeSeriesPlot(Window_Accuracy_All,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'SamplingRate',SamplingFrequency,'X_Name',X_Name,'Y_Name',Y_Name,'PlotTitle',PlotTitle,'PlotNames',PlotNames,'wantIndicatorNames',wantIndicatorNames,'Y_Tick_Label_Size',Y_Tick_Label_Size,'X_Tick_Label_Size',Y_Tick_Label_Size,'PlotColors',PlotColors,'InFigure',fig_plot,'Y_Name_Size',Y_Name_Size);
 
 hold on
 p_Random=yline(RandomChance);
@@ -64,14 +85,20 @@ p_Random.DisplayName = 'Random Chance';
 % p_Plots(NumLoops+2)=p_Random;
 
 if NumLoops > 1
-legend(p_Plots,'Location','best','FontSize',Legend_Size);
+legend(p_Plots,'Location','northeast','FontSize',Legend_Size,'NumColumns',2);
+legend('boxoff')
 else
-    legend([],'Location','best','FontSize',Legend_Size);
+    legend([],'Location','northeast','FontSize',Legend_Size,'NumColumns',2);
+    legend('boxoff')
     legend off;
 end
 
 YLimLower=RangeAccuracyLower;
 YLimUpper=RangeAccuracyUpper;
+
+% Current_Axis = gca;
+% Current_Axis.YAxis.FontSize=Y_Tick_Label_Size;
+% Current_Axis.XAxis.FontSize=Y_Tick_Label_Size;
 
 ylim([YLimLower,YLimUpper]);
 ylim([0,1]);

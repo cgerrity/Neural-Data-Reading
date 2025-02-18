@@ -1,6 +1,6 @@
 %% FIGURE_cggChannelTrialMeansandSTD
 
-
+clc; clear; close all;
 Current_Folder_Names=split(pwd,filesep);
 
 if strcmp(Current_Folder_Names{2},'data')||strcmp(Current_Folder_Names{2},'tmp')
@@ -16,7 +16,7 @@ end
 SessionName = 'Wo_Probe_01_23-02-23_008_01';
 
 inputfolder=[inputfolder_base '/DATA_neural/Wotan/Wotan_FLToken_Probe_01/' SessionName];
-outdatadir=[outputfolder_base '/Data_Neural_gerritcg'];
+outdatadir=[outputfolder_base '/Data_Neural'];
 probe_area_ACC='ACC_001';
 probe_area_CD='CD_001';
 Activity_Type='WideBand';
@@ -68,11 +68,12 @@ end
     'outdatadir',outdatadir);
 
 [outdatadir_WideBand_ACC,outdatadir_LFP_ACC,outdatadir_Spike_ACC,...
-    outdatadir_MUA_ACC] = cgg_generateNeuralDataFolders(...
+    outdatadir_MUA_ACC,outdatadir_Raw_ACC,outdatadir_Notch_ACC] = ...
+    cgg_generateNeuralDataFolders(...
     outdatadir,SessionName,ExperimentName,probe_area_ACC);
 
 [outdatadir_WideBand_CD,outdatadir_LFP_CD,outdatadir_Spike_CD,...
-    outdatadir_MUA_CD] = cgg_generateNeuralDataFolders(...
+    outdatadir_MUA_CD,outdatadir_Raw_CD,outdatadir_Notch_CD] = cgg_generateNeuralDataFolders(...
     outdatadir,SessionName,ExperimentName,probe_area_CD);
 
 [cfg_outplotdir_ACC] = cgg_generateNeuralPlottingFoldersforProcessing(outdatadir,...
@@ -91,16 +92,33 @@ rectrialdefs=rectrialdefs.rectrialdefs;
 NumTrials=length(rectrialdefs);
 
 %%
+% this_trial_index=rectrialdefs(Sel_Trial,8);
+% this_rectrialdeftable = rectrialdeftable(Sel_Trial,:);
+% this_rectrialdefs = rectrialdefs(Sel_Trial,:);
+
+%%
 
 fullfilename_ACC=[outdatadir_WideBand_ACC filesep Activity_Type '_Trial_%d.mat'];
+fullfilename_Raw_ACC=[outdatadir_Raw_ACC filesep 'Raw' '_Trial_%d.mat'];
+fullfilename_Notch_ACC=[outdatadir_Notch_ACC filesep 'Notch' '_Trial_%d.mat'];
 
 fullfilename_CD=[outdatadir_WideBand_CD filesep Activity_Type '_Trial_%d.mat'];
+fullfilename_Raw_CD=[outdatadir_Raw_CD filesep 'Raw' '_Trial_%d.mat'];
+fullfilename_Notch_CD=[outdatadir_Notch_CD filesep 'Notch' '_Trial_%d.mat'];
 
 recdata_wideband_ACC=load(sprintf(fullfilename_ACC,Sel_Trial));
 recdata_wideband_ACC=recdata_wideband_ACC.this_recdata_wideband;
+recdata_Raw_ACC=load(sprintf(fullfilename_Raw_ACC,Sel_Trial));
+recdata_Raw_ACC=recdata_Raw_ACC.this_recdata_wideband;
+recdata_Notch_ACC=load(sprintf(fullfilename_Notch_ACC,Sel_Trial));
+recdata_Notch_ACC=recdata_Notch_ACC.this_recdata_wideband;
 
 recdata_wideband_CD=load(sprintf(fullfilename_CD,Sel_Trial));
 recdata_wideband_CD=recdata_wideband_CD.this_recdata_wideband;
+recdata_Raw_CD=load(sprintf(fullfilename_Raw_CD,Sel_Trial));
+recdata_Raw_CD=recdata_Raw_CD.this_recdata_wideband;
+recdata_Notch_CD=load(sprintf(fullfilename_Notch_CD,Sel_Trial));
+recdata_Notch_CD=recdata_Notch_CD.this_recdata_wideband;
 
 %%
 
@@ -150,59 +168,73 @@ recdata_resample_CD = ft_resampledata(resampleconfig, recdata_lowpass_CD);
 
 %% Rereferencing
 
-% ACC
-[Connected_Channels_ACC,Disconnected_Channels_ACC,is_any_previously_rereferenced_ACC] = cgg_getDisconnectedChannels(NumTrials,...
-    Count_Sel_Trial,fullfilename_ACC);
+% % ACC
+% [Connected_Channels_ACC,Disconnected_Channels_ACC,is_any_previously_rereferenced_ACC] = cgg_getDisconnectedChannels(NumTrials,...
+%     Count_Sel_Trial,fullfilename_ACC);
+% 
+% [Connected_Channels,Disconnected_Channels,...
+%     is_any_previously_rereferenced,Debugging_Info] = ...
+%     cgg_getDisconnectedChannelsFromDirectories_v2(clustering_trial_count,...
+%     'inputfolder',inputfolder,'outdatadir',outdatadir,...
+%     'Activity_Type', 'WideBand','probe_area',this_probe_area);
+% 
+% Message_Rereferencing_ACC=sprintf('--- Disconnected Channels for Area: %s are:',probe_area_ACC);
+% for didx=1:length(Disconnected_Channels_ACC)
+%     if didx<length(Disconnected_Channels_ACC)
+%     Message_Rereferencing_ACC=sprintf([Message_Rereferencing_ACC ' %d,'],Disconnected_Channels_ACC(didx));
+%     else
+%     Message_Rereferencing_ACC=sprintf([Message_Rereferencing_ACC ' %d'],Disconnected_Channels_ACC(didx));
+%     end
+% end
+% 
+% disp(Message_Rereferencing_ACC);
+% 
+% cfg_rereference_ACC=[];
+% cfg_rereference_ACC.reref='yes';
+% cfg_rereference_ACC.refchannel=Connected_Channels_ACC; %All Good Channels
+% cfg_rereference_ACC.refmethod=rereference_type;
+% 
+% % CD
+% [Connected_Channels_CD,Disconnected_Channels_CD,is_any_previously_rereferenced_CD] = cgg_getDisconnectedChannels(NumTrials,...
+%     Count_Sel_Trial,fullfilename_CD);
+% 
+% Message_Rereferencing_CD=sprintf('--- Disconnected Channels for Area: %s are:',probe_area_CD);
+% for didx=1:length(Disconnected_Channels_CD)
+%     if didx<length(Disconnected_Channels_CD)
+%     Message_Rereferencing_CD=sprintf([Message_Rereferencing_CD ' %d,'],Disconnected_Channels_CD(didx));
+%     else
+%     Message_Rereferencing_CD=sprintf([Message_Rereferencing_CD ' %d'],Disconnected_Channels_CD(didx));
+%     end
+% end
+% 
+% disp(Message_Rereferencing_CD);
+% 
+% cfg_rereference_CD=[];
+% cfg_rereference_CD.reref='yes';
+% cfg_rereference_CD.refchannel=Connected_Channels_CD; %All Good Channels
+% cfg_rereference_CD.refmethod=rereference_type;
 
-Message_Rereferencing_ACC=sprintf('--- Disconnected Channels for Area: %s are:',probe_area_ACC);
-for didx=1:length(Disconnected_Channels_ACC)
-    if didx<length(Disconnected_Channels_ACC)
-    Message_Rereferencing_ACC=sprintf([Message_Rereferencing_ACC ' %d,'],Disconnected_Channels_ACC(didx));
-    else
-    Message_Rereferencing_ACC=sprintf([Message_Rereferencing_ACC ' %d'],Disconnected_Channels_ACC(didx));
-    end
-end
-
-disp(Message_Rereferencing_ACC);
-
-cfg_rereference_ACC=[];
-cfg_rereference_ACC.reref='yes';
-cfg_rereference_ACC.refchannel=Connected_Channels_ACC; %All Good Channels
-cfg_rereference_ACC.refmethod=rereference_type;
-
-% CD
-[Connected_Channels_CD,Disconnected_Channels_CD,is_any_previously_rereferenced_CD] = cgg_getDisconnectedChannels(NumTrials,...
-    Count_Sel_Trial,fullfilename_CD);
-
-Message_Rereferencing_CD=sprintf('--- Disconnected Channels for Area: %s are:',probe_area_CD);
-for didx=1:length(Disconnected_Channels_CD)
-    if didx<length(Disconnected_Channels_CD)
-    Message_Rereferencing_CD=sprintf([Message_Rereferencing_CD ' %d,'],Disconnected_Channels_CD(didx));
-    else
-    Message_Rereferencing_CD=sprintf([Message_Rereferencing_CD ' %d'],Disconnected_Channels_CD(didx));
-    end
-end
-
-disp(Message_Rereferencing_CD);
-
-cfg_rereference_CD=[];
-cfg_rereference_CD.reref='yes';
-cfg_rereference_CD.refchannel=Connected_Channels_CD; %All Good Channels
-cfg_rereference_CD.refmethod=rereference_type;
-
-recdata_wideband_reref_ACC = ft_preprocessing(cfg_rereference_ACC, recdata_wideband_ACC);
+% recdata_wideband_reref_ACC = ft_preprocessing(cfg_rereference_ACC, recdata_wideband_ACC);
+recdata_wideband_reref_ACC = recdata_wideband_ACC;
 recdata_bandpass_reref_ACC = ft_preprocessing(filtconfigband, recdata_wideband_reref_ACC);
 recdata_rectify_reref_ACC = ft_preprocessing(rectconfig, recdata_bandpass_reref_ACC);
 recdata_lowpass_reref_ACC = ft_preprocessing(filtconfiglow, recdata_rectify_reref_ACC);
 recdata_resample_reref_ACC = ft_resampledata(resampleconfig, recdata_lowpass_reref_ACC);
 
-recdata_wideband_reref_CD = ft_preprocessing(cfg_rereference_CD, recdata_wideband_CD);
+% recdata_wideband_reref_CD = ft_preprocessing(cfg_rereference_CD, recdata_wideband_CD);
+recdata_wideband_reref_CD = recdata_wideband_CD;
 recdata_bandpass_reref_CD = ft_preprocessing(filtconfigband, recdata_wideband_reref_CD);
 recdata_rectify_reref_CD = ft_preprocessing(rectconfig, recdata_bandpass_reref_CD);
 recdata_lowpass_reref_CD = ft_preprocessing(filtconfiglow, recdata_rectify_reref_CD);
 recdata_resample_reref_CD = ft_resampledata(resampleconfig, recdata_lowpass_reref_CD);
 
 %%
+
+Raw_ACC=recdata_Raw_ACC.trial{1};
+Raw_CD=recdata_Raw_CD.trial{1};
+Notch_ACC=recdata_Notch_ACC.trial{1};
+Notch_CD=recdata_Notch_CD.trial{1};
+
 
 WideBand_ACC=recdata_wideband_ACC.trial{1};
 WideBand_CD=recdata_wideband_CD.trial{1};
@@ -229,10 +261,16 @@ Resample_CD=recdata_resample_CD.trial{1};
 Resample_Reref_ACC=recdata_resample_reref_ACC.trial{1};
 Resample_Reref_CD=recdata_resample_reref_CD.trial{1};
 
-Average_ACC=smoothdata(Resample_ACC,2,'movmean',Smooth_Factor);
-Average_CD=smoothdata(Resample_CD,2,'movmean',Smooth_Factor);
-Average_Reref_ACC=smoothdata(Resample_Reref_ACC,2,'movmean',Smooth_Factor);
-Average_Reref_CD=smoothdata(Resample_Reref_CD,2,'movmean',Smooth_Factor);
+Average_ACC=smoothdata(Resample_ACC,2,'gaussian',Smooth_Factor);
+Average_CD=smoothdata(Resample_CD,2,'gaussian',Smooth_Factor);
+Average_Reref_ACC=smoothdata(Resample_Reref_ACC,2,'gaussian',Smooth_Factor);
+Average_Reref_CD=smoothdata(Resample_Reref_CD,2,'gaussian',Smooth_Factor);
+
+Time_Raw_ACC=recdata_Raw_ACC.time{1};
+Time_Raw_CD=recdata_Raw_CD.time{1};
+
+Time_Notch_ACC=recdata_Notch_ACC.time{1};
+Time_Notch_CD=recdata_Notch_CD.time{1};
 
 Time_WideBand_ACC=recdata_wideband_ACC.time{1};
 Time_WideBand_CD=recdata_wideband_CD.time{1};
@@ -251,6 +289,25 @@ Time_Resample_CD=recdata_resample_CD.time{1};
 
 Time_Average_ACC=Time_Resample_ACC;
 Time_Average_CD=Time_Resample_CD;
+
+%%
+[~,Start_IDX_Raw]=min(abs(Time_Raw_ACC-Start_Time));
+[~,End_IDX_Raw]=min(abs(Time_Raw_ACC-End_Time));
+
+this_Time_Raw_ACC=Time_Raw_ACC(Start_IDX_Raw:End_IDX_Raw);
+this_Time_Raw_CD=Time_Raw_CD(Start_IDX_Raw:End_IDX_Raw);
+
+this_Raw_ACC=Raw_ACC(Sel_Channel,Start_IDX_Raw:End_IDX_Raw);
+this_Raw_CD=Raw_CD(Sel_Channel,Start_IDX_Raw:End_IDX_Raw);
+
+[~,Start_IDX_Notch]=min(abs(Time_Notch_ACC-Start_Time));
+[~,End_IDX_Notch]=min(abs(Time_Notch_ACC-End_Time));
+
+this_Time_Notch_ACC=Time_Notch_ACC(Start_IDX_Notch:End_IDX_Notch);
+this_Time_Notch_CD=Time_Notch_CD(Start_IDX_Notch:End_IDX_Notch);
+
+this_Notch_ACC=Notch_ACC(Sel_Channel,Start_IDX_Notch:End_IDX_Notch);
+this_Notch_CD=Notch_CD(Sel_Channel,Start_IDX_Notch:End_IDX_Notch);
 
 %%
 
@@ -331,19 +388,19 @@ PlotDir_CD=cfg_outplotdir_CD.outdatadir.Experiment.Session.Plots.Area.Activity.P
 
 %% WideBand Plotting in Groups
 
-YLim_WideBand=[-30,30];
-YName_WideBand='WideBand Activity (a.u.)';
-Title_WideBand='WideBand Activity';
-SaveName_WideBand_ACC=[sprintf('Data_Processing_WideBand_ACC_Trial_%s_Many_Channel_',num2str(Sel_Trial)) '%s'];
-SaveName_WideBand_CD=[sprintf('Data_Processing_WideBand_CD_Trial_%s_Many_Channel_',num2str(Sel_Trial)) '%s'];
-Title_WideBand_Reref='WideBand Activity (Rereferenced)';
-SaveName_WideBand_Reref_ACC=[sprintf('Data_Processing_WideBand_Reref_ACC_Trial_%s_Many_Channel_',num2str(Sel_Trial)) '%s'];
-SaveName_WideBand_Reref_CD=[sprintf('Data_Processing_WideBand_Reref_CD_Trial_%s_Many_Channel_',num2str(Sel_Trial)) '%s'];
-InGroup_WideBand=1:64;
-
-cgg_plotDataProcessingStepsInGroups(this_WideBand_ACC,this_Time_WideBand_ACC,...
-    'Time (s)',YName_WideBand,Title_WideBand,YLim_WideBand,InGroup_WideBand,...
-    PlotDir_ACC.WideBand,SaveName_WideBand_ACC,'ACC');
+% YLim_WideBand=[-30,30];
+% YName_WideBand='WideBand Activity (a.u.)';
+% Title_WideBand='WideBand Activity';
+% SaveName_WideBand_ACC=[sprintf('Data_Processing_WideBand_ACC_Trial_%s_Many_Channel_',num2str(Sel_Trial)) '%s'];
+% SaveName_WideBand_CD=[sprintf('Data_Processing_WideBand_CD_Trial_%s_Many_Channel_',num2str(Sel_Trial)) '%s'];
+% Title_WideBand_Reref='WideBand Activity (Rereferenced)';
+% SaveName_WideBand_Reref_ACC=[sprintf('Data_Processing_WideBand_Reref_ACC_Trial_%s_Many_Channel_',num2str(Sel_Trial)) '%s'];
+% SaveName_WideBand_Reref_CD=[sprintf('Data_Processing_WideBand_Reref_CD_Trial_%s_Many_Channel_',num2str(Sel_Trial)) '%s'];
+% InGroup_WideBand=1:64;
+% 
+% cgg_plotDataProcessingStepsInGroups(this_WideBand_ACC,this_Time_WideBand_ACC,...
+%     'Time (s)',YName_WideBand,Title_WideBand,YLim_WideBand,InGroup_WideBand,...
+%     PlotDir_ACC.WideBand,SaveName_WideBand_ACC,'ACC');
 % cgg_plotDataProcessingStepsInGroups(this_WideBand_CD,this_Time_WideBand_CD,...
 %     'Time (s)',YName_WideBand,Title_WideBand,YLim_WideBand,InGroup_WideBand,...
 %     PlotDir_CD.WideBand,SaveName_WideBand_CD,'CD');
@@ -353,6 +410,36 @@ cgg_plotDataProcessingStepsInGroups(this_WideBand_ACC,this_Time_WideBand_ACC,...
 % cgg_plotDataProcessingStepsInGroups(this_WideBand_Reref_CD,this_Time_WideBand_CD,...
 %     'Time (s)',YName_WideBand,Title_WideBand_Reref,YLim_WideBand,InGroup_WideBand,...
 %     PlotDir_CD.WideBand,SaveName_WideBand_Reref_CD,'CD');
+
+%% Raw Plotting
+
+% YLim_Raw=[-100,100];
+% YName_Raw='WideBand Activity (\muV)';
+% Title_Raw='WideBand Activity';
+% SaveName_Raw_ACC=[sprintf('Data_Processing_Raw_ACC_Trial_%s_Channel_',num2str(Sel_Trial)) '%s'];
+% SaveName_Raw_CD=[sprintf('Data_Processing_Raw_CD_Trial_%s_Channel_',num2str(Sel_Trial)) '%s'];
+% 
+% cgg_plotDataProcessingSteps(this_Raw_ACC,this_Time_Raw_ACC,...
+%     'Time (s)',YName_Raw,Title_Raw,YLim_Raw,0,...
+%     PlotDir_ACC.Raw,SaveName_Raw_ACC,'ACC');
+% cgg_plotDataProcessingSteps(this_Raw_CD,this_Time_Raw_CD,...
+%     'Time (s)',YName_Raw,Title_Raw,YLim_Raw,0,...
+%     PlotDir_CD.Raw,SaveName_Raw_CD,'CD');
+
+%% Notch Plotting
+
+YLim_Notch=[-100,100];
+YName_Notch='WideBand Activity (\muV)';
+Title_Notch='WideBand Activity';
+SaveName_Notch_ACC=[sprintf('Data_Processing_Notch_ACC_Trial_%s_Channel_',num2str(Sel_Trial)) '%s'];
+SaveName_Notch_CD=[sprintf('Data_Processing_Notch_CD_Trial_%s_Channel_',num2str(Sel_Trial)) '%s'];
+
+cgg_plotDataProcessingSteps(this_Notch_ACC,this_Time_Notch_ACC,...
+    'Time (s)',YName_Notch,Title_Notch,YLim_Notch,0,...
+    PlotDir_ACC.Notch,SaveName_Notch_ACC,'ACC');
+cgg_plotDataProcessingSteps(this_Notch_CD,this_Time_Notch_CD,...
+    'Time (s)',YName_Notch,Title_Notch,YLim_Notch,0,...
+    PlotDir_CD.Notch,SaveName_Notch_CD,'CD');
 
 %% WideBand Plotting
 

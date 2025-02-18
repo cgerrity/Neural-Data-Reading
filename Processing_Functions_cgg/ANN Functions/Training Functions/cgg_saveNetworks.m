@@ -2,7 +2,7 @@ function cgg_saveNetworks(Encoder,Decoder,Classifier,WantSaveNet,NetworkPath,IsO
 %CGG_SAVENETWORKS Summary of this function goes here
 %   Detailed explanation goes here
 
-if ~(WantSaveNet || IsOptimal)
+if ~WantSaveNet
     return
 end
 

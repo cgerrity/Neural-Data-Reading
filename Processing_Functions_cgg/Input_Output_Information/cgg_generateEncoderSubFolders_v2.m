@@ -115,6 +115,10 @@ end
 if isfield(cfg_Encoder,'L2Factor')
 L2Factor = cfg_Encoder.L2Factor;
 end
+
+if isfield(cfg_Encoder,'maxworkerMiniBatchSize')
+maxworkerMiniBatchSize = cfg_Encoder.maxworkerMiniBatchSize;
+end
 %% Model Name Folder
 
 % Make the Model Name folder name.
@@ -125,6 +129,7 @@ cfg.EncodingDir=cfg_tmp;
 %% Model Parameters Folder
 
 % Make the Variational folder name.
+NameModelParameters = '';
 if IsVariational
     NameVariational = 'Variational';
     NameModelParameters = NameVariational;
@@ -219,8 +224,11 @@ cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize=c
 
 % Make the Mini Batch Size folder name.
 NameMiniBatchSize = sprintf('Mini Batch Size - %d',MiniBatchSize);
+% Make Gradient Accumulation folder name
+NameMaxMiniBatchSize = sprintf('Max Accumulation - %d',maxworkerMiniBatchSize);
+NameMiniBatchFolder = [NameMiniBatchSize ' ~ ' NameMaxMiniBatchSize];
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning;
-[cfg_tmp,~] = cgg_generateFolderAndPath(NameMiniBatchSize,'MiniBatchSize',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(NameMiniBatchFolder,'MiniBatchSize',cfg_tmp);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning=cfg_tmp;
 
 %% Data Augmentation  Folder
@@ -263,8 +271,13 @@ cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.L
 %% AutoEncoder Folder
 
 % Make the AutoEncoder folder name.
+if strcmp(LossType_Decoder,'None')
+NameAutoEncoderLoss = 'None';
+NameAutoEncoderEpochs = 'AutoEncoder';
+else
 NameAutoEncoderLoss = sprintf('Loss Function - %s',LossType_Decoder);
 NameAutoEncoderEpochs = sprintf('AutoEncoder - Epochs - %d',NumEpochsAutoEncoder);
+end
 NameAutoEncoder = [NameAutoEncoderEpochs ' ~ ' NameAutoEncoderLoss];
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset;
 [cfg_tmp,~] = cgg_generateFolderAndPath(NameAutoEncoder,'AutoEncoder',cfg_tmp);

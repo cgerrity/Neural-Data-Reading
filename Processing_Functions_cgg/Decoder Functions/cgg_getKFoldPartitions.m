@@ -102,19 +102,78 @@ cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
 
 Partition_Dir = cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Partition.path;
 
-if (wantSubset) && (wantStratifiedPartition)
-Partition_NameExt = 'KFoldPartition_Subset.mat';
-elseif (~wantSubset) && (wantStratifiedPartition)
-Partition_NameExt = 'KFoldPartition.mat';
-elseif (wantSubset) && (~wantStratifiedPartition)
-Partition_NameExt = 'KFoldPartition_Subset_NS.mat';
-elseif (~wantSubset) && (~wantStratifiedPartition)
-Partition_NameExt = 'KFoldPartition_NS.mat';
-else
-Partition_NameExt = 'KFoldPartition.mat';
+%%
+
+TargetAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Target.path;
+Target_Fun=@(x) cgg_loadTargetArray(x);
+Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun);
+
+%%
+switch wantSubset
+    case 'Single'
+        
+        TargetSession_Fun=@(x) cgg_loadTargetArray(x,'SessionName',true);
+        SessionNameDataStore = fileDatastore(TargetAggregateDir,"ReadFcn",TargetSession_Fun);
+
+        SessionsList=gather(tall(SessionNameDataStore));
+        SessionNames = unique(SessionsList);
+        NumSessions = length(SessionNames);
+
+        Partition_NameExt = cell(NumSessions,1);
+        IndicesPartition = cell(NumSessions,1);
+        Target_ds_Cell = cell(NumSessions,1);
+
+        for sidx = 1:NumSessions
+        this_SessionName = SessionNames{sidx};
+        if wantStratifiedPartition
+            Partition_NameExt{sidx} = sprintf('KFoldPartition_%s.mat',this_SessionName);
+        else
+            Partition_NameExt{sidx} = sprintf('KFoldPartition_%s_NS.mat',this_SessionName);
+        end
+        IndicesPartition{sidx}=strcmp(SessionsList,this_SessionName);
+        Target_ds_Cell{sidx}=subset(Target_ds,IndicesPartition{sidx});
+        end
+        Target_ds = Target_ds_Cell;
+    case true
+        if wantStratifiedPartition
+            Partition_NameExt = 'KFoldPartition_Subset.mat';
+        else
+            Partition_NameExt = 'KFoldPartition_Subset_NS.mat';
+        end
+
+        TargetSession_Fun=@(x) cgg_loadTargetArray(x,'SessionName',true);
+        SessionNameDataStore = fileDatastore(TargetAggregateDir,"ReadFcn",TargetSession_Fun);
+
+        SessionsList=gather(tall(SessionNameDataStore));
+        IndicesPartition=strcmp(SessionsList,SessionSubset);
+
+        Target_ds=subset(Target_ds,IndicesPartition);
+        NumSessions = 1;
+    case false
+        if wantStratifiedPartition
+            Partition_NameExt = 'KFoldPartition.mat';
+        else
+            Partition_NameExt = 'KFoldPartition_NS.mat';
+        end
+        IndicesPartition=true(numpartitions(Target_ds),1);
+        NumSessions = 1;
 end
 
-Partition_PathNameExt = [Partition_Dir filesep Partition_NameExt];
+%%
+
+% if (wantSubset) && (wantStratifiedPartition)
+% Partition_NameExt = 'KFoldPartition_Subset.mat';
+% elseif (~wantSubset) && (wantStratifiedPartition)
+% Partition_NameExt = 'KFoldPartition.mat';
+% elseif (wantSubset) && (~wantStratifiedPartition)
+% Partition_NameExt = 'KFoldPartition_Subset_NS.mat';
+% elseif (~wantSubset) && (~wantStratifiedPartition)
+% Partition_NameExt = 'KFoldPartition_NS.mat';
+% else
+% Partition_NameExt = 'KFoldPartition.mat';
+% end
+
+Partition_PathNameExt = fullfile(Partition_Dir,Partition_NameExt);
 
 %%
 
@@ -125,33 +184,52 @@ Partition_PathNameExt = [Partition_Dir filesep Partition_NameExt];
 
 % [Combined_ds] = cgg_getCombinedDataStoreForTall(DataWidth,StartingIDX,EndingIDX,WindowStride,cfg,'Dimension',Dimension);
 
-TargetAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Target.path;
-Target_Fun=@(x) cgg_loadTargetArray(x);
-Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun);
+% TargetAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Target.path;
+% Target_Fun=@(x) cgg_loadTargetArray(x);
+% Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun);
 
 % if wantSubset
 % Combined_ds=subset(Combined_ds,1:SubsetAmount);
 % end
 
-if wantSubset
-TargetSession_Fun=@(x) cgg_loadTargetArray(x,'SessionName',true);
-SessionNameDataStore = fileDatastore(TargetAggregateDir,"ReadFcn",TargetSession_Fun);
-
-SessionsList=gather(tall(SessionNameDataStore));
-IndicesPartition=strcmp(SessionsList,SessionSubset);
-
-Target_ds=subset(Target_ds,IndicesPartition);
-else
-IndicesPartition=true(numpartitions(Target_ds),1);
-end
+% if wantSubset
+% TargetSession_Fun=@(x) cgg_loadTargetArray(x,'SessionName',true);
+% SessionNameDataStore = fileDatastore(TargetAggregateDir,"ReadFcn",TargetSession_Fun);
+% 
+% SessionsList=gather(tall(SessionNameDataStore));
+% IndicesPartition=strcmp(SessionsList,SessionSubset);
+% 
+% Target_ds=subset(Target_ds,IndicesPartition);
+% else
+% IndicesPartition=true(numpartitions(Target_ds),1);
+% end
 
 %%
 
+for sidx = 1:NumSessions
+
+    if iscell(Partition_PathNameExt)
+        this_Partition_PathNameExt = Partition_PathNameExt{sidx};
+    else
+        this_Partition_PathNameExt = Partition_PathNameExt;
+    end
+    if iscell(IndicesPartition)
+        this_IndicesPartition = IndicesPartition{sidx};
+    else
+        this_IndicesPartition = IndicesPartition;
+    end
+    if iscell(Target_ds)
+        this_Target_ds = Target_ds{sidx};
+    else
+        this_Target_ds = Target_ds;
+    end
+
+    %%
 if wantStratifiedPartition
 % Each Data example gets its own identifier if it matches precise
 % characteristics
 % UniqueDataIdentifiers=readall(Target_ds);
-UniqueDataIdentifiers=gather(tall(Target_ds));
+UniqueDataIdentifiers=gather(tall(this_Target_ds));
 % UniqueDataIdentifiers=cellfun(@num2str,UniqueDataIdentifiers,'UniformOutput',false);
 
 % IdentifierName=cellfun(@(x) x{2},UniqueDataIdentifiers,'UniformOutput',false);
@@ -161,7 +239,7 @@ IdentifierName=UniqueDataIdentifiers{1}{2};
 
 PartitionGroups = cgg_procAssignGroups(Identifiers,IdentifierName,NumFolds);
 else
-PartitionGroups = numpartitions(Target_ds);
+PartitionGroups = numpartitions(this_Target_ds);
 end
 
 %%
@@ -176,9 +254,12 @@ for pidx=2:NumKPartitions
 KFoldPartition(pidx) = cvpartition(PartitionGroups,"KFold",NumFolds);
 end
 
-Partition_SaveVariables={KFoldPartition,IndicesPartition};
+Partition_SaveVariables={KFoldPartition,this_IndicesPartition};
 Partition_SaveVariablesName={'KFoldPartition','Indices'};
-cgg_saveVariableUsingMatfile(Partition_SaveVariables,Partition_SaveVariablesName,Partition_PathNameExt);
+cgg_saveVariableUsingMatfile(Partition_SaveVariables,Partition_SaveVariablesName,this_Partition_PathNameExt);
+
+end % End iteration through sessions
+
 
 end
 

@@ -64,6 +64,8 @@ switch VariableSet
     case 'Trial Outcome'
         VariableInformation(1,:) = {1,"Correct","text"};
         VariableInformation(2,:) = {0,"Error","text"};
+    case 'Adaptive Beta'
+        VariableInformation(1,:) = {1,"Adaptive beta","text"};
     case 'ZZZZZZZ'
         VariableInformation(1,:) = {1,"ZZZZZZZ","text"};
     otherwise

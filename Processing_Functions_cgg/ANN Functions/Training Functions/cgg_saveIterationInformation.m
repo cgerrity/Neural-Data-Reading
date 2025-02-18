@@ -4,7 +4,7 @@ function cgg_saveIterationInformation(Iteration,Epoch,Run,...
 %CGG_SAVEITERATIONINFORMATION Summary of this function goes here
 %   Detailed explanation goes here
 
-if ~(mod(Iteration,IterationSaveFrequency)==1 || IsOptimal)
+if ~(mod(Iteration,IterationSaveFrequency)==1 || IsOptimal || IterationSaveFrequency == 1)
     return
 end
 

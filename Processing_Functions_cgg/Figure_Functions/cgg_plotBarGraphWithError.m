@@ -183,6 +183,62 @@ if ~(exist('wantPaperSized','var'))
 wantPaperSized=false;
 end
 end
+
+if isfunction
+BarWidth = CheckVararginPairs('BarWidth', [], varargin{:});
+else
+if ~(exist('BarWidth','var'))
+BarWidth=[];
+end
+end
+
+if isfunction
+WantScatter = CheckVararginPairs('WantScatter', false, varargin{:});
+else
+if ~(exist('WantScatter','var'))
+WantScatter=false;
+end
+end
+
+if isfunction
+ConfidenceRange = CheckVararginPairs('ConfidenceRange', '', varargin{:});
+else
+if ~(exist('ConfidenceRange','var'))
+ConfidenceRange='';
+end
+end
+
+if isfunction
+ConfidenceColor = CheckVararginPairs('ConfidenceColor', [200,200,200]/255, varargin{:});
+else
+if ~(exist('ConfidenceColor','var'))
+ConfidenceColor=[200,200,200]/255;
+end
+end
+
+if isfunction
+ConfidenceColor_FaceAlpha = CheckVararginPairs('ConfidenceColor_FaceAlpha', 1, varargin{:});
+else
+if ~(exist('ConfidenceColor_FaceAlpha','var'))
+ConfidenceColor_FaceAlpha=1;
+end
+end
+
+if isfunction
+ConfidenceColor_EdgeAlpha = CheckVararginPairs('ConfidenceColor_EdgeAlpha', 0, varargin{:});
+else
+if ~(exist('ConfidenceColor_EdgeAlpha','var'))
+ConfidenceColor_EdgeAlpha=0;
+end
+end
+
+if isfunction
+MarkerSize = CheckVararginPairs('MarkerSize', 12, varargin{:});
+else
+if ~(exist('MarkerSize','var'))
+MarkerSize=12;
+end
+end
 %%
 ValueNames_Cat = categorical(ValueNames);
 ValueNames_Cat = reordercats(ValueNames_Cat,ValueNames);
@@ -289,18 +345,28 @@ ts = tinv(1-SignificanceValue/2,Bar_Count-1);
 BarCI = ts.*Bar_STE;
 
 %%
+this_BarWidth = 0.8;
+if ~isempty(BarWidth)
+this_BarWidth = (0.95/BarWidth)*(NumBars);
+end
+%%
 
-b_Plot=bar(ValueNames_Cat,Bar_Mean);
+b_Plot=bar(ValueNames_Cat,Bar_Mean,this_BarWidth);
 Num_b_Plot = length(b_Plot);
 % if NumBars == 1
 %     Num_b_Plot = NumBars;
 % end
 for bidx = 1:Num_b_Plot
 b_Plot(bidx).FaceColor="flat";
+if WantScatter
+b_Plot(bidx).FaceColor="none";
+b_Plot(bidx).LineStyle="none";
+end
 b_Plot(bidx).Horizontal=WantHorizontal;
 end
 
 if ~isempty(ColorOrder)
+
     if IsGrouped
         for bidx = 1:Num_b_Plot
         b_Plot(bidx).CData=repmat(ColorOrder(bidx,:),[NumGroups,1]);
@@ -357,14 +423,43 @@ for bidx = 1:NumBars
 end
 end
 
+% if NumBars > 1
+% Bar_Difference = abs(mean(Bar_Top(:,1)-Bar_Top(:,2)));
+% disp(Bar_Top)
+% else
+% Bar_Difference = abs(mean(Bar_Top(1)-Bar_Top(2)));
+% end
+Bar_Difference = 1;
+
+aaa = gca;
+YLimits_Bar = aaa.YLim;
+ylim(YLimits_Bar);
+
+drawnow;
+
+UpperValue_Confidence = max(Bar_Top(:))+Bar_Difference;
+LowerValue_Confidence = min(Bar_Top(:))-Bar_Difference;
+
 if WantHorizontal
 ErrorBar_X = Bar_Mean;
 ErrorBar_Y = Bar_Top';
 ErrorBar_Orientation = "horizontal";
+if ~isempty(ConfidenceRange)
+Patch_Y=[LowerValue_Confidence;Bar_Top(:);UpperValue_Confidence;UpperValue_Confidence;flipud(Bar_Top(:));LowerValue_Confidence];
+Confidence_Negative = cell2mat(cellfun(@(x) x(:,1),ConfidenceRange,'UniformOutput',false));
+Confidence_Positive = cell2mat(cellfun(@(x) x(:,2),ConfidenceRange,'UniformOutput',false));
+Patch_X=[Confidence_Negative(1);Confidence_Negative;Confidence_Negative(end);Confidence_Positive(end);flipud(Confidence_Positive);Confidence_Positive(end)];
+end
 else
 ErrorBar_X = Bar_Top';
 ErrorBar_Y = Bar_Mean;
 ErrorBar_Orientation = "vertical";
+if ~isempty(ConfidenceRange)
+Confidence_Negative = cell2mat(cellfun(@(x) x(:,1),ConfidenceRange,'UniformOutput',false));
+Confidence_Positive = cell2mat(cellfun(@(x) x(:,2),ConfidenceRange,'UniformOutput',false));
+Patch_Y=[Confidence_Negative(1);Confidence_Negative;Confidence_Negative(end);Confidence_Positive(end);flipud(Confidence_Positive);Confidence_Positive(end)];
+Patch_X=[LowerValue_Confidence;Bar_Top(:);UpperValue_Confidence;UpperValue_Confidence;flipud(Bar_Top(:));LowerValue_Confidence];
+end
 end
 
 b_Error = errorbar(ErrorBar_X,ErrorBar_Y,this_ErrorMetric,this_ErrorMetric,ErrorBar_Orientation,'LineWidth',ErrorLineWidth,'CapSize',ErrorCapSize);
@@ -372,8 +467,34 @@ b_Error = errorbar(ErrorBar_X,ErrorBar_Y,this_ErrorMetric,this_ErrorMetric,Error
 for bidx = 1:Num_b_Plot
 b_Error(bidx).Color=[0 0 0];
 b_Error(bidx).LineStyle='none';
+if WantScatter
+b_Error(bidx).Marker='.';
+b_Error(bidx).MarkerSize=MarkerSize;
+if ~isempty(ColorOrder)
+b_Error(bidx).MarkerEdgeColor=ColorOrder(bidx,:);
+b_Error(bidx).MarkerFaceColor=ColorOrder(bidx,:);
 end
+end
+end
+
+if ~isempty(ConfidenceRange)
+% disp(Patch_X);
+% disp(Patch_Y);
+p_Confidence=patch(Patch_X,Patch_Y,'r');
+p_Confidence.FaceColor=ConfidenceColor;
+p_Confidence.EdgeColor=ConfidenceColor;
+p_Confidence.FaceAlpha=ConfidenceColor_FaceAlpha;
+p_Confidence.EdgeAlpha=ConfidenceColor_EdgeAlpha;
+set(gca,'children',flipud(get(gca,'children')))
+end
+
 hold off
+
+if ~isempty(GroupNames) && WantScatter
+for bidx = 1:Num_b_Plot
+b_Error(bidx).DisplayName=GroupNames{bidx};
+end
+end
 
 if ~isempty(SignificanceTable)
 cgg_plotSignificanceBar(b_Plot,b_Error,SignificanceTable,'SignificanceFontSize',SignificanceFontSize,'WantHorizontal',WantHorizontal,'YRange',YRange);
@@ -401,10 +522,19 @@ end
 end
 
 if ~isempty(GroupNames) && WantLegend
+
+    if WantScatter
+    if isempty(Legend_Size)
+        legend(b_Error,'Location','best');
+    else
+        legend(b_Error,'Location','best','FontSize',Legend_Size);
+    end
+    else
     if isempty(Legend_Size)
         legend(b_Plot,'Location','best');
     else
         legend(b_Plot,'Location','best','FontSize',Legend_Size);
+    end
     end
 end
 

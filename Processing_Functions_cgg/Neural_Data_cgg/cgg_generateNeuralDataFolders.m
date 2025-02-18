@@ -1,8 +1,27 @@
 function [outdatadir_WideBand,outdatadir_LFP,outdatadir_Spike,...
-    outdatadir_MUA] = cgg_generateNeuralDataFolders(...
-    outdatadir,SessionName,ExperimentName,probe_area)
+    outdatadir_MUA,outdatadir_Raw,outdatadir_Notch] = ...
+    cgg_generateNeuralDataFolders(outdatadir,SessionName, ...
+    ExperimentName,probe_area,varargin)
 %CGG_GENERATENEURALDATAFOLDERS Summary of this function goes here
 %   Detailed explanation goes here
+
+isfunction=exist('varargin','var');
+
+if isfunction
+keep_raw = CheckVararginPairs('keep_raw', false, varargin{:});
+else
+if ~(exist('keep_raw','var'))
+keep_raw=false;
+end
+end
+
+if isfunction
+keep_notch = CheckVararginPairs('keep_notch', false, varargin{:});
+else
+if ~(exist('keep_notch','var'))
+keep_notch=false;
+end
+end
 
 % Make the Experiment and Session output folder names.
 outdatadir_Experiment=[outdatadir, filesep, ExperimentName];
@@ -31,6 +50,9 @@ outdatadir_WideBand=[outdatadir_Area, filesep, 'WideBand'];
 outdatadir_LFP=[outdatadir_Area, filesep, 'LFP'];
 outdatadir_Spike=[outdatadir_Area, filesep, 'Spike'];
 outdatadir_MUA=[outdatadir_Area, filesep, 'MUA'];
+
+outdatadir_Raw=[outdatadir_Area, filesep, 'Raw'];
+outdatadir_Notch=[outdatadir_Area, filesep, 'Notch'];
 
 %%
 
@@ -66,6 +88,18 @@ if ~exist(outdatadir_Spike, 'dir')
 end
 if ~exist(outdatadir_MUA, 'dir')
     mkdir(outdatadir_MUA);
+end
+
+if keep_raw
+if ~exist(outdatadir_Raw, 'dir')
+    mkdir(outdatadir_Raw);
+end
+end
+
+if keep_notch
+if ~exist(outdatadir_Notch, 'dir')
+    mkdir(outdatadir_Notch);
+end
 end
 
 end

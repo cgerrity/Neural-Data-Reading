@@ -47,6 +47,8 @@ switch VariableSet
         PlotSubFolder = 'Dimension';
     case 'Trial Outcome'
         PlotSubFolder = 'Trial Outcome';
+    case 'Adaptive Beta'
+        PlotSubFolder = 'Adaptive Beta';
     case 'ZZZZZZ'
         PlotSubFolder = 'ZZZZZZ';
     otherwise
@@ -108,6 +110,8 @@ switch VariableSet
         Target_Fun=@(x) cgg_loadTargetArray(x,'Dimension',Dimension);
     case 'Trial Outcome'
         Target_Fun=@(x) double(cgg_loadTargetArray(x,'CorrectTrial',true));
+    case 'Adaptive Beta'
+        Target_Fun=@(x) cgg_loadTargetArray(x,'OtherValue','AdaptiveBeta');
     case 'ZZZZZ'
         Target_Fun=@(x) cgg_loadTargetArray(x,'OtherValue','R');
     otherwise

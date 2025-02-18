@@ -14,6 +14,21 @@ SmoothType='gaussian';
 end
 end
 
+if isfunction
+PassBand = CheckVararginPairs('PassBand', NaN, varargin{:});
+else
+if ~(exist('PassBand','var'))
+PassBand=NaN;
+end
+end
+
+if isfunction
+SamplingFrequency = CheckVararginPairs('SamplingFrequency', 1000, varargin{:});
+else
+if ~(exist('SamplingFrequency','var'))
+SamplingFrequency=1000;
+end
+end
 %%
 
 this_trial_file_name=...
@@ -24,7 +39,16 @@ if exist(this_trial_file_name,'file')
     this_fields = fieldnames(m_trial);
     m_trial=m_trial.(this_fields{1});
     this_trial=m_trial.trial{1};
+    if strcmp(SmoothType,'None')
+        if ~isnan(PassBand)
+            % FIXME: Add banpdass filtering function and ensure it operates
+            % along the correct dimension (DO NOT FILTER ALONG CHANNELS)
+            this_trial_smooth = bandpass(this_trial',PassBand,SamplingFrequency)';
+            % Do bandpass filtering with SamplingFrequency
+        end
+    else
     this_trial_smooth=smoothdata(this_trial,2,SmoothType,Smooth_Factor);
+    end
     % this_trial_smooth=smoothdata(this_trial,2,'movmean',Smooth_Factor);
     OutData=this_trial_smooth(:,Start_IDX:End_IDX);
     this_trial=this_trial(1,Start_IDX:End_IDX);

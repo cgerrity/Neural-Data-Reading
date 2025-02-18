@@ -28,10 +28,10 @@ end
 end
 
 if isfunction
-maxworkerMiniBatchSize = CheckVararginPairs('maxworkerMiniBatchSize', 64, varargin{:});
+maxworkerMiniBatchSize = CheckVararginPairs('maxworkerMiniBatchSize', 8, varargin{:});
 else
 if ~(exist('maxworkerMiniBatchSize','var'))
-maxworkerMiniBatchSize=64;
+maxworkerMiniBatchSize=8;
 end
 end
 
@@ -105,6 +105,36 @@ else
 if ~(exist('WantRemovalTableAcrossFolds','var'))
 WantRemovalTableAcrossFolds=false;
 end
+end
+
+if isfunction
+PauseTime_Long = CheckVararginPairs('PauseTime_Long', 60, varargin{:});
+else
+if ~(exist('PauseTime_Long','var'))
+PauseTime_Long=60;
+end
+end
+
+if isfunction
+PauseTime_Short = CheckVararginPairs('PauseTime_Short', 15, varargin{:});
+else
+if ~(exist('PauseTime_Short','var'))
+PauseTime_Short=15;
+end
+end
+
+if isfunction
+WantDelay = CheckVararginPairs('WantDelay', true, varargin{:});
+else
+if ~(exist('WantDelay','var'))
+WantDelay=true;
+end
+end
+%%
+
+if ~WantDelay
+PauseTime_Long = 1;
+PauseTime_Short = 1;
 end
 %%
 Target = cfg_Encoder.Target;
@@ -286,6 +316,8 @@ if ~istable(IA_Table)
 return
 end
 
+pause(randi(PauseTime_Long)-1);
+
 if ~StopChecking
 cgg_saveImportanceAnalysis(IA_Table,EpochDir.Results,...
     RemovalType,Fold,SessionName,'SaveTerm',SaveTerm);
@@ -301,6 +333,8 @@ end
 end
 
 [IA_Table_Accuracy] = cgg_procImportanceAnalysisMetric(IA_Table,ClassNames,'IsQuaddle',IsQuaddle,'MatchType',MatchType);
+
+pause(randi(PauseTime_Short)-1);
 
 cgg_saveImportanceAnalysis(IA_Table_Accuracy,EpochDir.Results,...
     RemovalType,Fold,SessionName,'MatchType',MatchType, ...

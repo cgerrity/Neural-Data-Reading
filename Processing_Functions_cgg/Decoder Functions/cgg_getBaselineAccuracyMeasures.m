@@ -1,8 +1,16 @@
-function [MostCommon,RandomChance] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchType,IsQuaddle)
+function [MostCommon,RandomChance] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchType,IsQuaddle,varargin)
 %CGG_GETBASELINEACCURACYMEASURES Summary of this function goes here
 %   Detailed explanation goes here
 
+isfunction=exist('varargin','var');
+
+if isfunction
+NumIterRand = CheckVararginPairs('NumIterRand', 2000, varargin{:});
+else
+if ~(exist('NumIterRand','var'))
 NumIterRand=2000;
+end
+end
 
 NumDimensions=length(ClassNames);
 [Dim1,~]=size(TrueValue);

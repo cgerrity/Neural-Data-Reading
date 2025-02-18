@@ -16,6 +16,7 @@ Activity_Type=cfg_param.Activity_Type;
 Smooth_Factor=cfg_param.Smooth_Factor;
 SmoothType=cfg_param.SmoothType;
 want_all_Probes=cfg_param.want_all_Probes;
+PassBand=cfg_param.PassBand;
 
 Frame_Event_Selection_Data=cfg_param.Frame_Event_Selection_Data;
 Frame_Event_Selection_Location_Data=cfg_param.Frame_Event_Selection_Location_Data;
@@ -129,11 +130,13 @@ fullfilename = cgg_generateActivityFullFileName('inputfolder',inputfolder,'outda
 
 %% Get the segmented data and smooth it
 
+SamplingFrequency=mode(SF_Data);
+
 [Segmented_Data,TrialNumbers_Data,~] = cgg_getAllTrialDataFromTimeSegments_v2(Start_IDX_Data,End_IDX_Data,fullfilename,Smooth_Factor,'inputfolder',inputfolder,...
-    'outdatadir',outdatadir,'SmoothType',SmoothType);
+    'outdatadir',outdatadir,'SmoothType',SmoothType,'PassBand',PassBand,'SamplingFrequency',SamplingFrequency);
 
 [Segmented_Baseline,TrialNumbers_Baseline,~] = cgg_getAllTrialDataFromTimeSegments_v2(Start_IDX_Base,End_IDX_Base,fullfilename,Smooth_Factor,'inputfolder',inputfolder,...
-    'outdatadir',outdatadir,'SmoothType',SmoothType);
+    'outdatadir',outdatadir,'SmoothType',SmoothType,'PassBand',PassBand,'SamplingFrequency',SamplingFrequency);
 
 %% Detrend the data according to the baseline period
 
@@ -166,7 +169,6 @@ MatchTrialNumber_FullBaseline=MatchTrialNumber_Baseline;
 
 TrialNumbers=MatchTrialNumber_Data;
 InData=Norm_Data;
-SamplingFrequency=mode(SF_Data);
 
 [Significant_Channels,NotSignificant_Channels] = cgg_procChannelSelectionFromRegression(InData,trialVariables,SamplingFrequency,Regression_SP,TrialNumbers,Significance_Value,Minimum_Length,GainValue,LossValue,cfg_directories,'Connected_Channels',Connected_Channels);
 

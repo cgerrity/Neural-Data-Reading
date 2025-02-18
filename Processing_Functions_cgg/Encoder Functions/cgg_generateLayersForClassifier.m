@@ -56,6 +56,7 @@ Layers_Classifier=cell(NumDimensions,1);
 for didx=1:NumDimensions
 
     this_LayerName_LSTM=sprintf("LSTM_Dim_%d",didx);
+    this_LayerName_GRU=sprintf("GRU_Dim_%d",didx);
     this_LayerName_FullyConnected=sprintf("fc_Dim_%d",didx);
     this_LayerName_Activation=sprintf("activation_Dim_%d",didx);
     this_LayerName_output=sprintf("softmax_Tuning_Dim_%d",didx);
@@ -65,6 +66,7 @@ for didx=1:NumDimensions
         case 'CTC'
             this_NumClasses=NumClasses(didx)+1;
             this_LayerName_LSTM=this_LayerName_LSTM + "_CTC";
+            this_LayerName_GRU=this_LayerName_GRU + "_CTC";
             this_LayerName_FullyConnected=this_LayerName_FullyConnected + "_CTC";
             this_LayerName_Activation=this_LayerName_Activation + "_CTC";
             this_LayerName_output=this_LayerName_output + "_CTC";
@@ -78,6 +80,7 @@ for didx=1:NumDimensions
     if IsDeepClassifier
         for dpidx = 1:Depth-1
             this_Depth_LayerName_LSTM = this_LayerName_LSTM + sprintf("_Layer-%d",dpidx);
+            this_Depth_LayerName_GRU = this_LayerName_GRU + sprintf("_Layer-%d",dpidx);
             this_Depth_LayerName_Dropout = this_LayerName_Dropout + sprintf("_Layer-%d",dpidx);
             this_Depth_LayerName_FullyConnected = this_LayerName_FullyConnected + sprintf("_Layer-%d",dpidx);
             this_Depth_LayerName_Activation = this_LayerName_Activation + sprintf("_Layer-%d",dpidx);
@@ -92,6 +95,9 @@ for didx=1:NumDimensions
             switch NetworkType
                 case 'LSTM'
                     this_Layer_Before = [lstmLayer(this_HiddenSize, 'Name',this_Depth_LayerName_LSTM)];
+                    this_Layer_After = [];
+                case 'GRU'
+                    this_Layer_Before = [gruLayer(this_HiddenSize, 'Name',this_Depth_LayerName_GRU)];
                     this_Layer_After = [];
                 case 'Feedforward'
                     this_Layer_Before = [fullyConnectedLayer(this_HiddenSize,"Name",this_Depth_LayerName_FullyConnected)];
@@ -111,6 +117,7 @@ for didx=1:NumDimensions
     end
 
     this_Out_LayerName_LSTM = this_LayerName_LSTM + "_Layer-Out";
+    this_Out_LayerName_GRU = this_LayerName_GRU + "_Layer-Out";
     this_Out_LayerName_Dropout = this_LayerName_Dropout + "_Layer-Out";
     this_Out_LayerName_FullyConnected = this_LayerName_FullyConnected + "_Layer-Out";
     this_Out_LayerName_Activation = this_LayerName_Activation + "_Layer-Out";
@@ -125,6 +132,9 @@ for didx=1:NumDimensions
     switch NetworkType
         case 'LSTM'
             this_Layer_Before = [lstmLayer(this_HiddenSize, 'Name',this_Out_LayerName_LSTM)];
+            this_Layer_After = [];
+        case 'GRU'
+            this_Layer_Before = [gruLayer(this_HiddenSize, 'Name',this_Out_LayerName_GRU)];
             this_Layer_After = [];
         case 'Feedforward'
             this_Layer_Before = [fullyConnectedLayer(this_HiddenSize,"Name",this_Out_LayerName_FullyConnected)];

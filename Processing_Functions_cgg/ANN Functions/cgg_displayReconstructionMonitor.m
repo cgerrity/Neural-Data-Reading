@@ -9,10 +9,16 @@ this_Area = randi(NumAreas);
 % this_Batch = randi(NumBatches);
 this_Batch = BatchIDX;
 
+IsDataWidth1 = size(Y_Reconstruction_Training,2) == 1;
+
 this_Y_Reconstruction_Training = Y_Reconstruction_Training(this_Channel,:,this_Area,this_Batch,:);
 this_Y_Reconstruction_Training = double(extractdata(this_Y_Reconstruction_Training));
 this_Y_Reconstruction_Training = squeeze(this_Y_Reconstruction_Training);
-this_Y_Reconstruction_Training = num2cell(this_Y_Reconstruction_Training,1);
+if IsDataWidth1
+    this_Y_Reconstruction_Training = num2cell(this_Y_Reconstruction_Training,2);
+else
+    this_Y_Reconstruction_Training = num2cell(this_Y_Reconstruction_Training,1);
+end
 
 this_T_Reconstruction_Training = T_Reconstruction_Training(this_Channel,:,this_Area,this_Batch,:);
 this_T_Reconstruction_Training = double(extractdata(this_T_Reconstruction_Training));
@@ -22,7 +28,11 @@ this_T_Reconstruction_Training = num2cell(this_T_Reconstruction_Training,1);
 this_Y_Reconstruction_Validation = Y_Reconstruction_Validation(this_Channel,:,this_Area,this_Batch,:);
 this_Y_Reconstruction_Validation = double(extractdata(this_Y_Reconstruction_Validation));
 this_Y_Reconstruction_Validation = squeeze(this_Y_Reconstruction_Validation);
-this_Y_Reconstruction_Validation = num2cell(this_Y_Reconstruction_Validation,1);
+if IsDataWidth1
+    this_Y_Reconstruction_Validation = num2cell(this_Y_Reconstruction_Validation,2);
+else
+    this_Y_Reconstruction_Validation = num2cell(this_Y_Reconstruction_Validation,1);
+end
 
 this_T_Reconstruction_Validation = T_Reconstruction_Validation(this_Channel,:,this_Area,this_Batch,:);
 this_T_Reconstruction_Validation = double(extractdata(this_T_Reconstruction_Validation));

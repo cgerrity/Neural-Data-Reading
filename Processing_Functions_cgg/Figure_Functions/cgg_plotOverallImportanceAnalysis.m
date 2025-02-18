@@ -5,10 +5,10 @@ function cgg_plotOverallImportanceAnalysis(RemovalPlotTable,cfg,varargin)
 isfunction=exist('varargin','var');
 
 if isfunction
-Legend_Size = CheckVararginPairs('Legend_Size', 18, varargin{:});
+Legend_Size = CheckVararginPairs('Legend_Size', 42, varargin{:});
 else
 if ~(exist('Legend_Size','var'))
-Legend_Size=18;
+Legend_Size=42;
 end
 end
 
@@ -61,10 +61,10 @@ end
 end
 
 if isfunction
-SmoothWindow_Area = CheckVararginPairs('SmoothWindow_Area', [0,10], varargin{:});
+SmoothWindow_Area = CheckVararginPairs('SmoothWindow_Area', [40,0], varargin{:});
 else
 if ~(exist('SmoothWindow_Area','var'))
-SmoothWindow_Area=[0,10];
+SmoothWindow_Area=[40,0];
 end
 end
 
@@ -107,6 +107,72 @@ if ~(exist('WantCI','var'))
 WantCI=false;
 end
 end
+
+if isfunction
+Title_Size = CheckVararginPairs('Title_Size', 50, varargin{:});
+else
+if ~(exist('Title_Size','var'))
+Title_Size=50;
+end
+end
+
+if isfunction
+Y_Name_Size = CheckVararginPairs('Y_Name_Size', 42, varargin{:});
+else
+if ~(exist('Y_Name_Size','var'))
+Y_Name_Size=42;
+end
+end
+
+if isfunction
+X_Name_Size = CheckVararginPairs('X_Name_Size', 56, varargin{:});
+else
+if ~(exist('X_Name_Size','var'))
+X_Name_Size=56;
+end
+end
+
+if isfunction
+Y_Tick_Label_Size = CheckVararginPairs('Y_Tick_Label_Size', 42, varargin{:});
+else
+if ~(exist('Y_Tick_Label_Size','var'))
+Y_Tick_Label_Size=42;
+end
+end
+
+if isfunction
+X_Tick_Label_Size = CheckVararginPairs('X_Tick_Label_Size', 42, varargin{:});
+else
+if ~(exist('X_Tick_Label_Size','var'))
+X_Tick_Label_Size=42;
+end
+end
+
+if isfunction
+LabelAngle = CheckVararginPairs('LabelAngle', 30, varargin{:});
+else
+if ~(exist('LabelAngle','var'))
+LabelAngle=30;
+end
+end
+
+if isfunction
+ErrorCapSize = CheckVararginPairs('ErrorCapSize', 50, varargin{:});
+else
+if ~(exist('ErrorCapSize','var'))
+ErrorCapSize=50;
+end
+end
+
+if isfunction
+Line_Width = CheckVararginPairs('Line_Width', 4, varargin{:});
+else
+if ~(exist('Line_Width','var'))
+Line_Width=4;
+end
+end
+
+%%
 
 X_Name = 'Number of Channels Removed';
 
@@ -272,9 +338,17 @@ end
 
 %%
 
-this_PlotTitle = sprintf('%s Area Ranking',this_RemovalType);
+% this_PlotTitle = sprintf('%s Area Ranking',this_RemovalType);
+this_PlotTitle = this_Name;
 
-[InFigure,~,~] = cgg_plotLinePlot(AreaPlot_X(:,nidx),AreaRelativePlot_Y(:,nidx),'ErrorMetric',AreaPlot_Error(:,nidx),'PlotTitle',this_PlotTitle,'X_Name',X_Name,'Y_Name',Y_Name_AreaRelative,'PlotNames',SingleAreaPlotNames,'Legend_Size',Legend_Size,'PlotColors',PlotColors);
+[InFigure,~,~] = cgg_plotLinePlot(AreaPlot_X(:,nidx),AreaRelativePlot_Y(:,nidx), ...
+    'ErrorMetric',AreaPlot_Error(:,nidx),'PlotTitle',this_PlotTitle, ...
+    'X_Name',X_Name,'Y_Name',Y_Name_AreaRelative, ...
+    'PlotNames',SingleAreaPlotNames,'Legend_Size',Legend_Size, ...
+    'PlotColors',PlotColors,'Title_Size',Title_Size, ...
+    'Y_Tick_Label_Size',Y_Tick_Label_Size, ...
+    'X_Tick_Label_Size',X_Tick_Label_Size, ...
+    'Y_Name_Size',Y_Name_Size,'X_Name_Size',X_Name_Size);
 
 if ~any(isnan(YLimits_Area))
 ylim(YLimits_Area);
@@ -294,9 +368,17 @@ close all
 
 %%
 
-this_PlotTitle = sprintf('%s Area Ranking',this_RemovalType);
+% this_PlotTitle = sprintf('%s Area Ranking',this_RemovalType);
+this_PlotTitle = this_Name;
 
-[InFigure,~,~] = cgg_plotLinePlot(AreaPlot_X(:,nidx),AreaPlot_Y(:,nidx),'ErrorMetric',AreaPlot_Error(:,nidx),'PlotTitle',this_PlotTitle,'X_Name',X_Name,'Y_Name',Y_Name_Area,'PlotNames',SingleAreaPlotNames,'Legend_Size',Legend_Size,'PlotColors',PlotColors);
+[InFigure,~,~] = cgg_plotLinePlot(AreaPlot_X(:,nidx),AreaPlot_Y(:,nidx), ...
+    'ErrorMetric',AreaPlot_Error(:,nidx),'PlotTitle',this_PlotTitle, ...
+    'X_Name',X_Name,'Y_Name',Y_Name_Area, ...
+    'PlotNames',SingleAreaPlotNames,'Legend_Size',Legend_Size, ...
+    'PlotColors',PlotColors,'Title_Size',Title_Size, ...
+    'Y_Tick_Label_Size',Y_Tick_Label_Size, ...
+    'X_Tick_Label_Size',X_Tick_Label_Size,'Y_Name_Size',Y_Name_Size, ...
+    'X_Name_Size',X_Name_Size);
 
 ylim([0,1]);
 
@@ -314,7 +396,20 @@ close all
 
 %%
 
-[InFigure,~,~] = cgg_plotHeatMapOverTime(Plot_WindowAccuracy{nidx},'Time_Start',Time_Start,'SamplingRate',SamplingRate,'DataWidth',DataWidth,'WindowStride',WindowStride,'Y_Name',X_Name,'Z_Name',Y_Name,'PlotTitle','Importance Analysis','ZLimits',YLimits,'Y_Ticks',NaN,'YRange',Plot_X{nidx},'Y_TickLabel',NaN,'Tick_Size_Time',Tick_Size_Time);
+% this_PlotTitle = sprintf('%s Area Ranking',this_RemovalType);
+this_PlotTitle = char(this_Name);
+Title_Size_HeatMap = 70;
+% X_Name_Size_HeatMap = 80;
+% Y_Name_Size_HeatMap = 80;
+[InFigure,~,~] = cgg_plotHeatMapOverTime(Plot_WindowAccuracy{nidx},...
+    'Time_Start',Time_Start,'SamplingRate',SamplingRate, ...
+    'DataWidth',DataWidth,'WindowStride',WindowStride, ...
+    'Y_Name',X_Name,'Z_Name',Y_Name,'PlotTitle',this_PlotTitle, ...
+    'ZLimits',YLimits,'Y_Ticks',NaN,'YRange',Plot_X{nidx}, ...
+    'Y_TickLabel',NaN,'Tick_Size_Time',Tick_Size_Time, ...
+    'Title_Size',Title_Size_HeatMap,'Y_Tick_Label_Size',Y_Tick_Label_Size, ...
+    'X_Tick_Label_Size',X_Tick_Label_Size,'Y_Name_Size',Y_Name_Size, ...
+    'X_Name_Size',X_Name_Size);
 
 % hold on
 % Plot_Z = ones(size(this_WindowAccuracyMaxTime));
@@ -336,9 +431,16 @@ close all
 end
 %%
 
-this_PlotTitle = sprintf('%s Importance Analysis',this_RemovalType);
+% this_PlotTitle = sprintf('%s Importance Analysis',this_RemovalType);
+this_PlotTitle = 'Peak Accuracy';
 
-[InFigure,~,~] = cgg_plotLinePlot(Plot_X,Plot_Y,'ErrorMetric',Plot_Error,'PlotTitle',this_PlotTitle,'X_Name',X_Name,'Y_Name',Y_Name,'PlotNames',PlotNames,'Legend_Size',Legend_Size);
+[InFigure,~,~] = cgg_plotLinePlot(Plot_X,Plot_Y, ...
+    'ErrorMetric',Plot_Error,'PlotTitle',this_PlotTitle, ...
+    'X_Name',X_Name,'Y_Name',Y_Name,'PlotNames',PlotNames, ...
+    'Legend_Size',Legend_Size,'Title_Size',Title_Size, ...
+    'Y_Tick_Label_Size',Y_Tick_Label_Size, ...
+    'X_Tick_Label_Size',X_Tick_Label_Size,'Y_Name_Size',Y_Name_Size, ...
+    'X_Name_Size',X_Name_Size);
 ylim(YLimits);
 
 %%
@@ -377,7 +479,14 @@ PlotColors_Multiple = cell(1,NumAreas*NumNames);
         end
     end
 
-[InFigure,~,~] = cgg_plotLinePlot(AreaPlot_X,AreaRelativePlot_Y,'ErrorMetric',AreaPlot_Error,'PlotTitle',this_PlotTitle,'X_Name',X_Name,'Y_Name',Y_Name_AreaRelative,'PlotNames',AreaPlotNames,'Legend_Size',Legend_Size,'PlotColors',PlotColors_Multiple);
+[InFigure,~,~] = cgg_plotLinePlot(AreaPlot_X,AreaRelativePlot_Y, ...
+    'ErrorMetric',AreaPlot_Error,'PlotTitle',this_PlotTitle, ...
+    'X_Name',X_Name,'Y_Name',Y_Name_AreaRelative, ...
+    'PlotNames',AreaPlotNames,'Legend_Size',Legend_Size, ...
+    'PlotColors',PlotColors_Multiple,'Title_Size',Title_Size, ...
+    'Y_Tick_Label_Size',Y_Tick_Label_Size, ...
+    'X_Tick_Label_Size',X_Tick_Label_Size,'Y_Name_Size',Y_Name_Size, ...
+    'X_Name_Size',X_Name_Size);
 
 if ~any(isnan(YLimits_Area))
 ylim(YLimits_Area);
@@ -397,7 +506,13 @@ close all
 
 %%
 
-[InFigure,~,~] = cgg_plotLinePlot(AreaPlot_X,AreaPlot_Y,'ErrorMetric',AreaPlot_Error,'PlotTitle',this_PlotTitle,'X_Name',X_Name,'Y_Name',Y_Name_Area,'PlotNames',AreaPlotNames,'Legend_Size',Legend_Size,'PlotColors',PlotColors_Multiple);
+[InFigure,~,~] = cgg_plotLinePlot(AreaPlot_X,AreaPlot_Y, ...
+    'ErrorMetric',AreaPlot_Error,'PlotTitle',this_PlotTitle, ...
+    'X_Name',X_Name,'Y_Name',Y_Name_Area,'PlotNames',AreaPlotNames, ...
+    'Legend_Size',Legend_Size,'PlotColors',PlotColors_Multiple, ...
+    'Title_Size',Title_Size,'Y_Tick_Label_Size',Y_Tick_Label_Size, ...
+    'X_Tick_Label_Size',X_Tick_Label_Size,'Y_Name_Size',Y_Name_Size, ...
+    'X_Name_Size',X_Name_Size);
 
 ylim([0,1]);
 
@@ -415,7 +530,28 @@ close all
 
 %% Bar
 
-[~,~,InFigure] = cgg_plotBarGraphWithError(AreaRelativeBar,Names,'X_Name','Area','Y_Name','','PlotTitle','','IsGrouped',true,'GroupNames',SingleAreaPlotNames,'ErrorMetric',AreaRelativeBar_Error,'WantLegend',true,'ColorOrder',cell2mat(PlotColors'));
+[~,~,InFigure] = cgg_plotBarGraphWithError(AreaRelativeBar,Names, ...
+    'X_Name','','Y_Name',Y_Name_AreaRelative, ...
+    'PlotTitle','','IsGrouped',true, ...
+    'GroupNames',SingleAreaPlotNames, ...
+    'ErrorMetric',AreaRelativeBar_Error,'WantLegend',true, ...
+    'ColorOrder',cell2mat(PlotColors'),'Title_Size',Title_Size, ...
+    'Y_Tick_Label_Size',Y_Tick_Label_Size, ...
+    'X_TickFontSize',X_Tick_Label_Size,'ErrorLineWidth',Line_Width, ...
+    'ErrorCapSize',ErrorCapSize,'LabelAngle',LabelAngle, ...
+    'Legend_Size',Legend_Size,'Y_Name_Size',Y_Name_Size, ...
+    'X_Name_Size',X_Name_Size);
+
+YLimits_Bar = [-0.03,0.03];
+Y_Tick_Size = 0.01;
+
+Current_Axis = gca;
+Current_Axis.YAxis.FontSize=Y_Tick_Label_Size;
+Y_Ticks = YLimits_Bar(1):Y_Tick_Size:YLimits_Bar(2);
+
+if ~(isempty(Y_Ticks) || any(isnan(Y_Ticks)))
+yticks(Y_Ticks);
+end
 
 %%
 cfg_Results = cgg_generateDecodingFolders('TargetDir',cfg.ResultsDir,...
@@ -430,9 +566,17 @@ close all
 
 %%
 
-this_PlotTitle = sprintf('%s Peak Accuracy Time',this_RemovalType);
+% this_PlotTitle = sprintf('%s Peak Accuracy Time',this_RemovalType);
+this_PlotTitle = 'Time of Peak Accuracy';
 
-[InFigure,~,~] = cgg_plotLinePlot(Plot_X,Plot_WindowAccuracyTime,'ErrorMetric',Plot_WindowAccuracyTime_Error,'PlotTitle',this_PlotTitle,'X_Name',X_Name,'Y_Name',Y_Name_Time,'PlotNames',PlotNames,'Legend_Size',Legend_Size);
+[InFigure,~,~] = cgg_plotLinePlot(Plot_X,Plot_WindowAccuracyTime, ...
+    'ErrorMetric',Plot_WindowAccuracyTime_Error, ...
+    'PlotTitle',this_PlotTitle,'X_Name',X_Name, ...
+    'Y_Name',Y_Name_Time,'PlotNames',PlotNames, ...
+    'Legend_Size',Legend_Size,'Title_Size',Title_Size, ...
+    'Y_Tick_Label_Size',Y_Tick_Label_Size, ...
+    'X_Tick_Label_Size',X_Tick_Label_Size,'Y_Name_Size',Y_Name_Size, ...
+    'X_Name_Size',X_Name_Size);
 if ~any(isnan(YLimits_Time))
 ylim(YLimits_Time);
 end

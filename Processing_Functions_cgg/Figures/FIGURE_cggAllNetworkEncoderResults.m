@@ -13,39 +13,37 @@ end
 
 EpochName = 'Decision';
 WantAnalysis = true;
+WantDelay = true;
 
-% FilterColumn={'Gain','Loss'};
-% FilterColumn={'All'};
-% FilterColumn={'Dimensionality'};
-% FilterColumn={'Learned'};
-% FilterColumn={'Correct Trial'};
-% FilterColumn={'Gain','Loss','Dimensionality'};
-% FilterColumn={'Correct Trial','Dimensionality'};
-FilterColumn={'Shared Feature Coding'};
-% FilterColumn={'Trials From Learning Point Category'};
+% FilterColumn={'Gain','Loss'}; Split_TableRowNames = {'2/-3','2/-1','3/-3','3/-1'};
+FilterColumn={'All'}; Split_TableRowNames = {'Overall'};
+% FilterColumn={'Dimensionality'}; Split_TableRowNames = {'1-D','2-D','3-D'};
+% FilterColumn={'Learned'}; Split_TableRowNames = {'Not Learned','Learning','Learned'};
+% FilterColumn={'Correct Trial'}; Split_TableRowNames = {'Error','Correct'};
+% FilterColumn={'Gain','Loss','Dimensionality'}; Split_TableRowNames = {'1-D 2/-3','2-D 2/-3','3-D 2/-3','1-D 2/-1','2-D 2/-1','3-D 2/-1','1-D 3/-3','2-D 3/-3','3-D 3/-3','1-D 3/-1','2-D 3/-1','3-D 3/-1'};
+% FilterColumn={'Correct Trial','Dimensionality'}; Split_TableRowNames = {'1-D Error','2-D Error','3-D Error','1-D Correct','2-D Correct','3-D Correct'};
+% FilterColumn={'Shared Feature Coding'}; Split_TableRowNames = {'EC-Shared', 'EC-NonShared','EE-Shared','EE-NonShared','CC-Shared', 'CC-NonShared','CE-Shared','CE-NonShared','First'};
+% FilterColumn={'Trials From Learning Point Category'}; Split_TableRowNames = {'Not Learned', 'fewer than 5','-5 to -1','0 to 9','10 to 19', 'more than 20'};
 
-% Split_TableRowNames = {'Not Learned', 'fewer than 5','-5 to -1','0 to 9','10 to 19', 'more than 20'};
-Split_TableRowNames = {'EC-Shared', 'EC-NonShared','EE-Shared','EE-NonShared','CC-Shared', 'CC-NonShared','CE-Shared','CE-NonShared','First'};
-% Split_TableRowNames = [];
 %%
 % [FullTable,cfg] = cgg_getResultsPlotsParameters(Epoch,'wantSubset',wantSubset,'wantZeroFeatureDetector',wantZeroFeatureDetector,'ARModelOrder',ARModelOrder);
-[FullTable,cfg] = cgg_getResultsPlotsParametersNetwork(EpochName,'FilterColumn',FilterColumn,'WantAnalysis',WantAnalysis,'Split_TableRowNames',Split_TableRowNames);
+[FullTable,cfg] = cgg_getResultsPlotsParametersNetwork(EpochName,'FilterColumn',FilterColumn,'WantAnalysis',WantAnalysis,'Split_TableRowNames',Split_TableRowNames,'WantDelay',WantDelay);
 
 %% Overall Accuracy
 
-cgg_plotOverallAccuracy(FullTable,cfg);
+% cgg_plotOverallAccuracy(FullTable,cfg);
 
 %% Split Accuracy
 
-cgg_plotSplitAccuracy(FullTable,cfg);
+% cgg_plotSplitAccuracy(FullTable,cfg);
 
 %% Overall Windowed Accuracy
 
-cgg_plotWindowedAccuracy(FullTable,cfg);
+% cgg_plotWindowedAccuracy(FullTable,cfg);
 
 %% Split Windowed Accuracy
 
-cgg_plotSplitWindowedAccuracy(FullTable,cfg);
+% cgg_plotSplitWindowedAccuracy(FullTable,cfg);
 
 %% Overall Importance Analysis
 
@@ -58,3 +56,7 @@ cgg_plotSplitWindowedAccuracy(FullTable,cfg);
 %% Latent Correlation Analysis
 
 % cgg_plotLatentCorrelationAnalysis(cfg.CorrelationTable,cfg);
+
+%% Parameter Sweep
+
+% cgg_plotParameterSweep(cfg);

@@ -58,7 +58,7 @@ if ~WantSplitAreas
                 layerNormalizationLayer("Name",CombinationNormalizationName)];
         case 'None'
     end
-    CombinationLayer = [convolution2dLayer(1,InputSize(3),"Name",CombinationName,"Padding",'same')
+    CombinationLayer = [convolution2dLayer(1,InputSize(3),"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")
         CombinationActivationLayer];
     CombinationLG = layerGraph(CombinationLayer);
     CoderBlock = cgg_combineLayerGraphs(CoderBlock,CombinationLG);
@@ -99,7 +99,7 @@ switch FinalActivation
     case 'None'
 end
 
-CombinationLayer = [convolution2dLayer(1,1,"Name",CombinationName,"Padding",'same')
+CombinationLayer = [convolution2dLayer(1,1,"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")
     CombinationActivationLayer];
 CombinationLG = layerGraph(CombinationLayer);
 AreaBlocks = cgg_connectLayerGraphs(AreaBlocks,CombinationLG);
