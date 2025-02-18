@@ -11,6 +11,7 @@ WantPlotExplainedVariance = false;
 WantPlotCorrelation = false;
 
 WantCI = true;
+% This is to test that I am on the Charlie Branch
 
 SignificanceValue = 0.05;
 SignificanceMimimum = [];
