@@ -147,6 +147,34 @@ BadChannelTable=[];
 end
 end
 
+if isfunction
+PauseTime_Long = CheckVararginPairs('PauseTime_Long', 60, varargin{:});
+else
+if ~(exist('PauseTime_Long','var'))
+PauseTime_Long=60;
+end
+end
+
+if isfunction
+PauseTime_Short = CheckVararginPairs('PauseTime_Short', 3, varargin{:});
+else
+if ~(exist('PauseTime_Short','var'))
+PauseTime_Short=3;
+end
+end
+
+if isfunction
+WantDelay = CheckVararginPairs('WantDelay', true, varargin{:});
+else
+if ~(exist('WantDelay','var'))
+WantDelay=true;
+end
+end
+%%
+if ~WantDelay
+PauseTime_Long = 1;
+PauseTime_Short = 1;
+end
 %%
 
 CurrentSaveTerm = sprintf(SaveTerm,NumRemoved);
@@ -297,6 +325,8 @@ switch RemovalType
         end
 end
 
+pause(randi(PauseTime_Long)-1);
+
 cgg_saveRemovalTable(RemovalTable_Best,Folds,EpochDir.Results,RemovalType,SessionName,CurrentSaveTerm);
 
 end
@@ -318,10 +348,14 @@ end
 %%
 Folds = cell2mat(IA_Table_Fold_Best.Fold);
 
+% pause(randi(PauseTime_Long)-1);
+
 for fidx = 1:length(Folds)
 Fold = Folds(fidx);
 this_IA_AccuracyTestPathNameExt = sprintf(IA_AccuracyTestPathNameExt,Fold);
 this_IATestPathNameExt = sprintf(IATestPathNameExt,Fold);
+
+pause(randi(PauseTime_Short)-1);
 if isfile(this_IA_AccuracyTestPathNameExt)
 delete(this_IA_AccuracyTestPathNameExt);
 end

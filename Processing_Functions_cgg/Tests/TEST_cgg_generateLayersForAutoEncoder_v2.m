@@ -7,8 +7,10 @@ clc; clear; close all;
 HiddenSizes = [8,16,32];
 LatentSize = [10];
 
-NetworkToView = 'Encoder';
-Pause_Time = 5;
+NetworkToView = 'Decoder';
+Pause_Time = 0;
+
+wantGrouped = false;
 
 % ModelName = 'Feedforward - ReLU';
 % ModelName = 'Feedforward - ReLU - Normalized';
@@ -20,13 +22,13 @@ Pause_Time = 5;
 % ModelName = 'Variational GRU - Dropout 0.5';
 % ModelName = 'LSTM';
 % ModelName = 'LSTM - Normalized';
-% ModelName = 'Convolution';
+ModelName = 'Convolutional';
 % ModelName = 'Multi-Filter Convolution';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - Leaky ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh';
-ModelName = 'Variational Convolutional Resnet 3x3 - Split Area - Leaky ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh';
+% ModelName = 'Variational Convolutional Resnet 3x3 - Split Area - Leaky ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh';
 % ModelName = 'Variational Convolutional Multi-Filter [3,5,7] - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM';
 
 % ClassifierName = 'Deep LSTM - Dropout 0.5';
@@ -88,6 +90,20 @@ switch NetworkToView
 end
 
 %%
+InputNet_Grouped = InputNet;
+for aidx = 1:NumAreas
+    for lidx = 1:length(HiddenSizes)-1
+this_Name = sprintf("Area-%d_Layer-%d",aidx,lidx);
+this_LayerIDX = find(contains({InputNet_Grouped.Layers(:).Name},this_Name));
+InputNet_Grouped = groupLayers(InputNet_Grouped,this_LayerIDX,GroupNames=this_Name);
+    end
+end
+
+if wantGrouped
+InputNet = InputNet_Grouped;
+end
+
+%%
 NumLayers = length(InputNet.Layers);
 OutputLayerNames = cell(1,NumLayers);
 for idx = 1:NumLayers
@@ -100,6 +116,7 @@ OutputNames = [OutputNames{:}];
 % OutputNames=cellfun(@(x,y) [x '/' y{1}],{InputNet.Layers(:).Name},OutputLayerNames,'UniformOutput',false);
 OutputExample=cell(1,length(OutputNames));
 [OutputExample{:}]=forward(InputNet,X_Network,Outputs=OutputNames);
+
 
 %%
 % IDX = 1; {OutputExample{IDX}.dims, size(OutputExample{IDX}),prod(size(OutputExample{IDX}))}
@@ -126,65 +143,65 @@ close all
 
 analyzeNetwork(InputNet);
 
-%%
-
-NumData = [10,20];
-
-MeanData = [10,12;80,82];
-
-STDData = [4,5;5,6];
-
-Series_1_1 = randn(NumData(1),1)*STDData(1,1) + MeanData(1,1);
-Series_1_2 = randn(NumData(1),1)*STDData(1,2) + MeanData(1,2);
-Series_2_1 = randn(NumData(2),1)*STDData(2,1) + MeanData(2,1);
-Series_2_2 = randn(NumData(2),1)*STDData(2,2) + MeanData(2,2);
-
-
-[H_1,P_1,CI_1,Stats_1] = ttest2(Series_1_1,Series_1_2,"Vartype","unequal");
-[H_2,P_2,CI_2,Stats_2] = ttest2(Series_2_1,Series_2_2,"Vartype","unequal");
-
-Mean_1_1 = mean(Series_1_1);
-Mean_1_2 = mean(Series_1_2);
-Mean_2_1 = mean(Series_2_1);
-Mean_2_2 = mean(Series_2_2);
-
-STD_1_1 = std(Series_1_1);
-STD_1_2 = std(Series_1_2);
-STD_2_1 = std(Series_2_1);
-STD_2_2 = std(Series_2_2);
-
-STE_1_1 = STD_1_1/sqrt(NumData(1));
-STE_1_2 = STD_1_2/sqrt(NumData(1));
-STE_2_1 = STD_2_1/sqrt(NumData(2));
-STE_2_2 = STD_2_2/sqrt(NumData(2));
-
-T_1 = (Mean_1_1-Mean_1_2)/sqrt(STE_1_1^2+STE_1_2^2);
-T_2 = (Mean_2_1-Mean_2_2)/sqrt(STE_2_1^2+STE_2_2^2);
-
-DF_1 = ((STE_1_1^2+STE_1_2^2)^2)/(((STE_1_1^2)^2)/(NumData(1)-1)+((STE_1_2^2)^2)/(NumData(1)-1));
-DF_2 = ((STE_2_1^2+STE_2_2^2)^2)/(((STE_2_1^2)^2)/(NumData(2)-1)+((STE_2_2^2)^2)/(NumData(2)-1));
-
-P_Value_1 = tcdf(-abs(T_1),DF_1) + tcdf(abs(T_1),DF_1,'upper');
-P_Value_2 = tcdf(-abs(T_2),DF_2) + tcdf(abs(T_2),DF_2,'upper');
-
-Difference_1 = Series_1_1 - Series_1_2;
-Difference_2 = Series_2_1 - Series_2_2;
-
-[H_Diff,P_Diff,CI_Diff,Stats_Diff] = ttest2(Difference_1,Difference_2,"Vartype","unequal");
-
-Mean_Difference_1 = mean(Difference_1);
-Mean_Difference_2 = mean(Difference_2);
-
-STD_Difference_1 = std(Difference_1);
-STD_Difference_2 = std(Difference_2);
-
-STE_Difference_1 = STD_Difference_1/sqrt(NumData(1));
-STE_Difference_2 = STD_Difference_2/sqrt(NumData(2));
-
-T_Difference = (Mean_Difference_1-Mean_Difference_2)/sqrt(STE_Difference_1^2+STE_Difference_2^2);
-
-DF_Difference = ((STE_Difference_1^2+STE_Difference_2^2)^2)/(((STE_Difference_1^2)^2)/(NumData(1)-1)+((STE_Difference_2^2)^2)/(NumData(2)-1));
-
-P_Difference = tcdf(-abs(T_Difference),DF_Difference) + tcdf(abs(T_Difference),DF_Difference,'upper');
+% %%
+% 
+% NumData = [10,20];
+% 
+% MeanData = [10,12;80,82];
+% 
+% STDData = [4,5;5,6];
+% 
+% Series_1_1 = randn(NumData(1),1)*STDData(1,1) + MeanData(1,1);
+% Series_1_2 = randn(NumData(1),1)*STDData(1,2) + MeanData(1,2);
+% Series_2_1 = randn(NumData(2),1)*STDData(2,1) + MeanData(2,1);
+% Series_2_2 = randn(NumData(2),1)*STDData(2,2) + MeanData(2,2);
+% 
+% 
+% [H_1,P_1,CI_1,Stats_1] = ttest2(Series_1_1,Series_1_2,"Vartype","unequal");
+% [H_2,P_2,CI_2,Stats_2] = ttest2(Series_2_1,Series_2_2,"Vartype","unequal");
+% 
+% Mean_1_1 = mean(Series_1_1);
+% Mean_1_2 = mean(Series_1_2);
+% Mean_2_1 = mean(Series_2_1);
+% Mean_2_2 = mean(Series_2_2);
+% 
+% STD_1_1 = std(Series_1_1);
+% STD_1_2 = std(Series_1_2);
+% STD_2_1 = std(Series_2_1);
+% STD_2_2 = std(Series_2_2);
+% 
+% STE_1_1 = STD_1_1/sqrt(NumData(1));
+% STE_1_2 = STD_1_2/sqrt(NumData(1));
+% STE_2_1 = STD_2_1/sqrt(NumData(2));
+% STE_2_2 = STD_2_2/sqrt(NumData(2));
+% 
+% T_1 = (Mean_1_1-Mean_1_2)/sqrt(STE_1_1^2+STE_1_2^2);
+% T_2 = (Mean_2_1-Mean_2_2)/sqrt(STE_2_1^2+STE_2_2^2);
+% 
+% DF_1 = ((STE_1_1^2+STE_1_2^2)^2)/(((STE_1_1^2)^2)/(NumData(1)-1)+((STE_1_2^2)^2)/(NumData(1)-1));
+% DF_2 = ((STE_2_1^2+STE_2_2^2)^2)/(((STE_2_1^2)^2)/(NumData(2)-1)+((STE_2_2^2)^2)/(NumData(2)-1));
+% 
+% P_Value_1 = tcdf(-abs(T_1),DF_1) + tcdf(abs(T_1),DF_1,'upper');
+% P_Value_2 = tcdf(-abs(T_2),DF_2) + tcdf(abs(T_2),DF_2,'upper');
+% 
+% Difference_1 = Series_1_1 - Series_1_2;
+% Difference_2 = Series_2_1 - Series_2_2;
+% 
+% [H_Diff,P_Diff,CI_Diff,Stats_Diff] = ttest2(Difference_1,Difference_2,"Vartype","unequal");
+% 
+% Mean_Difference_1 = mean(Difference_1);
+% Mean_Difference_2 = mean(Difference_2);
+% 
+% STD_Difference_1 = std(Difference_1);
+% STD_Difference_2 = std(Difference_2);
+% 
+% STE_Difference_1 = STD_Difference_1/sqrt(NumData(1));
+% STE_Difference_2 = STD_Difference_2/sqrt(NumData(2));
+% 
+% T_Difference = (Mean_Difference_1-Mean_Difference_2)/sqrt(STE_Difference_1^2+STE_Difference_2^2);
+% 
+% DF_Difference = ((STE_Difference_1^2+STE_Difference_2^2)^2)/(((STE_Difference_1^2)^2)/(NumData(1)-1)+((STE_Difference_2^2)^2)/(NumData(2)-1));
+% 
+% P_Difference = tcdf(-abs(T_Difference),DF_Difference) + tcdf(abs(T_Difference),DF_Difference,'upper');
 
 

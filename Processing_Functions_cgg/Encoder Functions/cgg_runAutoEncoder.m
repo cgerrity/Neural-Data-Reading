@@ -32,8 +32,11 @@ else
 cfg_Encoder = PARAMETERS_cgg_runAutoEncoder();
 end
 
-if ~isnan(SLURMIDX) && ~isnan(SLURMChoice)
-TableSLURM = SLURMPARAMETERS_cgg_runAutoEncoder(SLURMChoice,SLURMIDX);
+if strcmp(SLURMChoice,'Base') && ~isnan(SLURMIDX)
+TableSLURM = SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX);
+[Fold,cfg_Encoder] = cgg_assignSLURMEncoderParameters(cfg_Encoder,TableSLURM);
+elseif ~isnan(SLURMIDX) && ~isnan(SLURMChoice)
+TableSLURM = SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX);
 [Fold,cfg_Encoder] = cgg_assignSLURMEncoderParameters(cfg_Encoder,TableSLURM);
 end
 
@@ -78,6 +81,12 @@ DataWidth = cfg_Encoder.DataWidth;
 StartingIDX = cfg_Encoder.StartingIDX;
 EndingIDX = cfg_Encoder.EndingIDX;
 WindowStride = cfg_Encoder.WindowStride;
+if isfield(cfg_Encoder,'Subset')
+    cfg_Encoder.wantSubset = cfg_Encoder.Subset;
+else
+    cfg_Encoder.Subset = cfg_Encoder.wantSubset;
+end
+
 wantSubset = cfg_Encoder.wantSubset;
 
 ModelName = cfg_Encoder.ModelName;

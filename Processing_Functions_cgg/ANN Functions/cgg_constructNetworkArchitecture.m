@@ -52,7 +52,9 @@ cfg.WantNormalization = cfg_Encoder.WantNormalization;
 end
 
 if isfield(cfg_Encoder,'Activation')
-cfg.Activation = cfg_Encoder.Activation;
+    if ~isempty(cfg_Encoder.Activation)
+    cfg.Activation = cfg_Encoder.Activation;
+    end
 end
 
 if isfield(cfg_Encoder,'IsVariational')

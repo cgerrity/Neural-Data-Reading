@@ -142,14 +142,20 @@ cfg_param = PARAMETERS_cgg_procFullTrialPreparation_v2('');
 Probe_Order=cfg_param.Probe_Order;
 
 %%
+rng('shuffle');
+SessionIndices = 1:NumSessions;
+SessionIndices = SessionIndices(randperm(NumSessions));
+
 for sidx=1:NumSessions
 %%
 
-this_SessionName=SessionListUnique{sidx};
+this_SessionIndex = SessionIndices(sidx);
+
+this_SessionName=SessionListUnique{this_SessionIndex};
 this_SessionIDX=strcmp(this_SessionName,SessionsList);
 
 InSavePathNameExt=[PlotDatacfg.path filesep 'Regression_Data_%s_' this_SessionName '.mat'];
-this_ProbeProcessing=ProbeProcessing{sidx};
+this_ProbeProcessing=ProbeProcessing{this_SessionIndex};
 
 AreaNames=fieldnames(this_ProbeProcessing);
 

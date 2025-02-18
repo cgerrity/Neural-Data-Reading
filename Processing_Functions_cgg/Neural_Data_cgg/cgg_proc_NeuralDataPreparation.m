@@ -82,6 +82,9 @@ want_MUA = cfg.want_MUA;
 want_Spike = cfg.want_Spike;
 keep_wideband = cfg.keep_wideband;
 
+keep_raw = cfg.keep_raw;
+keep_notch = cfg.keep_notch;
+
 %%
 % Make the Experiment and Session output folder names.
 outdatadir_Experiment=[outdatadir, filesep, ExperimentName];
@@ -667,8 +670,10 @@ for aidx=1:length(probe_area)
     this_probe_selection=probe_selection{aidx};
     
 [outdatadir_WideBand,outdatadir_LFP,outdatadir_Spike,...
-    outdatadir_MUA] = cgg_generateNeuralDataFolders(...
-    outdatadir,SessionName,ExperimentName,this_probe_area);
+    outdatadir_MUA,outdatadir_Raw,outdatadir_Notch] = ...
+    cgg_generateNeuralDataFolders(outdatadir,SessionName, ...
+    ExperimentName,this_probe_area,'keep_raw',keep_raw, ...
+    'keep_notch',keep_notch);
 
 parfor tidx=1:trialcount
 %    disp(have_stim)
@@ -690,6 +695,9 @@ parfor tidx=1:trialcount
        this_trial_index);
    this_trial_Spike_file_name=...
        sprintf([outdatadir_Spike filesep 'Spike_Trial_%d.mat'],...
+       this_trial_index);
+   this_trial_Raw_file_name=...
+       sprintf([outdatadir_Raw filesep 'Raw_Trial_%d.mat'],...
        this_trial_index);
    
    have_desired_data=...
@@ -795,6 +803,11 @@ end
 m = matfile(this_trial_wideband_file_name,'Writable',true);
 m.this_recdata_wideband=this_recdata_wideband;
 
+if keep_raw
+m_raw = matfile(this_trial_Raw_file_name,'Writable',true);
+m_raw.this_recdata_wideband=this_recdata_wideband;
+end
+
     end
 
 end
@@ -875,6 +888,9 @@ parfor tidx=1:trialcount
    this_trial_wideband_file_name=...
        sprintf([outdatadir_WideBand filesep 'WideBand_Trial_%d.mat'],...
        this_trial_index);
+   this_trial_Notch_file_name=...
+       sprintf([outdatadir_Notch filesep 'Notch_Trial_%d.mat'],...
+       this_trial_index);
    
     
     if ((~(exist(this_trial_LFP_file_name,'file'))) && want_LFP)||...
@@ -905,6 +921,11 @@ parfor tidx=1:trialcount
     disp('.. Performing notch filtering (recorder).');
     this_recdata_wideband = euFT_doBrickNotchRemoval( ...
       this_recdata_wideband, notch_filter_freqs, notch_filter_bandwidth );
+
+    if keep_notch
+    m_notch = matfile(this_trial_Notch_file_name,'Writable',true);
+    m_notch.this_recdata_wideband=this_recdata_wideband;
+    end
         
     is_previously_rereferenced=cgg_checkFTRereference(this_recdata_wideband);
     

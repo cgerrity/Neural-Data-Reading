@@ -1,6 +1,16 @@
-function HomogenietyTable = cgg_plotPaperFigureTable(PlotTable,PlotPath,NeighborhoodSize)
+function HomogenietyTable = cgg_plotPaperFigureTable(PlotTable,PlotPath,NeighborhoodSize,varargin)
 %CGG_PLOTPAPERFIGURETABLE Summary of this function goes here
 %   Detailed explanation goes here
+
+isfunction=exist('varargin','var');
+
+if isfunction
+ROIName = CheckVararginPairs('ROIName', '', varargin{:});
+else
+if ~(exist('ROIName','var'))
+ROIName='';
+end
+end
 
 
 TableVariables = [["Mean ACC", "double"]; ...
@@ -76,8 +86,10 @@ end
 HomogenietyTable = movevars(HomogenietyTable,'Monkey','Before',1);
 
 InFigure = cgg_plotTable(HomogenietyTable,'Homogeneity Index');
-
-PlotName=sprintf('Homogeneity_Table-Neighborhood_%d',NeighborhoodSize);
+if ~isempty(ROIName)
+    ROIName = sprintf("-%s",ROIName);
+end
+PlotName=sprintf('Homogeneity_Table-Neighborhood_%s%d',ROIName,NeighborhoodSize);
 PlotPathName=[PlotPath filesep PlotName];
 exportgraphics(InFigure,[PlotPathName, '.pdf'],'ContentType','vector');
 

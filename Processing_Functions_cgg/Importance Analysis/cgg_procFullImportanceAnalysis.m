@@ -98,6 +98,18 @@ if ~(exist('SessionName','var'))
 SessionName='Subset';
 end
 end
+
+if isfunction
+WantDelay = CheckVararginPairs('WantDelay', true, varargin{:});
+else
+if ~(exist('WantDelay','var'))
+WantDelay=true;
+end
+end
+
+%%
+
+rng('shuffle');
 %%
 Target = cfg_Encoder.Target;
 HiddenSize=cfg_Encoder.HiddenSizes;
@@ -170,19 +182,28 @@ fprintf(MessagePart1);
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize, ...
     'DataFormat',DataFormat,'IsQuaddle',IsQuaddle, ...
     'RemovalType','Channel','BaselineArea',BaselineArea, ...
-    'BaselineChannel',BaselineChannel,'BaselineLatent',BaselineLatent);
+    'BaselineChannel',BaselineChannel,'BaselineLatent',BaselineLatent, ...
+    'WantDelay',WantDelay);
 
 %%
+SaveTerm = '_Selection';
+IANameExt = sprintf('IA_Table%s.mat',SaveTerm);
+AnalysisDir = fullfile(EpochDir.Results,'Analysis','Importance Analysis','Channel');
+funcHandle =@(x,y) all([x,cgg_getOutputFromIndices(@cgg_checkImportanceAnalysis,y,2,2)]);
+HasRemovalTable = cgg_procDirectorySearchAndApply(AnalysisDir, IANameExt, funcHandle);
+if isempty(HasRemovalTable)
+HasRemovalTable = false;
+end
 
+if ~HasRemovalTable
 IA_Table_Average = sortrows(IA_Table_Average,"RankPeak","ascend");
 RemovalTable = cgg_getRemovalTableFromRanking(IA_Table_Average, ...
     'BaselineArea',BaselineArea,'BaselineChannel',BaselineChannel, ...
     'BaselineLatent',BaselineLatent);
 
-SaveTerm = '_Selection';
-
 cgg_saveRemovalTable(RemovalTable,Folds,EpochDir.Results,'Channel',SessionName,SaveTerm);
 
+end
 %% Part 2: Select Channel Removal
 fprintf(MessagePart2);
 [IA_Table_Fold_Part2,~] = cgg_procSingleImportanceAnalysis(...
@@ -192,9 +213,9 @@ fprintf(MessagePart2);
     'DataFormat',DataFormat,'IsQuaddle',IsQuaddle, ...
     'RemovalType','Channel','BaselineArea',BaselineArea, ...
     'BaselineChannel',BaselineChannel,'BaselineLatent',BaselineLatent, ...
-    'SaveTerm','_Selection');
+    'SaveTerm','_Selection','WantDelay',WantDelay);
 
-RemovalPlotTable = cgg_getRemovalPlotTable([],IA_Table_Fold_Part2,'Selection','Channel',cfg);
+RemovalPlotTable = cgg_getRemovalPlotTable([],IA_Table_Fold_Part2,'Rank','Channel',cfg);
 
 %% Part 3: Random Channel Removal
 fprintf(MessagePart3);
@@ -205,7 +226,8 @@ fprintf(MessagePart3);
     'DataFormat',DataFormat,'IsQuaddle',IsQuaddle, ...
     'RemovalType','Channel','BaselineArea',BaselineArea, ...
     'BaselineChannel',BaselineChannel,'BaselineLatent',BaselineLatent, ...
-    'WantRemovalTableAcrossFolds',true,'SessionName',SessionName,'Folds',Folds);
+    'WantRemovalTableAcrossFolds',true,'SessionName',SessionName, ...
+    'Folds',Folds,'WantDelay',WantDelay);
 
 RemovalPlotTable = cgg_getRemovalPlotTable(RemovalPlotTable,IA_Table_Fold_Part3,'Random','Channel',cfg);
 
@@ -218,7 +240,8 @@ fprintf(MessagePart4);
     'DataFormat',DataFormat,'IsQuaddle',IsQuaddle, ...
     'RemovalType','Channel','BaselineArea',BaselineArea, ...
     'BaselineChannel',BaselineChannel,'BaselineLatent',BaselineLatent, ...
-    'WantRemovalTableAcrossFolds',true,'SessionName',SessionName,'Folds',Folds);
+    'WantRemovalTableAcrossFolds',true,'SessionName',SessionName, ...
+    'Folds',Folds,'WantDelay',WantDelay);
 
 RemovalPlotTable = cgg_getRemovalPlotTable(RemovalPlotTable,IA_Table_Fold_Part4,'Sequential','Channel',cfg);
 
@@ -230,7 +253,8 @@ fprintf(MessagePart5);
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize, ...
     'DataFormat',DataFormat,'IsQuaddle',IsQuaddle, ...
     'RemovalType','Latent','BaselineArea',BaselineArea, ...
-    'BaselineChannel',BaselineChannel,'BaselineLatent',BaselineLatent);
+    'BaselineChannel',BaselineChannel,'BaselineLatent',BaselineLatent, ...
+    'WantDelay',WantDelay);
 
 %%
 
@@ -264,9 +288,9 @@ fprintf(MessagePart6);
     'DataFormat',DataFormat,'IsQuaddle',IsQuaddle, ...
     'RemovalType','Latent','BaselineArea',BaselineArea, ...
     'BaselineChannel',BaselineChannel,'BaselineLatent',BaselineLatent, ...
-    'SaveTerm','_Selection');
+    'SaveTerm','_Selection','WantDelay',WantDelay);
 
-RemovalPlotTable = cgg_getRemovalPlotTable(RemovalPlotTable,IA_Table_Fold_Part6,'Selection','Latent',cfg);
+RemovalPlotTable = cgg_getRemovalPlotTable(RemovalPlotTable,IA_Table_Fold_Part6,'Rank','Latent',cfg);
 
 %% Part 7: Random Latent Removal
 fprintf(MessagePart7);
@@ -277,7 +301,8 @@ fprintf(MessagePart7);
     'DataFormat',DataFormat,'IsQuaddle',IsQuaddle, ...
     'RemovalType','Latent','BaselineArea',BaselineArea, ...
     'BaselineChannel',BaselineChannel,'BaselineLatent',BaselineLatent, ...
-    'WantRemovalTableAcrossFolds',false,'SessionName',SessionName,'Folds',Folds);
+    'WantRemovalTableAcrossFolds',false,'SessionName',SessionName, ...
+    'Folds',Folds,'WantDelay',WantDelay);
 
 RemovalPlotTable = cgg_getRemovalPlotTable(RemovalPlotTable,IA_Table_Fold_Part7,'Random','Latent',cfg);
 
@@ -290,7 +315,8 @@ fprintf(MessagePart8);
     'DataFormat',DataFormat,'IsQuaddle',IsQuaddle, ...
     'RemovalType','Latent','BaselineArea',BaselineArea, ...
     'BaselineChannel',BaselineChannel,'BaselineLatent',BaselineLatent, ...
-    'WantRemovalTableAcrossFolds',false,'SessionName',SessionName,'Folds',Folds);
+    'WantRemovalTableAcrossFolds',false,'SessionName',SessionName, ...
+    'Folds',Folds,'WantDelay',WantDelay);
 
 RemovalPlotTable = cgg_getRemovalPlotTable(RemovalPlotTable,IA_Table_Fold_Part8,'Sequential','Latent',cfg);
 % %% Part 3: Plot Data

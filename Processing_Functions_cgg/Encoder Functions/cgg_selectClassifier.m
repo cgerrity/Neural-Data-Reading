@@ -13,6 +13,10 @@ switch ClassifierName
         DropoutPercent=0.5;
         NetworkType='Feedforward';
         Layers_Classifier = cgg_generateLayersForClassifier(NumClasses,'LossType',LossType,'DropoutPercent',DropoutPercent,'NetworkType',NetworkType,varargin{:});
+    case 'Deep GRU - Dropout 0.5'
+        DropoutPercent=0.5;
+        NetworkType='GRU';
+        Layers_Classifier = cgg_generateLayersForClassifier(NumClasses,'LossType',LossType,'DropoutPercent',DropoutPercent,'NetworkType',NetworkType,varargin{:});
     case 'LSTM'
         NetworkType='LSTM';
         Layers_Classifier = cgg_generateLayersForLSTMClassifier(NumClasses,'LossType',LossType,'NetworkType',NetworkType);

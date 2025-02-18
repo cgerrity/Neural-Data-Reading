@@ -1,4 +1,4 @@
-function cgg_plotDataDistribution(FullDataTable,InVariableName,InEpoch,InSavePlotCFG)
+function cgg_plotDataDistribution(FullDataTable,InVariableName,InEpoch,InSavePlotCFG,TitleName,Count_Y_Lim)
 %CGG_PLOTDATADISTRIBUTION Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -31,6 +31,13 @@ Main_SubTitle_Size = cfg_Plotting.Main_SubTitle_Size;
 Label_Size = cfg_Plotting.Label_Size;
 Legend_Size = cfg_Plotting.Legend_Size;
 
+Y_Tick_Label_Size = 24;
+X_Tick_Label_Size = 18;
+Pie_Font_Size = 24;
+
+% Count_Y_Lim = [0,20000];
+Difference_Y_Lim = [-0.03,0.03];
+
 RangeFactorUpper = cfg_Plotting.RangeFactorUpper;
 RangeFactorLower = cfg_Plotting.RangeFactorLower;
 
@@ -61,7 +68,7 @@ end
 
 ColorOrder=p_Full.ColorOrder;
 ColorOrder=[ColorOrder;ColorOrder;ColorOrder;ColorOrder];
-
+p_Full.FontSize = Pie_Font_Size;
 % title('Fraction of Each Type')
 
 % title('Fraction of Each Type','FontSize',Title_Size);
@@ -91,6 +98,13 @@ end
 % xlabel(InVariableName,'FontSize',X_Name_Size);
 ylabel('Number of Trials','FontSize',Y_Name_Size);
 
+Current_Axes = gca;
+
+Current_Axes.YAxis.FontSize=Y_Tick_Label_Size;
+Current_Axes.XAxis.FontSize=X_Tick_Label_Size;
+
+ylim(Count_Y_Lim);
+
 % title('Count of Each Type','FontSize',Title_Size);
 
 %%
@@ -105,21 +119,30 @@ b_Distribution(2).LineWidth=2;
 b_Distribution(1).BoxWidth=0.75;
 b_Distribution(2).BoxWidth=0.75;
 
+
+
 legend(b_Distribution,'Location','best','FontSize',Legend_Size);
 
 ylabel('Difference','FontSize',Y_Name_Size);
+ylim(Difference_Y_Lim);
 
 % title('Spread of Partitions','FontSize',Title_Size);
+Current_Axes = gca;
+
+Current_Axes.YAxis.FontSize=Y_Tick_Label_Size;
+Current_Axes.XAxis.FontSize=X_Tick_Label_Size;
 
 %%
 
-Main_Title=sprintf('Data Distribution for %s',InVariableName);
+% Main_Title=sprintf('Data Distribution for %s',InVariableName);
+Main_Title=sprintf('%s',replace(TitleName,'_',' '));
 Main_SubTitle=sprintf('Epoch: %s',InEpoch);
 
 Main_Title=['{\' sprintf(['fontsize{%d}' Main_Title '}'],Main_Title_Size)];
 Main_SubTitle=['{\' sprintf(['fontsize{%d}' Main_SubTitle '}'],Main_SubTitle_Size)];
 
 Full_Title={Main_Title,Main_SubTitle};
+Full_Title={Main_Title};
 
 sgtitle(Full_Title);
 drawnow;

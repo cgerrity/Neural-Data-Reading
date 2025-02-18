@@ -135,6 +135,12 @@ want_Spike = false;
 
 keep_wideband=false;
 
+% For visualizing processing steps this boolean determines whether to save
+% the raw wideband and notch filtered. Regular wideband is rereferenced as
+% well
+
+keep_raw = true;
+keep_notch = true;
 
 %%
 

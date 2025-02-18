@@ -83,6 +83,14 @@ if ~(exist('Split_TableRowNames','var'))
 Split_TableRowNames=[];
 end
 end
+
+if isfunction
+WantDelay = CheckVararginPairs('WantDelay', true, varargin{:});
+else
+if ~(exist('WantDelay','var'))
+WantDelay=true;
+end
+end
 %%
 HasSplit_TableRowNames = ~isempty(Split_TableRowNames);
 %%
@@ -154,15 +162,34 @@ VarargIN = varargin{:};
 end
 end
 
-%%
-Target = cfg_Encoder.Target;
-EncodingParametersPath = cgg_getDirectory(cfg.ResultsDir,'Encoding');
-EncodingParametersPath = fullfile(EncodingParametersPath,Target);
-% EncodingParametersPathNameExt = [EncodingParametersPath filesep 'EncodingParameters.yaml'];
-EncoderParametersFunc = @(x,y) cgg_getAllEncoderAccuracyTable(x,y,'MatchType',MatchType,'IsQuaddle',IsQuaddle);
-EncoderParameters = cgg_procDirectorySearchAndApply(EncodingParametersPath, ...
-    'EncodingParameters.yaml', EncoderParametersFunc);
-
+% %%
+% RunTable = [];
+% BestRunTable = [];
+% CurrentCases = {'ClassifierHiddenSize','ClassifierName','DataWidth', ...
+%     'HiddenSizes','InitialLearningRate','IsVariational','L2Factor', ...
+%     'MiniBatchSize','ModelName','Normalization','NumEpochsAutoEncoder', ...
+%     'Optimizer','WantNormalization','WeightedLoss','WindowStride', ...
+%     'maxworkerMiniBatchSize','Weights','BottleNeckDepth','Dropout', ...
+%     'GradientThreshold'};
+% 
+% %%
+% LabelAngle = 45;
+% WantFinished = false;
+% %%
+% for cidx = 1:length(CurrentCases)
+% SweepType = CurrentCases{cidx};
+% disp(SweepType);
+% 
+% [SweepName,SweepNameIgnore] = PARAMETERS_cggEncoderParameterSweep(SweepType);
+% 
+% [SweepAccuracy,SweepWindowAccuracy,SweepAllNames,RunTable,BestRunTable] = ...
+%     cgg_procParameterSweepTable(SweepName,SweepNameIgnore,...
+%     cfg,'MatchType',MatchType,'IsQuaddle',IsQuaddle, ...
+%     'RunTable',RunTable,'BestRunTable',BestRunTable, ...
+%     'WantFinished',WantFinished);
+% 
+% cgg_plotBarGraphWithError(SweepAccuracy,SweepAllNames,'PlotTitle',SweepType,'LabelAngle',LabelAngle);
+% end
 %%
 
 FullTablePath=cfg.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.PlotFolder.SubFolder_1.path;
@@ -350,9 +377,11 @@ this_CM_Table=join(this_CM_Table,this_Identifiers_Table);
 
 %%
 
-[~,~,this_Accuracy] = cgg_procConfusionMatrixFromTable(this_CM_Table,ClassNames,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline);
+% [~,~,this_Accuracy] = cgg_procConfusionMatrixFromTable(this_CM_Table,ClassNames,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline);
 
 [~,~,this_Window_Accuracy] = cgg_procConfusionMatrixWindowsFromTable(this_CM_Table,ClassNames,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline);
+
+this_Accuracy = max(this_Window_Accuracy);
 
 %%
 % if fidx==1
@@ -378,7 +407,7 @@ for tidx=1:NumTypes
 [~,~,this_Split_Accuracy(tidx)] = cgg_procConfusionMatrixFromTable(this_CM_Table,ClassNames,'FilterColumn',FilterColumn,'FilterValue',this_FilterValue,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline);
 
 [~,~,this_Split_Window_Accuracy{tidx}] = cgg_procConfusionMatrixWindowsFromTable(this_CM_Table,ClassNames,'FilterColumn',FilterColumn,'FilterValue',this_FilterValue,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline);
-
+this_Split_Accuracy(tidx) = max(this_Split_Window_Accuracy{tidx});
 end
 
 % if fidx==1
@@ -415,7 +444,7 @@ end % Loop through the Folds
 
 if isempty(Split_Table)
 FilterColumnSTR=string(FilterColumn);
-if HasSplit_TableRowNames
+if ~HasSplit_TableRowNames
 Split_TableRowNames=cell(1,NumTypes);
 end
     for tidx=1:NumTypes
@@ -428,7 +457,7 @@ end
         end
         this_Split_TableRowNames=[this_Split_TableRowNames, sprintf('%s:%d',this_FilterColumn,this_FilterValue)];
         end
-        if HasSplit_TableRowNames
+        if ~HasSplit_TableRowNames
         Split_TableRowNames{tidx}=this_Split_TableRowNames;
         end
     end
@@ -480,6 +509,7 @@ Outcfg.wantSubset=wantSubset;
 % Outcfg.ARModelOrder=ARModelOrder;
 Outcfg.MatchType=MatchType;
 Outcfg.NumWindows = NumWindows;
+Outcfg.IsQuaddle = IsQuaddle;
 
 %%
 
@@ -494,17 +524,20 @@ cgg_saveVariableUsingMatfile(FullTableSaveVariables,FullTableSaveVariablesName,F
 
 end % want full table is true
 
-if WantAnalysis
+Outcfg.cfg = cfg;
 
 %%
 EpochDir = struct();
 EpochDir.Main = cgg_getDirectory(cfg.TargetDir,'Epoch');
 EpochDir.Results = cgg_getDirectory(cfg.ResultsDir,'Epoch'); 
 %% Importance Analysis
-NumEntries = 500;
-RemovalPlotTable = cgg_procFullImportanceAnalysis(cfg_Encoder,EpochDir,Outcfg,'NumEntries',NumEntries);
-Outcfg.RemovalPlotTable = RemovalPlotTable;
+if WantAnalysis
 
+NumEntries = 500;
+RemovalPlotTable = cgg_procFullImportanceAnalysis(cfg_Encoder, ...
+    EpochDir,Outcfg,'NumEntries',NumEntries,'WantDelay',WantDelay);
+Outcfg.RemovalPlotTable = RemovalPlotTable;
+end
 %% Correlation Analysis
 
 Learning_Model_Variables = {'Absolute Prediction Error','Outcome',...
@@ -532,6 +565,6 @@ end
 
 Outcfg.CorrelationTable = CorrelationTable;
 
-end
+
 end
 

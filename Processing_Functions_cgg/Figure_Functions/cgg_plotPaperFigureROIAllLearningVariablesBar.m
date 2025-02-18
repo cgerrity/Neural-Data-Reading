@@ -66,6 +66,14 @@ end
 end
 
 if isfunction
+ROIName = CheckVararginPairs('ROIName', '', varargin{:});
+else
+if ~(exist('ROIName','var'))
+ROIName='';
+end
+end
+
+if isfunction
 SignificanceValue = CheckVararginPairs('SignificanceValue', 0.05, varargin{:});
 else
 if ~(exist('SignificanceValue','var'))
@@ -126,6 +134,14 @@ WantCI = CheckVararginPairs('WantCI', false, varargin{:});
 else
 if ~(exist('WantCI','var'))
 WantCI=false;
+end
+end
+
+if isfunction
+ColorOrder = CheckVararginPairs('ColorOrder', [0,0.4470,7410;0.8500,0.3250,0.0980], varargin{:});
+else
+if ~(exist('ColorOrder','var'))
+ColorOrder=[0,0.4470,7410;0.8500,0.3250,0.0980];
 end
 end
 
@@ -242,11 +258,11 @@ SignificanceTable = [];
 %%
 wantCI = false;
 IsGrouped = true;
-ColorOrder = [0,0.4470,7410;0.8500,0.3250,0.0980];
+% ColorOrder = [0,0.4470,7410;0.8500,0.3250,0.0980];
 WantHorizontal = true;
 LabelAngle = 45;
 
-[~,~] = cgg_plotBarGraphWithError(Plot_Bar,LMNames,'X_Name',Y_Name,'Y_Name','','PlotTitle',PlotTitle,'YRange',YLimits,'wantCI',wantCI,'SignificanceValue',SignificanceValue,'ColorOrder',ColorOrder,'IsGrouped',IsGrouped,'GroupNames',GroupNames,'ErrorMetric',PlotError,'WantLegend',WantLegend,'ErrorCapSize',ErrorCapSize,'SignificanceTable',SignificanceTable,'SignificanceFontSize',SignificanceFontSize,'WantBarNames',WantBarNames,'WantHorizontal',WantHorizontal,'X_TickFontSize',X_TickFontSize,'Legend_Size',Legend_Size,'LabelAngle',LabelAngle);
+[~,~,InFigure] = cgg_plotBarGraphWithError(Plot_Bar,LMNames,'X_Name',Y_Name,'Y_Name','','PlotTitle',PlotTitle,'YRange',YLimits,'wantCI',wantCI,'SignificanceValue',SignificanceValue,'ColorOrder',ColorOrder,'IsGrouped',IsGrouped,'GroupNames',GroupNames,'ErrorMetric',PlotError,'WantLegend',WantLegend,'ErrorCapSize',ErrorCapSize,'SignificanceTable',SignificanceTable,'SignificanceFontSize',SignificanceFontSize,'WantBarNames',WantBarNames,'WantHorizontal',WantHorizontal,'X_TickFontSize',X_TickFontSize,'Legend_Size',Legend_Size,'LabelAngle',LabelAngle,'InFigure',InFigure);
 % ylim([0,5]);
 %%
     if ~(isempty(Y_Ticks) || any(isnan(Y_Ticks)))
@@ -269,7 +285,10 @@ if ~isempty(PlotPath)
     if ~isempty(MonkeyName)
         MonkeyName = sprintf("-%s",MonkeyName);
     end
-    PlotName=sprintf('ROI_LM_Variables_Bar%s',MonkeyName);
+    if ~isempty(ROIName)
+        ROIName = sprintf("-%s",ROIName);
+    end
+    PlotName=sprintf('ROI_LM_Variables_Bar%s%s',ROIName,MonkeyName);
     PlotPathName=[PlotPath filesep PlotName];
     saveas(InFigure,[PlotPathName, '.fig']);
     exportgraphics(InFigure,[PlotPathName, '.pdf'],'ContentType','vector');

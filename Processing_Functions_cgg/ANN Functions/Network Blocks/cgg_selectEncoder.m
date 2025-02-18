@@ -7,7 +7,13 @@ function [PreEncoderBlock,EncoderBlocks,PostEncoderBlock] = ...
 
 PreEncoderBlock = [];
 PostEncoderBlock = [];
+EncoderBlocks = [];
 Coder = 'Encoder';
+
+if isempty(HiddenSizeAutoEncoder)
+    return
+end
+
 
 if cfg.IsSimple
     Dropout = cfg.Dropout;

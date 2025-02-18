@@ -107,6 +107,34 @@ Folds=[];
 end
 end
 
+if isfunction
+PauseTime_Long = CheckVararginPairs('PauseTime_Long', 60, varargin{:});
+else
+if ~(exist('PauseTime_Long','var'))
+PauseTime_Long=60;
+end
+end
+
+if isfunction
+PauseTime_Short = CheckVararginPairs('PauseTime_Short', 3, varargin{:});
+else
+if ~(exist('PauseTime_Short','var'))
+PauseTime_Short=3;
+end
+end
+
+if isfunction
+WantDelay = CheckVararginPairs('WantDelay', true, varargin{:});
+else
+if ~(exist('WantDelay','var'))
+WantDelay=true;
+end
+end
+%%
+if ~WantDelay
+PauseTime_Long = 1;
+PauseTime_Short = 1;
+end
 %%
 SaveTerm = '_Sequential';
 IANameExt = 'IA_Table_Sequential.mat';
@@ -190,6 +218,8 @@ this_NumRemoved = ridx;
 
 SaveTerm = '_Sequential-%d';
 
+pause(randi(PauseTime_Long)-1);
+
 [IA_Table_Fold,IA_Table_Average] = ...
     cgg_procBestSequentialImportanceAnalysis(cfg_Encoder,EpochDir, ...
     'MatchType',MatchType,'NumRemoved',this_NumRemoved, ...
@@ -201,7 +231,8 @@ SaveTerm = '_Sequential-%d';
     'SaveTerm',SaveTerm, ...
     'WantRemovalTableAcrossFolds',WantRemovalTableAcrossFolds, ...
     'Folds',Folds,'NumChannels',NumChannels,'NumAreas',NumAreas, ...
-    'LatentSize',LatentSize,'BadChannelTable',BadChannelTable);
+    'LatentSize',LatentSize,'BadChannelTable',BadChannelTable, ...
+    'WantDelay',WantDelay);
 
 %%
 
@@ -240,6 +271,8 @@ SaveTerm = '_Sequential';
 Folds = cell2mat(Full_IA_Table_Fold.Fold);
 Fold_RemovalTable = Full_IA_Table_Fold{:,"RemovalTable"};
 
+pause(randi(PauseTime_Long)-1);
+
 cgg_saveRemovalTable(Fold_RemovalTable,Folds,EpochDir.Results,RemovalType,SessionName,SaveTerm,'ResetAnalysis',true);
 end % End of Iteration through Removals
 
@@ -260,7 +293,7 @@ SaveTerm = '_Sequential';
     'SaveTerm',SaveTerm);
 
 %%
-pause(randi(300));
+pause(randi(PauseTime_Long)-1);
 funcHandle =@(x,y) all([x,cgg_getOutputFromIndices(@cgg_checkImportanceAnalysis,y,1,2)]);
 HasIA_Table_1 = cgg_procDirectorySearchAndApply(AnalysisDir, IANameExt, funcHandle);
 
@@ -268,7 +301,7 @@ if isempty(HasIA_Table)
 HasIA_Table_1 = false;
 end
 
-pause(randi(300));
+pause(randi(PauseTime_Long)-1);
 HasIA_Table = cgg_procDirectorySearchAndApply(AnalysisDir, IANameExt, funcHandle);
 
 if isempty(HasIA_Table)
@@ -283,17 +316,24 @@ HasIA_Table = false;
 
 if HasIA_Table
 
-for ridx = 1:NumRemoved
+RemovedIDX = 1:NumRemoved;
+RemovedIDX = RemovedIDX(randperm(length(RemovedIDX)));
+
+for ridx = 1:length(RemovedIDX)
+    this_NumRemoved = RemovedIDX(ridx);
 SaveTerm = sprintf('_Sequential-%d',this_NumRemoved);
 IASingleNameExt = sprintf('IA_Table%s.mat',SaveTerm);
 IASinglePathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IASingleNameExt);
 IA_AccuracySingleNameExt = sprintf('IA_Table%s_%s.mat',SaveTerm,MatchType);
 IA_AccuracySinglePathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IA_AccuracySingleNameExt);
 
+% pause(randi(PauseTime_Short));
+
 for fidx = 1:length(Folds)
 Fold = Folds(fidx);
 this_IA_AccuracySinglePathNameExt = sprintf(IA_AccuracySinglePathNameExt,Fold);
 this_IASinglePathNameExt = sprintf(IASinglePathNameExt,Fold);
+
 if isfile(this_IA_AccuracySinglePathNameExt)
 delete(this_IA_AccuracySinglePathNameExt);
 end

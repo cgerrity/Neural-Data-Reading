@@ -1,4 +1,4 @@
-function cgg_plotPaperFigureROIAllLearningVariablesDifferenceBar(PlotTable,varargin)
+function cgg_plotPaperFigureHomogeneityIndexBar(PlotTable,varargin)
 %CGG_PLOTPAPERFIGUREROIBAR Summary of this function goes here
 %   Detailed explanation goes here
 %%
@@ -26,10 +26,10 @@ end
 end
 
 if isfunction
-Y_Name = CheckVararginPairs('Y_Name', {'Difference of Proportion','(CD - ACC)'}, varargin{:});
+Y_Name = CheckVararginPairs('Y_Name', {'Homogeneity Index'}, varargin{:});
 else
 if ~(exist('Y_Name','var'))
-Y_Name={'Proportion of','Significant Channels'};
+Y_Name={'Homogeneity Index'};
 end
 end
 
@@ -42,10 +42,10 @@ end
 end
 
 if isfunction
-GroupNames = CheckVararginPairs('GroupNames', {'Difference'}, varargin{:});
+GroupNames = CheckVararginPairs('GroupNames', cellstr(AreaNames), varargin{:});
 else
 if ~(exist('GroupNames','var'))
-GroupNames={'Difference'};
+GroupNames=cellstr(AreaNames);
 end
 end
 
@@ -66,14 +66,6 @@ end
 end
 
 if isfunction
-ROIName = CheckVararginPairs('ROIName', '', varargin{:});
-else
-if ~(exist('ROIName','var'))
-ROIName='';
-end
-end
-
-if isfunction
 SignificanceValue = CheckVararginPairs('SignificanceValue', 0.05, varargin{:});
 else
 if ~(exist('SignificanceValue','var'))
@@ -82,10 +74,10 @@ end
 end
 
 if isfunction
-WantLegend = CheckVararginPairs('WantLegend', false, varargin{:});
+WantLegend = CheckVararginPairs('WantLegend', true, varargin{:});
 else
 if ~(exist('WantLegend','var'))
-WantLegend=false;
+WantLegend=true;
 end
 end
 
@@ -122,6 +114,46 @@ end
 end
 
 if isfunction
+WantLarge = CheckVararginPairs('WantLarge', true, varargin{:});
+else
+if ~(exist('WantLarge','var'))
+WantLarge=true;
+end
+end
+
+if isfunction
+WantCI = CheckVararginPairs('WantCI', false, varargin{:});
+else
+if ~(exist('WantCI','var'))
+WantCI=false;
+end
+end
+
+if isfunction
+WantAbsolute = CheckVararginPairs('WantAbsolute', false, varargin{:});
+else
+if ~(exist('WantAbsolute','var'))
+WantAbsolute=false;
+end
+end
+
+if isfunction
+NeighborhoodSize = CheckVararginPairs('NeighborhoodSize', '', varargin{:});
+else
+if ~(exist('NeighborhoodSize','var'))
+NeighborhoodSize='';
+end
+end
+
+if isfunction
+WantCorrelationMeasure = CheckVararginPairs('WantCorrelationMeasure', false, varargin{:});
+else
+if ~(exist('WantCorrelationMeasure','var'))
+WantCorrelationMeasure=false;
+end
+end
+
+if isfunction
 ColorOrder = CheckVararginPairs('ColorOrder', [0,0.4470,7410;0.8500,0.3250,0.0980], varargin{:});
 else
 if ~(exist('ColorOrder','var'))
@@ -145,8 +177,6 @@ NumData = cell(NumLM,1);
 
 for lidx = 1:NumLM
     this_LMNamesIDX = LMNamesIDX == lidx;
-    this_PlotValues = NaN(1,NumAreas);
-    this_NumData = NaN(1,NumAreas);
 for aidx = 1:NumAreas
     this_AreaNamesIDX = AreaNamesIDX == aidx;
     this_TableIDX = this_LMNamesIDX & this_AreaNamesIDX;
@@ -156,13 +186,30 @@ for aidx = 1:NumAreas
     PlotData = this_PlotTable{1,"PlotData"};
     PlotData = PlotData{1};
 
-    this_PlotValues(aidx) = PlotData.ProportionAll_ROI;  
-    this_NumData(aidx) = PlotData.NumData; 
+    if WantCorrelationMeasure
+    Plot_Bar{lidx}(aidx) = PlotData.HomogeneityIndex_Correlation;
+        if WantCI
+        PlotError{lidx}(aidx) = PlotData.HomogeneityIndex_Correlation_CI;
+        else
+        PlotError{lidx}(aidx) = PlotData.HomogeneityIndex_Correlation_STE;
+        end
+    Plot_P_Value{lidx}(aidx) = PlotData.HomogeneityIndex_Correlation_P_Value;
+    else
+    Plot_Bar{lidx}(aidx) = PlotData.HomogeneityIndex;
+        if WantCI
+        PlotError{lidx}(aidx) = PlotData.HomogeneityIndex_CI;
+        else
+        PlotError{lidx}(aidx) = PlotData.HomogeneityIndex_STE;
+        end
+    Plot_P_Value{lidx}(aidx) = PlotData.HomogeneityIndex_P_Value;
+    end
+
+    if WantAbsolute
+    Plot_Bar{lidx}(aidx) = abs(Plot_Bar{lidx}(aidx));
+    end
+
+    NumData{lidx}(aidx) = PlotData.NumData;    
 end
-Plot_Bar{lidx} = this_PlotValues(2) - this_PlotValues(1);
-PlotError{lidx} = NaN;
-NumData{lidx} = this_NumData;
-Plot_P_Value{lidx} = cgg_procTwoProportionZTest(this_PlotValues(2), this_NumData(2), this_PlotValues(1), this_NumData(1));
 end
 
 %%
@@ -176,10 +223,24 @@ Legend_Size = cfg_Paper.Legend_Size;
 
 %%
 
-Y_TickDir = cfg_Paper.TickDir_ChannelProportion;
+Y_TickDir = cfg_Paper.TickDir_Correlation;
 
-YLimits = cfg_Paper.Limit_ChannelProportion_Difference;
-Y_Tick_Size = cfg_Paper.Tick_Size_ChannelProportion_Difference;
+% if WantLarge
+% YLimits = cfg_Paper.Limit_ChannelProportion_Large;
+% Y_Tick_Size = cfg_Paper.Tick_Size_ChannelProportion_Large;
+% else
+if WantCorrelationMeasure
+YLimits = cfg_Paper.Limit_HomogeneityIndex_Correlation;
+Y_Tick_Size = cfg_Paper.Tick_Size_HomogeneityIndex_Correlation;
+else
+YLimits = cfg_Paper.Limit_HomogeneityIndex;
+Y_Tick_Size = cfg_Paper.Tick_Size_HomogeneityIndex;
+end
+
+if WantAbsolute
+    YLimits(1) = 0;
+end
+% end
 
 Y_Ticks = YLimits(1):Y_Tick_Size:YLimits(2);
 
@@ -225,17 +286,18 @@ SignificanceTable = table('Size',[0,NumVariables],...
 Counter_SignigficanceTable = 0;
 for lidx = 1:NumLM
     LMName = LMNames(lidx);
+for aidx = 1:NumAreas
+    AreaName = AreaNames(aidx);
     Counter_SignigficanceTable = Counter_SignigficanceTable + 1;
-    SignificanceTable(Counter_SignigficanceTable,:) = {Plot_P_Value{lidx},GroupNames,{""},{LMName},{""}};
+    SignificanceTable(Counter_SignigficanceTable,:) = {Plot_P_Value{lidx}(aidx),{AreaName},{""},{LMName},{""}};
+end
 end
 
-
-% SignificanceTable = [];
+SignificanceTable = [];
 %%
 wantCI = false;
 IsGrouped = true;
 % ColorOrder = [0,0.4470,7410;0.8500,0.3250,0.0980];
-% ColorOrder = [];
 WantHorizontal = true;
 LabelAngle = 45;
 
@@ -262,10 +324,21 @@ if ~isempty(PlotPath)
     if ~isempty(MonkeyName)
         MonkeyName = sprintf("-%s",MonkeyName);
     end
-    if ~isempty(ROIName)
-        ROIName = sprintf("-%s",ROIName);
+    if ~isempty(NeighborhoodSize)
+        NeighborhoodSizeName = sprintf("_Size-%d",NeighborhoodSize);
+    else
+        NeighborhoodSizeName = '';
     end
-    PlotName=sprintf('ROI_LM_Variables_Difference_Bar%s%s',ROIName,MonkeyName);
+    if WantCorrelationMeasure
+        CorrelationName = "-Correlation";
+    else
+        CorrelationName = '';
+    end
+    if WantAbsolute
+    PlotName=sprintf('Homogeneity-Index%s-Absolute%s_Bar%s',CorrelationName,NeighborhoodSizeName,MonkeyName);
+    else
+    PlotName=sprintf('Homogeneity-Index%s%s_Bar%s',CorrelationName,NeighborhoodSizeName,MonkeyName);
+    end
     PlotPathName=[PlotPath filesep PlotName];
     saveas(InFigure,[PlotPathName, '.fig']);
     exportgraphics(InFigure,[PlotPathName, '.pdf'],'ContentType','vector');

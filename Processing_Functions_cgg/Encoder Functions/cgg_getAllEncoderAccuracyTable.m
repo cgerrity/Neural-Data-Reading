@@ -45,7 +45,7 @@ end
     [FolderPath,~,~] = fileparts(filePath);
     CM_TablePathNameExt = fullfile(FolderPath,'CM_Table.mat');
 
-    disp(CM_TablePathNameExt);
+    % disp(CM_TablePathNameExt);
 
     if isfile(CM_TablePathNameExt)
         m_CM_Table = matfile(CM_TablePathNameExt,"Writable",false);
@@ -54,7 +54,16 @@ end
         return
     end
 
-    [ClassNames,~,~,~] = cgg_getClassesFromCMTable(CM_Table);
+    IterationPathNameExt = fullfile(FolderPath,'CurrentIteration.mat');
+
+    if isfile(IterationPathNameExt)
+        m_Iteration= matfile(IterationPathNameExt,"Writable",false);
+        Epoch = m_Iteration.Epoch;
+    else
+        return
+    end
+
+    % [ClassNames,~,~,~] = cgg_getClassesFromCMTable(CM_Table);
 %     MostCommon = [];
 %     RandomChance = [];
 % 
@@ -87,13 +96,14 @@ end
 % 'MatchType',MatchType,...
 % 'IsQuaddle',IsQuaddle,'MostCommon',MostCommon,'RandomChance',RandomChance);
 
-        [~,~,this_WindowAccuracy] = ...
-cgg_procConfusionMatrixWindowsFromTable(...
-CM_Table,ClassNames,...
-'MatchType',MatchType,...
-'IsQuaddle',IsQuaddle);
-
-    this_Accuracy = max(this_WindowAccuracy);
+%         [~,~,this_WindowAccuracy] = ...
+% cgg_procConfusionMatrixWindowsFromTable(...
+% CM_Table,ClassNames,...
+% 'MatchType',MatchType,...
+% 'IsQuaddle',IsQuaddle);
+% 
+%     this_Accuracy = max(this_WindowAccuracy);
+    this_Accuracy = Epoch;
 
     FieldNames = fieldnames(EncodingParameters);
 

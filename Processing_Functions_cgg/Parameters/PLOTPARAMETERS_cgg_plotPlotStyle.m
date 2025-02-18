@@ -21,16 +21,18 @@ end
 end
 
 X_Name_Size=18;
+X_Name_Size=36;
 Y_Name_Size=18;
+Y_Name_Size=42;
 
-Main_Title_Size=18;
+Main_Title_Size=28;
 Main_SubTitle_Size=14;
 Main_SubSubTitle_Size=8;
 
 Title_Size=24;
 
 Label_Size=14;
-Legend_Size = 6;
+Legend_Size = 18;
 
 Indicator_Size = 8;
 
@@ -40,7 +42,7 @@ Tick_Size_Channels=16;
 Tick_Size_Time=0.5;
 Tick_Size_Z = 0.025;
 
-ErrorCapSize=50;
+ErrorCapSize=40;
 
 X_Name_Size_Pie=12;
 
@@ -62,9 +64,13 @@ MATLABPlotColors{7}="#A2142F";
 
 %% Area Colors
 
-Color_ACC = '#ED1C24';
-Color_CD = '#00A651';
-Color_PFC = '#2E3192';
+Color_ACC = [237, 28, 36]/255;
+Color_CD = [0, 166, 81]/255;
+Color_PFC = [46, 49, 146]/255;
+
+Color_Hex_ACC = '#ED1C24';
+Color_Hex_CD = '#00A651';
+Color_Hex_PFC = '#2E3192';
 
 %% Error Plots
 
@@ -124,6 +130,11 @@ RangeFactorHeatLower = 0.3;
 RangeAccuracyUpper = 0.5;
 RangeAccuracyLower = 0.4;
 
+%% Confidence Range
+ConfidenceColor = [200,200,200]/255;
+ConfidenceColor_FaceAlpha = 1;
+ConfidenceColor_EdgeAlpha = 0;
+
 %% Regular Preferences 
 
 Time_Offset = 0;
@@ -144,17 +155,27 @@ Limit_BetaValues_Large = [NaN,NaN];
 Limit_LatentProportion = [0,0.12];
 Limit_LatentCorrelation = [0.25,0.4];
 
+Limit_LatentProportion_Medium = [0,0.2];
+Limit_LatentProportion_Large = [0.05,0.25];
+Limit_HomogeneityIndex = [-0.5,0.5];
+Limit_HomogeneityIndex_Correlation = [-0.25,0.25];
+
 Tick_Size_ChannelProportion = NaN;
 Tick_Size_ChannelProportion_Large = NaN;
 Tick_Size_ChannelProportion_ExtraLarge = NaN;
 Tick_Size_ChannelProportion_ExtraSmall = NaN;
 % Tick_Size_Time = NaN;
 
-Tick_Size_LatentProportion = 0.02;
+Tick_Size_LatentProportion = 0.04;
 Tick_Size_LatentCorrelation = 0.05;
 Tick_Size_ChannelProportion_Regression = 0.25;
 
+Tick_Size_LatentProportion_Medium = 0.05;
+Tick_Size_LatentProportion_Large = 0.05;
+
 Tick_Size_BetaValues_Large = NaN;
+Tick_Size_HomogeneityIndex = NaN;
+Tick_Size_HomogeneityIndex_Correlation = NaN;
 
 
 TickDir = '';
@@ -197,6 +218,8 @@ Limit_Correlation_Large = [0,0.4];
 Limit_ChannelProportion_Difference = [0,0.1];
 Limit_BetaValues = [-0.15,0.3];
 Limit_BetaValues_Large = [-0.2,0.3];
+Limit_HomogeneityIndex = [-0.75,0.75];
+Limit_HomogeneityIndex_Correlation = [-0.4,0.4];
 
 Limit_ChannelProportion_Regression = [0,1];
 
@@ -212,6 +235,8 @@ Tick_Size_Correlation = 0.05;
 Tick_Size_ChannelProportion_Difference = 0.05;
 Tick_Size_BetaValues = 0.15;
 Tick_Size_BetaValues_Large = 0.1;
+Tick_Size_HomogeneityIndex = 0.25;
+Tick_Size_HomogeneityIndex_Correlation = 0.1;
 Tick_Size_ChannelProportion_Regression = 0.25;
 
 TickDir = 'out';
@@ -242,6 +267,18 @@ Tick_Size_Time = 0.5;
 wantFeedbackIndicators = false;
 wantIndicatorNames = true;
 end
+%%
+
+%% Super Cute Rainbow
+
+    Rainbow = [0.9098 0.0784 0.0863; ...
+        1.0000 0.6471 0.0000; ...
+        0.9804 0.9216 0.2118; ...
+        0.4745 0.7647 0.0784; ...
+        0.2824 0.4902 0.9059; ...
+        0.4392 0.2118 0.6157];
+
+
 %%
 
 w = whos;

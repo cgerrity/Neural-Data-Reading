@@ -108,6 +108,35 @@ Folds=[];
 end
 end
 
+if isfunction
+PauseTime_Long = CheckVararginPairs('PauseTime_Long', 60, varargin{:});
+else
+if ~(exist('PauseTime_Long','var'))
+PauseTime_Long=60;
+end
+end
+
+if isfunction
+PauseTime_Short = CheckVararginPairs('PauseTime_Short', 5, varargin{:});
+else
+if ~(exist('PauseTime_Short','var'))
+PauseTime_Short=5;
+end
+end
+
+if isfunction
+WantDelay = CheckVararginPairs('WantDelay', true, varargin{:});
+else
+if ~(exist('WantDelay','var'))
+WantDelay=true;
+end
+end
+%%
+
+if ~WantDelay
+PauseTime_Long = 1;
+PauseTime_Short = 1;
+end
 %%
 % SaveTerm = '_Random';
 IANameExt = 'IA_Table_Random.mat';
@@ -159,6 +188,8 @@ this_NumRemoved = NumRemoved_Vector(ridx);
 
 SaveTerm = sprintf('_Random-%d',this_NumRemoved);
 
+pause(randi(PauseTime_Long)-1);
+
 [IA_Table_Fold,IA_Table_Average] = ...
     cgg_procBestRandomImportanceAnalysis(cfg_Encoder,EpochDir, ...
     'MatchType',MatchType,'NumRemoved',this_NumRemoved, ...
@@ -167,7 +198,9 @@ SaveTerm = sprintf('_Random-%d',this_NumRemoved);
     'DataFormat',DataFormat,'IsQuaddle',IsQuaddle, ...
     'RemovalType',RemovalType,'BaselineArea',BaselineArea, ...
     'BaselineChannel',BaselineChannel,'BaselineLatent',BaselineLatent, ...
-    'SaveTerm',SaveTerm,'WantRemovalTableAcrossFolds',WantRemovalTableAcrossFolds);
+    'SaveTerm',SaveTerm, ...
+    'WantRemovalTableAcrossFolds',WantRemovalTableAcrossFolds, ...
+    'WantDelay',WantDelay);
 
 if ~(istable(IA_Table_Average) && istable(IA_Table_Fold))
 continue
@@ -200,6 +233,8 @@ end
 SaveTerm = '_Random';
 Folds = cell2mat(Full_IA_Table_Fold.Fold);
 Fold_RemovalTable = Full_IA_Table_Fold{:,"RemovalTable"};
+
+pause(randi(PauseTime_Long)-1);
 
 cgg_saveRemovalTable(Fold_RemovalTable,Folds,EpochDir.Results,RemovalType,SessionName,SaveTerm);
 
@@ -278,6 +313,8 @@ for fidx = 1:NumFolds
     this_Fold_IA_Table = Full_IA_Table_Fold{fidx,"IA_Table"};
     this_Fold_IA_Table = this_Fold_IA_Table{1};
 
+    pause(randi(PauseTime_Long)-1);
+
 cgg_saveImportanceAnalysis(this_Fold_IA_Table,EpochDir.Results,...
     RemovalType,this_Fold,SessionName,'SaveTerm',SaveTerm);
 
@@ -289,6 +326,8 @@ end
 %%
 
 SaveTerm = '_Random';
+
+pause(randi(PauseTime_Short)-1);
 
 [IA_Table_Fold,IA_Table_Average] = cgg_procSingleImportanceAnalysis(...
     cfg_Encoder,EpochDir,'MatchType',MatchType,'NumRemoved',1, ...
@@ -312,18 +351,23 @@ end
 
 if HasIA_Table
 
-for ridx = 1:NumRemoved
-    this_NumRemoved = ridx;
+RemovedIDX = 1:NumRemoved;
+RemovedIDX = RemovedIDX(randperm(length(RemovedIDX)));
+for ridx = 1:length(RemovedIDX)
+    this_NumRemoved = RemovedIDX(ridx);
 SaveTerm = sprintf('_Random-%d',this_NumRemoved);
 IASingleNameExt = sprintf('IA_Table%s.mat',SaveTerm);
 IASinglePathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IASingleNameExt);
 IA_AccuracySingleNameExt = sprintf('IA_Table%s_%s.mat',SaveTerm,MatchType);
 IA_AccuracySinglePathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IA_AccuracySingleNameExt);
 
+% pause(randi(PauseTime_Short));
+
 for fidx = 1:length(Folds)
 Fold = Folds(fidx);
 this_IA_AccuracySinglePathNameExt = sprintf(IA_AccuracySinglePathNameExt,Fold);
 this_IASinglePathNameExt = sprintf(IASinglePathNameExt,Fold);
+
 if isfile(this_IA_AccuracySinglePathNameExt)
 delete(this_IA_AccuracySinglePathNameExt);
 end

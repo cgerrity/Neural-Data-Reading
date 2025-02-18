@@ -21,6 +21,14 @@ end
 end
 
 if isfunction
+NumIter = CheckVararginPairs('NumIter', 1000, varargin{:});
+else
+if ~(exist('NumIter','var'))
+NumIter=1000;
+end
+end
+
+if isfunction
 SamplingRate = CheckVararginPairs('SamplingRate', 1000, varargin{:});
 else
 if ~(exist('SamplingRate','var'))
@@ -35,6 +43,14 @@ if ~(exist('Time_ROI','var'))
 Time_ROI=[];
 end
 end
+
+% if isfunction
+% ROINames = CheckVararginPairs('ROINames', {}, varargin{:});
+% else
+% if ~(exist('ROINames','var'))
+% ROINames={};
+% end
+% end
 
 if isfunction
 Time_Offset = CheckVararginPairs('Time_Offset', 0, varargin{:});
@@ -147,7 +163,10 @@ DataTransform={@(x) atanh(x),@(x) tanh(x)}; % Fisher Z Transform
 
 if isempty(Time_ROI)
 Time_ROI = [Time_Start,Time_End];
+% ROINames = {'All'};
 end
+
+% this_ROI = struct
 
 [~,ProportionAll_ROI,All_ROI_STD,All_ROI_STE,All_ROI_CI] = ...
     cgg_procROIValues(SignificantValues_All,Time_ROI,Time,NumData);
@@ -172,37 +191,70 @@ ProportionDifference_Series_ROI = ProportionPositive_Series_ROI - ProportionNega
 %%
 
 if ~isempty(NeighborhoodSize)
+
+%% Proportion Significant
     PlotInformation.PlotVariable = 'Correlation';
 SignificantValues_Positive_Func = @(x) cgg_getSignificantValuesFromTable(x,PlotInformation,SignificanceValue,'Positive');
-OutputGet_Positive_Func = @(x) getOutput(x,SignificantValues_Positive_Func,2);
-ROI_Positive_Func = @(x) cgg_procROIValues(OutputGet_Positive_Func(x),Time_ROI,Time,height(x));
+OutputGet_Positive_Func = @(x) cgg_getOutput(x,SignificantValues_Positive_Func,2);
+% ROI_Positive_Func = @(x) cgg_procROIValues(OutputGet_Positive_Func(x),Time_ROI,Time,height(x));
+ROI_Positive_Func = @(x) mean(cgg_procROIValues(OutputGet_Positive_Func(x),Time_ROI,Time,height(x)));
 
 SignificantValues_Negative_Func = @(x) cgg_getSignificantValuesFromTable(x,PlotInformation,SignificanceValue,'Negative');
-OutputGet_Negative_Func = @(x) getOutput(x,SignificantValues_Negative_Func,2);
-ROI_Negative_Func = @(x) cgg_procROIValues(OutputGet_Negative_Func(x),Time_ROI,Time,height(x));
+OutputGet_Negative_Func = @(x) cgg_getOutput(x,SignificantValues_Negative_Func,2);
+% ROI_Negative_Func = @(x) cgg_procROIValues(OutputGet_Negative_Func(x),Time_ROI,Time,height(x));
+ROI_Negative_Func = @(x) mean(cgg_procROIValues(OutputGet_Negative_Func(x),Time_ROI,Time,height(x)));
 
-NeighborhoodFunc = @(x) {ROI_Positive_Func(x),ROI_Negative_Func(x)};
+%% Correlation Strength
+PlotInformation.PlotVariable = 'Correlation';
+Correlation_Positive_Func = @(x) cgg_getSignificantValuesFromTable(x,PlotInformation,SignificanceValue,'Positive');
+OutputCorrelation_Positive_Func = @(x) DataTransform{1}(cgg_getOutput(x,Correlation_Positive_Func,1));
+ROI_Correlation_Positive_Func = @(x) mean(cgg_procROIValues(OutputCorrelation_Positive_Func(x),Time_ROI,Time,height(x)));
+
+Correlation_Negative_Func = @(x) cgg_getSignificantValuesFromTable(x,PlotInformation,SignificanceValue,'Negative');
+OutputCorrelation_Negative_Func = @(x) DataTransform{1}(cgg_getOutput(x,Correlation_Negative_Func,1));
+ROI_Correlation_Negative_Func = @(x) mean(cgg_procROIValues(OutputCorrelation_Negative_Func(x),Time_ROI,Time,height(x)));
+
+%%
+NeighborhoodFunc = @(x) {ROI_Positive_Func(x),ROI_Negative_Func(x),ROI_Correlation_Positive_Func(x),ROI_Correlation_Negative_Func(x)};
 
 NeighborhoodValue = cgg_getTableNeighborhood(InputTable,NeighborhoodSize,NeighborhoodFunc);
 
 %%
-
-HomogeneityIndex_Func = @(x) (x{1}-x{2})/(x{1}+x{2});
+SmallTolerance = 0.00000001;
+HomogeneityIndex_Func = @(x) (x{1}-x{2})/(x{1}+x{2}+SmallTolerance);
+HomogeneityIndex_Correlation_Func = @(x) (x{3}-abs(x{4}))/(x{3}+abs(x{4})+SmallTolerance);
 
 HomogeneityIndex = cellfun(@(x) HomogeneityIndex_Func(x),NeighborhoodValue,"UniformOutput",true);
+HomogeneityIndex_Correlation = cellfun(@(x) HomogeneityIndex_Correlation_Func(x),NeighborhoodValue,"UniformOutput",true);
+
+ConfidenceRange = cgg_getSignTest(HomogeneityIndex,'NumIter',NumIter,'SignificanceValue',SignificanceValue);
+ConfidenceRange_Correlation = cgg_getSignTest(HomogeneityIndex_Correlation,'NumIter',NumIter,'SignificanceValue',SignificanceValue);
 
 [HomogeneityIndex,HomogeneityIndex_STD,HomogeneityIndex_STE,HomogeneityIndex_CI] = ...
     cgg_getMeanSTDSeries(HomogeneityIndex,'NumSamples',1);
+[HomogeneityIndex_Correlation,HomogeneityIndex_Correlation_STD,HomogeneityIndex_Correlation_STE,HomogeneityIndex_Correlation_CI] = ...
+    cgg_getMeanSTDSeries(HomogeneityIndex_Correlation,'NumSamples',1);
 
 HomogeneityIndex_T = HomogeneityIndex/HomogeneityIndex_STE;
+HomogeneityIndex_Correlation_T = HomogeneityIndex_Correlation/HomogeneityIndex_Correlation_STE;
 
 HomogeneityIndex_P_Value = tcdf(-abs(HomogeneityIndex_T),NumData-1) + tcdf(abs(HomogeneityIndex_T),NumData-1,'upper');
+HomogeneityIndex_Correlation_P_Value = tcdf(-abs(HomogeneityIndex_Correlation_T),NumData-1) + tcdf(abs(HomogeneityIndex_Correlation_T),NumData-1,'upper');
+
 else
 HomogeneityIndex = [];
 HomogeneityIndex_STD = [];
 HomogeneityIndex_STE = [];
 HomogeneityIndex_CI = [];
 HomogeneityIndex_P_Value = [];
+ConfidenceRange = [];
+
+HomogeneityIndex_Correlation = [];
+HomogeneityIndex_Correlation_STD = [];
+HomogeneityIndex_Correlation_STE = [];
+HomogeneityIndex_Correlation_CI = [];
+HomogeneityIndex_Correlation_P_Value = [];
+ConfidenceRange_Correlation = [];
 end
 
 %%
@@ -247,6 +299,11 @@ PlotData.HomogeneityIndex_STD = HomogeneityIndex_STD;
 PlotData.HomogeneityIndex_STE = HomogeneityIndex_STE;
 PlotData.HomogeneityIndex_CI = HomogeneityIndex_CI;
 PlotData.HomogeneityIndex_P_Value = HomogeneityIndex_P_Value;
+PlotData.HomogeneityIndex_Correlation = HomogeneityIndex_Correlation;
+PlotData.HomogeneityIndex_Correlation_STD = HomogeneityIndex_Correlation_STD;
+PlotData.HomogeneityIndex_Correlation_STE = HomogeneityIndex_Correlation_STE;
+PlotData.HomogeneityIndex_Correlation_CI = HomogeneityIndex_Correlation_CI;
+PlotData.HomogeneityIndex_Correlation_P_Value = HomogeneityIndex_Correlation_P_Value;
 PlotData.ProportionModel = ProportionModel;
 PlotData.Model_STD = Model_STD;
 PlotData.Model_STE = Model_STE;
@@ -256,13 +313,15 @@ PlotData.Beta_STD = Beta_STD;
 PlotData.Beta_STE = Beta_STE;
 PlotData.Beta_CI = Beta_CI;
 PlotData.NumData = NumData;
+PlotData.ConfidenceRange = ConfidenceRange;
+PlotData.ConfidenceRange_Correlation = ConfidenceRange_Correlation;
 %%
 
-    function Output = getOutput(Input,Func,OutputNumber)
-        Output_tmp = cell(1,OutputNumber);
-        [Output_tmp{:}] = Func(Input);
-        Output = Output_tmp{OutputNumber};
-    end
+    % function Output = getOutput(Input,Func,OutputNumber)
+    %     Output_tmp = cell(1,OutputNumber);
+    %     [Output_tmp{:}] = Func(Input);
+    %     Output = Output_tmp{OutputNumber};
+    % end
 
 end
 

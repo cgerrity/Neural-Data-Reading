@@ -66,14 +66,14 @@ Name_Residual = "conv_residual" + CoderBlock_Name;
 switch Coder
     case 'Decoder'
         CropName="crop_residual" + CoderBlock_Name;
-        this_Residual = [transposedConv2dLayer(1,this_NumFilters,"Name",Name_Residual,'Stride',Stride,"Cropping","same")
+        this_Residual = [transposedConv2dLayer(1,this_NumFilters,"Name",Name_Residual,'Stride',Stride,"Cropping","same","WeightsInitializer","he")
             cgg_cropLayer(CropName,this_CropAmount)];
         % this_Residual = [functionLayer(@(X) dlresize(X,'Scale',Stride),'Name',Name_Residual)
         %     cgg_cropLayer(CropName,CropAmount)
         %     depthConcatenationLayer(this_NumFilters,'Name',Name_Depth)];
         % OutResidual_Name = CropName;
     otherwise
-        this_Residual = convolution2dLayer(1,this_NumFilters,"Name",Name_Residual,"Padding",'same','Stride',Stride);
+        this_Residual = convolution2dLayer(1,this_NumFilters,"Name",Name_Residual,"Padding",'same','Stride',Stride,"WeightsInitializer","he");
 % this_Residual = [averagePooling2dLayer(Stride,'Stride',Stride,'Name',Name_Residual,'Padding','same')
 %     depthConcatenationLayer(this_NumFilters,'Name',Name_Depth)];
 end

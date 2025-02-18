@@ -25,6 +25,13 @@ ErrorCapSize = cfg_Plotting.ErrorCapSize;
 
 Tick_Size = 2;
 
+BarWidth  = 12;
+
+Y_Upper=0;
+Y_Lower=1;
+Y_Limit_Set = [0,0.35];
+Y_Tick_Label_Size = 36;
+Y_Tick_Size = 0.05;
 %%
 
 % Decoders=FullTable.Properties.RowNames;
@@ -76,8 +83,7 @@ p_Error = gobjects(NumLoops,1);
 % InvalidPlots = false(NumDecoders,1);
 InvalidPlots = false(NumLoops,1);
 
-Y_Upper=0;
-Y_Lower=1;
+
 
 % Values=cell(NumDecoders,1);
 % ColorOrder=cell(NumDecoders,1);
@@ -199,7 +205,7 @@ close all
 
 fig_accuracy_bar=figure;
 fig_accuracy_bar.Units="normalized";
-fig_accuracy_bar.Position=[0,0,1,1];
+fig_accuracy_bar.Position=[0,0,0.5,1];
 fig_accuracy_bar.Units="inches";
 fig_accuracy_bar.PaperUnits="inches";
 PlotPaperSize=fig_accuracy_bar.Position;
@@ -207,39 +213,53 @@ PlotPaperSize(1:2)=[];
 fig_accuracy_bar.PaperSize=PlotPaperSize;
 
 LabelAngle = 30;
+% ColorOrder = '';
+if length(ValueNames) == 6
+ColorOrder = cfg_Plotting.Rainbow;
+end
+% disp(isempty(ColorOrder))
+[b_Plot] = cgg_plotBarGraphWithError(Values,ValueNames,'ColorOrder',ColorOrder,'X_TickFontSize',Y_Tick_Label_Size,'ErrorLineWidth',Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',true,'LabelAngle',LabelAngle,'InFigure',fig_accuracy_bar,'X_Name','','BarWidth',BarWidth);
 
-[b_Plot] = cgg_plotBarGraphWithError(Values,ValueNames,'ColorOrder',ColorOrder,'X_TickFontSize',20,'ErrorLineWidth',Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',true,'LabelAngle',LabelAngle);
-
-p_MostCommon=yline(MostCommon,"-",'Most Common');
-p_Random=yline(RandomChance,"-",'Random Chance');
-p_MostCommon.LineWidth = Line_Width;
-p_Random.LineWidth = Line_Width;
-
-p_MostCommon.LabelOrientation = 'horizontal';
-p_MostCommon.LabelVerticalAlignment = 'middle';
-p_MostCommon.LabelHorizontalAlignment = 'left';
-p_MostCommon.FontSize = Label_Size;
-p_Random.LabelOrientation = 'horizontal';
-p_Random.LabelVerticalAlignment = 'middle';
-p_Random.LabelHorizontalAlignment = 'left';
-p_Random.FontSize = Label_Size;
+% p_MostCommon=yline(MostCommon,"-",'Most Common');
+% p_Random=yline(RandomChance,"-",'Random Chance');
+% p_MostCommon.LineWidth = Line_Width;
+% p_Random.LineWidth = Line_Width;
+% 
+% p_MostCommon.LabelOrientation = 'horizontal';
+% p_MostCommon.LabelVerticalAlignment = 'middle';
+% p_MostCommon.LabelHorizontalAlignment = 'left';
+% p_MostCommon.FontSize = Label_Size;
+% p_Random.LabelOrientation = 'horizontal';
+% p_Random.LabelVerticalAlignment = 'middle';
+% p_Random.LabelHorizontalAlignment = 'left';
+% p_Random.FontSize = Label_Size;
 
 Y_Name = 'Accuracy';
 if contains(cfg.MatchType,'Scaled')
-Y_Name = 'Normalized Accuracy';
+Y_Name = 'Scaled Balanced Accuracy';
 end
-
-ylabel(Y_Name,'FontSize',Y_Name_Size);
+Y_Label = sprintf('{\\fontsize{%d}%s}',Y_Name_Size,Y_Name);
+% ylabel(Y_Name,'FontSize',Y_Name_Size);
+ylabel(Y_Label);
 
 Bar_Title=sprintf('Accuracy of %s over %d Folds',cfg.LoopTitle,NumFolds);
-title(Bar_Title,'FontSize',Title_Size);
+% title(Bar_Title,'FontSize',Title_Size);
 
 % ylim([0,Y_Upper*(1+RangeFactorUpper)]);
-ylim([YLimLower,YLimUpper]);
-ylim([0,1]);
+% ylim([YLimLower,YLimUpper]);
+% ylim([0,1]);
+YLimits = Y_Limit_Set;
+ylim(YLimits);
+
+Current_Axis = gca;
+Current_Axis.YAxis.FontSize=Y_Tick_Label_Size;
+Y_Ticks = YLimits(1):Y_Tick_Size:YLimits(2);
+
+if ~(isempty(Y_Ticks) || any(isnan(Y_Ticks)))
+yticks(Y_Ticks);
+end
 
 drawnow;
-
 SavePath=cfg_Plot.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Accuracy.path;
 SaveName=['Accuracy_Overall' ExtraSaveTerm '_Type_' cfg.LoopType];
 

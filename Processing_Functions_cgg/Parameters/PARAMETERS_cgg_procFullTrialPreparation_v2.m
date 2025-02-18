@@ -11,8 +11,9 @@ Count_Sel_Trial=30;
 probe_area='ACC_001';
 Activity_Type='MUA';
 Smooth_Factor=50;
-SmoothType='gaussian';
+SmoothType='gaussian'; % None
 want_all_Probes=true;
+PassBand = NaN; % [10,36]
 
 Increment_Time=25; %Value in ms
 

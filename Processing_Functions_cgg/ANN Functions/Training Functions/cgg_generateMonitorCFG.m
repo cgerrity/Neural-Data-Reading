@@ -53,6 +53,7 @@ end
 HasDecoder = ~isempty(Decoder);
 HasClassifier = ~isempty(Classifier);
 IsVariational = false;
+LossType = 'Classification';
 
 NumDimensions = [];
 
