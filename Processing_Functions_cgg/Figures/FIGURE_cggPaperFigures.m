@@ -11,7 +11,7 @@ WantPlotExplainedVariance = false;
 WantPlotCorrelation = false;
 
 WantCI = true;
-% This is to test that I am on the Charlie Branch
+% This is to test that I am on the Charlie Branch and a second commit
 
 SignificanceValue = 0.05;
 SignificanceMimimum = [];
