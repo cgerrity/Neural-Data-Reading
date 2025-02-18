@@ -11,6 +11,7 @@ WantPlotExplainedVariance = false;
 WantPlotCorrelation = false;
 
 WantCI = false;
+% This is a test for the main branch
 
 SignificanceValue = 0.05;
 SignificanceMimimum = [];
