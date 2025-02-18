@@ -10,6 +10,8 @@ InIncrement = 1;
 WantPlotExplainedVariance = false;
 WantPlotCorrelation = false;
 
+WantCI = true;
+
 SignificanceValue = 0.05;
 SignificanceMimimum = [];
 % Time_ROI = [0.95,1.15];
@@ -368,7 +370,7 @@ cgg_plotPaperFigureROIAllLearningVariablesBar(this_PlotTable,'PlotPath',PlotPath
 close all
 cgg_plotPaperFigureROIAllLearningVariablesDifferenceBar(this_PlotTable,'PlotPath',PlotPath,'ColorOrder',[],'MonkeyName',MonkeyName,'ROIName',ROIName);
 close all
-cgg_plotPaperFigureHomogeneityIndexScatter(this_PlotTable,'PlotPath',PlotPath,'WantAbsolute',false,'NeighborhoodSize',NeighborhoodSize,'WantCorrelationMeasure',false,'ColorOrder',ColorOrder,'MonkeyName',MonkeyName,'ROIName',ROIName);
+cgg_plotPaperFigureHomogeneityIndexScatter(this_PlotTable,'PlotPath',PlotPath,'WantAbsolute',false,'NeighborhoodSize',NeighborhoodSize,'WantCorrelationMeasure',false,'ColorOrder',ColorOrder,'MonkeyName',MonkeyName,'ROIName',ROIName,'WantCI',WantCI);
 close all
 % close all
 % cgg_plotPaperFigureHomogeneityIndexBar(this_PlotTable,'PlotPath',PlotPath,'WantAbsolute',false,'NeighborhoodSize',NeighborhoodSize,'WantCorrelationMeasure',false,'ColorOrder',ColorOrder,'MonkeyName',MonkeyName);
