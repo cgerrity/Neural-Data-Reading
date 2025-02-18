@@ -10,7 +10,7 @@ InIncrement = 1;
 WantPlotExplainedVariance = false;
 WantPlotCorrelation = false;
 
-WantCI = true;
+WantCI = false;
 
 SignificanceValue = 0.05;
 SignificanceMimimum = [];
