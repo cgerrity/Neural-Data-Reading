@@ -12,6 +12,14 @@ NumIterRand=2000;
 end
 end
 
+if isfunction
+Weights = CheckVararginPairs('Weights', [], varargin{:});
+else
+if ~(exist('Weights','var'))
+Weights=[];
+end
+end
+
 NumDimensions=length(ClassNames);
 [Dim1,~]=size(TrueValue);
 if Dim1==NumDimensions
@@ -26,7 +34,7 @@ Prediction=NaN(size(TrueValue));
 for tidx=1:NumTrials
 Prediction(tidx,:) = cgg_getRandomPrediction(ClassNames,IsQuaddle);
 end
-RandomChance(idx) = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType);
+RandomChance(idx) = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType,'Weights',Weights);
 end
 RandomChance=mean(RandomChance);
 
@@ -65,7 +73,7 @@ MostCommonPrediction=ModeTarget;
 end
 
 Prediction=repmat(MostCommonPrediction,NumTrials,1);
-MostCommon = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType);
+MostCommon = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType,'Weights',Weights);
 
 end
 

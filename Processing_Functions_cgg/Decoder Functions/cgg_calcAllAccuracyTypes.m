@@ -1,6 +1,16 @@
-function Accuracy = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType)
+function Accuracy = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType,varargin)
 %CGG_CALCALLACCURACYTYPES Summary of this function goes here
 %   Detailed explanation goes here
+
+isfunction=exist('varargin','var');
+
+if isfunction
+Weights = CheckVararginPairs('Weights', [], varargin{:});
+else
+if ~(exist('Weights','var'))
+Weights=[];
+end
+end
 
 
 switch MatchType
@@ -20,15 +30,15 @@ switch MatchType
             Accuracy = TruePositives/TotalObservations;
     
     case 'macroaccuracy'
-        [Accuracy] = cgg_calcMacroAccuracy(TrueValue,Prediction,ClassNames);
+        [Accuracy] = cgg_calcMacroAccuracy(TrueValue,Prediction,ClassNames,'Weights',Weights);
     case 'combinedaccuracy'
-        [Accuracy] = cgg_calcCombinedAccuracy(TrueValue,Prediction,ClassNames);
+        [Accuracy] = cgg_calcCombinedAccuracy(TrueValue,Prediction,ClassNames,'Weights',Weights);
     case 'macroF1'
-        [Accuracy] = cgg_calcMacroF1(TrueValue,Prediction,ClassNames);
+        [Accuracy] = cgg_calcMacroF1(TrueValue,Prediction,ClassNames,'Weights',Weights);
     case 'macroRecall'
-        [Accuracy] = cgg_calcMacroRecall(TrueValue,Prediction,ClassNames);
+        [Accuracy] = cgg_calcMacroRecall(TrueValue,Prediction,ClassNames,'Weights',Weights);
     case 'BalancedAccuracy'
-        [Accuracy] = cgg_calcMacroRecall(TrueValue,Prediction,ClassNames);
+        [Accuracy] = cgg_calcMacroRecall(TrueValue,Prediction,ClassNames,'Weights',Weights);
     otherwise
 end
 

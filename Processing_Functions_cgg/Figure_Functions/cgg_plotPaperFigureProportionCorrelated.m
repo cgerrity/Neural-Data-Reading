@@ -136,10 +136,10 @@ end
 end
 
 if isfunction
-SeparatePlotName = CheckVararginPairs('SeparatePlotName', '', varargin{:});
+LM_Variable = CheckVararginPairs('LM_Variable', '', varargin{:});
 else
-if ~(exist('SeparatePlotName','var'))
-SeparatePlotName='';
+if ~(exist('LM_Variable','var'))
+LM_Variable='';
 end
 end
 
@@ -284,6 +284,14 @@ WantMediumLatent = CheckVararginPairs('WantMediumLatent', false, varargin{:});
 else
 if ~(exist('WantMediumLatent','var'))
 WantMediumLatent=false;
+end
+end
+
+if isfunction
+MonkeyName = CheckVararginPairs('MonkeyName', '', varargin{:});
+else
+if ~(exist('MonkeyName','var'))
+MonkeyName='';
 end
 end
 %%
@@ -449,7 +457,13 @@ if ~isempty(PlotPath)
     if ~isempty(AreaName)
         AreaName = sprintf("-%s",AreaName);
     end
-    PlotName=sprintf('Proportion_Correlated%s',AreaName);
+    if ~isempty(MonkeyName)
+        MonkeyName = sprintf("-%s",MonkeyName);
+    end
+    if ~isempty(LM_Variable)
+        LM_Variable = sprintf("-%s",LM_Variable);
+    end
+    PlotName=sprintf('Proportion_Correlated%s%s%s',LM_Variable,AreaName,MonkeyName);
     PlotPathName=[PlotPath filesep PlotName];
     saveas(InFigure,[PlotPathName, '.fig']);
     exportgraphics(InFigure,[PlotPathName, '.pdf'],'ContentType','vector');

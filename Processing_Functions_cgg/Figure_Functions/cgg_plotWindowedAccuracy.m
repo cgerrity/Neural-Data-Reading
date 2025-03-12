@@ -69,7 +69,13 @@ PlotPaperSize=fig_plot.Position;
 PlotPaperSize(1:2)=[];
 fig_plot.PaperSize=PlotPaperSize;
 
-[fig_plot,p_Plots,p_Error] = cgg_plotTimeSeriesPlot(Window_Accuracy_All,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'SamplingRate',SamplingFrequency,'X_Name',X_Name,'Y_Name',Y_Name,'PlotTitle',PlotTitle,'PlotNames',PlotNames,'wantIndicatorNames',wantIndicatorNames,'Y_Tick_Label_Size',Y_Tick_Label_Size,'X_Tick_Label_Size',Y_Tick_Label_Size,'PlotColors',PlotColors,'InFigure',fig_plot,'Y_Name_Size',Y_Name_Size);
+RangeAccuracyLower = -0.05;
+RangeAccuracyUpper = 0.2;
+Tick_Size = 0.05;
+
+Y_Ticks = 0:Tick_Size:RangeAccuracyUpper;
+
+[fig_plot,p_Plots,p_Error] = cgg_plotTimeSeriesPlot(Window_Accuracy_All,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'SamplingRate',SamplingFrequency,'X_Name',X_Name,'Y_Name',Y_Name,'PlotTitle',PlotTitle,'PlotNames',PlotNames,'wantIndicatorNames',wantIndicatorNames,'Y_Tick_Label_Size',Y_Tick_Label_Size,'X_Tick_Label_Size',Y_Tick_Label_Size,'PlotColors',PlotColors,'InFigure',fig_plot,'Y_Name_Size',Y_Name_Size,'Y_Ticks',Y_Ticks);
 
 hold on
 p_Random=yline(RandomChance);
@@ -101,8 +107,8 @@ YLimUpper=RangeAccuracyUpper;
 % Current_Axis.XAxis.FontSize=Y_Tick_Label_Size;
 
 ylim([YLimLower,YLimUpper]);
-ylim([0,1]);
-ylim([-0.05,0.3]);
+% ylim([0,1]);
+% ylim([-0.05,0.3]);
 drawnow;
 
 %%

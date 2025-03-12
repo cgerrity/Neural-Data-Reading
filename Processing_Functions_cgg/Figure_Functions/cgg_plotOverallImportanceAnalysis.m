@@ -225,7 +225,8 @@ PlotColors = cell(1,NumAreas);
 for aidx = 1:NumAreas
     this_Area = SingleAreaPlotNames{aidx};
     this_PlotColorName = sprintf('Color_%s',this_Area);
-    PlotColors{aidx} = hex2rgb(cfg_Plotting.(this_PlotColorName));
+    PlotColors{aidx} = cfg_Plotting.(this_PlotColorName);
+    % PlotColors{aidx} = hex2rgb(cfg_Plotting.(this_PlotColorName));
 end
 
 AreaRelativePlot_Y = cell(NumAreas,NumNames);
@@ -243,7 +244,7 @@ for nidx = 1:NumNames
 
 this_Name = Names(nidx);
 this_NameIDX = NameIDX == nidx;
-this_NameTable = RemovalPlotTable(this_NameIDX,:);
+this_NameTable = this_RemovalTypeTable(this_NameIDX,:);
 
 this_X = this_NameTable.("Units Removed");
 this_Y = this_NameTable.Accuracy;
