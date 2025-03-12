@@ -1,9 +1,20 @@
-function [FullClassCM] = cgg_calcClassConfusionMatrix(TrueValue,Prediction,ClassNames)
+function [FullClassCM] = cgg_calcClassConfusionMatrix(TrueValue,Prediction,ClassNames,varargin)
 %CGG_CALCCLASSCONFUSIONMATRIX Summary of this function goes here
 %   Detailed explanation goes here
 
+isfunction=exist('varargin','var');
+
+if isfunction
+Weights = CheckVararginPairs('Weights', [], varargin{:});
+else
+if ~(exist('Weights','var'))
+Weights=[];
+end
+end
 
 [~,NumDimension]=size(TrueValue);
+
+HasWeights = ~isempty(Weights);
 
 % MatchInstances=TrueValue==Prediction;
 
@@ -12,7 +23,35 @@ FullClassCM=table();
 for didx=1:NumDimension
 this_ClassNames=ClassNames{didx};
 NumClasses=length(this_ClassNames);
+
+if HasWeights
+this_CM = zeros(NumClasses);
+Single_TrueValue = TrueValue(:,didx);
+Single_Prediction = Prediction(:,didx);
+Single_Weight = Weights(:,didx);
+[Indices,TrueLabels,PredictionLabels] = findgroups(Single_TrueValue, Single_Prediction);
+
+CM_Vector = accumarray(Indices,Single_Weight);
+
+% Get the CM in the correct order
+[~, ~, CM_Rows] = unique(TrueLabels);
+[~, CM_RowsIDX] = ismember(unique(TrueLabels), this_ClassNames);
+CM_Rows = CM_RowsIDX(CM_Rows);
+[~, ~, CM_Columns] = unique(PredictionLabels);
+[~, CM_ColumnsIDX] = ismember(unique(PredictionLabels), this_ClassNames);
+CM_Columns = CM_ColumnsIDX(CM_Columns);
+
+CM_Indices = sub2ind(size(this_CM), CM_Rows, CM_Columns);
+this_CM(CM_Indices) = CM_Vector;
+
+% 
+% for eidx = 1:NumEntries
+% this_CMtmp = confusionmat(TrueValue(eidx,didx),Prediction(eidx,didx),'Order',this_ClassNames).*Weights(eidx,didx);
+% this_CM = this_CM + this_CMtmp;
+% end
+else
 this_CM=confusionmat(TrueValue(:,didx),Prediction(:,didx),'Order',this_ClassNames);
+end
 
 this_ClassIndices=1:NumClasses;
 

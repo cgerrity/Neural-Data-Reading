@@ -132,6 +132,14 @@ WantMedium=false;
 end
 end
 
+if isfunction
+LM_Variable = CheckVararginPairs('LM_Variable', '', varargin{:});
+else
+if ~(exist('LM_Variable','var'))
+LM_Variable='';
+end
+end
+
 %%
 [AreaNamesIDX,AreaNames] = findgroups(PlotTable.Area);
 
@@ -322,7 +330,10 @@ if ~isempty(PlotPath)
     if ~isempty(ROIName)
         ROIName = sprintf("-%s",ROIName);
     end
-    PlotName=sprintf('ROI_Bar-%s%s%s',SaveAreaNames,ROIName,MonkeyName);
+    if ~isempty(LM_Variable)
+        LM_Variable = sprintf("-%s",LM_Variable);
+    end
+    PlotName=sprintf('ROI_Bar-%s%s%s%s',SaveAreaNames,ROIName,LM_Variable,MonkeyName);
     PlotPathName=[PlotPath filesep PlotName];
     saveas(InFigure,[PlotPathName, '.fig']);
     exportgraphics(InFigure,[PlotPathName, '.pdf'],'ContentType','vector');

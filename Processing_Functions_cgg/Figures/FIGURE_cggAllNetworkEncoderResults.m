@@ -12,8 +12,8 @@ end
 %% Parameters
 
 EpochName = 'Decision';
-WantAnalysis = true;
-WantDelay = true;
+WantAnalysis = false;
+WantDelay = false;
 
 % FilterColumn={'Gain','Loss'}; Split_TableRowNames = {'2/-3','2/-1','3/-3','3/-1'};
 FilterColumn={'All'}; Split_TableRowNames = {'Overall'};
@@ -39,11 +39,11 @@ FilterColumn={'All'}; Split_TableRowNames = {'Overall'};
 
 %% Overall Windowed Accuracy
 
-% cgg_plotWindowedAccuracy(FullTable,cfg);
+cgg_plotWindowedAccuracy(FullTable,cfg);
 
 %% Split Windowed Accuracy
 
-% cgg_plotSplitWindowedAccuracy(FullTable,cfg);
+cgg_plotSplitWindowedAccuracy(FullTable,cfg);
 
 %% Overall Importance Analysis
 

@@ -319,43 +319,7 @@ fprintf(MessagePart8);
     'Folds',Folds,'WantDelay',WantDelay);
 
 RemovalPlotTable = cgg_getRemovalPlotTable(RemovalPlotTable,IA_Table_Fold_Part8,'Sequential','Latent',cfg);
-% %% Part 3: Plot Data
-% % TableEntry_Part3 = {'Random','Channel',[],[],[],[]};
-% 
-% Accuracy_Part3(isnan(NumRemoved_Part3)) = [];
-% NumRemoved_Part3(isnan(NumRemoved_Part3)) = [];
-% 
-% [Accuracy_Random,~,Accuracy_Random_STE,Accuracy_Random_CI] = ...
-%     cgg_getMeanSTDSeries(Accuracy_Part3,'NumCollapseDimension',NumFolds);
-% 
-% NumRemoved = length(NumRemoved_Part3);
-% 
-% Table_Part3 = table(repmat({'Random'},[NumRemoved,1]),repmat({'Channel'},[NumRemoved,1]),NumRemoved_Part3,Accuracy_Random,Accuracy_Random_STE,Accuracy_Random_CI,'VariableNames',TableVariables(:,1));
-% Table_Part3 = sortrows(Table_Part3,"Units Removed","ascend");
-% 
-% RemovalPlotTable = [RemovalPlotTable;Table_Part3];
-% %%
-% Example_IA_Table = IA_Table_Fold_Part1(1,"IA_Table_Metric");
-% [AreaNames,~,~] = unique([Example_IA_Table.AreaNames{:}]);
-% AreaNames(strcmp(AreaNames,'None')) = [];
-% NumAreas = length(AreaNames);
-% Window_Importance_Area = cell(NumAreas,1);
-% 
-% for fidx = 1:height(IA_Table_Fold_Part1)
-% for aidx = 1:NumAreas
-% this_AreaName = AreaNames{aidx};
-% this_IA_Table = IA_Table_Fold_Part1(fidx,"IA_Table_Metric");
-% this_AreaNamesIDX = strcmp([this_IA_Table.AreaNames{:}],this_AreaName);
-% this_IA_Table_Area = this_IA_Table(this_AreaNamesIDX,:);
-% 
-% this_Window_Importance = this_IA_Table_Area.Window_Importance;
-% 
-% Window_Importance_Area{aidx} = cat(3,Window_Importance_Area{aidx},this_Window_Importance);
-% 
-% end
-% end
-% 
-% for aidx = 1:NumAreas
+
 
 end
 

@@ -20,6 +20,14 @@ if ~(exist('MatchType','var'))
 MatchType='macroRecall';
 end
 end
+
+if isfunction
+Weights = CheckVararginPairs('Weights', [], varargin{:});
+else
+if ~(exist('Weights','var'))
+Weights=[];
+end
+end
 %%
 
 IsScaled = contains(MatchType,'Scaled');
@@ -40,7 +48,7 @@ if IsScaled
         Prediction,ClassNames,MatchType_Calc,IsQuaddle,varargin{:});
 else
     PerformanceMetric = cgg_calcAllAccuracyTypes(TrueValue,Prediction,...
-        ClassNames,MatchType);
+        ClassNames,MatchType,'Weights',Weights);
 end
 
 end

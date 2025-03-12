@@ -19,7 +19,8 @@ MacroDimensionBalancedAccuracy=NaN(NumDimension,1);
 MacroDimensionTotalAccuracy=NaN(NumDimension,1);
 
 IsValidCM = true;
-
+IsValidDimension = true(NumDimension,1);
+%%
 for didx=1:NumDimension
     DimensionCM=FullClassCM{1,didx}{1};
     [NumClasses,~]=size(DimensionCM);
@@ -35,7 +36,7 @@ for didx=1:NumDimension
     MacroClassTN=NaN(NumClasses,1);
     MacroClassFP=NaN(NumClasses,1);
     MacroClassFN=NaN(NumClasses,1);
-
+%%
     for cidx=1:NumClasses
         ClassCM=DimensionCM(cidx,:);
         ClassName=ClassCM.Properties.RowNames{1};
@@ -47,6 +48,12 @@ for didx=1:NumDimension
 
         if TP+TN+FP+FN < 1
             IsValidCM = false;
+            IsValidDimension(didx) = false;
+        end
+
+        IsPresent = true;
+        if TP+FN == 0
+            IsPresent = false;
         end
 
         ClassAccuracy=(TP+TN)/(TP+TN+FP+FN);
@@ -55,7 +62,15 @@ for didx=1:NumDimension
         ClassSpecificity=(TN)/(TN+FP);
         ClassF1=2*(ClassPrecision*ClassRecall)/...
             (ClassPrecision+ClassRecall);
-        ClassBalancedAccuracy=0.5*(ClassRecall+ClassSpecificity);
+        % ClassBalancedAccuracy=0.5*(ClassRecall+ClassSpecificity);
+        ClassBalancedAccuracy=ClassRecall;
+
+        if ~IsPresent
+            ClassPrecision = NaN;
+            ClassRecall = NaN;
+            ClassF1 = NaN;
+            ClassBalancedAccuracy = NaN;
+        end
 
         Global_TP=Global_TP+TP;
         Global_TN=Global_TN+TN;
@@ -87,6 +102,8 @@ for didx=1:NumDimension
         MacroClassTotal=TP+TN+FP+FN;
     end
 
+    %%
+
     MacroDimensionTotalAccuracy(didx)=sum(MacroClassTP)/MacroClassTotal;
 
     MacroDimensionAccuracy(didx)=mean(MacroClassAccuracy,"omitnan");
@@ -97,8 +114,8 @@ for didx=1:NumDimension
     % MacroDimensionPrecision(didx)=mean(MacroClassPrecision);
     % MacroDimensionRecall(didx)=mean(MacroClassRecall);
     % MacroDimensionSpecificity(didx)=mean(MacroClassSpecificity);
-    MacroDimensionF1(didx)=mean(MacroClassF1);
-    MacroDimensionBalancedAccuracy(didx)=mean(MacroClassBalancedAccuracy);
+    MacroDimensionF1(didx)=mean(MacroClassF1,"omitnan");
+    MacroDimensionBalancedAccuracy(didx)=mean(MacroClassBalancedAccuracy,"omitnan");
 
 end
 
@@ -118,14 +135,46 @@ MacroBalancedAccuracy=mean(MacroDimensionBalancedAccuracy);
 
 %% Fix catastrophic predictions
 
+if isnan(MacroTotalAccuracy) && IsValidCM
+    MacroTotalAccuracy = 0;
+else
+    MacroTotalAccuracy=mean(MacroDimensionTotalAccuracy,"all","omitmissing");
+end
+
+if isnan(MacroAccuracy) && IsValidCM
+    MacroAccuracy = 0;
+else
+    MacroAccuracy=mean(MacroDimensionAccuracy,"all","omitmissing");
+end
+
 if isnan(MacroPrecision) && IsValidCM
-MacroPrecision = 0;
+    MacroPrecision = 0;
+else
+    MacroPrecision=mean(MacroDimensionPrecision,"all","omitmissing");
 end
+
 if isnan(MacroRecall) && IsValidCM
-MacroRecall = 0;
+    MacroRecall = 0;
+else
+    MacroRecall=mean(MacroDimensionRecall,"all","omitmissing");
 end
+
+if isnan(MacroSpecificity) && IsValidCM
+    MacroSpecificity = 0;
+else
+    MacroSpecificity=mean(MacroDimensionSpecificity,"all","omitmissing");
+end
+
 if isnan(MacroF1) && IsValidCM
-MacroF1 = 0;
+    MacroF1 = 0;
+else
+    MacroF1=mean(MacroDimensionF1,"all","omitmissing");
+end
+
+if isnan(MacroBalancedAccuracy) && IsValidCM
+    MacroBalancedAccuracy = 0;
+else
+    MacroBalancedAccuracy=mean(MacroDimensionBalancedAccuracy,"all","omitmissing");
 end
 
 %%

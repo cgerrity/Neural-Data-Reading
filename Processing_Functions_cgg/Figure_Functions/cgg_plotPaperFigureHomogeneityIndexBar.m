@@ -130,6 +130,14 @@ end
 end
 
 if isfunction
+WantSTD = CheckVararginPairs('WantSTD', false, varargin{:});
+else
+if ~(exist('WantSTD','var'))
+WantSTD=false;
+end
+end
+
+if isfunction
 WantAbsolute = CheckVararginPairs('WantAbsolute', false, varargin{:});
 else
 if ~(exist('WantAbsolute','var'))

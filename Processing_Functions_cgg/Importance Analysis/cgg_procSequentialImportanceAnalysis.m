@@ -297,7 +297,7 @@ pause(randi(PauseTime_Long)-1);
 funcHandle =@(x,y) all([x,cgg_getOutputFromIndices(@cgg_checkImportanceAnalysis,y,1,2)]);
 HasIA_Table_1 = cgg_procDirectorySearchAndApply(AnalysisDir, IANameExt, funcHandle);
 
-if isempty(HasIA_Table)
+if isempty(HasIA_Table_1)
 HasIA_Table_1 = false;
 end
 
@@ -310,7 +310,7 @@ end
 
 HasIA_Table = HasIA_Table_1 && HasIA_Table;
 
-HasIA_Table = false;
+% HasIA_Table = false;
 
 %%
 

@@ -1,5 +1,62 @@
 clc; clear; close all;
 
+%%
+
+NumSamples_1 = 2000;
+NumSamples_2 = 2000;
+
+True_Proportion_Positive_1 = 0.3;
+True_Proportion_Negative_1 = 0.2;
+True_Proportion_Positive_2 = 0.5;
+True_Proportion_Negative_2 = 0.4;
+
+
+Sample_Propotions_1 = [True_Proportion_Positive_1,True_Proportion_Negative_1,...
+    1-True_Proportion_Positive_1-True_Proportion_Negative_1];
+Sample_Propotions_2 = [True_Proportion_Positive_2,True_Proportion_Negative_2,...
+    1-True_Proportion_Positive_2-True_Proportion_Negative_2];
+
+Data_1 = mnrnd(NumSamples_1,Sample_Propotions_1,1);
+Data_2 = mnrnd(NumSamples_2,Sample_Propotions_2,1);
+
+Count_Positive_1 = Data_1(1);
+Count_Negative_1 = Data_1(2);
+Count_Positive_2 = Data_2(1);
+Count_Negative_2 = Data_2(2);
+
+Proportion_Positive_1 = Count_Positive_1/NumSamples_1;
+Proportion_Negative_1 = Count_Negative_1/NumSamples_1;
+Proportion_Positive_2 = Count_Positive_2/NumSamples_2;
+Proportion_Negative_2 = Count_Negative_2/NumSamples_2;
+
+Proportion_Overall_1 = (Count_Positive_1+Count_Negative_1)/NumSamples_1;
+STE_Overall_1 = sqrt(Proportion_Overall_1 * (1 - Proportion_Overall_1) * (1/Count_Positive_1 + 1/Count_Negative_1));
+Proportion_Overall_2 = (Count_Positive_2+Count_Negative_2)/NumSamples_2;
+STE_Overall_2 = sqrt(Proportion_Overall_2 * (1 - Proportion_Overall_2) * (1/Count_Positive_2 + 1/Count_Negative_2));
+
+Z_Overall_1 = (Count_Positive_1/NumSamples_1 - Count_Negative_1/NumSamples_1) / STE_Overall_1;
+Z_Overall_2 = (Count_Positive_2/NumSamples_2 - Count_Negative_2/NumSamples_2) / STE_Overall_2;
+
+P_Value_1 = 2 * (1 - normcdf(abs(Z_Overall_1)));  % Two-tailed test
+P_Value_2 = 2 * (1 - normcdf(abs(Z_Overall_2)));  % Two-tailed test
+
+Proportion_Difference_1 = Proportion_Positive_1 - Proportion_Negative_1;
+Proportion_Difference_2 = Proportion_Positive_2 - Proportion_Negative_2;
+
+STE_Overall = sqrt((Proportion_Positive_1 * (1 - Proportion_Positive_1) + ...
+    Proportion_Negative_1 * (1 - Proportion_Negative_1)) / NumSamples_1 + ...
+    (Proportion_Positive_2 * (1 - Proportion_Positive_2) + ...
+    Proportion_Negative_2 * (1 - Proportion_Negative_2)) / NumSamples_2);
+
+Z_Overall = (Proportion_Difference_1 - Proportion_Difference_2) / STE_Overall;
+
+P_Value = 2 * (1 - normcdf(abs(Z_Overall)));  % Two-tailed test
+
+[P_Value_func,Z_Value_func] = cgg_procDifferenceOfDifferencesProportionTest(Proportion_Positive_1,Proportion_Negative_1,Proportion_Positive_2,Proportion_Negative_2,NumSamples_1,NumSamples_2);
+
+%%
+
+
 
 %%
 
@@ -135,3 +192,4 @@ histogram(SampleMean,BinEdges,'Normalization','pdf','FaceAlpha',0.3,'DisplayName
 % histogram(Distribution_FullBootMean,BinEdges,'Normalization','pdf','FaceAlpha',0.3,'DisplayName','Boot');
 hold off
 legend
+

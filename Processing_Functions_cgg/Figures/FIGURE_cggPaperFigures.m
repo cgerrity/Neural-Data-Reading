@@ -11,7 +11,9 @@ WantPlotExplainedVariance = false;
 WantPlotCorrelation = false;
 
 WantCI = false;
-% This is a test for the main branch
+WantSTD = false;
+
+WantBonferroni = true;
 
 SignificanceValue = 0.05;
 SignificanceMimimum = [];
@@ -50,6 +52,14 @@ Save_Folder = 'Final Paper Figures';
 Time_ROI = [0.95,1.15];
 WantDecisionCentered = false;
 end
+
+% if WantCI
+%     PlotSubFolders{3} = 'Figure 3 - CI';
+% elseif WantSTD
+%     PlotSubFolders{3} = 'Figure 3 - STD';
+% else
+%     PlotSubFolders{3} = 'Figure 3 - STE';
+% end
 %%
 
 if ~isempty(SignificanceMimimum)
@@ -63,13 +73,12 @@ end
 [~,~,temporaryfolder_base,~] = cgg_getBaseFolders();
 
 ResultsDir=[temporaryfolder_base filesep 'Data_Neural'];
+%%
+for ridx = 1:length(ROINames)
 
 cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
     'Epoch',Epoch,'PlotFolder',Save_Folder,'PlotSubFolder',PlotSubFolders);
 PlotPath = cfg_Results.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots.PlotFolder.path;
-
-%%
-for ridx = 1:length(ROINames)
 
 ROIName = ROINames{ridx};
 Time_ROI = ROITimes(ridx,:);
@@ -371,7 +380,9 @@ cgg_plotPaperFigureROIAllLearningVariablesBar(this_PlotTable,'PlotPath',PlotPath
 close all
 cgg_plotPaperFigureROIAllLearningVariablesDifferenceBar(this_PlotTable,'PlotPath',PlotPath,'ColorOrder',[],'MonkeyName',MonkeyName,'ROIName',ROIName);
 close all
-cgg_plotPaperFigureHomogeneityIndexScatter(this_PlotTable,'PlotPath',PlotPath,'WantAbsolute',false,'NeighborhoodSize',NeighborhoodSize,'WantCorrelationMeasure',false,'ColorOrder',ColorOrder,'MonkeyName',MonkeyName,'ROIName',ROIName,'WantCI',WantCI);
+cgg_plotPaperFigureHomogeneityIndexScatter(this_PlotTable,'PlotPath',PlotPath,'WantAbsolute',false,'NeighborhoodSize',NeighborhoodSize,'WantCorrelationMeasure',false,'ColorOrder',ColorOrder,'MonkeyName',MonkeyName,'ROIName',ROIName,'WantCI',WantCI,'WantSTD',WantSTD,'WantBonferroni',WantBonferroni);
+close all
+cgg_plotPaperFigureHomogeneityIndexBox(this_PlotTable,'PlotPath',PlotPath,'WantAbsolute',false,'NeighborhoodSize',NeighborhoodSize,'WantCorrelationMeasure',false,'ColorOrder',ColorOrder,'MonkeyName',MonkeyName,'ROIName',ROIName,'WantCI',WantCI,'WantSTD',WantSTD,'WantBonferroni',WantBonferroni);
 close all
 % close all
 % cgg_plotPaperFigureHomogeneityIndexBar(this_PlotTable,'PlotPath',PlotPath,'WantAbsolute',false,'NeighborhoodSize',NeighborhoodSize,'WantCorrelationMeasure',false,'ColorOrder',ColorOrder,'MonkeyName',MonkeyName);
@@ -384,7 +395,7 @@ close all
 % close all
 end
 %% All Variables: Figure 2
-PlotSubFolders = 'Figure 2 Other Variables';
+PlotSubFolders_Other = 'Figure 2 Other Variables';
 WantMedium = true;
 
 for lmidx = 1:length(Learning_Model_Variables)
@@ -394,7 +405,7 @@ PlotSubSubFolder = this_EVType;
 
 cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
     'Epoch',Epoch,'PlotFolder',Save_Folder, ...
-    'PlotSubFolder',PlotSubFolders,'PlotSubSubFolder',PlotSubSubFolder);
+    'PlotSubFolder',PlotSubFolders_Other,'PlotSubSubFolder',PlotSubSubFolder);
 PlotPath = cgg_getDirectory(cfg_Results,'SubSubFolder_1');
 
 [InputCell,~] = ...
@@ -561,13 +572,13 @@ PlotTable_Neighborhood.HomogeneityIndex_Correlation_STE = HomogeneityIndex_Corre
 PlotTable_Neighborhood.HomogeneityIndex_Correlation_CI = HomogeneityIndex_Correlation_CI;
 
 %%
-PlotSubFolders = 'Homogeneity Index';
+PlotSubFolders_Homogeneity = 'Homogeneity Index';
 this_LMVariables = unique(PlotTable_Neighborhood{:,"Model_Variable"});
 NumLM = length(this_LMVariables);
 
 cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
     'Epoch',Epoch,'PlotFolder',Save_Folder, ...
-    'PlotSubFolder',PlotSubFolders);
+    'PlotSubFolder',PlotSubFolders_Homogeneity);
 PlotPath = cgg_getDirectory(cfg_Results,'SubFolder_1');
 
 for lmidx = 1:NumLM

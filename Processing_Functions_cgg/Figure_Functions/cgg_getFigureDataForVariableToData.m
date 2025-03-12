@@ -85,8 +85,13 @@ end
 end
 
 %%
+this_InputTable = InputTable;
+NaNValues = all(isnan(this_InputTable.P_Value),2);
+this_InputTable(NaNValues,:) = [];
 
-NumData = height(InputTable);
+%%
+
+NumData = height(this_InputTable);
 
 Time_Start = Time_Start + Time_Offset;
 Time_End = Time_End + Time_Offset;
@@ -102,16 +107,16 @@ PlotInformation.PlotVariable = 'Correlation';
 PlotInformation.SignificanceMimimum = SignificanceMimimum;
 PlotInformation.SamplingRate = SamplingRate;
 
-[R_Value_All,SignificantValues_All] = cgg_getSignificantValuesFromTable(InputTable,PlotInformation,SignificanceValue,'All');
-[~,SignificantValues_Positive] = cgg_getSignificantValuesFromTable(InputTable,PlotInformation,SignificanceValue,'Positive');
-[~,SignificantValues_Negative] = cgg_getSignificantValuesFromTable(InputTable,PlotInformation,SignificanceValue,'Negative');
+[R_Value_All,SignificantValues_All] = cgg_getSignificantValuesFromTable(this_InputTable,PlotInformation,SignificanceValue,'All');
+[~,SignificantValues_Positive] = cgg_getSignificantValuesFromTable(this_InputTable,PlotInformation,SignificanceValue,'Positive');
+[~,SignificantValues_Negative] = cgg_getSignificantValuesFromTable(this_InputTable,PlotInformation,SignificanceValue,'Negative');
 
 PlotInformation.PlotVariable = 'Model';
-[~,SignificantValues_Model] = cgg_getSignificantValuesFromTable(InputTable,PlotInformation,SignificanceValue,'All');
+[~,SignificantValues_Model] = cgg_getSignificantValuesFromTable(this_InputTable,PlotInformation,SignificanceValue,'All');
 
 PlotInformation.PlotVariable = 'Coefficient';
 PlotInformation.WantSignificant = false;
-[Beta_Values,~] = cgg_getSignificantValuesFromTable(InputTable,PlotInformation,SignificanceValue,'All');
+[Beta_Values,~] = cgg_getSignificantValuesFromTable(this_InputTable,PlotInformation,SignificanceValue,'All');
 
 %%
 
@@ -217,7 +222,7 @@ ROI_Correlation_Negative_Func = @(x) mean(cgg_procROIValues(OutputCorrelation_Ne
 %%
 NeighborhoodFunc = @(x) {ROI_Positive_Func(x),ROI_Negative_Func(x),ROI_Correlation_Positive_Func(x),ROI_Correlation_Negative_Func(x)};
 
-NeighborhoodValue = cgg_getTableNeighborhood(InputTable,NeighborhoodSize,NeighborhoodFunc);
+NeighborhoodValue = cgg_getTableNeighborhood(this_InputTable,NeighborhoodSize,NeighborhoodFunc);
 
 %%
 SmallTolerance = 0.00000001;
@@ -229,6 +234,9 @@ HomogeneityIndex_Correlation = cellfun(@(x) HomogeneityIndex_Correlation_Func(x)
 
 ConfidenceRange = cgg_getSignTest(HomogeneityIndex,'NumIter',NumIter,'SignificanceValue',SignificanceValue);
 ConfidenceRange_Correlation = cgg_getSignTest(HomogeneityIndex_Correlation,'NumIter',NumIter,'SignificanceValue',SignificanceValue);
+
+HomogeneityIndex_Data = HomogeneityIndex;
+HomogeneityIndex_Correlation_Data = HomogeneityIndex_Correlation;
 
 [HomogeneityIndex,HomogeneityIndex_STD,HomogeneityIndex_STE,HomogeneityIndex_CI] = ...
     cgg_getMeanSTDSeries(HomogeneityIndex,'NumSamples',1);
@@ -243,6 +251,7 @@ HomogeneityIndex_Correlation_P_Value = tcdf(-abs(HomogeneityIndex_Correlation_T)
 
 else
 HomogeneityIndex = [];
+HomogeneityIndex_Data = [];
 HomogeneityIndex_STD = [];
 HomogeneityIndex_STE = [];
 HomogeneityIndex_CI = [];
@@ -250,6 +259,7 @@ HomogeneityIndex_P_Value = [];
 ConfidenceRange = [];
 
 HomogeneityIndex_Correlation = [];
+HomogeneityIndex_Correlation_Data = [];
 HomogeneityIndex_Correlation_STD = [];
 HomogeneityIndex_Correlation_STE = [];
 HomogeneityIndex_Correlation_CI = [];
@@ -299,11 +309,13 @@ PlotData.HomogeneityIndex_STD = HomogeneityIndex_STD;
 PlotData.HomogeneityIndex_STE = HomogeneityIndex_STE;
 PlotData.HomogeneityIndex_CI = HomogeneityIndex_CI;
 PlotData.HomogeneityIndex_P_Value = HomogeneityIndex_P_Value;
+PlotData.HomogeneityIndex_Data = HomogeneityIndex_Data;
 PlotData.HomogeneityIndex_Correlation = HomogeneityIndex_Correlation;
 PlotData.HomogeneityIndex_Correlation_STD = HomogeneityIndex_Correlation_STD;
 PlotData.HomogeneityIndex_Correlation_STE = HomogeneityIndex_Correlation_STE;
 PlotData.HomogeneityIndex_Correlation_CI = HomogeneityIndex_Correlation_CI;
 PlotData.HomogeneityIndex_Correlation_P_Value = HomogeneityIndex_Correlation_P_Value;
+PlotData.HomogeneityIndex_Correlation_Data = HomogeneityIndex_Correlation_Data;
 PlotData.ProportionModel = ProportionModel;
 PlotData.Model_STD = Model_STD;
 PlotData.Model_STE = Model_STE;

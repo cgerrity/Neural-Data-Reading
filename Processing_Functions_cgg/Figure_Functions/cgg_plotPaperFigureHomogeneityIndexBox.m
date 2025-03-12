@@ -1,4 +1,4 @@
-function cgg_plotPaperFigureHomogeneityIndexScatter(PlotTable,varargin)
+function cgg_plotPaperFigureHomogeneityIndexBox(PlotTable,varargin)
 %CGG_PLOTPAPERFIGUREROIBAR Summary of this function goes here
 %   Detailed explanation goes here
 %%
@@ -269,6 +269,42 @@ for aidx = 1:NumAreas
 end
 end
 
+
+%%
+
+TableVariables = [["Data", "double"]; ...
+                  ["LM_Variable", "cell"]; ...
+                  ["Area", "cell"]];
+
+NumVariables = size(TableVariables,1);
+AllDataTable = table('Size',[0,NumVariables],...
+                          'VariableNames', TableVariables(:,1),...
+                          'VariableTypes', TableVariables(:,2));
+
+for lidx = 1:NumLM
+    this_LMNamesIDX = LMNamesIDX == lidx;
+for aidx = 1:NumAreas
+    this_AreaNamesIDX = AreaNamesIDX == aidx;
+    this_TableIDX = this_LMNamesIDX & this_AreaNamesIDX;
+    this_PlotTable = PlotTable(this_TableIDX,:);
+    LM_VariableName = this_PlotTable{1,"Model_Variable"};
+    AreaName = this_PlotTable{1,"Area"};
+    % disp(LM_VariableName)
+    
+    % SaveAreaNames = SaveAreaNames + AreaName;
+    PlotData = this_PlotTable{1,"PlotData"};
+    PlotData = PlotData{1};
+
+    Data = PlotData.HomogeneityIndex_Data;
+
+    this_DataTable = table(Data);
+    this_DataTable{:,'Area'} = AreaName;
+    this_DataTable{:,'LM_Variable'} = LM_VariableName;
+
+    AllDataTable = [AllDataTable;this_DataTable];
+
+end
+end
 %%
 % DataTransform = [];
 % wantSubPlot = true;
@@ -308,6 +344,8 @@ if WantAbsolute
     YLimits(1) = 0;
 end
 % end
+YLimits = [-1,1];
+
 
 Y_Ticks = YLimits(1):Y_Tick_Size:YLimits(2);
 
@@ -340,26 +378,6 @@ end
 
 %%
 
-TableVariables = [["P Value", "double"]; ...
-                  ["Group Name 1", "cell"]; ...
-                  ["Group Name 2", "cell"]; ...
-                  ["Bar Name 1", "cell"]; ...
-                  ["Bar Name 2", "cell"]];
-
-NumVariables = size(TableVariables,1);
-SignificanceTable = table('Size',[0,NumVariables],...
-                          'VariableNames', TableVariables(:,1),...
-                          'VariableTypes', TableVariables(:,2));
-Counter_SignigficanceTable = 0;
-for lidx = 1:NumLM
-    LMName = LMNames(lidx);
-for aidx = 1:NumAreas
-    AreaName = AreaNames(aidx);
-    Counter_SignigficanceTable = Counter_SignigficanceTable + 1;
-    SignificanceTable(Counter_SignigficanceTable,:) = {Plot_P_Value{lidx}(aidx),{AreaName},{""},{LMName},{""}};
-end
-end
-
 SignificanceTable = [];
 %%
 wantCI = false;
@@ -368,7 +386,11 @@ IsGrouped = true;
 WantHorizontal = true;
 LabelAngle = 45;
 
-[~,~,InFigure] = cgg_plotBarGraphWithError(Plot_Bar,LMNames, ...
+Data = AllDataTable.Data;
+DataNames = AllDataTable.LM_Variable;
+DataGroup = AllDataTable.Area;
+
+[b_Plot,InFigure] = cgg_plotBoxPlot(Data,DataNames,DataGroup, ...
     'X_Name',Y_Name,'Y_Name','','PlotTitle',PlotTitle,'YRange',YLimits, ...
     'wantCI',wantCI,'SignificanceValue',SignificanceValue, ...
     'ColorOrder',ColorOrder,'IsGrouped',IsGrouped, ...
@@ -379,7 +401,7 @@ LabelAngle = 45;
     'WantBarNames',WantBarNames,'WantHorizontal',WantHorizontal, ...
     'X_TickFontSize',X_TickFontSize,'Legend_Size',Legend_Size, ...
     'LabelAngle',LabelAngle,'InFigure',InFigure, ...
-    'WantScatter',WantScatter,'ConfidenceRange',Plot_Confidence);
+    'WantScatter',WantScatter,'ConfidenceRange',Plot_Confidence,'DataNames_Order',LMNames);
 % ylim([0,5]);
 %%
 
@@ -428,9 +450,9 @@ if ~isempty(PlotPath)
         CorrelationName = '';
     end
     if WantAbsolute
-    PlotName=sprintf('Homogeneity_Index%s_Absolute%s_Bar%s%s%s',CorrelationName,ROIName,NeighborhoodSizeName,MonkeyName,ErrorName);
+    PlotName=sprintf('Homogeneity_Index%s_Absolute%s_Box%s%s%s',CorrelationName,ROIName,NeighborhoodSizeName,MonkeyName,ErrorName);
     else
-    PlotName=sprintf('Homogeneity_Index%s_Bar%s%s%s%s',CorrelationName,ROIName,NeighborhoodSizeName,MonkeyName,ErrorName);
+    PlotName=sprintf('Homogeneity_Index%s_Box%s%s%s%s',CorrelationName,ROIName,NeighborhoodSizeName,MonkeyName,ErrorName);
     end
     PlotPathName=[PlotPath filesep PlotName];
     saveas(InFigure,[PlotPathName, '.fig']);
