@@ -36,8 +36,13 @@ for didx=1:NumDimension
     MacroClassTN=NaN(NumClasses,1);
     MacroClassFP=NaN(NumClasses,1);
     MacroClassFN=NaN(NumClasses,1);
+
+    % NotPresentFP = 0;
+    % PresentTP = 0;
+    % PresentFN = 0;
 %%
     for cidx=1:NumClasses
+        
         ClassCM=DimensionCM(cidx,:);
         ClassName=ClassCM.Properties.RowNames{1};
         
@@ -46,14 +51,21 @@ for didx=1:NumDimension
         FP=ClassCM.FP;
         FN=ClassCM.FN;
 
+        IsValidClass = true;
         if TP+TN+FP+FN < 1
             IsValidCM = false;
             IsValidDimension(didx) = false;
+            IsValidClass = false;
         end
 
+        % PresentCount = TP + FN;
         IsPresent = true;
         if TP+FN == 0
             IsPresent = false;
+        end
+        HasPrediction = true;
+        if TP + FP == 0
+            HasPrediction = false;
         end
 
         ClassAccuracy=(TP+TN)/(TP+TN+FP+FN);
@@ -62,15 +74,60 @@ for didx=1:NumDimension
         ClassSpecificity=(TN)/(TN+FP);
         ClassF1=2*(ClassPrecision*ClassRecall)/...
             (ClassPrecision+ClassRecall);
-        % ClassBalancedAccuracy=0.5*(ClassRecall+ClassSpecificity);
-        ClassBalancedAccuracy=ClassRecall;
+        % ClassBalancedAccuracy=ClassRecall;
+        ClassBalancedAccuracy=0.5*(ClassRecall+ClassSpecificity);
 
         if ~IsPresent
             ClassPrecision = NaN;
             ClassRecall = NaN;
             ClassF1 = NaN;
+            ClassBalancedAccuracy=NaN;
+        end
+
+        % if IsPresent
+        %     PresentFN = PresentFN +FN;
+        % else
+        %     NotPresentFP = NotPresentFP + FP;
+        %     ClassPrecision = NaN;
+        %     ClassRecall = NaN;
+        %     ClassF1 = NaN;
+        %     ClassBalancedAccuracy=NaN;
+        % end
+
+        % if ~IsPresent
+        %     % if HasPrediction
+        %     % ClassPrecision = 1;
+        %     % ClassRecall = 1;
+        %     % ClassF1 = 1;
+        %     % ClassBalancedAccuracy=0.5*(ClassRecall+ClassSpecificity);
+        %     % else
+        %     % ClassPrecision = 0;
+        %     % ClassRecall = 0;
+        %     % ClassF1 = 0;
+        %     % ClassBalancedAccuracy = 0;
+        %     % end
+        % 
+        %     ClassRecall = 1-ClassSpecificity;
+        %     if HasPrediction
+        %     ClassPrecision = 1;
+        %     % ClassRecall = 1;
+        %     ClassF1 = 1;
+        %     ClassBalancedAccuracy=0.5*(ClassRecall+ClassSpecificity);
+        %     else
+        %     ClassPrecision = 0;
+        %     % ClassRecall = 0;
+        %     ClassF1 = 0;
+        %     ClassBalancedAccuracy = 0;
+        %     end
+        % end
+
+        if ~IsValidClass
+            ClassPrecision = NaN;
+            ClassRecall = NaN;
+            ClassF1 = NaN;
             ClassBalancedAccuracy = NaN;
         end
+        
 
         Global_TP=Global_TP+TP;
         Global_TN=Global_TN+TN;
@@ -101,6 +158,8 @@ for didx=1:NumDimension
 
         MacroClassTotal=TP+TN+FP+FN;
     end
+
+    % MacroClassRecall(NumClasses+1) = 1-NotPresentFP/(PresentTP+PresentFN);
 
     %%
 

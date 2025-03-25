@@ -47,10 +47,15 @@ Y_Name = {'Scaled', 'Balanced Accuracy'};
 PlotTitle = 'Normalized Accuracy Over Time';
 end
 PlotTitle = '';
+if isfield(cfg,'PlotTitle')
+if ~isempty(cfg.PlotTitle)
+PlotTitle = cfg.PlotTitle;
+end
+end
 
 Window_Accuracy_All=FullTable.('Window Accuracy');
 PlotNames=FullTable.Properties.RowNames;
-
+% disp(PlotNames)
 NumLoops=length(PlotNames);
 
 MATLABPlotColors = cfg_Plotting.MATLABPlotColors;
@@ -70,7 +75,7 @@ PlotPaperSize(1:2)=[];
 fig_plot.PaperSize=PlotPaperSize;
 
 RangeAccuracyLower = -0.05;
-RangeAccuracyUpper = 0.2;
+RangeAccuracyUpper = 0.4;
 Tick_Size = 0.05;
 
 Y_Ticks = 0:Tick_Size:RangeAccuracyUpper;
@@ -123,10 +128,12 @@ SavePath=cfg_Plot.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Accuracy.pa
 SaveName=['Windowed_Accuracy' ExtraSaveTerm '_Type_' cfg.LoopType];
 
 SaveNameExt=[SaveName '.pdf'];
-
 SavePathNameExt=[SavePath filesep SaveNameExt];
-
 saveas(fig_plot,SavePathNameExt,'pdf');
+
+% SaveNameExt=[SaveName '.png'];
+% SavePathNameExt=[SavePath filesep SaveNameExt];
+% saveas(fig_plot,SavePathNameExt,'png');
 
 close all
 

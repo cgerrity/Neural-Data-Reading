@@ -255,7 +255,6 @@ SaveVariablesName={'Identifiers_Table'};
 cgg_saveVariableUsingMatfile(SaveVariables,SaveVariablesName,SavePathNameExt);
 
 end
-
 %%
 
 Overall_Encoding_Dir = cfg.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.Target.path;
@@ -294,18 +293,73 @@ this_ClassNames=unique(TrueValue(:,fdidx));
 ClassNames{fdidx}=unique(this_ClassNames);
 end
 
+%% Attentional Filtering Components
+TargetDimension = Identifiers_Table{:,"Target Feature"};
+FeatureMatrix = TrueValue;
+TargetDimensionIDX = sub2ind(size(FeatureMatrix), (1:size(FeatureMatrix,1))', TargetDimension);
+
+ActiveDimensionsTable = varfun(@(x1){unique(x1)},Identifiers_Table,"InputVariables","Target Feature","GroupingVariables","Session Name");
+TMP_Table = innerjoin(Identifiers_Table, ActiveDimensionsTable, 'Keys', 'Session Name');
+ActiveDimensionTMP = TMP_Table.("Fun_Target Feature");
+Identifiers_Table.("Active Dimensions") = ActiveDimensionTMP;
+
+InactiveMatrix = cellfun(@(x) ~ismember(1:NumDimension, x), Identifiers_Table.("Active Dimensions"), 'UniformOutput', false);
+InactiveMatrix = double(cell2mat(InactiveMatrix));
+
+DistractorMatrix = FeatureMatrix ~=0;
+DistractorMatrix(TargetDimensionIDX) = 0;
+NeutralMatrix = FeatureMatrix == 0 - InactiveMatrix;
+
+TargetWeights = zeros(size(FeatureMatrix));
+TargetWeights(TargetDimensionIDX) = 1;
+
+DistractorWeights = DistractorMatrix./sum(DistractorMatrix,2);
+DistractorWeights(isnan(DistractorWeights)) = 0;
+
+NeutralWeights = NeutralMatrix./sum(NeutralMatrix,2);
+NeutralWeights(isnan(NeutralWeights)) = 0;
+
+InactiveWeights = double(InactiveMatrix);
+
+AttentionalFiltering = struct();
+AttentionalFiltering.Overall = ones(size(TargetWeights));
+AttentionalFiltering.Target = TargetWeights;
+AttentionalFiltering.Distractor = DistractorWeights;
+AttentionalFiltering.Neutral = NeutralWeights;
+AttentionalFiltering.Inactive = InactiveWeights;
+
+Identifiers_Table.Overall = ones(size(TargetWeights));
+Identifiers_Table.Target = TargetWeights;
+Identifiers_Table.Distractor = DistractorWeights;
+Identifiers_Table.Neutral = NeutralWeights;
+Identifiers_Table.Inactive = InactiveWeights;
+
 %% Get Baseline Measures
 
 IsScaled = contains(MatchType,'Scaled');
 MatchTypeBaseline = extractAfter(MatchType,'Scaled-');
 
-[MostCommon_Baseline,RandomChance_Baseline] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchTypeBaseline,IsQuaddle);
+[MostCommon_Baseline,RandomChance_Baseline,Stratified_Baseline] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchTypeBaseline,IsQuaddle);
 
 if IsScaled
-ChanceLevel = max([MostCommon_Baseline,RandomChance_Baseline]);
+ChanceLevel = max([MostCommon_Baseline,RandomChance_Baseline,Stratified_Baseline]);
 MostCommon = (MostCommon_Baseline-ChanceLevel)/(1-ChanceLevel);
 RandomChance = (RandomChance_Baseline-ChanceLevel)/(1-ChanceLevel);
+Stratified = (Stratified_Baseline-ChanceLevel)/(1-ChanceLevel);
 end
+
+%% Get Baseline Measure for Attentional Filtering
+
+BaselineFun = @(x) cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchTypeBaseline,IsQuaddle,'Weights',x);
+
+[MostCommonAttentional_Baseline,RandomChanceAttentional_Baseline,...
+    StratifiedAttentional_Baseline] = ...
+    structfun(BaselineFun, AttentionalFiltering,"UniformOutput",false);
+MostCommonAttentional_Baseline = StratifiedAttentional_Baseline;
+RandomChanceAttentional_Baseline = StratifiedAttentional_Baseline;
+
+AttentionalNames = fieldnames(AttentionalFiltering);
+NumAttention = length(AttentionalNames);
 
 %%
 
@@ -315,6 +369,15 @@ CM_Table_All=cell(NumLoops,1);
 Split_Table_All=cell(NumLoops,1);
 % Split_Accuracy_All=cell(NumLoops,1);
 % Split_Window_Accuracy_All=cell(NumLoops,1);
+
+Accuracy_All_Attention=cell(NumAttention,1);
+Window_Accuracy_All_Attention=cell(NumAttention,1);
+CM_Table_All_Attention=cell(NumAttention,1);
+AttentionalTable_All = cell(NumLoops,1);
+% Split_Table_All_Attention=cell(NumAttention,1);
+
+Split_Accuracy_Attention_All=cell(1,NumTypes);
+Split_Window_Accuracy_Attention_All=cell(1,NumTypes);
 
 %%
 
@@ -383,14 +446,46 @@ this_CM_Table=join(this_CM_Table,this_Identifiers_Table);
 
 this_Accuracy = max(this_Window_Accuracy);
 
-%%
-% if fidx==1
 if IsFirst
     [~,NumWindows]=size(this_Window_Accuracy);
     Accuracy_All{lidx}=NaN(NumFolds,1);
     Window_Accuracy_All{lidx}=NaN(NumFolds,NumWindows);
     CM_Table_All{lidx}=cell(NumFolds,1);
 end
+
+% fprintf('??? Debug 1-> Fold: %d Is First: %d\n',fidx,IsFirst);
+for aidx = 1:NumAttention
+
+    this_Field = AttentionalNames{aidx};
+    this_RandomChance = RandomChanceAttentional_Baseline.(this_Field);
+    this_MostCommon = MostCommonAttentional_Baseline.(this_Field);
+    % this_RandomChance = RandomChance_Baseline;
+    % this_MostCommon = MostCommon_Baseline;
+    this_Weights = this_CM_Table.(this_Field);
+
+    [~,~,this_Window_Accuracy_Attention] = ...
+        cgg_procConfusionMatrixWindowsFromTable(this_CM_Table,...
+        ClassNames,'MatchType',MatchType,'IsQuaddle',IsQuaddle,...
+        'RandomChance',this_RandomChance,...
+        'MostCommon',this_MostCommon,'Weights',this_Weights);
+    this_Accuracy_Attention = max(this_Window_Accuracy_Attention);
+
+
+    if IsFirst
+    [~,this_NumWindows]=size(this_Window_Accuracy_Attention);
+    Accuracy_All_Attention{aidx}=NaN(NumFolds,1);
+    Window_Accuracy_All_Attention{aidx}=NaN(NumFolds,this_NumWindows);
+    CM_Table_All_Attention{aidx}=cell(NumFolds,1);
+    end
+
+    Accuracy_All_Attention{aidx}(fidx,:)=this_Accuracy_Attention;
+    Window_Accuracy_All_Attention{aidx}(fidx,:)=this_Window_Accuracy_Attention;
+    CM_Table_All_Attention{lidx}{aidx} = this_CM_Table;
+end
+
+%%
+% if fidx==1
+
 
 %%
 Accuracy_All{lidx}(fidx,:)=this_Accuracy;
@@ -401,13 +496,51 @@ if isempty(Split_Table)
 this_Split_Accuracy=NaN(1,NumTypes);
 this_Split_Window_Accuracy=cell(1,NumTypes);
 
+% this_Split_Accuracy_Attention=cell(1,NumTypes);
+% this_Split_Window_Accuracy_Attention=cell(1,NumTypes);
+
 for tidx=1:NumTypes
     this_FilterValue=TypeValues(tidx,:);
-
+% fprintf('??? Debug Before Single Accuracy Calculation\n');
 [~,~,this_Split_Accuracy(tidx)] = cgg_procConfusionMatrixFromTable(this_CM_Table,ClassNames,'FilterColumn',FilterColumn,'FilterValue',this_FilterValue,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline);
-
+% fprintf('??? Debug After Single Accuracy Calculation\n');
 [~,~,this_Split_Window_Accuracy{tidx}] = cgg_procConfusionMatrixWindowsFromTable(this_CM_Table,ClassNames,'FilterColumn',FilterColumn,'FilterValue',this_FilterValue,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline);
 this_Split_Accuracy(tidx) = max(this_Split_Window_Accuracy{tidx});
+
+if IsFirst
+Split_Accuracy_Attention_All{tidx} = cell(NumAttention,1);
+Split_Window_Accuracy_Attention_All{tidx} = cell(NumAttention,1);
+end
+% fprintf('??? Debug 1-> Accuracy Rows: %d Window Rows: %d\n',size(this_Split_Accuracy_Attention{tidx},1),size(this_Split_Window_Accuracy_Attention{tidx},1));
+for aidx = 1:NumAttention
+
+    this_Field = AttentionalNames{aidx};
+    this_RandomChance = RandomChanceAttentional_Baseline.(this_Field);
+    this_MostCommon = MostCommonAttentional_Baseline.(this_Field);
+    this_Weights = this_CM_Table.(this_Field);
+
+    % fprintf('??? Debug 1-> Attentional Name: %s Filter: %s Filter Type %d\n',this_Field,FilterColumn{1},this_FilterValue);
+    
+    [~,~,this_Window_Accuracy_Attention] = ...
+        cgg_procConfusionMatrixWindowsFromTable(this_CM_Table,...
+        ClassNames,'FilterColumn',FilterColumn,...
+        'FilterValue',this_FilterValue,...
+        'MatchType',MatchType,'IsQuaddle',IsQuaddle,...
+        'RandomChance',this_RandomChance,...
+        'MostCommon',this_MostCommon,'Weights',this_Weights);
+    this_Accuracy_Attention = max(this_Window_Accuracy_Attention);
+
+% fprintf('??? Debug 1-> Fold: %d Is First: %d\n',fidx,IsFirst);
+    if IsFirst
+    [~,this_NumWindows]=size(this_Window_Accuracy_Attention);
+    Split_Accuracy_Attention_All{tidx}{aidx}=NaN(NumFolds,1);
+    Split_Window_Accuracy_Attention_All{tidx}{aidx}=NaN(NumFolds,this_NumWindows);
+    end
+% fprintf('??? Debug 2-> Accuracy Rows: %d Accuracy Split Rows: %d  Window Rows: %d Window Split Rows: %d\n',size(this_Accuracy_Attention,1),size(Split_Accuracy_Attention_All{tidx}{aidx},1),size(this_Window_Accuracy_Attention,1),size(Split_Window_Accuracy_Attention_All{tidx}{aidx},1));
+    Split_Accuracy_Attention_All{tidx}{aidx}(fidx,:)=this_Accuracy_Attention;
+    Split_Window_Accuracy_Attention_All{tidx}{aidx}(fidx,:)=this_Window_Accuracy_Attention;
+end
+
 end
 
 % if fidx==1
@@ -421,15 +554,16 @@ end
 %     end
 % end
 %%
+% fprintf('??? Debug 2-> Fold: %d Is First: %d\n',fidx,IsFirst);
 if IsFirst
     [~,NumWindows]=size(this_Split_Window_Accuracy{1});
     for tidx=1:NumTypes
         this_Split_Accuracy_All{tidx}=NaN(NumFolds,1);
         this_Split_Window_Accuracy_All{tidx}=NaN(NumFolds,NumWindows);
     end
-    IsFirst = false;
+    
 end
-
+% fprintf('??? Debug 3-> Fold: %d Is First: %d\n',fidx,IsFirst);
 %%
 % Split_Accuracy_All{lidx}(fidx,:)=this_Split_Accuracy;
 for tidx=1:NumTypes
@@ -439,7 +573,7 @@ end
 end % Check if Split Table exists already
 %%
 end % Check if Metrics have been calculated and exist
-
+IsFirst = false;
 end % Loop through the Folds
 
 if isempty(Split_Table)
@@ -447,6 +581,7 @@ FilterColumnSTR=string(FilterColumn);
 if ~HasSplit_TableRowNames
 Split_TableRowNames=cell(1,NumTypes);
 end
+this_AttentionalTable = cell(NumTypes,1);
     for tidx=1:NumTypes
         this_Split_TableRowNames='';
         for cidx=1:NumColumns
@@ -460,10 +595,13 @@ end
         if ~HasSplit_TableRowNames
         Split_TableRowNames{tidx}=this_Split_TableRowNames;
         end
+        % fprintf('??? Debug 2-> Accuracy Rows: %d Window Rows: %d\n',size(Split_Accuracy_Attention_All{tidx},1),size(Split_Window_Accuracy_Attention_All{tidx},1));
+        this_AttentionalTable{tidx} = table(Split_Accuracy_Attention_All{tidx},Split_Window_Accuracy_Attention_All{tidx},'VariableNames',{cfg_Names.TableNameAccuracy,cfg_Names.TableNameWindow_Accuracy},'RowNames',AttentionalNames);
     end
+% fprintf('??? Debug 2-> AttentionalTable Rows: %d\n',size(this_AttentionalTable,1));
 
-Split_Table=table(this_Split_Accuracy_All,this_Split_Window_Accuracy_All,'VariableNames',{cfg_Names.TableNameAccuracy,cfg_Names.TableNameWindow_Accuracy},'RowNames',Split_TableRowNames);
-
+Split_Table=table(this_Split_Accuracy_All,this_Split_Window_Accuracy_All,this_AttentionalTable,'VariableNames',{cfg_Names.TableNameAccuracy,cfg_Names.TableNameWindow_Accuracy,'Attentional Table'},'RowNames',Split_TableRowNames);
+% Split_Table=table(this_Split_Accuracy_All,this_Split_Window_Accuracy_All,'VariableNames',{cfg_Names.TableNameAccuracy,cfg_Names.TableNameWindow_Accuracy},'RowNames',Split_TableRowNames);
 Split_TableSaveVariables=cell(1);
 Split_TableSaveVariablesName=cell(1);
 Split_TableSaveVariables{1}=Split_Table;
@@ -475,6 +613,8 @@ cgg_saveVariableUsingMatfile(Split_TableSaveVariables,...
 end
 
 Split_Table_All{lidx}=Split_Table;
+AttentionalTable = table(Accuracy_All_Attention,Window_Accuracy_All_Attention,'VariableNames',{cfg_Names.TableNameAccuracy,cfg_Names.TableNameWindow_Accuracy},'RowNames',AttentionalNames);
+AttentionalTable_All{lidx} = AttentionalTable;
 
 end % Loop through all the loops
 
@@ -483,7 +623,8 @@ end % Loop through all the loops
 FullTableRowNames = LoopNames;
 
 % FullTable=table(Accuracy_All,Window_Accuracy_All,CM_Table_All,Split_Table_All,'VariableNames',{cfg_Names.TableNameAccuracy,cfg_Names.TableNameWindow_Accuracy,cfg_Names.TableNameCM_Table,cfg_Names.TableNameSplit_Table},'RowNames',FullTableRowNames);
-FullTable=table(Accuracy_All,Window_Accuracy_All,Split_Table_All,'VariableNames',{cfg_Names.TableNameAccuracy,cfg_Names.TableNameWindow_Accuracy,cfg_Names.TableNameSplit_Table},'RowNames',FullTableRowNames);
+% AttentionalTable = table(Accuracy_All_Attention,Window_Accuracy_All_Attention,'VariableNames',{cfg_Names.TableNameAccuracy,cfg_Names.TableNameWindow_Accuracy},'RowNames',AttentionalNames);
+FullTable=table(Accuracy_All,Window_Accuracy_All,Split_Table_All,AttentionalTable_All,'VariableNames',{cfg_Names.TableNameAccuracy,cfg_Names.TableNameWindow_Accuracy,cfg_Names.TableNameSplit_Table,'Attentional Table'},'RowNames',FullTableRowNames);
 %%
 Outcfg.DataWidth=DataWidth;
 Outcfg.WindowStride=WindowStride;
@@ -510,6 +651,7 @@ Outcfg.wantSubset=wantSubset;
 Outcfg.MatchType=MatchType;
 Outcfg.NumWindows = NumWindows;
 Outcfg.IsQuaddle = IsQuaddle;
+Outcfg.AttentionalTable = AttentionalTable;
 
 %%
 
@@ -537,7 +679,7 @@ NumEntries = 500;
 RemovalPlotTable = cgg_procFullImportanceAnalysis(cfg_Encoder, ...
     EpochDir,Outcfg,'NumEntries',NumEntries,'WantDelay',WantDelay);
 Outcfg.RemovalPlotTable = RemovalPlotTable;
-end
+
 %% Correlation Analysis
 
 Learning_Model_Variables = {'Absolute Prediction Error','Outcome',...
@@ -564,7 +706,7 @@ end
 end
 
 Outcfg.CorrelationTable = CorrelationTable;
-
+end
 
 end
 
