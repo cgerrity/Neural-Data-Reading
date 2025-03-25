@@ -122,6 +122,14 @@ end
 end
 
 if isfunction
+TrialsFromLPCategoryFine = CheckVararginPairs('TrialsFromLPCategoryFine', false, varargin{:});
+else
+if ~(exist('TrialsFromLPCategoryFine','var'))
+TrialsFromLPCategoryFine=false;
+end
+end
+
+if isfunction
 SharedFeatureCoding = CheckVararginPairs('SharedFeatureCoding', false, varargin{:});
 else
 if ~(exist('SharedFeatureCoding','var'))
@@ -215,6 +223,8 @@ elseif TrialsFromLP
 TargetType='TrialsFromLP';
 elseif TrialsFromLPCategory
 TargetType='TrialsFromLPCategory';
+elseif TrialsFromLPCategoryFine
+TargetType='TrialsFromLPCategoryFine';
 elseif SharedFeatureCoding
 TargetType='SharedFeatureCoding';
 elseif SharedFeature
@@ -330,7 +340,17 @@ this_TrialsFromLP=Target.TrialsFromLP;
 if isnan(this_TrialsFromLP)
 this_TrialsFromLP=-Inf;
 end
-this_TrialsFromLPCategory = cgg_calcTrialsFromLPCategories(this_TrialsFromLP);
+this_TrialsFromLPCategory = cgg_calcTrialsFromLPCategories(this_TrialsFromLP,false);
+end
+
+% Selecting Fine Grain Trials from Learning Point Category
+
+if TrialsFromLPCategoryFine||AllTargets
+this_TrialsFromLP=Target.TrialsFromLP;
+if isnan(this_TrialsFromLP)
+this_TrialsFromLP=-Inf;
+end
+this_TrialsFromLPCategoryFine = cgg_calcTrialsFromLPCategories(this_TrialsFromLP,true);
 end
 
 % Selecting Shared Feature Coding
@@ -405,6 +425,8 @@ switch TargetType
         Target = this_TrialsFromLP;
     case 'TrialsFromLPCategory'
         Target = this_TrialsFromLPCategory;
+    case 'TrialsFromLPCategoryFine'
+        Target = this_TrialsFromLPCategoryFine;
     case 'SharedFeatureCoding'
         Target = this_SharedFeatureCoding;
     case 'SharedFeature'
@@ -421,7 +443,7 @@ switch TargetType
         Target = this_OtherValue;
     case 'AllTargets'
         Target=cell(1,2);
-        [Target{1},Target{2}] = cgg_procDataSegmentationGroups(this_Dimension_Each,this_CorrectTrial,this_PreviousTrialCorrect,this_Dimensionality,this_Gain,this_Loss,this_Learned,this_ProbeProcessing,this_TargetFeature,this_ReactionTime,this_TrialChosen,this_SessionName,this_DataNumber,this_SharedFeatureCoding,this_TrialsFromLP,this_TrialsFromLPCategory);
+        [Target{1},Target{2}] = cgg_procDataSegmentationGroups(this_Dimension_Each,this_CorrectTrial,this_PreviousTrialCorrect,this_Dimensionality,this_Gain,this_Loss,this_Learned,this_ProbeProcessing,this_TargetFeature,this_ReactionTime,this_TrialChosen,this_SessionName,this_DataNumber,this_SharedFeatureCoding,this_TrialsFromLP,this_TrialsFromLPCategory,this_TrialsFromLPCategoryFine);
     otherwise
 end
 
