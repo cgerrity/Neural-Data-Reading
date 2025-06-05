@@ -1,6 +1,16 @@
-function cgg_trainAllAutoEncoder(InDataStore,DataStore_Validation,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,cfg_Network)
+function cgg_trainAllAutoEncoder(InDataStore,DataStore_Validation,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,cfg_Network,varargin)
 %CGG_TRAINALLAUTOENCODER Summary of this function goes here
 %   Detailed explanation goes here
+
+isfunction=exist('varargin','var');
+
+if isfunction
+PCAInformation = CheckVararginPairs('PCAInformation', [], varargin{:});
+else
+if ~(exist('PCAInformation','var'))
+PCAInformation=[];
+end
+end
 
 HiddenSizes=cfg_Encoder.HiddenSizes;
 NumEpochsBase=cfg_Encoder.NumEpochsBase;

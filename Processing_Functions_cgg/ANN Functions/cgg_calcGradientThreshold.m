@@ -6,6 +6,10 @@ epsilon=0.0000001;
 
 GradientsNew = Gradients;
 
+if isempty(Gradients)
+    return
+end
+
 GradientsValue = GradientsNew.Value;
 
 globalL2Norm = 0;
