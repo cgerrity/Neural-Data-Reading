@@ -232,10 +232,10 @@ end
 end
 
 if isfunction
-WantFig = CheckVararginPairs('WantFig', true, varargin{:});
+WantFig = CheckVararginPairs('WantFig', false, varargin{:});
 else
 if ~(exist('WantFig','var'))
-WantFig=true;
+WantFig=false;
 end
 end
 %%

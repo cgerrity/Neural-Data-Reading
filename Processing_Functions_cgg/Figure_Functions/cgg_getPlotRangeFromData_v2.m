@@ -31,6 +31,14 @@ end
 Limit_Upper = prctile(this_Data,Percentile);
 Limit_Lower = prctile(this_Data,100-Percentile);
 
+if isnan(Limit_Upper) && isnan(Limit_Lower)
+    Limit_Upper = 0.00001;
+    Limit_Lower = 0;
+elseif isnan(Limit_Upper)
+    Limit_Upper = Limit_Lower;
+elseif isnan(Limit_Lower)
+    Limit_Lower = Limit_Upper;
+end
 
 Range = Limit_Upper-Limit_Lower;
 if Range <= 0

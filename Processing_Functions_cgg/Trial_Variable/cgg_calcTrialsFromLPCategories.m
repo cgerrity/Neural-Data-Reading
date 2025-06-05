@@ -5,7 +5,7 @@ function LPCategory = cgg_calcTrialsFromLPCategories(TrialsFromLP,WantFine)
 if WantFine
     LPRanges = [-Inf,-1000,-20,-15,-10,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,12,15,18,20,30,Inf];
 else
-    LPRanges = [-Inf,-5,0,10,20];
+    LPRanges = [-Inf,-1000,-5,0,10,20,Inf];
 end
 
 % [aa,aaa,aaaa] = histcounts(TrialsFromLP,LPRanges);
