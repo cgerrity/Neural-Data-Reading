@@ -1,4 +1,4 @@
-function [LossInformation,CM_Table,Gradients] = cgg_lossComponents(...
+function [LossInformation,CM_Table,Gradients] = cgg_lossComponentsParallel(...
     Encoder,Decoder,Classifier,InDatastore,varargin)
 %CGG_LOSSCOMPONENTS Summary of this function goes here
 %   Detailed explanation goes here
@@ -191,10 +191,12 @@ NumTrials=numpartitions(InDatastore);
 
 %%
 NumPasses = 0;
-while hasdata(MaxMbq)
+spmd
+this_MaxMbq = partition(MaxMbq,spdmSize,spmdIndex);
+while spmdReduce(@and,hasdata(this_MaxMbq))
 NumPasses = NumPasses + 1;
-fprintf('??? Current gradient aggregation pass through is %d\n',NumPasses);
-[X,T,DataNumber] = next(MaxMbq);
+% fprintf('??? Current gradient aggregation pass through is %d\n',NumPasses);
+[X,T,DataNumber] = next(this_MaxMbq);
 
 Normalization_Factor = length(DataNumber)/NumTrials;
 
@@ -258,6 +260,10 @@ end
 
 %%
 
+
+
+
+
 end
 
 %% Get Loss Information
@@ -301,5 +307,8 @@ Gradients = struct();
 Gradients.Encoder = Gradients_Encoder;
 Gradients.Decoder = Gradients_Decoder;
 Gradients.Classifier = Gradients_Classifier;
+end
+
+
 end
 

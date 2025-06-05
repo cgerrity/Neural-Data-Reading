@@ -9,7 +9,7 @@ CurrentCases = {'Classifier Hidden Size','Classifier','Data Width', ...
     'Batch Size','Model','Data Augmentation','Unsupervised Epochs', ...
     'Optimizer','Normalization','Weighted Loss','Stride', ...
     'Gradient Accumulation Size','Loss Weights','Bottleneck Depth','Dropout', ...
-    'Gradient Threshold','Decoder Loss Type'};
+    'Gradient Threshold','Decoder Loss Type','Layers','Initial Units'};
 %%
 
 
@@ -25,7 +25,7 @@ switch SweepType
         SweepNameIgnore = "WindowStride";
     case 'Hidden Size'
         SweepName = "HiddenSizes";
-        SweepNameIgnore = "maxworkerMiniBatchSize";
+        SweepNameIgnore = ["maxworkerMiniBatchSize","NumberOfLayers","FirstHiddenSize"];
     case 'Initial Learning Rate'
         SweepName = "InitialLearningRate";
         SweepNameIgnore = [];
@@ -40,7 +40,7 @@ switch SweepType
         SweepNameIgnore = "maxworkerMiniBatchSize";
     case 'Model'
         SweepName = "ModelName";
-        SweepNameIgnore = ["HiddenSizes","maxworkerMiniBatchSize","Activation"];
+        SweepNameIgnore = ["HiddenSizes","maxworkerMiniBatchSize","Activation","WeightReconstruction","WeightClassification","WeightKL","WantNormalization","LossFactorKL","LossFactorReconstruction","FirstHiddenSize"];
     case 'Data Augmentation'
         SweepName = "Normalization";
         SweepNameIgnore = [];
@@ -77,6 +77,12 @@ switch SweepType
     case 'Decoder Loss Type'
         SweepName = "LossType_Decoder";
         SweepNameIgnore = [];
+    case 'Layers'
+        SweepName = "NumberOfLayers";
+        SweepNameIgnore = ["HiddenSizes"];
+    case 'Initial Units'
+        SweepName = "FirstHiddenSize";
+        SweepNameIgnore = ["HiddenSizes"];
     otherwise
         SweepName = [];
         SweepNameIgnore = [];
