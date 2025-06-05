@@ -50,7 +50,7 @@ ClassifierHiddenSize=[250,100,50];
 NumEpochsAutoEncoder = 0;
 MiniBatchSize = 100;
 GradientThreshold = 100;
-NumEpochsFull = 30;
+NumEpochsFull = 100;
 InitialLearningRate = 0.01;
 WeightReconstruction = 100;
 WeightKL = 1;
@@ -90,7 +90,7 @@ wantStratifiedPartition = true;
 MatchType_Accuracy_Measure = 'macroF1';
 
 WantSaveNet = false;
-
+WantSaveOptimalNet = true;
 %% Learning Rate Parameters
 
 LearningRateDecay = 0.9;

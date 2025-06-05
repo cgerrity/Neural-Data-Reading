@@ -23,10 +23,25 @@ end
 %%
     % Read the file into a table
     EncodingParameters = ReadYaml(filePath,0,true);
+    disp(filePath)
+    if isempty(EncodingParameters)
+        fprintf('!!! Encoding Parameters File is Empty\n');
+        return
+    end
     EncodingParameters = rmfield(EncodingParameters,'varargin');
     Fold = EncodingParameters.Fold;
 
     EncodingParameters = rmfield(EncodingParameters,'Fold');
+    if isfield(EncodingParameters,'WantSaveOptimalNet')
+    EncodingParameters = rmfield(EncodingParameters,'WantSaveOptimalNet');
+    end
+    
+    if iscell(EncodingParameters.HiddenSizes)
+    EncodingParameters.FirstHiddenSize = EncodingParameters.HiddenSizes{1};
+    else
+    EncodingParameters.FirstHiddenSize = EncodingParameters.HiddenSizes(1);
+    end
+    EncodingParameters.NumberOfLayers = length(EncodingParameters.HiddenSizes);
 
     [FolderPath,~,~] = fileparts(filePath);
     if WantValidation

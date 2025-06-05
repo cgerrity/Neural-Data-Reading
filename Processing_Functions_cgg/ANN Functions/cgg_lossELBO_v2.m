@@ -11,9 +11,10 @@ loss_Reconstruction = 0.5*l2loss(Y,T,Mask=Mask_NaN);
 % loss_Reconstruction = mse(Y,T);
 SizeData = size(Y);
 NumAreas = SizeData(finddim(Y,"C"));
+loss_Reconstruction_perchannel = NaN(NumAreas,1);
 for aidx = 1:NumAreas
 % loss_Reconstruction_perchannel(aidx) = mse(Y(:,:,aidx,:,:),T(:,:,aidx,:,:));
-loss_Reconstruction_perchannel(aidx) = 0.5*l2loss(Y(:,:,aidx,:,:),T(:,:,aidx,:,:),Mask=Mask_NaN(:,:,aidx,:,:));
+loss_Reconstruction_perchannel(aidx) = extractdata(0.5*l2loss(Y(:,:,aidx,:,:),T(:,:,aidx,:,:),Mask=Mask_NaN(:,:,aidx,:,:)));
 end
 % [extractdata(0.5*sum((Y-T).^2,"all")),extractdata(sum((Y).^2,"all")),extractdata(sum((T).^2,"all"))]
 % sum((Y-T).^2,"all")

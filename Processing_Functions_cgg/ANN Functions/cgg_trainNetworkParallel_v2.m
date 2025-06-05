@@ -1,4 +1,4 @@
-function [Encoder,Decoder,Classifier] = cgg_trainNetwork(Encoder,DataStore_Training,DataStore_Validation,DataStore_Testing,varargin)
+function [Encoder,Decoder,Classifier] = cgg_trainNetworkParallel_v2(Encoder,DataStore_Training,DataStore_Validation,DataStore_Testing,varargin)
 %CGG_TRAINNETWORK Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -309,6 +309,15 @@ ModelLoss_Testing = ...
     'ClassNames',ClassNames,'LossType_Decoder',LossType_Decoder,...
     'DataType','Testing',...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,'L2Factor',L2Factor);
+
+%%
+
+ModelLoss_Training = dlaccelerate(@ModelLoss_Training);
+ModelLoss_Validation = dlaccelerate(@ModelLoss_Validation);
+ModelLoss_Testing = dlaccelerate(@ModelLoss_Testing);
+clearCache(ModelLoss_Training);
+clearCache(ModelLoss_Validation);
+clearCache(ModelLoss_Testing);
 
 %% Training
 

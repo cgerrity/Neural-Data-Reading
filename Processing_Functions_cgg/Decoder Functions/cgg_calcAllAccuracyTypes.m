@@ -40,6 +40,8 @@ switch MatchType
     case 'BalancedAccuracy'
         [Accuracy] = cgg_calcMacroRecall(TrueValue,Prediction,ClassNames,'Weights',Weights);
         % [Accuracy] = cgg_calcMacroBalancedAccuracy(TrueValue,Prediction,ClassNames,'Weights',Weights);
+    case 'MicroAccuracy'
+        [Accuracy] = cgg_calcMicroAccuracy(TrueValue,Prediction,ClassNames,'Weights',Weights);
     otherwise
 end
 

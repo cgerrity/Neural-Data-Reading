@@ -154,6 +154,14 @@ end
 end
 
 if isfunction
+Block = CheckVararginPairs('Block', false, varargin{:});
+else
+if ~(exist('Block','var'))
+Block=false;
+end
+end
+
+if isfunction
 DataNumber = CheckVararginPairs('DataNumber', false, varargin{:});
 else
 if ~(exist('DataNumber','var'))
@@ -231,6 +239,8 @@ elseif SharedFeature
 TargetType='SharedFeature';
 elseif ~isempty(SessionName)
 TargetType='SessionName';
+elseif Block
+TargetType='Block';
 elseif DataNumber
 TargetType='DataNumber';
 elseif PredictionError
@@ -263,6 +273,8 @@ end
 if PreviousTrialCorrect||AllTargets
     if iscell(Target.PreviousTrialCorrect)
     this_PreviousTrialCorrect=strcmp(Target.PreviousTrialCorrect{1},'True');
+    elseif ischar(Target.PreviousTrialCorrect)
+    this_PreviousTrialCorrect=strcmp(Target.PreviousTrialCorrect,'True');
     else
     this_PreviousTrialCorrect=false;
     end
@@ -371,6 +383,12 @@ if ~isempty(SessionName)||AllTargets
 this_SessionName = Target.SessionName;
 end
 
+% Selecting Block Number
+
+if Block||AllTargets
+this_Block=Target.Block;
+end
+
 % Selecting Data Number
 
 if DataNumber||AllTargets
@@ -433,6 +451,8 @@ switch TargetType
         Target = this_SharedFeature;
     case 'SessionName'
         Target = this_SessionName;
+    case 'Block'
+        Target = this_Block;
     case 'DataNumber'
         Target = this_DataNumber;
     case 'PredictionError'
@@ -443,7 +463,7 @@ switch TargetType
         Target = this_OtherValue;
     case 'AllTargets'
         Target=cell(1,2);
-        [Target{1},Target{2}] = cgg_procDataSegmentationGroups(this_Dimension_Each,this_CorrectTrial,this_PreviousTrialCorrect,this_Dimensionality,this_Gain,this_Loss,this_Learned,this_ProbeProcessing,this_TargetFeature,this_ReactionTime,this_TrialChosen,this_SessionName,this_DataNumber,this_SharedFeatureCoding,this_TrialsFromLP,this_TrialsFromLPCategory,this_TrialsFromLPCategoryFine);
+        [Target{1},Target{2}] = cgg_procDataSegmentationGroups(this_Dimension_Each,this_CorrectTrial,this_PreviousTrialCorrect,this_Dimensionality,this_Gain,this_Loss,this_Learned,this_ProbeProcessing,this_TargetFeature,this_ReactionTime,this_TrialChosen,this_SessionName,this_Block,this_DataNumber,this_SharedFeatureCoding,this_TrialsFromLP,this_TrialsFromLPCategory,this_TrialsFromLPCategoryFine);
     otherwise
 end
 

@@ -57,6 +57,7 @@ wantSubset = true;
 wantStratifiedPartition = true;
 MatchType_Accuracy_Measure = 'macroF1';
 WantSaveNet = false;
+WantSaveOptimalNet = true;
 
 %%
 

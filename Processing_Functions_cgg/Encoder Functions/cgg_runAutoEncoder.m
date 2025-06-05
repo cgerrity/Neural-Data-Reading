@@ -37,7 +37,7 @@ TableSLURM = SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX);
 [Fold,cfg_Encoder] = cgg_assignSLURMEncoderParameters(cfg_Encoder,TableSLURM);
 elseif ~isnan(SLURMIDX) && ~isnan(SLURMChoice)
 TableSLURM = SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX);
-[Fold,cfg_Encoder] = cgg_assignSLURMEncoderParameters(cfg_Encoder,TableSLURM);
+[~,cfg_Encoder] = cgg_assignSLURMEncoderParameters(cfg_Encoder,TableSLURM);
 end
 
 cfg_Encoder.Fold = Fold;
@@ -98,6 +98,7 @@ LossFactorReconstruction = cfg_Encoder.LossFactorReconstruction;
 LossFactorKL = cfg_Encoder.LossFactorKL;
 
 SubsetAmount = cfg_param_Decoder.SubsetAmount;
+WantSaveOptimalNet = cfg_Encoder.WantSaveOptimalNet;
 
 %%
 
@@ -125,6 +126,9 @@ end
 if isfunction
 cfg_Encoder.LossFactorKL = CheckVararginPairs('LossFactorKL', LossFactorKL, varargin{:});
 end
+if isfunction
+cfg_Encoder.WantSaveOptimalNet = CheckVararginPairs('WantSaveOptimalNet', WantSaveOptimalNet, varargin{:});
+end
 
 %%
 cfg_Encoder.IsQuaddle = true;
@@ -141,13 +145,19 @@ disp(cfg_Encoder);
 disp(datetime);
 
 %%
-
-if ~isempty(getenv('SLURM_JOB_CPUS_PER_NODE'))
-cores = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
-p=gcp("nocreate");
-if isempty(p)
-parpool(cores);
-end
+if canUseGPU
+    % numberOfGPUs = gpuDeviceCount("available");
+    numberOfGPUs = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
+    p=gcp("nocreate");
+    if isempty(p)
+    parpool(numberOfGPUs);
+    end
+elseif ~isempty(getenv('SLURM_JOB_CPUS_PER_NODE'))
+    cores = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
+    p=gcp("nocreate");
+    if isempty(p)
+    parpool(cores);
+    end
 end
 
 %%
