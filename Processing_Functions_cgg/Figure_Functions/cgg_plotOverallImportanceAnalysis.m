@@ -226,7 +226,11 @@ for aidx = 1:NumAreas
     this_Area = SingleAreaPlotNames{aidx};
     this_PlotColorName = sprintf('Color_%s',this_Area);
     PlotColors{aidx} = cfg_Plotting.(this_PlotColorName);
-    % PlotColors{aidx} = hex2rgb(cfg_Plotting.(this_PlotColorName));
+    % if isMATLABReleaseOlderThan("R2024a")
+    %     PlotColors{aidx} = cgg_getHexToRGB(cfg_Plotting.(this_PlotColorName));
+    % else
+    %     PlotColors{aidx} = hex2rgb(cfg_Plotting.(this_PlotColorName));
+    % end
 end
 
 AreaRelativePlot_Y = cell(NumAreas,NumNames);

@@ -21,6 +21,14 @@ IdentifierName='';
 end
 end
 
+if isfunction
+AdditionalTarget = CheckVararginPairs('AdditionalTarget', '', varargin{:});
+else
+if ~(exist('AdditionalTarget','var'))
+AdditionalTarget='';
+end
+end
+
 %%
 
 ExtraSaveTerm = cgg_generateExtraSaveTerm('wantSubset',wantSubset);
@@ -40,6 +48,21 @@ if isempty(Identifiers)||isempty(IdentifierName)
 
 TargetAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Target.path;
 Target_Fun=@(x) cgg_loadTargetArray(x);
+
+if ~isempty(AdditionalTarget)
+
+    for tidx = 1:length(AdditionalTarget)
+        this_Target = AdditionalTarget{tidx};
+        this_cfg_VariableSet = PARAMETERS_cggVariableToData(this_Target);
+        this_Target_Fun = this_cfg_VariableSet.Target_Fun;
+Target_Fun = @(x) {[cell2mat(cgg_getDataFromIndices(Target_Fun(x),1)),...
+    this_Target_Fun(x)], ...
+    [cgg_getOutputFromCell(cgg_getDataFromIndices(Target_Fun(x),2)), ...
+    string(this_Target)]};
+    end
+
+end
+
 Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun);
 
 if wantSubset

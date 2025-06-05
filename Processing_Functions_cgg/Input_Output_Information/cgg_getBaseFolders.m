@@ -54,7 +54,7 @@ switch Root_Directory
         inputfolder_base='/data';
         outputfolder_base=['/data/users/',Current_User];
         temporaryfolder_base=['/data/users/',Current_User];
-    case "accre"
+    case {"accre","panfs"}
         Current_System="ACCRE";
         inputfolder_base=['/home/',Current_User];
         outputfolder_base=['/home/',Current_User];

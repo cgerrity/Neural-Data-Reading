@@ -81,6 +81,14 @@ end
 end
 
 if isfunction
+wantSTD = CheckVararginPairs('wantSTD', false, varargin{:});
+else
+if ~(exist('wantSTD','var'))
+wantSTD=false;
+end
+end
+
+if isfunction
 SignificanceValue = CheckVararginPairs('SignificanceValue', 0.05, varargin{:});
 else
 if ~(exist('SignificanceValue','var'))
@@ -340,6 +348,7 @@ for vidx=1:length(Values)
 end
 
 Bar_STE=Bar_STD./sqrt(Bar_Count);
+Bar_STE(Bar_Count==1) = NaN;
 
 ts = tinv(1-SignificanceValue/2,Bar_Count-1);
 BarCI = ts.*Bar_STE;
@@ -405,6 +414,8 @@ hold on
 this_ErrorMetric=Bar_STE;
 if wantCI
     this_ErrorMetric=BarCI;
+elseif wantSTD
+    this_ErrorMetric=Bar_STD;
 end
 
 if ~isempty(ErrorMetric)

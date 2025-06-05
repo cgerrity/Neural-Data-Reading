@@ -142,6 +142,30 @@ end
 IANameExt = 'IA_Table_Random.mat';
 IAPathNameExt = fullfile('Fold %d',SessionName,IANameExt);
 %%
+
+NumChannelsRemovedFunc = @(y) cellfun(@(x) sum(~isnan(x)),y.ChannelRemoved);
+NumLatentRemovedFunc = @(y) cellfun(@(x) sum(~isnan(x)),y.LatentRemoved);
+NumRemovalsFunc = @(y) NumChannelsRemovedFunc(y) + NumLatentRemovedFunc(y);
+MaxNumRemovalsFunc = @(y) max(NumRemovalsFunc(y));
+
+AnalysisDir = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType);
+RemovalTable_Func =@(y) cgg_getRemovalTable(y);
+
+funcHandle_RemovalTable = @(x,y) min([x,MaxNumRemovalsFunc(RemovalTable_Func(y))]);
+
+%%
+
+CurrentNumRemovals_RemovalTable = cgg_procDirectorySearchAndApply(AnalysisDir, IANameExt, funcHandle_RemovalTable);
+if isempty(CurrentNumRemovals_RemovalTable)
+    CurrentNumRemovals_RemovalTable = 0;
+end
+
+[MaximumRemovals,NumChannels,NumAreas,LatentSize,BadChannelTable] = cgg_getMaximumNumberOfRemovals(cfg_Encoder,EpochDir,'RemovalType',RemovalType,'SessionName',SessionName);
+
+IsFinished_RemovalTable = CurrentNumRemovals_RemovalTable == MaximumRemovals;
+
+%%
+
 AnalysisDir = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType);
 funcHandle =@(x,y) all([x,cgg_getOutputFromIndices(@cgg_checkImportanceAnalysis,y,2,2)]);
 HasRemovalTable = cgg_procDirectorySearchAndApply(AnalysisDir, IANameExt, funcHandle);

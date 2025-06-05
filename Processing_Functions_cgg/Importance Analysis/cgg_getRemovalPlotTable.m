@@ -5,10 +5,10 @@ function RemovalPlotTable = cgg_getRemovalPlotTable(RemovalPlotTable,IA_Table_Fo
 isfunction=exist('varargin','var');
 
 if isfunction
-SmoothWindow = CheckVararginPairs('SmoothWindow', [0,0], varargin{:});
+SmoothWindow = CheckVararginPairs('SmoothWindow', [30,0], varargin{:});
 else
 if ~(exist('SmoothWindow','var'))
-SmoothWindow=[0,0];
+SmoothWindow=[30,0];
 end
 end
 
