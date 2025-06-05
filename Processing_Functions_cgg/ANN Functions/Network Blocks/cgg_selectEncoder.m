@@ -26,6 +26,19 @@ if cfg.IsSimple
             'WantNormalization',WantNormalization,...
             'Transform',Transform,'Activation',Activation);
     EncoderBlocks = layerGraph(EncoderBlocks);
+elseif strcmp(cfg.Transform,'PCA')
+    PCCoefficients = cfg.PCAInformation.PCCoefficients;
+    PCMean = cfg.PCAInformation.PCMean;
+    ApplyPerTimePoint = cfg.PCAInformation.ApplyPerTimePoint;
+    OutputDimension = cfg.PCAInformation.OutputDimension;
+
+    EncoderBlocks = cgg_PCAEncodingLayer(...
+        Name="PCA_Encoder", ...
+        PCCoefficients=PCCoefficients, ...
+        PCMean=PCMean, ...
+        ApplyPerTimePoint=ApplyPerTimePoint, ...
+        OutputDimension=OutputDimension);
+    EncoderBlocks = layerGraph(EncoderBlocks);
 else
 
     FilterSizes = cfg.FilterSizes;

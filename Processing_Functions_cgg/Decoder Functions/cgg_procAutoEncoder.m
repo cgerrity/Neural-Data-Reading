@@ -220,6 +220,20 @@ DataStore_Training=subset(DataStore,Training_IDX);
 DataStore_Validation=subset(DataStore,Validation_IDX);
 DataStore_Testing=subset(DataStore,Testing_IDX);
 
+%% Get PCA Information
+
+if strcmp(cfg_Encoder.ModelName,'PCA')
+    PCAInformation = cgg_getPCAForLayer(DataStore_Training);
+    PCAPathNameExt = [Encoding_Dir filesep 'PCAInformation.yaml'];
+    PCAVariables = {PCAInformation.OutputDimensionAll,PCAInformation.ApplyPerTimePoint};
+    PCAVariablesName = {'OutputDimensionAll','ApplyPerTimePoint'};
+    cgg_saveVariableUsingMatfile(PCAVariables,PCAVariablesName,PCAPathNameExt);
+else
+    PCAInformation = [];
+end
+
+%%
+
 % Set the data augmentation read function
 DataStore_Training.UnderlyingDatastores{1}.ReadFcn = Data_Fun_Augmented;
 
@@ -335,11 +349,11 @@ SessionsList=SessionList_Training;
 
 switch NetworkTrainingVersion
     case 'Version 1'
-        cgg_trainAllAutoEncoder(InDataStore,DataStore_Validation,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,cfg_Network);
+        cgg_trainAllAutoEncoder(InDataStore,DataStore_Validation,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,cfg_Network,'PCAInformation',PCAInformation);
     case 'Version 2'
-        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network);
+        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network,'PCAInformation',PCAInformation);
     otherwise
-        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network);
+        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network,'PCAInformation',PCAInformation);
 end
 
 %% All Session Encoder Tuning

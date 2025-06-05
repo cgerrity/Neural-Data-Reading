@@ -7,6 +7,13 @@ Coder = 'BottleNeck';
 BottleNeckDepth = cfg.BottleNeckDepth;
 HiddenSizeBottleNeck = repmat(HiddenSizeBottleNeck,[1,BottleNeckDepth]);
 
+BottleNeck = [];
+if isempty(HiddenSizeBottleNeck)
+    BottleNeck = flattenLayer('Name','flatten_BottleNeck');
+    BottleNeck = layerGraph(BottleNeck);
+    return
+end
+
 if cfg.IsSimple
     Dropout = cfg.Dropout;
     WantNormalization = cfg.WantNormalization;
@@ -22,6 +29,8 @@ if cfg.IsSimple
     %         'Coder',Coder,'Dropout',Dropout,...
     %         'WantNormalization',WantNormalization,...
     %         'Transform',Transform,'Activation',Activation);
+elseif strcmp(cfg.Transform,'PCA')
+    return
 else
     Dropout = cfg.Dropout;
     WantNormalization = cfg.WantNormalization;

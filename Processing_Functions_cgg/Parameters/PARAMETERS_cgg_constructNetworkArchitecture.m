@@ -84,6 +84,26 @@ switch ArchitectureType
         needReshape = true;
         OutputFullyConnected = true;
         BottleNeckDepth = 1;
+    case 'Logistic Regression'
+        IsSimple = true;
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'Feedforward';
+        Activation = '';
+        IsVariational = false;
+        needReshape = true;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+    case 'PCA'
+        IsSimple = false;
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'PCA';
+        Activation = '';
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
     case 'GRU'
         IsSimple = true;
         Dropout = 0;
@@ -164,7 +184,8 @@ switch ArchitectureType
         Dropout = 0;
         WantNormalization = false;
         Transform = 'GRU';
-        Activation = 'ReLU';
+        % Activation = 'ReLU';
+        Activation = 'Leaky ReLU';
         FinalActivation = 'Tanh';
         WantResnet = false;
         IsVariational = false;

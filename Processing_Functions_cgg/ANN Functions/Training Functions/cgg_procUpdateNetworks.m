@@ -3,6 +3,10 @@ function [UpdateNet,OptimizerVariables] = cgg_procUpdateNetworks(...
 %CGG_PROCUPDATENETWORKS Summary of this function goes here
 %   Detailed explanation goes here
 
+if isempty(Gradients)
+    UpdateNet = InputNet;
+    return
+end
 
 switch Optimizer
     case 'SGD'
