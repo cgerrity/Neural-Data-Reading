@@ -132,6 +132,14 @@ if ~(exist('DataType','var'))
 DataType='Training';
 end
 end
+
+if isfunction
+WantPreFetch = CheckVararginPairs('WantPreFetch', true, varargin{:});
+else
+if ~(exist('WantPreFetch','var'))
+WantPreFetch=true;
+end
+end
 %%
 HasDecoder = ~isempty(Decoder);
 HasClassifier = ~isempty(Classifier);
@@ -182,11 +190,23 @@ if ~IsClassifierLearnable
 end
 
 %%
-
+if isMATLABReleaseOlderThan("R2024a")
+    PreprocessingEnvironment = "serial";
+    if WantPreFetch
+        PreprocessingEnvironment = "parallel";
+    end
 MaxMbq = minibatchqueue(InDatastore,...
         MiniBatchSize=maxworkerMiniBatchSize,...
         MiniBatchFormat=DataFormat,...
+        PreprocessingEnvironment=PreprocessingEnvironment,...
         OutputEnvironment="auto");
+else
+MaxMbq = minibatchqueue(InDatastore,...
+        MiniBatchSize=maxworkerMiniBatchSize,...
+        MiniBatchFormat=DataFormat,...
+        DispatchInBackground=WantPreFetch,...
+        OutputEnvironment="auto");
+end
 NumTrials=numpartitions(InDatastore);
 
 %%
@@ -263,7 +283,6 @@ end
 
 
 
-
 end
 
 %% Get Loss Information
@@ -275,38 +294,40 @@ end
     Loss_Classification_PerDimension,LossInformation,...
     WantUpdateLossPrior,WeightReconstruction,WeightKL,WeightClassification);
 
-%% Get Loss
-
-Loss_Decoder = LossInformation.Loss_Decoder;
-Loss_Classifier = LossInformation.Loss_Classifier;
-Loss_Encoder = LossInformation.Loss_Encoder;
+% %% Get Loss
+% 
+% Loss_Decoder = LossInformation.Loss_Decoder;
+% Loss_Classifier = LossInformation.Loss_Classifier;
+% Loss_Encoder = LossInformation.Loss_Encoder;
 
 %%
-Gradients_Encoder = [];
-Gradients_Decoder = [];
-Gradients_Classifier = [];
+% Gradients_Encoder = [];
+% Gradients_Decoder = [];
+% Gradients_Classifier = [];
+
+Gradients = struct();
+Gradients.Encoder = [];
+Gradients.Decoder = [];
+Gradients.Classifier = [];
 
 if WantGradient
     %Regularize gradients
     L2Regularizer = @(grad,param) grad + L2Factor.*param;
     if IsEncoderLearnable
-    Gradients_Encoder = dlgradient(Loss_Encoder,Encoder.Learnables);
-    Gradients_Encoder = dlupdate(L2Regularizer,Gradients_Encoder,Encoder.Learnables);
+    Gradients.Encoder = dlgradient(LossInformation.Loss_Encoder,Encoder.Learnables);
+    Gradients.Encoder = dlupdate(L2Regularizer,Gradients.Encoder,Encoder.Learnables);
     end
     if HasDecoder && IsDecoderLearnable
-        Gradients_Decoder = dlgradient(Loss_Decoder,Decoder.Learnables);
-        Gradients_Decoder = dlupdate(L2Regularizer,Gradients_Decoder,Decoder.Learnables);
+        Gradients.Decoder = dlgradient(LossInformation.Loss_Decoder,Decoder.Learnables);
+        Gradients.Decoder = dlupdate(L2Regularizer,Gradients.Decoder,Decoder.Learnables);
     end
     if HasClassifier && IsClassifierLearnable
-        Gradients_Classifier = dlgradient(Loss_Classifier,Classifier.Learnables);
-        Gradients_Classifier = dlupdate(L2Regularizer,Gradients_Classifier,Classifier.Learnables);
+        Gradients.Classifier = dlgradient(LossInformation.Loss_Classifier,Classifier.Learnables);
+        Gradients.Classifier = dlupdate(L2Regularizer,Gradients.Classifier,Classifier.Learnables);
     end
 end
 
-Gradients = struct();
-Gradients.Encoder = Gradients_Encoder;
-Gradients.Decoder = Gradients_Decoder;
-Gradients.Classifier = Gradients_Classifier;
+
 end
 
 

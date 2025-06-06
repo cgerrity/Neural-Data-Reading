@@ -132,6 +132,14 @@ if ~(exist('DataType','var'))
 DataType='Training';
 end
 end
+
+if isfunction
+WantPreFetch = CheckVararginPairs('WantPreFetch', true, varargin{:});
+else
+if ~(exist('WantPreFetch','var'))
+WantPreFetch=true;
+end
+end
 %%
 HasDecoder = ~isempty(Decoder);
 HasClassifier = ~isempty(Classifier);
@@ -183,10 +191,24 @@ end
 
 %%
 
+%%
+if isMATLABReleaseOlderThan("R2024a")
+    PreprocessingEnvironment = "serial";
+    if WantPreFetch
+        PreprocessingEnvironment = "parallel";
+    end
 MaxMbq = minibatchqueue(InDatastore,...
         MiniBatchSize=maxworkerMiniBatchSize,...
         MiniBatchFormat=DataFormat,...
+        PreprocessingEnvironment=PreprocessingEnvironment,...
         OutputEnvironment="auto");
+else
+MaxMbq = minibatchqueue(InDatastore,...
+        MiniBatchSize=maxworkerMiniBatchSize,...
+        MiniBatchFormat=DataFormat,...
+        DispatchInBackground=WantPreFetch,...
+        OutputEnvironment="auto");
+end
 NumTrials=numpartitions(InDatastore);
 
 %%
