@@ -1,5 +1,6 @@
 function NormalizationTable = cgg_getNormalizationTableFromDataName(FileName,varargin)
 %CGG_GETNORMALIZATIONTABLEFROMDATANAME Summary of this function goes here
+%   Detailed explanation goes here
 
 isfunction=exist('varargin','var');
 
@@ -10,7 +11,6 @@ if ~(exist('NormalizationInformation','var'))
 NormalizationInformation='';
 end
 end
-%   Detailed explanation goes here
 
 [FileNumber,NumberWidth] = cgg_getNumberFromFileName(FileName);
 
@@ -34,28 +34,12 @@ end
 NormalizationInformationPath = [EpochDir filesep 'Normalization Information'];
 NormalizationInformationPathNameExt = [NormalizationInformationPath filesep 'NormalizationInformation.mat'];
 
-%%
+% m_NormalizationInformation=matfile(NormalizationInformationPathNameExt,"Writable",false);
+% NormalizationInformation=m_NormalizationInformation.NormalizationInformation;
+% NormalizationTable = NormalizationInformation.(SessionName);
 
-%%
-Time_Mat = NaN(1,100);
-Time_Load = NaN(1,100);
-for idx = 1:100
-SessionName = Session_List{randi(length(Session_List))};
-tic
-m_NormalizationInformation=matfile(NormalizationInformationPathNameExt,"Writable",false);
-NormalizationInformation=m_NormalizationInformation.NormalizationInformation;
+NormalizationInformation = load(NormalizationInformationPathNameExt);
+NormalizationInformation = NormalizationInformation.NormalizationInformation;
 NormalizationTable = NormalizationInformation.(SessionName);
-Time_Mat(idx) = toc;
-
-tic
-NormalizationInformation_2 = load(NormalizationInformationPathNameExt);
-NormalizationInformation_2 = NormalizationInformation_2.NormalizationInformation;
-NormalizationTable_2 = NormalizationInformation_2.(SessionName);
-Time_Load(idx) = toc;
-
-end
-
-disp(mean(Time_Mat));
-disp(mean(Time_Load));
 
 end
