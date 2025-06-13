@@ -56,17 +56,25 @@ end
 end
 
 if isfunction
-NormalizationTable = CheckVararginPairs('NormalizationTable', NaN, varargin{:});
+NormalizationTable = CheckVararginPairs('NormalizationTable', '', varargin{:});
 else
 if ~(exist('NormalizationTable','var'))
-NormalizationTable=NaN;
+NormalizationTable='';
+end
+end
+
+if isfunction
+NormalizationInformation = CheckVararginPairs('NormalizationInformation', '', varargin{:});
+else
+if ~(exist('NormalizationInformation','var'))
+NormalizationInformation='';
 end
 end
 
 %% Normalize Data
 if ~strcmp(Normalization,'None')
     if isempty(NormalizationTable)
-        NormalizationTable = cgg_getNormalizationTableFromDataName(FileName);
+        NormalizationTable = cgg_getNormalizationTableFromDataName(FileName,'NormalizationInformation',NormalizationInformation);
     end
 Data = cgg_selectNormalization(Data,NormalizationTable,Normalization);
 end
