@@ -1,4 +1,4 @@
-function [MiniBatchTable,NumBatches] = cgg_procAllSessionMiniBatchTable(DataStore,MiniBatchSize)
+function [MiniBatchTable,NumBatches] = cgg_procAllSessionMiniBatchTable(DataStore,MiniBatchSize,WantFullBatch)
 %CGG_PROCALLSESSIONMINIBATCHTABLE Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -37,7 +37,7 @@ for seidx = 1:NumSessions
 
     [Iteration_SessionDataStoreIDX,IterationsPerEpoch] = ...
         cgg_procSplitSingleSessionDataStoreByMiniBatchSize(...
-        this_SessionDataStore,MiniBatchSize);
+        this_SessionDataStore,MiniBatchSize,WantFullBatch);
 
 
     Iteration_DataStoreIDX = ...

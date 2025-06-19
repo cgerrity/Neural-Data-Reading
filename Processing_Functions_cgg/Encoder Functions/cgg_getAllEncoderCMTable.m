@@ -23,7 +23,7 @@ end
 %%
     % Read the file into a table
     EncodingParameters = ReadYaml(filePath,0,true);
-    disp(filePath)
+    % disp(filePath)
     if isempty(EncodingParameters)
         fprintf('!!! Encoding Parameters File is Empty\n');
         return
