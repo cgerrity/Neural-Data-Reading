@@ -230,6 +230,14 @@ L2Factor=1e-4;
 end
 end
 
+if isfunction
+WantFullBatch = CheckVararginPairs('WantFullBatch', false, varargin{:});
+else
+if ~(exist('WantFullBatch','var'))
+WantFullBatch=false;
+end
+end
+
 MessageAlreadyTrained = '!!! Network trained to maximum number of epochs\n';
 
 %% No Epochs
@@ -335,7 +343,8 @@ while Epoch <= NumEpochs
 
     % Get the mini-batch table for this training epoch
     [MiniBatchTable,NumBatches] = ...
-    cgg_procAllSessionMiniBatchTable(DataStore_Training,MiniBatchSize);
+    cgg_procAllSessionMiniBatchTable(DataStore_Training,MiniBatchSize,...
+    WantFullBatch);
 
     % Shuffle the mini-batches from the mini-batch table
     MiniBatchTable = MiniBatchTable(randperm(size(MiniBatchTable,1)),:);
@@ -403,6 +412,10 @@ while Epoch <= NumEpochs
             LossInformation_Training,LossInformation_Validation,...
             CM_Table_Training,CM_Table_Validation,...
             Gradients,Gradients_PreThreshold);
+        %% Only Get Optimal Network for Annealed Weights
+        if Epoch < WeightDelayEpoch + WeightEpochRamp
+            IsOptimal = false;
+        end
 
         %%
         SaveAll = mod(Iteration,SaveFrequency)==1 || SaveFrequency == 1;

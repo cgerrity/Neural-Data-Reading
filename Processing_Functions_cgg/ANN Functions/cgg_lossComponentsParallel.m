@@ -190,7 +190,7 @@ if ~IsClassifierLearnable
 end
 
 %%
-if isMATLABReleaseOlderThan("R2024a")
+if ~isMATLABReleaseOlderThan("R2024a")
     PreprocessingEnvironment = "serial";
     if WantPreFetch
         PreprocessingEnvironment = "parallel";

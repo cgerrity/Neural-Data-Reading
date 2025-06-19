@@ -167,6 +167,10 @@ Testing_IDX=test(KFoldPartition,kidx);
 DataAggregateDir = cgg_getDirectory(cfg.TargetDir,'Data');
 TargetAggregateDir = cgg_getDirectory(cfg.TargetDir,'Target');
 
+NormalizationInformationPath = [cgg_getDirectory(cfg.TargetDir,'Epoch') filesep 'Normalization Information'];
+NormalizationInformationPathNameExt = [NormalizationInformationPath filesep 'NormalizationInformation.mat'];
+NormalizationInformation = load(NormalizationInformationPathNameExt);
+NormalizationInformation = NormalizationInformation.NormalizationInformation;
 % if Data_Normalized
 % % DataAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Data_Normalized.path;
 % DataAggregateDir = cgg_getDirectory(cfg.TargetDir,'Data_Normalized');
@@ -181,8 +185,8 @@ WantRandomize=false;
 WantNaNZeroed=false;
 Want1DVector=false;
 
-Data_Fun=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'Normalization',Normalization,'NormalizationTable','');
-Data_Fun_Augmented=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'STDChannelOffset',STDChannelOffset,'STDWhiteNoise',STDWhiteNoise,'STDRandomWalk',STDRandomWalk,'Normalization',Normalization,'NormalizationTable','');
+Data_Fun=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'Normalization',Normalization,'NormalizationTable','','NormalizationInformation',NormalizationInformation);
+Data_Fun_Augmented=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'STDChannelOffset',STDChannelOffset,'STDWhiteNoise',STDWhiteNoise,'STDRandomWalk',STDRandomWalk,'Normalization',Normalization,'NormalizationTable','','NormalizationInformation',NormalizationInformation);
 
 switch Target
     case 'Dimension'
@@ -223,8 +227,9 @@ DataStore_Testing=subset(DataStore,Testing_IDX);
 %% Get PCA Information
 
 if strcmp(cfg_Encoder.ModelName,'PCA')
-    PCAInformation = cgg_getPCAForLayer(DataStore_Training);
-    PCAPathNameExt = [Encoding_Dir filesep 'PCAInformation.yaml'];
+    WantPerTime = false;
+    PCAInformation = cgg_getPCAForLayer(DataStore_Training,'WantPerTime',WantPerTime);
+    PCAPathNameExt = [Encoding_Dir filesep 'PCAInformation.mat'];
     PCAVariables = {PCAInformation.OutputDimensionAll,PCAInformation.ApplyPerTimePoint};
     PCAVariablesName = {'OutputDimensionAll','ApplyPerTimePoint'};
     cgg_saveVariableUsingMatfile(PCAVariables,PCAVariablesName,PCAPathNameExt);
