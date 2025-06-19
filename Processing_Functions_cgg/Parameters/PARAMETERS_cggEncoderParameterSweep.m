@@ -9,7 +9,8 @@ CurrentCases = {'Classifier Hidden Size','Classifier','Data Width', ...
     'Batch Size','Model','Data Augmentation','Unsupervised Epochs', ...
     'Optimizer','Normalization','Weighted Loss','Stride', ...
     'Gradient Accumulation Size','Loss Weights','Bottleneck Depth','Dropout', ...
-    'Gradient Threshold','Decoder Loss Type','Layers','Initial Units'};
+    'Gradient Threshold','Decoder Loss Type','Layers','Initial Units',...
+    'Classification Weight','KL Weight','Reconstruction Weight'};
 %%
 
 
@@ -64,6 +65,15 @@ switch SweepType
         SweepNameIgnore = "ModelName";
     case 'Loss Weights'
         SweepName = ["WeightReconstruction","WeightClassification","WeightKL"];
+        SweepNameIgnore = ["LossFactorKL","LossFactorReconstruction"];
+    case 'Reconstruction Weight'
+        SweepName = "WeightReconstruction";
+        SweepNameIgnore = ["LossFactorKL","LossFactorReconstruction"];
+    case 'KL Weight'
+        SweepName = "WeightKL";
+        SweepNameIgnore = ["LossFactorKL","LossFactorReconstruction"];
+    case 'Classification Weight'
+        SweepName = "WeightClassification";
         SweepNameIgnore = ["LossFactorKL","LossFactorReconstruction"];
     case 'Bottleneck Depth'
         SweepName = "BottleNeckDepth";

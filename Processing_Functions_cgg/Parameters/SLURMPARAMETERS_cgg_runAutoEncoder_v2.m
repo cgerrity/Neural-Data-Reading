@@ -17,7 +17,7 @@ WeightKL = cfg.WeightKL;
 WeightClassification = cfg.WeightClassification;
 MiniBatchSize = cfg.MiniBatchSize;
 GradientThreshold=cfg.GradientThreshold;
-Subset = cfg.Subset;
+Subset = cfg.wantSubset;
 Epoch = cfg.Epoch;
 Target = cfg.Target;
 WeightedLoss = cfg.WeightedLoss;
@@ -79,8 +79,8 @@ CurrentIDX = CurrentIDX +1;% Good
 CurrentIDX = CurrentIDX +1;%FIXME: Time
     Description{CurrentIDX} = 'Convolutional Network - Gradient Accumulation size 5; Minibatch Size 5'; % <<<<<<<<
     ModelName{CurrentIDX} = 'Convolutional'; 
-    maxworkerMiniBatchSize{CurrentIDX} = 5;
-    MiniBatchSize{CurrentIDX} = 5;
+    maxworkerMiniBatchSize{CurrentIDX} = 10;
+    % MiniBatchSize{CurrentIDX} = 5;
     HiddenSizes{CurrentIDX} = [8,16,32];
     WeightReconstruction{CurrentIDX} = 100; 
     WeightKL{CurrentIDX} = 1e-4; 
@@ -522,6 +522,44 @@ CurrentIDX = CurrentIDX +1;
 CurrentIDX = CurrentIDX +1;
     Description{CurrentIDX} = 'PCA'; % <<<<<<<<
     ModelName{CurrentIDX} = 'PCA';
+
+%% SLURM Choice 12
+    case 12
+
+WeightReconstruction = repmat({WeightReconstruction},[SLURMIDX_Count,1]);
+WeightKL = repmat({WeightKL},[SLURMIDX_Count,1]);
+WeightClassification = repmat({WeightClassification},[SLURMIDX_Count,1]);
+
+CurrentIDX = 1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 2'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 2;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 10'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 10;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 100'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 100;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 1000'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 1000;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 0.1'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 0.1;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 0.1'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 0.1;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 0.01'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 0.01;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 1e-3'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 1e-3;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 10'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 10;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Reconstruction Weight - 0.1'; % <<<<<<<<
+    WeightReconstruction{CurrentIDX} = 0.1;
 
 %% SLURM Choice Default
     otherwise
