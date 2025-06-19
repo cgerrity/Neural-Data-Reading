@@ -21,6 +21,14 @@ maxworkerMiniBatchSize=10;
 end
 end
 
+if isfunction
+WantPreFetch = CheckVararginPairs('WantPreFetch', true, varargin{:});
+else
+if ~(exist('WantPreFetch','var'))
+WantPreFetch=true;
+end
+end
+
 %% Get Data
 
 IsDataStore = isa(InData,'matlab.io.Datastore');
@@ -50,11 +58,29 @@ if IsDataStore
     end
 
     % Construct MiniBatch
+
+    if ~isMATLABReleaseOlderThan("R2024a")
+        PreprocessingEnvironment = "serial";
+        if WantPreFetch
+            PreprocessingEnvironment = "parallel";
+        end
     MiniBatchQueue = minibatchqueue(InData,...
-        MiniBatchSize=maxworkerMiniBatchSize, ...
-        MiniBatchFormat=DataFormat,...
-        PreprocessingEnvironment="parallel",...
-        OutputEnvironment="auto");
+            MiniBatchSize=maxworkerMiniBatchSize,...
+            MiniBatchFormat=DataFormat,...
+            PreprocessingEnvironment=PreprocessingEnvironment,...
+            OutputEnvironment="auto");
+    else
+    MiniBatchQueue = minibatchqueue(InData,...
+            MiniBatchSize=maxworkerMiniBatchSize,...
+            MiniBatchFormat=DataFormat,...
+            DispatchInBackground=WantPreFetch,...
+            OutputEnvironment="auto");
+    end
+    % MiniBatchQueue = minibatchqueue(InData,...
+    %     MiniBatchSize=maxworkerMiniBatchSize, ...
+    %     MiniBatchFormat=DataFormat,...
+    %     PreprocessingEnvironment="parallel",...
+    %     OutputEnvironment="auto");
     X_Input = [];
     while hasdata(MiniBatchQueue)
     [this_X,~,~] = next(MiniBatchQueue);
@@ -174,7 +200,7 @@ OutputDimension = max(OutputDimensionAll);
 
 PCAInformation = struct();
 
-PCAInformation.PCCoefficients = PCCoefficients;
+PCAInformation.PCCoefficients = PCCoefficients(:, 1:OutputDimension);
 PCAInformation.PCMean = PCMean;
 PCAInformation.OutputDimension = OutputDimension;
 PCAInformation.OutputDimensionAll = OutputDimensionAll;
