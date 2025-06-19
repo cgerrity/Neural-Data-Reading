@@ -39,8 +39,7 @@ function aggregatedResult = cgg_procDirectorySearchAndApply(folderPath, fileName
         fullFilePath = fullfile(folderContainingFile, filesAndFolders(i).name);
         
         % If a function handle is provided, apply the function to the file
-        % if nargin > 2 && isa(funcHandle, 'function_handle')
-        if isa(funcHandle, 'function_handle')
+        if nargin > 2 && isa(funcHandle, 'function_handle')
             % Update the aggregated result by calling the function
             % disp('FileNumber')
             % disp(fullFilePath);

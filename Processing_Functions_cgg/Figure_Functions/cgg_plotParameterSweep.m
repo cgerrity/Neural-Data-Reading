@@ -1,8 +1,18 @@
-function cgg_plotParameterSweep(Incfg)
+function cgg_plotParameterSweep(Incfg,varargin)
 %CGG_PLOTPARAMETERSWEEP Summary of this function goes here
 %   Detailed explanation goes here
 
+%% Varargin Options
 
+isfunction=exist('varargin','var');
+
+if isfunction
+WantValidation = CheckVararginPairs('WantValidation', false, varargin{:});
+else
+if ~(exist('WantValidation','var'))
+WantValidation=false;
+end
+end
 %%
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
@@ -36,7 +46,7 @@ Y_Tick_Size = 0.05;
 
 LabelAngle = 45;
 WantFinished = false;
-WantValidation = false; 
+% WantValidation = false; 
 BarWidth  = 12;
 
 %%
@@ -77,7 +87,8 @@ CurrentCases = {'Classifier Hidden Size','Classifier','Data Width', ...
     'Batch Size','Model','Data Augmentation','Unsupervised Epochs', ...
     'Optimizer','Normalization','Weighted Loss','Stride', ...
     'Gradient Accumulation Size','Loss Weights','Bottleneck Depth','Dropout', ...
-    'Gradient Threshold','Decoder Loss Type','Layers','Initial Units'};
+    'Gradient Threshold','Decoder Loss Type','Layers','Initial Units',...
+    'Classification Weight','KL Weight','Reconstruction Weight'};
 
 
 

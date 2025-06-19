@@ -9,7 +9,6 @@ if isempty(p)
 parpool(cores);
 end
 end
-% profile on
 %% Parameters
 
 EpochName = 'Decision';
@@ -96,7 +95,5 @@ FilterColumn={'All'}; Split_TableRowNames = {'Overall'};
 
 %% Parameter Sweep
 
-cgg_plotParameterSweep(cfg);
-
-%%
-% profile viewer
+cgg_plotParameterSweep(cfg,'WantValidation',true);
+cgg_plotParameterSweep(cfg,'WantValidation',false);
