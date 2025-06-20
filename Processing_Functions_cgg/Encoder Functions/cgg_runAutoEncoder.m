@@ -146,8 +146,8 @@ disp(datetime);
 
 %%
 if canUseGPU
-    % numberOfGPUs = gpuDeviceCount("available");
-    numberOfGPUs = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
+    numberOfGPUs = gpuDeviceCount("available");
+    % numberOfGPUs = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
     p=gcp("nocreate");
     if isempty(p)
     parpool(numberOfGPUs);

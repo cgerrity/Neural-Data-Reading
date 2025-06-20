@@ -413,7 +413,7 @@ while Epoch <= NumEpochs
             CM_Table_Training,CM_Table_Validation,...
             Gradients,Gradients_PreThreshold);
         %% Only Get Optimal Network for Annealed Weights
-        if Epoch < WeightDelayEpoch + WeightEpochRamp
+        if Epoch < WeightDelayEpoch + WeightEpochRamp && ~FirstIteration
             IsOptimal = false;
         end
 

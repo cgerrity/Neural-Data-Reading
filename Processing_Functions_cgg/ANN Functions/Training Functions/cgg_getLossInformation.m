@@ -155,6 +155,12 @@ if isdlarray(Loss_Classification)
 % elseif isdlarray(Loss_Reconstruction_Normalized)
 elseif isdlarray(Loss_Reconstruction)
     Rescale_Value = LossInformation.Prior_Loss_Reconstruction;
+elseif ~(all(isnan(Loss_Classification),'all') || ...
+        isempty(Loss_Classification))
+    Rescale_Value = LossInformation.Prior_Loss_Classification;
+elseif ~(all(isnan(Loss_Reconstruction),'all') || ...
+        isempty(Loss_Reconstruction))
+    Rescale_Value = LossInformation.Prior_Loss_Reconstruction;
 end
 
 if WantWeightedLoss_Reconstruction
