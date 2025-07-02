@@ -13,7 +13,7 @@ UpSampleSizes = flipud(DownSampleSizes);
 CropSizes = cell(NumLayers,1);
 
 for lidx = 1:NumLayers
-    CropSizes{lidx} = UpSampleSizes{lidx}*2 - UpSampleSizes{lidx+1};
+    CropSizes{lidx} = UpSampleSizes{lidx}*Stride - UpSampleSizes{lidx+1};
 end
 
 CropSizes = flipud(CropSizes);
