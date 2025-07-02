@@ -158,7 +158,8 @@ SaveName=['Windowed_Accuracy' ExtraSaveTerm '_Type_' cfg.LoopType];
 
 SaveNameExt=[SaveName '.pdf'];
 SavePathNameExt=[SavePath filesep SaveNameExt];
-saveas(fig_plot,SavePathNameExt,'pdf');
+exportgraphics(fig_plot,SavePathNameExt,'ContentType','vector');
+% saveas(fig_plot,SavePathNameExt,'pdf');
 
 % SaveNameExt=[SaveName '.png'];
 % SavePathNameExt=[SavePath filesep SaveNameExt];
