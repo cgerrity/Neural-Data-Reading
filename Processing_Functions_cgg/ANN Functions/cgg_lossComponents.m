@@ -213,7 +213,7 @@ NumTrials=numpartitions(InDatastore);
 NumPasses = 0;
 while hasdata(MaxMbq)
 NumPasses = NumPasses + 1;
-fprintf('??? Current gradient aggregation pass through is %d\n',NumPasses);
+% fprintf('??? Current gradient aggregation pass through is %d\n',NumPasses);
 [X,T,DataNumber] = next(MaxMbq);
 
 Normalization_Factor = length(DataNumber)/NumTrials;
@@ -277,10 +277,6 @@ end
 end
 
 %%
-
-
-
-
 
 end
 

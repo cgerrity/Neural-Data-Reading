@@ -36,8 +36,8 @@ GradientThreshold = 100;
 NumEpochsFull = 100;
 InitialLearningRate = 0.01;
 WeightReconstruction = 100;
-WeightKL = 1;
-WeightClassification = 1;
+WeightKL = 0.1; % WeightKL = 1;
+WeightClassification = 1000; % WeightClassification = 1;
 RescaleLossEpoch = 1;
 WeightedLoss = 'Inverse'; % Name of type of weighted loss ['', 'Inverse']
 Optimizer = 'ADAM'; % Name of Optimizer ['ADAM', 'SGD']
@@ -63,7 +63,7 @@ wantStratifiedPartition = true;
 MatchType_Accuracy_Measure = 'macroF1';
 
 WantSaveNet = false;
-WantSaveOptimalNet = true;
+WantSaveOptimalNet = false;
 
 %% Learning Rate Parameters
 

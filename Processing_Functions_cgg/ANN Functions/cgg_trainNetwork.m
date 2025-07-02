@@ -238,6 +238,14 @@ WantFullBatch=false;
 end
 end
 
+if isfunction
+WantSaveOptimalNet = CheckVararginPairs('WantSaveOptimalNet', true, varargin{:});
+else
+if ~(exist('WantSaveOptimalNet','var'))
+WantSaveOptimalNet=true;
+end
+end
+
 MessageAlreadyTrained = '!!! Network trained to maximum number of epochs\n';
 
 %% No Epochs
@@ -355,7 +363,8 @@ while Epoch <= NumEpochs
     while HasData
         MiniBatchIDX = MiniBatchIDX + 1;
         Iteration = Iteration + 1;
-
+        fprintf('~~~ Current Epoch: %d ~~~ Current Iteration: %d\n',Epoch,Iteration);
+        
         % Get Datastore for only the mini-batch size desired
         [this_DataStore_Training,SessionName,SessionNumber] = ...
             cgg_getCurrentIterationDataStore(MiniBatchTable,...
@@ -396,7 +405,7 @@ while Epoch <= NumEpochs
 
         %% Get Measures
 
-        if mod(Iteration,ValidationFrequency)==1 || FirstIteration || ValidationFrequency == 1
+        if mod(Iteration,ValidationFrequency)==1 || FirstIteration || ValidationFrequency == 1 || ((MiniBatchIDX == NumBatches) && (Epoch == NumEpochs))
         [LossInformation_Validation,CM_Table_Validation,~] = ...
             ModelLoss_Validation(Encoder,Decoder,Classifier,LossInformation_Training,WeightKL_Anneal);
         FirstIteration = false;
@@ -412,11 +421,12 @@ while Epoch <= NumEpochs
             LossInformation_Training,LossInformation_Validation,...
             CM_Table_Training,CM_Table_Validation,...
             Gradients,Gradients_PreThreshold);
-        %% Only Get Optimal Network for Annealed Weights
-        if Epoch < WeightDelayEpoch + WeightEpochRamp && ~FirstIteration
+        %% Only Get Optimal Network for Annealed Weights  
+        if Epoch < WeightDelayEpoch + WeightEpochRamp
             IsOptimal = false;
+            Monitor_Values.MaximumValidationAccuracy = -Inf;
+            Monitor_Values.MinimumValidationLoss = Inf;
         end
-
         %%
         SaveAll = mod(Iteration,SaveFrequency)==1 || SaveFrequency == 1;
         cgg_updateAllMonitors(MonitorTable,Monitor_Values,SaveAll);
@@ -431,8 +441,9 @@ while Epoch <= NumEpochs
 
         %% Save Networks
         SaveNetwork = WantSaveNet && SaveAll;
+        SaveOptimal = WantSaveOptimalNet && IsOptimal;
         cgg_saveNetworks(Encoder,Decoder,Classifier,SaveNetwork,...
-            SaveDir,IsOptimal);
+            SaveDir,SaveOptimal);
 
         %% Save Validation Information
         cgg_saveValidationCMTable(CM_Table_Validation,IsOptimal,SaveDir);
