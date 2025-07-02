@@ -6,18 +6,26 @@ function ScaledAccuracy = cgg_calcScaledAccuracyMeasure(TrueValue,...
 isfunction=exist('varargin','var');
 
 if isfunction
-RandomChance = CheckVararginPairs('RandomChance', '', varargin{:});
+RandomChance = CheckVararginPairs('RandomChance', [], varargin{:});
 else
 if ~(exist('RandomChance','var'))
-RandomChance='';
+RandomChance=[];
 end
 end
 
 if isfunction
-MostCommon = CheckVararginPairs('MostCommon', '', varargin{:});
+MostCommon = CheckVararginPairs('MostCommon', [], varargin{:});
 else
 if ~(exist('MostCommon','var'))
-MostCommon='';
+MostCommon=[];
+end
+end
+
+if isfunction
+Stratified = CheckVararginPairs('Stratified', [], varargin{:});
+else
+if ~(exist('Stratified','var'))
+Stratified=[];
 end
 end
 
@@ -29,12 +37,13 @@ Weights=[];
 end
 end
 
-if isempty(MostCommon) && isempty(RandomChance)
-[MostCommon,RandomChance] = cgg_getBaselineAccuracyMeasures(TrueValue,...
-    ClassNames,MatchType,IsQuaddle,'Weights',Weights);
+if isempty(MostCommon) || isempty(RandomChance) || isempty(Stratified)
+[MostCommon,RandomChance,Stratified] = cgg_getBaselineAccuracyMeasures(...
+    TrueValue,ClassNames,MatchType,IsQuaddle,'Weights',Weights);
 end
 
-ChanceLevel = max([MostCommon,RandomChance]);
+% ChanceLevel = max([MostCommon,RandomChance]);
+ChanceLevel = Stratified;
 
 Accuracy = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,...
     MatchType,'Weights',Weights);
