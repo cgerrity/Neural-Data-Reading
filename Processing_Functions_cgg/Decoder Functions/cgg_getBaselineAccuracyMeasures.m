@@ -20,7 +20,7 @@ Weights=[];
 end
 end
 
-%%
+%% Random Chance
 
 NumDimensions=length(ClassNames);
 [Dim1,~]=size(TrueValue);
@@ -47,7 +47,7 @@ Prediction = TrueValue(randperm(size(TrueValue, 1)), :);
 Stratified(idx) = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType,'Weights',Weights);
 end
 Stratified=mean(Stratified);
-%%
+%% Most Common
 
 switch MatchType
     case 'exact'
