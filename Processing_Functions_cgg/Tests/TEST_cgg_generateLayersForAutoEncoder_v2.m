@@ -4,7 +4,7 @@ clc; clear; close all;
 
 %%
 
-HiddenSize = [8,16,32,64];
+HiddenSize = [8,16,32];
 LatentSize = [250];
 
 NetworkToView = 'Encoder';
@@ -22,9 +22,9 @@ wantGrouped = false;
 % ModelName = 'Variational GRU - Dropout 0.5';
 % ModelName = 'LSTM';
 % ModelName = 'LSTM - Normalized';
-% ModelName = 'Convolutional';
+ModelName = 'Convolutional';
 % ModelName = 'Logistic Regression';
-ModelName = 'PCA';
+% ModelName = 'PCA';
 % ModelName = 'Multi-Filter Convolution';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM';
@@ -39,11 +39,11 @@ ClassifierName = 'Deep LSTM - Dropout 0.5';
 LossType = 'Classification';
 ClassifierHiddenSize = [500,250];
 
-NumChannels = 3;
+NumChannels = 58;
 DataWidth = 100;
-NumWindows = 4;
+NumWindows = 59;
 NumAreas = 6;
-NumExamples = 200;
+NumExamples = 100;
 
 NumClasses = [1,4,4,4];
 

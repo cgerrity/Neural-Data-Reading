@@ -163,7 +163,24 @@ fprintf(MessageUnsupervised);
     'IterationSaveFrequency',IterationSaveFrequency,...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
     'RescaleLossEpoch',RescaleLossEpoch,'cfg_Monitor',cfg_Monitor, ...
-    'L2Factor',L2Factor);
+    'L2Factor',L2Factor,'WantSaveOptimalNet',WantSaveOptimalNet);
+
+%% Get Optimal Autoencoder
+
+AutoEncoder_Optimal_EncoderSavePathNameExt = [AutoEncoding_Dir filesep 'Encoder-Optimal.mat'];
+AutoEncoder_Optimal_DecoderSavePathNameExt = [AutoEncoding_Dir filesep 'Decoder-Optimal.mat'];
+
+HasAutoEncoder_Optimal = isfile(AutoEncoder_Optimal_EncoderSavePathNameExt) && ...
+    isfile(AutoEncoder_Optimal_DecoderSavePathNameExt);
+
+% Get the optimal autoencoder only if it exists. Otherwise the current
+% autoencoder is used
+if HasAutoEncoder_Optimal
+    m_AutoEncoder_Encoder = matfile(AutoEncoder_Optimal_EncoderSavePathNameExt,"Writable",false);
+    Encoder=m_AutoEncoder_Encoder.Encoder;
+    m_AutoEncoder_Decoder = matfile(AutoEncoder_Optimal_DecoderSavePathNameExt,"Writable",false);
+    Decoder=m_AutoEncoder_Decoder.Decoder;
+end
 
 %% Full Network (Encoder, Decoder, Classifier)
 
@@ -206,7 +223,7 @@ fprintf(MessageSupervised);
     'IterationSaveFrequency',IterationSaveFrequency,...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
     'RescaleLossEpoch',RescaleLossEpoch,'cfg_Monitor',cfg_Monitor, ...
-    'L2Factor',L2Factor);
+    'L2Factor',L2Factor,'WantSaveOptimalNet',WantSaveOptimalNet);
 
 
 %%
