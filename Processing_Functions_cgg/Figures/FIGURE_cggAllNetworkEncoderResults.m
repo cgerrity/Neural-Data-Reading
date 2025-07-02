@@ -12,7 +12,7 @@ end
 %% Parameters
 
 EpochName = 'Decision';
-WantAnalysis = false;
+WantAnalysis = true;
 WantDelay = false;
 % MatchType='Scaled-MicroAccuracy';
 % % MatchType='Scaled-BalancedAccuracy';
@@ -87,7 +87,7 @@ FilterColumn={'All'}; Split_TableRowNames = {'Overall'};
 
 %% Attentional Analysis
 
-% cgg_plotAttentionalSplitWindowedAccuracy(FullTable,cfg);
+cgg_plotAttentionalSplitWindowedAccuracy(FullTable,cfg);
 
 %% Latent Correlation Analysis
 
@@ -95,5 +95,5 @@ FilterColumn={'All'}; Split_TableRowNames = {'Overall'};
 
 %% Parameter Sweep
 
-cgg_plotParameterSweep(cfg,'WantValidation',true);
-cgg_plotParameterSweep(cfg,'WantValidation',false);
+% cgg_plotParameterSweep(cfg,'WantValidation',true);
+% cgg_plotParameterSweep(cfg,'WantValidation',false);

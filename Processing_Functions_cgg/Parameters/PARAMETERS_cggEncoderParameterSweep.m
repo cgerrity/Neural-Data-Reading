@@ -41,7 +41,8 @@ switch SweepType
         SweepNameIgnore = "maxworkerMiniBatchSize";
     case 'Model'
         SweepName = "ModelName";
-        SweepNameIgnore = ["HiddenSizes","maxworkerMiniBatchSize","Activation","WeightReconstruction","WeightClassification","WeightKL","WantNormalization","LossFactorKL","LossFactorReconstruction","FirstHiddenSize"];
+        SweepNameIgnore = ["HiddenSizes","maxworkerMiniBatchSize","Activation","FirstHiddenSize"];
+        % SweepNameIgnore = ["HiddenSizes","maxworkerMiniBatchSize","Activation","WeightReconstruction","WeightClassification","WeightKL","WantNormalization","LossFactorKL","LossFactorReconstruction","FirstHiddenSize"];
     case 'Data Augmentation'
         SweepName = "Normalization";
         SweepNameIgnore = [];
