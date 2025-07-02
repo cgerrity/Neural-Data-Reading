@@ -178,7 +178,7 @@ switch ArchitectureType
         IsSimple = false;
         FilterSizes = 3;
         WantSplitAreas = true;
-        Stride = 2;
+        Stride = 4;
         DownSampleMethod = 'MaxPool';
         UpSampleMethod = 'Transpose Convolution - Point-Wise';
         Dropout = 0;
@@ -196,7 +196,7 @@ switch ArchitectureType
         IsSimple = false;
         FilterSizes = 3;
         WantSplitAreas = true;
-        Stride = 2;
+        Stride = 4;
         DownSampleMethod = 'MaxPool';
         UpSampleMethod = 'Transpose Convolution - Point-Wise';
         Dropout = 0;
@@ -213,7 +213,7 @@ switch ArchitectureType
         IsSimple = false;
         FilterSizes = [3,5,7];
         WantSplitAreas = true;
-        Stride = 2;
+        Stride = 4;
         DownSampleMethod = 'MaxPool';
         UpSampleMethod = 'Transpose Convolution - Point-Wise';
         Dropout = 0;
@@ -230,7 +230,7 @@ switch ArchitectureType
         IsSimple = false;
         FilterSizes = [3,5,7];
         WantSplitAreas = true;
-        Stride = 2;
+        Stride = 4;
         DownSampleMethod = 'MaxPool';
         UpSampleMethod = 'Transpose Convolution - Point-Wise';
         Dropout = 0;
