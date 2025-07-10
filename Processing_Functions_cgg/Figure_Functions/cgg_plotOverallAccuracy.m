@@ -46,6 +46,7 @@ ExtraSaveTerm=cfg.ExtraSaveTerm;
 
 RandomChance=cfg.RandomChance;
 MostCommon=cfg.MostCommon;
+Stratified=cfg.Stratified;
 
 Accuracy_All=FullTable.(cfg_Names.TableNameAccuracy);
 
@@ -137,15 +138,19 @@ YLimUpper=RangeAccuracyUpper;
 
 p_Random=yline(RandomChance);
 p_MostCommon=yline(MostCommon);
+% p_Stratified=yline(Stratified);
 
 p_MostCommon.LineWidth = Line_Width;
 p_Random.LineWidth = Line_Width;
+% p_Stratified.LineWidth = Line_Width;
 p_MostCommon.DisplayName = 'Most Common';
 p_Random.DisplayName = 'Random Chance';
+% p_Stratified.DisplayName = 'Stratified';
 
 % p_Mean(NumDecoders+1)=p_Random;
 p_Mean(NumLoops+1)=p_MostCommon;
 p_Mean(NumLoops+2)=p_Random;
+% p_Mean(NumLoops+3)=p_Stratified;
 
 hold off
 

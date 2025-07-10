@@ -45,6 +45,7 @@ X_Name_Size = Y_Name_Size;
 %%
 RandomChance=cfg.RandomChance;
 MostCommon=cfg.MostCommon;
+Stratified=cfg.Stratified;
 
 ExtraSaveTerm=cfg.ExtraSaveTerm;
 
@@ -113,12 +114,15 @@ X_Ticks = cfg.Time_Start:Tick_Size_X:cfg.Time_End;
 hold on
 p_Random=yline(RandomChance);
 p_MostCommon=yline(MostCommon);
+% p_Stratified=yline(Stratified);
 hold off
 
 p_MostCommon.LineWidth = Line_Width;
 p_Random.LineWidth = Line_Width;
+% p_Stratified.LineWidth = Line_Width;
 p_MostCommon.DisplayName = 'Most Common';
 p_Random.DisplayName = 'Random Chance';
+% p_Stratified.DisplayName = 'Stratified';
 
 % p_Plots(NumLoops+1)=p_MostCommon;
 % p_Plots(NumLoops+2)=p_Random;
