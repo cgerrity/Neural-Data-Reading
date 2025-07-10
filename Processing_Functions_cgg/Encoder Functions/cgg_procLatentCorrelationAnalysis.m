@@ -34,7 +34,8 @@ T = [];
 while hasdata(MaxMbq)
 
 [X,this_T,~] = next(MaxMbq);
-Encoder=resetState(Encoder);
+% Encoder=resetState(Encoder);
+Encoder=cgg_resetState(Encoder);
 [this_Y_Encoded] = predict(Encoder,X);
 
 %%

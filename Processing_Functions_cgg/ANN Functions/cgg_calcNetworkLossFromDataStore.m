@@ -31,7 +31,8 @@ while hasdata(workerMbq) && ~stopRequest
 
     Iteration = Iteration + 1;
 
-    net=resetState(net);
+    % net=resetState(net);
+    net=cgg_resetState(net);
 
     % Read a mini-batch of data.
     [workerX,workerT] = next(workerMbq);

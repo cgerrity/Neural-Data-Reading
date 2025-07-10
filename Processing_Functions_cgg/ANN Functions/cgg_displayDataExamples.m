@@ -79,9 +79,11 @@ NumOutputs=length(AllOutputNames);
 Y_Training=cell(NumOutputs,1);
 Y_Validation=cell(NumOutputs,1);
 
-InputNet=resetState(InputNet);
+% InputNet=resetState(InputNet);
+InputNet=cgg_resetState(InputNet);
 [Y_Training{:},~] = predict(InputNet,XTraining,Outputs=AllOutputNames);
-InputNet=resetState(InputNet);
+% InputNet=resetState(InputNet);
+InputNet=cgg_resetState(InputNet);
 [Y_Validation{:},~] = predict(InputNet,XValidation,Outputs=AllOutputNames);
 
 Y_Classification_Training=Y_Training(1:NumClassifiers);
@@ -261,7 +263,8 @@ end
 if WantActivations
     BottleNeckActivationIDX=contains({InputNet.Layers(:).Name},"crop_Decoder_1");
     BottleNeckActivationIDX = find(BottleNeckActivationIDX,1,'last');
-    InputNet=resetState(InputNet);
+    % InputNet=resetState(InputNet);
+    InputNet=cgg_resetState(InputNet);
     [Y_Activation_Training,~] = predict(InputNet,XTraining,Outputs=InputNet.Layers(BottleNeckActivationIDX).Name);
     if isdlarray(Y_Activation_Training)
         Y_Activation_Training = extractdata(Y_Activation_Training);
