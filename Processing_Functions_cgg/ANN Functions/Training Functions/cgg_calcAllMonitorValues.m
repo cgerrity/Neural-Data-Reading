@@ -107,7 +107,7 @@ HasValidationCM_Table = istable(CM_Table_Validation);
 
 if ~isempty(Classifier)
     if HasValidationCM_Table
-    [~,~,WindowAccuracyValidation] = cgg_procConfusionMatrixWindowsFromTable(CM_Table_Validation,Monitor_Values.ClassNames,'MatchType',Monitor_Values.OptimalAccuracyMeasure,'IsQuaddle',Monitor_Values.IsQuaddle,'RandomChance',Monitor_Values.RandomChance_Optimal_Validation,'MostCommon',Monitor_Values.MostCommon_Optimal_Validation);
+    [~,~,WindowAccuracyValidation] = cgg_procConfusionMatrixWindowsFromTable(CM_Table_Validation,Monitor_Values.ClassNames,'MatchType',Monitor_Values.OptimalAccuracyMeasure,'IsQuaddle',Monitor_Values.IsQuaddle,'RandomChance',Monitor_Values.RandomChance_Optimal_Validation,'MostCommon',Monitor_Values.MostCommon_Optimal_Validation,'Stratified',Monitor_Values.Stratified_Optimal_Validation);
     if max(WindowAccuracyValidation) > Monitor_Values.MaximumValidationAccuracy
         IsOptimal = true;
         Monitor_Values.MaximumValidationAccuracy = max(WindowAccuracyValidation);

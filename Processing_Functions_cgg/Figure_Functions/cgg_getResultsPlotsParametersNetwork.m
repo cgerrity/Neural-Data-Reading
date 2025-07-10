@@ -413,6 +413,7 @@ BaselineFun = @(x) cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchTyp
     structfun(BaselineFun, AttentionalFiltering,"UniformOutput",false);
 MostCommonAttentional_Baseline = StratifiedAttentional_Baseline;
 RandomChanceAttentional_Baseline = StratifiedAttentional_Baseline;
+StratifiedAttentional_Baseline = StratifiedAttentional_Baseline;
 
 % fprintf('??? Debug 1-> Chance Level Distractor: %f Chance Level Distractor (Correct): %f: %d\n',StratifiedAttentional_Baseline.Distractor,StratifiedAttentional_Baseline.DistractorCorrect);
 
@@ -500,7 +501,7 @@ this_CM_Table=join(this_CM_Table,this_Identifiers_Table);
 
 % [~,~,this_Accuracy] = cgg_procConfusionMatrixFromTable(this_CM_Table,ClassNames,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline);
 
-[~,~,this_Window_Accuracy] = cgg_procConfusionMatrixWindowsFromTable(this_CM_Table,ClassNames,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline);
+[~,~,this_Window_Accuracy] = cgg_procConfusionMatrixWindowsFromTable(this_CM_Table,ClassNames,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline,'Stratified',Stratified_Baseline);
 
 this_Accuracy = max(this_Window_Accuracy);
 
@@ -517,6 +518,7 @@ for aidx = 1:NumAttention
     this_Field = AttentionalNames{aidx};
     this_RandomChance = RandomChanceAttentional_Baseline.(this_Field);
     this_MostCommon = MostCommonAttentional_Baseline.(this_Field);
+    this_Stratified = StratifiedAttentional_Baseline.(this_Field);
     % this_RandomChance = RandomChance_Baseline;
     % this_MostCommon = MostCommon_Baseline;
     this_Weights = this_CM_Table.(this_Field);
@@ -525,7 +527,8 @@ for aidx = 1:NumAttention
         cgg_procConfusionMatrixWindowsFromTable(this_CM_Table,...
         ClassNames,'MatchType',MatchType_Attention,'IsQuaddle',IsQuaddle,...
         'RandomChance',this_RandomChance,...
-        'MostCommon',this_MostCommon,'Weights',this_Weights);
+        'MostCommon',this_MostCommon,'Stratified',this_Stratified,...
+        'Weights',this_Weights);
     this_Accuracy_Attention = max(this_Window_Accuracy_Attention);
 
 
@@ -560,9 +563,9 @@ this_Split_Window_Accuracy=cell(1,NumTypes);
 for tidx=1:NumTypes
     this_FilterValue=TypeValues(tidx,:);
 % fprintf('??? Debug Before Single Accuracy Calculation\n');
-[~,~,this_Split_Accuracy(tidx)] = cgg_procConfusionMatrixFromTable(this_CM_Table,ClassNames,'FilterColumn',FilterColumn,'FilterValue',this_FilterValue,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline);
+[~,~,this_Split_Accuracy(tidx)] = cgg_procConfusionMatrixFromTable(this_CM_Table,ClassNames,'FilterColumn',FilterColumn,'FilterValue',this_FilterValue,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline,'Stratified',Stratified_Baseline);
 % fprintf('??? Debug After Single Accuracy Calculation\n');
-[~,~,this_Split_Window_Accuracy{tidx}] = cgg_procConfusionMatrixWindowsFromTable(this_CM_Table,ClassNames,'FilterColumn',FilterColumn,'FilterValue',this_FilterValue,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline);
+[~,~,this_Split_Window_Accuracy{tidx}] = cgg_procConfusionMatrixWindowsFromTable(this_CM_Table,ClassNames,'FilterColumn',FilterColumn,'FilterValue',this_FilterValue,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'RandomChance',RandomChance_Baseline,'MostCommon',MostCommon_Baseline,'Stratified',Stratified_Baseline);
 this_Split_Accuracy(tidx) = max(this_Split_Window_Accuracy{tidx});
 
 if IsFirst
@@ -575,6 +578,7 @@ for aidx = 1:NumAttention
     this_Field = AttentionalNames{aidx};
     this_RandomChance = RandomChanceAttentional_Baseline.(this_Field);
     this_MostCommon = MostCommonAttentional_Baseline.(this_Field);
+    this_Stratified = StratifiedAttentional_Baseline.(this_Field);
     this_Weights = this_CM_Table.(this_Field);
 
     % fprintf('??? Debug 1-> Attentional Name: %s Filter: %s Filter Type %d\n',this_Field,FilterColumn{1},this_FilterValue);
@@ -585,7 +589,8 @@ for aidx = 1:NumAttention
         'FilterValue',this_FilterValue,...
         'MatchType',MatchType_Attention,'IsQuaddle',IsQuaddle,...
         'RandomChance',this_RandomChance,...
-        'MostCommon',this_MostCommon,'Weights',this_Weights);
+        'MostCommon',this_MostCommon,'Stratified',this_Stratified,...
+        'Weights',this_Weights);
     this_Accuracy_Attention = max(this_Window_Accuracy_Attention);
 
 % fprintf('??? Debug 1-> Fold: %d Is First: %d\n',fidx,IsFirst);
@@ -737,7 +742,7 @@ EpochDir.Results = cgg_getDirectory(cfg.ResultsDir,'Epoch');
 if WantAnalysis
 
 NumEntries = 500;
-RemovalPlotTable = cgg_procFullImportanceAnalysis(cfg_Encoder, ...
+RemovalPlotTable = cgg_procFullImportanceAnalysis_v2(cfg_Encoder, ...
     EpochDir,Outcfg,'NumEntries',NumEntries,'WantDelay',WantDelay);
 Outcfg.RemovalPlotTable = RemovalPlotTable;
 

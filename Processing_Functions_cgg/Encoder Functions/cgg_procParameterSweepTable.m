@@ -169,13 +169,14 @@ NumFolds = length(Folds);
 
 MostCommon = NaN(1,NumFolds);
 RandomChance = NaN(1,NumFolds);
+Stratified = NaN(1,NumFolds);
 ClassNames = cell(1,NumFolds);
 
 for fidx = 1:length(Folds)
     this_CM_Table = CMTable_Best{fidx};
 [ClassNames{fidx},~,~,~] = cgg_getClassesFromCMTable(this_CM_Table);
 
-[MostCommon(fidx),RandomChance(fidx)] = ...
+[MostCommon(fidx),RandomChance(fidx),Stratified(fidx)] = ...
         cgg_getBaselineAccuracyMeasures(this_CM_Table.TrueValue, ...
         ClassNames{fidx},MatchType_Calc,IsQuaddle,'NumIterRand',NumIterRand);
 
@@ -208,9 +209,10 @@ for ridx = 1:height(SweepTable)
         this_ClassNames = ClassNames{this_Fold_SweepIDX};
         this_MostCommon = MostCommon(this_Fold_SweepIDX);
         this_RandomChance = RandomChance(this_Fold_SweepIDX);
+        this_Stratified = Stratified(this_Fold_SweepIDX);
         else
         [this_ClassNames,~,~,~] = cgg_getClassesFromCMTable(this_CM_Table);
-        [this_MostCommon,this_RandomChance] = ...
+        [this_MostCommon,this_RandomChance,this_Stratified] = ...
         cgg_getBaselineAccuracyMeasures(this_CM_Table.TrueValue, ...
         this_ClassNames,MatchType_Calc,IsQuaddle,'NumIterRand',NumIterRand);
         end
@@ -218,7 +220,7 @@ for ridx = 1:height(SweepTable)
 [~,~,this_WindowAccuracy] = cgg_procConfusionMatrixWindowsFromTable(...
 this_CM_Table,this_ClassNames,'MatchType',MatchType,...
 'IsQuaddle',IsQuaddle,'MostCommon',this_MostCommon,...
-'RandomChance',this_RandomChance);
+'RandomChance',this_RandomChance,'Stratified',this_Stratified);
 
 
     this_SweepAccuracy(fidx) = max(this_WindowAccuracy);
