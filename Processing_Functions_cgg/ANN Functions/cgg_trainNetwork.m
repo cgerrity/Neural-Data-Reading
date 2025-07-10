@@ -364,6 +364,7 @@ while Epoch <= NumEpochs
         MiniBatchIDX = MiniBatchIDX + 1;
         Iteration = Iteration + 1;
         fprintf('~~~ Current Epoch: %d ~~~ Current Iteration: %d\n',Epoch,Iteration);
+        LastIteration = (MiniBatchIDX == NumBatches) && (Epoch == NumEpochs);
         
         % Get Datastore for only the mini-batch size desired
         [this_DataStore_Training,SessionName,SessionNumber] = ...
@@ -371,7 +372,7 @@ while Epoch <= NumEpochs
             MiniBatchIDX,DataStore_Training);
     
         %% Calculate Loss and Gradients
-        [LossInformation_Training,CM_Table_Training,Gradients] = ...
+        [LossInformation_Training,CM_Table_Training,Gradients,State] = ...
             dlfeval(ModelLoss_Training,this_DataStore_Training,...
             Encoder,Decoder,Classifier,...
             LossInformation_Training,WantUpdateLossPrior,WeightKL_Anneal);
@@ -384,6 +385,8 @@ while Epoch <= NumEpochs
         % Update Networks using gradients
         [Encoder,OptimizerVariables.Encoder] = cgg_procUpdateNetworks(...
             Encoder,Gradients.Encoder,LearningRate,Optimizer,OptimizerVariables.Encoder);
+        % Update state
+        Encoder = cgg_updateState(Encoder,State.Encoder);
 
         if HasDecoder
         % Update Gradient Threshold
@@ -392,6 +395,8 @@ while Epoch <= NumEpochs
         % Update Networks using gradients
         [Decoder,OptimizerVariables.Decoder] = cgg_procUpdateNetworks(...
             Decoder,Gradients.Decoder,LearningRate,Optimizer,OptimizerVariables.Decoder);
+        % Update state
+        Decoder = cgg_updateState(Decoder,State.Decoder);
         end
 
         if HasClassifier
@@ -401,12 +406,14 @@ while Epoch <= NumEpochs
         % Update Networks using gradients
         [Classifier,OptimizerVariables.Classifier] = cgg_procUpdateNetworks(...
             Classifier,Gradients.Classifier,LearningRate,Optimizer,OptimizerVariables.Classifier);
+        % Update state
+        Classifier = cgg_updateState(Classifier,State.Classifier);
         end
 
         %% Get Measures
 
-        if mod(Iteration,ValidationFrequency)==1 || FirstIteration || ValidationFrequency == 1 || ((MiniBatchIDX == NumBatches) && (Epoch == NumEpochs))
-        [LossInformation_Validation,CM_Table_Validation,~] = ...
+        if mod(Iteration,ValidationFrequency)==1 || FirstIteration || ValidationFrequency == 1 || LastIteration
+        [LossInformation_Validation,CM_Table_Validation,~,~] = ...
             ModelLoss_Validation(Encoder,Decoder,Classifier,LossInformation_Training,WeightKL_Anneal);
         FirstIteration = false;
         else
@@ -428,7 +435,7 @@ while Epoch <= NumEpochs
             Monitor_Values.MinimumValidationLoss = Inf;
         end
         %%
-        SaveAll = mod(Iteration,SaveFrequency)==1 || SaveFrequency == 1;
+        SaveAll = mod(Iteration,SaveFrequency)==1 || SaveFrequency == 1 || LastIteration;
         cgg_updateAllMonitors(MonitorTable,Monitor_Values,SaveAll);
 
         %% Save Monitors when optimal condition is met

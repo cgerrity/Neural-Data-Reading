@@ -327,7 +327,8 @@ else
 end
 
 net=InputNet;
-net=resetState(net);
+% net=resetState(net);
+net = cgg_resetState(net);
 
 %%
 
@@ -475,22 +476,26 @@ end
 %%
 MostCommon=NaN;
 RandomChance=NaN;
+Stratified=NaN;
 MostCommon_Accuracy_Measure=NaN;
 RandomChance_Accuracy_Measure=NaN;
+Stratified_Accuracy_Measure=NaN;
 if HasClassifier
 TrueValue=double(extractdata(ValidationT)');
-[MostCommon,RandomChance] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchType,IsQuaddle);
-[MostCommon_Accuracy_Measure,RandomChance_Accuracy_Measure] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchType_Accuracy_Measure,IsQuaddle);
+[MostCommon,RandomChance,Stratified] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchType,IsQuaddle);
+[MostCommon_Accuracy_Measure,RandomChance_Accuracy_Measure,Stratified_Accuracy_Measure] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchType_Accuracy_Measure,IsQuaddle);
 end
 
 MostCommon_Testing=NaN;
 RandomChance_Testing=NaN;
+Stratified_Testing=NaN;
 MostCommon_Accuracy_Measure_Testing=NaN;
 RandomChance_Accuracy_Measure_Testing=NaN;
+Stratified_Accuracy_Measure_Testing=NaN;
 if HasClassifier
 TrueValue_Testing=double(extractdata(TestingT)');
-[MostCommon_Testing,RandomChance_Testing] = cgg_getBaselineAccuracyMeasures(TrueValue_Testing,ClassNames,MatchType,IsQuaddle);
-[MostCommon_Accuracy_Measure_Testing,RandomChance_Accuracy_Measure_Testing] = cgg_getBaselineAccuracyMeasures(TrueValue_Testing,ClassNames,MatchType_Accuracy_Measure,IsQuaddle);
+[MostCommon_Testing,RandomChance_Testing,Stratified_Testing] = cgg_getBaselineAccuracyMeasures(TrueValue_Testing,ClassNames,MatchType,IsQuaddle);
+[MostCommon_Accuracy_Measure_Testing,RandomChance_Accuracy_Measure_Testing,Stratified_Accuracy_Measure_Testing] = cgg_getBaselineAccuracyMeasures(TrueValue_Testing,ClassNames,MatchType_Accuracy_Measure,IsQuaddle);
 end
 
 %%
@@ -587,7 +592,8 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
         % while hasdata(workerMbq) && ~stopRequest
             %%
             iteration = iteration + 1;
-            net=resetState(net);
+            % net=resetState(net);
+            net = cgg_resetState(net);
 
             % Determine if Classification is wanted
             if iteration == NumIterationsAutoEncoder
@@ -772,7 +778,8 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
                     InSaveTerm = 'Optimal';
                     % MaximumValidationAccuracy = accuracyValidation;
                     MaximumValidationAccuracy = max(Window_AccuracyValidation);
-                    net=resetState(net);
+                    % net=resetState(net);
+                    net = cgg_resetState(net);
                     if HasClassifier
                     cgg_saveCMTableFromNetwork(DataStore_Testing,net,ClassNames,SaveDirPlot,varargin{:});
                     end
@@ -787,7 +794,8 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
                     catch
                         NetSave=net;
                     end
-                    NetSave=resetState(NetSave);
+                    % NetSave=resetState(NetSave);
+                    net = cgg_resetState(NetSave);
                     cgg_saveVariableUsingMatfile({NetSave},{'Network'},NetworkPathNameExt);
                     end
 
@@ -883,6 +891,7 @@ net=net{1};
 catch
 
 end
-net=resetState(net);
+% net=resetState(net);
+net = cgg_resetState(net);
 
 end
