@@ -605,12 +605,14 @@ monitor.DataNames = DataNames;
             MonitorUpdate.T_Classification_Validation = T_Validation;
             MonitorUpdate.T_Reconstruction_Validation = X_Validation;
             % fprintf('!!! Are Encodings the same %d',any(X_Training == X_Validation,"all"));
-            Monitor_Values.Encoder=resetState(Monitor_Values.Encoder);
+            % Monitor_Values.Encoder=resetState(Monitor_Values.Encoder);
+            Monitor_Values.Encoder=cgg_resetState(Monitor_Values.Encoder);
             if ~IsEncoderLearnable
             Monitor_Values.Encoder=initialize(Monitor_Values.Encoder);
             end
             Encoding_Training = predict(Monitor_Values.Encoder,MonitorUpdate.T_Reconstruction_Training);
-            Monitor_Values.Encoder=resetState(Monitor_Values.Encoder);
+            % Monitor_Values.Encoder=resetState(Monitor_Values.Encoder);
+            Monitor_Values.Encoder=cgg_resetState(Monitor_Values.Encoder);
             if ~IsEncoderLearnable
             Monitor_Values.Encoder=initialize(Monitor_Values.Encoder);
             end
@@ -620,12 +622,14 @@ monitor.DataNames = DataNames;
                 IsClassifierLearnable = ~isempty(Monitor_Values.Classifier.Learnables);
                 MonitorUpdate.Y_Classification_Training=cell(monitor.NumDimensions,1);
                 MonitorUpdate.Y_Classification_Validation=cell(monitor.NumDimensions,1);
-                Monitor_Values.Classifier=resetState(Monitor_Values.Classifier);
+                % Monitor_Values.Classifier=resetState(Monitor_Values.Classifier);
+                Monitor_Values.Classifier=cgg_resetState(Monitor_Values.Classifier);
                 if ~IsClassifierLearnable
                 Monitor_Values.Classifier=initialize(Monitor_Values.Classifier);
                 end
                 [MonitorUpdate.Y_Classification_Training{:},~] = predict(Monitor_Values.Classifier,Encoding_Training);
-                Monitor_Values.Classifier=resetState(Monitor_Values.Classifier);
+                % Monitor_Values.Classifier=resetState(Monitor_Values.Classifier);
+                Monitor_Values.Classifier=cgg_resetState(Monitor_Values.Classifier);
                 if ~IsClassifierLearnable
                 Monitor_Values.Classifier=initialize(Monitor_Values.Classifier);
                 end
@@ -636,14 +640,16 @@ monitor.DataNames = DataNames;
             end
             if ~isempty(Monitor_Values.Decoder)
                 IsDecoderLearnable = ~isempty(Monitor_Values.Decoder.Learnables);
-                Monitor_Values.Decoder=resetState(Monitor_Values.Decoder);
+                % Monitor_Values.Decoder=resetState(Monitor_Values.Decoder);
+                Monitor_Values.Decoder=cgg_resetState(Monitor_Values.Decoder);
                 if ~IsDecoderLearnable
                 Monitor_Values.Decoder=initialize(Monitor_Values.Decoder);
                 end
                 [Y_Reconstruction_Training,~,~] = ...
                     cgg_getReconstructionOutput(Encoding_Training,...
                     Monitor_Values.Decoder,true);
-                Monitor_Values.Decoder=resetState(Monitor_Values.Decoder);
+                % Monitor_Values.Decoder=resetState(Monitor_Values.Decoder);
+                Monitor_Values.Decoder=cgg_resetState(Monitor_Values.Decoder);
                 if ~IsDecoderLearnable
                 Monitor_Values.Decoder=initialize(Monitor_Values.Decoder);
                 end

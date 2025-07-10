@@ -16,7 +16,7 @@ try
     Encoder=Encoder{1};
 catch
 end
-Encoder=resetState(Encoder);
+Encoder = cgg_resetState(Encoder);
 
 EncoderNameExt = sprintf('Encoder%s.mat',CurrentSaveTerm);
 EncoderPathNameExt = [NetworkPath filesep EncoderNameExt];
@@ -32,7 +32,7 @@ if HasDecoder
         Decoder=Decoder{1};
     catch
     end
-    Decoder=resetState(Decoder);
+    Decoder = cgg_resetState(Decoder);
     DecoderNameExt = sprintf('Decoder%s.mat',CurrentSaveTerm);
     DecoderPathNameExt = [NetworkPath filesep DecoderNameExt];
     cgg_saveVariableUsingMatfile({Decoder},{'Decoder'},DecoderPathNameExt);
@@ -48,7 +48,7 @@ if HasClassifier
         Classifier=Classifier{1};
     catch
     end
-    Classifier=resetState(Classifier);
+    Classifier = cgg_resetState(Classifier);
     ClassifierNameExt = sprintf('Classifier%s.mat',CurrentSaveTerm);
     ClassifierPathNameExt = [NetworkPath filesep ClassifierNameExt];
     cgg_saveVariableUsingMatfile({Classifier},{'Classifier'},ClassifierPathNameExt);

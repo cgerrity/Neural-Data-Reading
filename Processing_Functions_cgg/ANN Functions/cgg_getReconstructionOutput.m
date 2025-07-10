@@ -6,7 +6,8 @@ function [Y_Reconstruction,Y_Mean,Y_logSigmaSq] = ...
 OutputNames_Decoder = Decoder.OutputNames;
 NumOutputs_Decoder = length(OutputNames_Decoder);
 
-Decoder=resetState(Decoder);
+% Decoder=resetState(Decoder);
+Decoder=cgg_resetState(Decoder);
     Y_Decoded=cell(NumOutputs_Decoder,1);
 if wantPredict
     [Y_Decoded{:},~] = predict(Decoder,Y_Encoded,Outputs=OutputNames_Decoder);

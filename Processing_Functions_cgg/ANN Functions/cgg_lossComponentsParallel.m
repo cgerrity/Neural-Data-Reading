@@ -1,4 +1,4 @@
-function [LossInformation,CM_Table,Gradients] = cgg_lossComponentsParallel(...
+function [LossInformation,CM_Table,Gradients,State] = cgg_lossComponentsParallel(...
     Encoder,Decoder,Classifier,InDatastore,varargin)
 %CGG_LOSSCOMPONENTS Summary of this function goes here
 %   Detailed explanation goes here
@@ -149,16 +149,20 @@ IsDecoderLearnable = true;
 IsClassifierLearnable = true;
 
 %%
+State = struct();
+State.Encoder = Encoder.State;
 
 if HasDecoder
 OutputNames_Decoder = Decoder.OutputNames;
 NumOutputs_Decoder = length(OutputNames_Decoder);
 IsDecoderLearnable = ~isempty(Decoder.Learnables);
+State.Decoder = Decoder.State;
 end
 if HasClassifier
 OutputNames_Classifier = Classifier.OutputNames;
 NumOutputs_Classifier = length(OutputNames_Classifier);
 IsClassifierLearnable = ~isempty(Classifier.Learnables);
+State.Classifier = Classifier.State;
 NumDimensions = NumOutputs_Classifier;
 LossType_Classifier = repmat({'CrossEntropy'},1,NumDimensions);
 LossType_Classifier(contains(OutputNames_Classifier,'CTC')) = {'CTC'};
@@ -225,20 +229,22 @@ T_Reconstruction = X;
 
 %% Encoder
 Encoder=resetState(Encoder);
+Encoder = cgg_updateState(Encoder,State.Encoder);
 if wantPredict
-    [Y_Encoded] = predict(Encoder,X);
+    [Y_Encoded,~] = predict(Encoder,X);
 else
-    [Y_Encoded] = forward(Encoder,X);
+    [Y_Encoded,State.Encoder] = forward(Encoder,X);
 end
 
 %% Decoder
 if HasDecoder
     Decoder=resetState(Decoder);
+    Decoder = cgg_updateState(Decoder,State.Decoder);
     Y_Decoded=cell(NumOutputs_Decoder,1);
 if wantPredict
     [Y_Decoded{:},~] = predict(Decoder,Y_Encoded,Outputs=OutputNames_Decoder);
 else
-    [Y_Decoded{:},~] = forward(Decoder,Y_Encoded,Outputs=OutputNames_Decoder);
+    [Y_Decoded{:},State.Decoder] = forward(Decoder,Y_Encoded,Outputs=OutputNames_Decoder);
 end
 if any(contains(OutputNames_Decoder,'mean')) && any(contains(OutputNames_Decoder,'log-variance'))
 Y_Mean = Y_Decoded{contains(OutputNames_Decoder,'mean')};
@@ -262,12 +268,13 @@ end
 %% Classifier
 if HasClassifier
     Classifier=resetState(Classifier);
+    Classifier = cgg_updateState(Classifier,State.Classifier);
     Y_Classified=cell(NumDimensions,1);
 
 if wantPredict
     [Y_Classified{:},~] = predict(Classifier,Y_Encoded,Outputs=OutputNames_Classifier);
 else
-    [Y_Classified{:},~] = forward(Classifier,Y_Encoded,Outputs=OutputNames_Classifier);
+    [Y_Classified{:},State.Classifier] = forward(Classifier,Y_Encoded,Outputs=OutputNames_Classifier);
 end
 
 [Loss_Classification_PerDimension,CM_Table] = cgg_getClassifierOutputsFromProbabilities(...

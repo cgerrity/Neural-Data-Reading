@@ -28,9 +28,11 @@ NumOutputs=length(AllOutputNames);
 Y_Training=cell(NumOutputs,1);
 Y_Validation=cell(NumOutputs,1);
 
-InputNet=resetState(InputNet);
+% InputNet=resetState(InputNet);
+InputNet=cgg_resetState(InputNet);
 [Y_Training{:},~] = predict(InputNet,XTraining,Outputs=AllOutputNames);
-InputNet=resetState(InputNet);
+% InputNet=resetState(InputNet);
+InputNet=cgg_resetState(InputNet);
 [Y_Validation{:},~] = predict(InputNet,XValidation,Outputs=AllOutputNames);
 
 Y_Classification_Training=Y_Training(1:NumClassifiers);
