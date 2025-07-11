@@ -37,15 +37,23 @@ for fidx = 1:NumFilters
         FilterNumber = NaN;
     end
 
-this_FilterSize = FilterSizes(fidx);
+    if iscell(FilterSizes)
+        this_FilterSize = FilterSizes{fidx};
+    else
+        this_FilterSize = FilterSizes(fidx);
+    end
 
 FilterBlocks = cgg_generateSingleConvolutionalPath(this_FilterSize,FilterHiddenSizes,FilterNumber,AreaIDX,varargin{:});
 
     if NumFilters > 1
-        CoderBlock = addLayers(CoderBlock,FilterBlocks);
         this_Destination = FilterConcatenationName + sprintf("/in%d",fidx);
+        if isa(FilterBlocks,'nnet.cnn.LayerGraph')
+            CoderBlock = cgg_connectLayerGraphs(FilterBlocks,CoderBlock,'DestinationHint',this_Destination);
+        else
+        CoderBlock = addLayers(CoderBlock,FilterBlocks);
         CoderBlock = connectLayers(CoderBlock,...
             FilterBlocks(end).Name,this_Destination);
+        end
     else
         if strcmp(class(FilterBlocks),'nnet.cnn.layer.Layer')
             CoderBlock = layerGraph(FilterBlocks);
