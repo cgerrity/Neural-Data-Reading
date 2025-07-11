@@ -5,10 +5,10 @@ function KFoldPartition = cgg_getKFoldPartitions(varargin)
 isfunction=exist('varargin','var');
 
 if isfunction
-Epoch = CheckVararginPairs('Epoch', NaN, varargin{:});
+Epoch = CheckVararginPairs('Epoch', '', varargin{:});
 else
 if ~(exist('Epoch','var'))
-Epoch=NaN;
+Epoch='';
 end
 end
 
@@ -17,6 +17,14 @@ SessionSubset = CheckVararginPairs('SessionSubset', NaN, varargin{:});
 else
 if ~(exist('SessionSubset','var'))
 SessionSubset=NaN;
+end
+end
+
+if isfunction
+SingleSessionSubset = CheckVararginPairs('SingleSessionSubset', NaN, varargin{:});
+else
+if ~(exist('SingleSessionSubset','var'))
+SingleSessionSubset=NaN;
 end
 end
 
@@ -86,8 +94,13 @@ NumKPartitions = cfg_param.NumKPartitions;
 end
 
 %%
+if all(ischar(SingleSessionSubset)) || isstring(SingleSessionSubset)
+wantSubset = 'Single';
+end
 
-if isnan(Epoch)
+%%
+
+if isempty(Epoch)
 Epoch=cfg_param.Epoch;
 end
 % Decoder=cfg_param.Decoder;
@@ -116,7 +129,16 @@ switch wantSubset
         SessionNameDataStore = fileDatastore(TargetAggregateDir,"ReadFcn",TargetSession_Fun);
 
         SessionsList=gather(tall(SessionNameDataStore));
-        SessionNames = unique(SessionsList);
+
+        if isnan(SingleSessionSubset)
+            SessionNames = unique(SessionsList);
+        else
+            if iscell(SingleSessionSubset)
+                SessionNames = SingleSessionSubset;
+            else
+                SessionNames = {SingleSessionSubset};
+            end
+        end
         NumSessions = length(SessionNames);
 
         Partition_NameExt = cell(NumSessions,1);
