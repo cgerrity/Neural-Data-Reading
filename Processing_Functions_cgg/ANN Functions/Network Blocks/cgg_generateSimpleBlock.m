@@ -81,11 +81,15 @@ switch Transform
             fullyConnectedLayer(HiddenSize,"Name",Name_Transform);
 end
 
-if WantNormalization
-    Name_Normalization="normalization" + CoderLevel_Name;
-    NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
-else
-    NormalizationLayer = [];
+switch WantNormalization
+    case 'Batch'
+        Name_Normalization="normalization" + CoderLevel_Name;
+        NormalizationLayer = batchNormalizationLayer('Name',Name_Normalization);
+    case true
+        Name_Normalization="normalization" + CoderLevel_Name;
+        NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
+    otherwise
+        NormalizationLayer = [];
 end
 
 switch Activation
