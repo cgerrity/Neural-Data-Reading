@@ -1,9 +1,10 @@
-function cfgSLURM = SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX)
+function [cfgSLURM,IsInccidentalBaseRepeat] = ...
+    SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX)
 %SLURMPARAMETERS_CGG_RUNAUTOENCODER Summary of this function goes here
 %   Detailed explanation goes here
 
 SLURMIDX_Count = 10;
-
+NotBase = true;
 cfg = PARAMETERS_OPTIMAL_cgg_runAutoEncoder_v2();
 %%
 Fold = 2;
@@ -17,7 +18,7 @@ WeightKL = cfg.WeightKL;
 WeightClassification = cfg.WeightClassification;
 MiniBatchSize = cfg.MiniBatchSize;
 GradientThreshold=cfg.GradientThreshold;
-Subset = cfg.wantSubset;
+Subset = cfg.Subset;
 Epoch = cfg.Epoch;
 Target = cfg.Target;
 WeightedLoss = cfg.WeightedLoss;
@@ -40,6 +41,8 @@ Activation = cfg.Activation;
 IsVariational = cfg.IsVariational;
 BottleNeckDepth = cfg.BottleNeckDepth;
 WantSaveOptimalNet = cfg.WantSaveOptimalNet;
+
+%%
 
 SLURMDescription = '>>> Current SLURM Aim is %s\n';
 Description = repmat({'Base'},[SLURMIDX_Count,1]);
@@ -81,7 +84,7 @@ CurrentIDX = CurrentIDX +1;%FIXME: Time
     ModelName{CurrentIDX} = 'Convolutional'; 
     maxworkerMiniBatchSize{CurrentIDX} = 10;
     % MiniBatchSize{CurrentIDX} = 5;
-    HiddenSizes{CurrentIDX} = [8,16,32];
+    HiddenSizes{CurrentIDX} = [8,16,32,cfg.HiddenSizes(end)];
     % WeightReconstruction{CurrentIDX} = 100; 
     % WeightKL{CurrentIDX} = 1e-4; 
     % WeightClassification{CurrentIDX} = 1;
@@ -89,7 +92,7 @@ CurrentIDX = CurrentIDX +1;%FIXME: Time
     Description{CurrentIDX} = 'Resnet Network - Gradient Accumulation size 10'; % <<<<<<<<
     ModelName{CurrentIDX} = 'Resnet';
     maxworkerMiniBatchSize{CurrentIDX} = 10;
-    HiddenSizes{CurrentIDX} = [8,16,32];
+    HiddenSizes{CurrentIDX} = [8,16,32,cfg.HiddenSizes(end)];
     % WeightReconstruction{CurrentIDX} = 100; 
     % WeightKL{CurrentIDX} = 1e-4; 
     % WeightClassification{CurrentIDX} = 1;
@@ -97,7 +100,7 @@ CurrentIDX = CurrentIDX +1;%FIXME: Time
     Description{CurrentIDX} = 'Multi-Filter Network - Gradient Accumulation size 5'; % <<<<<<<<
     ModelName{CurrentIDX} = 'Multi-Filter Convolutional'; 
     maxworkerMiniBatchSize{CurrentIDX} = 5;
-    HiddenSizes{CurrentIDX} = [8,16,32];
+    HiddenSizes{CurrentIDX} = [8,16,32,cfg.HiddenSizes(end)];
     % WeightReconstruction{CurrentIDX} = 100; 
     % WeightKL{CurrentIDX} = 1e-4; 
     % WeightClassification{CurrentIDX} = 1;
@@ -614,9 +617,9 @@ CurrentIDX = CurrentIDX +1;%FIXME: Time
 
 %% SLURM Choice Default
     otherwise
-
+NotBase = false;
 Fold = {1;2;3;4;5;6;7;8;9;10};
-WantSaveOptimalNet = repmat({true},[SLURMIDX_Count,1]);
+% WantSaveOptimalNet = repmat({true},[SLURMIDX_Count,1]);
 % NumEpochsFull = 500;
 for idx = 1:length(Description)
 Description{idx} = sprintf('Base Case - Fold %d',Fold{idx});
@@ -652,6 +655,9 @@ for vidx = 1:length(VariableNames)
 
     cfgSLURM.(this_VariableName) = this_Variable;
 end
+
+IsSubset = cgg_isSubsetStruct(cfg,rmfield(cfgSLURM,'Fold'));
+IsInccidentalBaseRepeat = IsSubset && NotBase;
 
 fprintf(SLURMDescription,Description{SLURMIDX});
 

@@ -56,7 +56,7 @@ STDRandomWalk = 0.007;
 
 %%
 
-wantSubset = true;
+Subset = true;
 
 wantStratifiedPartition = true;
 
@@ -96,6 +96,7 @@ NumEpochsSession = NumEpochsFull;
 
 LossFactorReconstruction = WeightReconstruction;
 LossFactorKL = WeightKL;
+wantSubset = Subset;
 
 %%
 
