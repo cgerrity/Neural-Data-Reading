@@ -35,13 +35,16 @@ end
 Name_FullyConnected=sprintf("fc_Encoder_%d",EncoderLevel);
 Name_Activation=sprintf("activation_Encoder_%d",EncoderLevel);
 
-if WantNormalization
-    Name_Normalization=sprintf("normalization_Encoder_%d",EncoderLevel);
-    NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
-else
-    NormalizationLayer = [];
+switch WantNormalization
+    case 'Batch'
+        Name_Normalization=sprintf("normalization_Encoder_%d",EncoderLevel);
+        NormalizationLayer = batchNormalizationLayer('Name',Name_Normalization);
+    case true
+        Name_Normalization=sprintf("normalization_Encoder_%d",EncoderLevel);
+        NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
+    otherwise
+        NormalizationLayer = [];
 end
-
 
 switch Activation
     case 'SoftSign'

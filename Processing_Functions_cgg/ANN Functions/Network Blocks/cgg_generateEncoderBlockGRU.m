@@ -25,11 +25,15 @@ end
 
 Name_GRU=sprintf("gru_Encoder_%d",EncoderLevel);
 
-if WantNormalization
-    Name_Normalization=sprintf("normalization_Encoder_%d",EncoderLevel);
-    NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
-else
-    NormalizationLayer = [];
+switch WantNormalization
+    case 'Batch'
+        Name_Normalization=sprintf("normalization_Encoder_%d",EncoderLevel);
+        NormalizationLayer = batchNormalizationLayer('Name',Name_Normalization);
+    case true
+        Name_Normalization=sprintf("normalization_Encoder_%d",EncoderLevel);
+        NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
+    otherwise
+        NormalizationLayer = [];
 end
 
 WantDropout = false;

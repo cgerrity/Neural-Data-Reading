@@ -7,7 +7,7 @@ clc; clear; close all;
 HiddenSize = [8,16,32];
 LatentSize = [250];
 
-NetworkToView = 'Encoder';
+NetworkToView = 'Decoder';
 Pause_Time = 0;
 
 wantGrouped = false;
@@ -23,9 +23,10 @@ wantGrouped = false;
 % ModelName = 'LSTM';
 % ModelName = 'LSTM - Normalized';
 ModelName = 'Convolutional';
+% ModelName = 'Multi-Filter Resnet ~ Stride 2 ~ Filter Size {[1,5],[2,10],[4,20]}';
 % ModelName = 'Logistic Regression';
 % ModelName = 'PCA';
-% ModelName = 'Multi-Filter Convolution';
+% ModelName = 'Multi-Filter Convolutional';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh';
@@ -39,11 +40,11 @@ ClassifierName = 'Deep LSTM - Dropout 0.5';
 LossType = 'Classification';
 ClassifierHiddenSize = [500,250];
 
-NumChannels = 58;
+NumChannels = 2;
 DataWidth = 100;
 NumWindows = 59;
-NumAreas = 6;
-NumExamples = 100;
+NumAreas = 3;
+NumExamples = 4;
 
 NumClasses = [1,4,4,4];
 
