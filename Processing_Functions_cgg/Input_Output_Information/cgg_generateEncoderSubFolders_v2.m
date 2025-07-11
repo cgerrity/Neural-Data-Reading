@@ -48,6 +48,10 @@ if isfield(cfg_Encoder,'wantSubset')
 IsSubset = cfg_Encoder.wantSubset;
 end
 
+if isfield(cfg_Encoder,'Subset')
+SubsetSessionName = cfg_Encoder.Subset;
+end
+
 if isfield(cfg_Encoder,'WeightedLoss')
 WeightedLoss = cfg_Encoder.WeightedLoss;
 end
@@ -152,11 +156,16 @@ if ~(Dropout == 0)
     NameModelParameters = [NameModelParameters ' ~ ' NameDropout];
 end
 % Make the Layer Normalization folder name.
+if islogical(WantNormalization)
 if WantNormalization
     NameLayerNormalization = 'Normalized';
     NameModelParameters = [NameModelParameters ' ~ ' NameLayerNormalization];
 % else
 %     NameLayerNormalization = '';
+end
+else
+    NameLayerNormalization = sprintf('%s Normalized',WantNormalization);
+    NameModelParameters = [NameModelParameters ' ~ ' NameLayerNormalization];
 end
 % Make the Bottle Neck Depth folder name.
 NameBottleNeckDepth = sprintf('Bottle Neck Depth - %d',BottleNeckDepth);
@@ -263,6 +272,9 @@ if IsSubset
     NameIsSubset = 'Subset';
 else
     NameIsSubset = 'All Sessions';
+end
+if ~islogical(SubsetSessionName)
+    NameIsSubset = SubsetSessionName;
 end
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation;
 [cfg_tmp,~] = cgg_generateFolderAndPath(NameIsSubset,'IsSubset',cfg_tmp);

@@ -142,10 +142,23 @@ WriteYaml(NetworkParametersPathNameExt, cfg_Encoder);
 
 kidx=Fold;
 
-cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm',ExtraSaveTerm);
+if isfield(cfg_Encoder,'Subset')
+    if islogical(cfg_Encoder.Subset)
+        cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','Subset');
+    else
+        cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm',cfg_Encoder.Subset);
+    end
+elseif cfg_Encoder.wantSubset
+    cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','Subset');
+else
+    cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','All');
+end
 
 Partition_PathNameExt = cfg_partition.Partition;
 
+if ~isfile(Partition_PathNameExt)
+    cgg_getKFoldPartitions('Epoch',cfg_Encoder.Epoch,'SingleSessionSubset',cfg_Encoder.Subset,'wantSubset',cfg_Encoder.wantSubset);
+end
 m_Partition = matfile(Partition_PathNameExt,'Writable',false);
 KFoldPartition=m_Partition.KFoldPartition;
 KFoldPartition=KFoldPartition(1);
@@ -179,6 +192,7 @@ NormalizationInformation = NormalizationInformation.NormalizationInformation;
 TargetSession_Fun=@(x) cgg_loadTargetArray(x,'SessionName',true);
 SessionNameDataStore = fileDatastore(TargetAggregateDir,"ReadFcn",TargetSession_Fun);
 
+%%
 ChannelRemoval=[];
 WantDisp=false;
 WantRandomize=false;
