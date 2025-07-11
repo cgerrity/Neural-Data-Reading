@@ -35,7 +35,8 @@ switch Root_Directory
                 if cgg_checkACCREMounted('/Users/cgerrity/Documents') && ~WantTEBA
         inputfolder_base='/Users/cgerrity/Documents/ACCRE';
         outputfolder_base='/Users/cgerrity/Documents/ACCRE';
-        temporaryfolder_base='/Users/cgerrity/Documents/ACCRE_NoBackup';
+        temporaryfolder_base='/Users/cgerrity/Documents/ACCRE_DATA';
+        % temporaryfolder_base='/Users/cgerrity/Documents/ACCRE_NoBackup';
                 else
         inputfolder_base='/Volumes/Womelsdorf Lab';
         outputfolder_base='/Volumes/gerritcg''s home';
@@ -58,7 +59,8 @@ switch Root_Directory
         Current_System="ACCRE";
         inputfolder_base=['/home/',Current_User];
         outputfolder_base=['/home/',Current_User];
-        temporaryfolder_base=['/nobackup/user/',Current_User];
+        temporaryfolder_base=['/data/womelsdorf_lab/',Current_User];
+        % temporaryfolder_base=['/nobackup/user/',Current_User];
 end
 
 end
