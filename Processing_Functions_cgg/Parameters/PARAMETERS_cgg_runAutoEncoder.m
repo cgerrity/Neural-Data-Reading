@@ -93,15 +93,15 @@ WantSaveNet = false;
 WantSaveOptimalNet = true;
 %% Learning Rate Parameters
 
-LearningRateDecay = 0.9;
-LearningRateEpochDrop = 30;
+LearningRateDecay = 0.75;
+LearningRateEpochDrop = 5;
 LearningRateEpochRamp = 5;
 
 %% Validation and Saving
 
-ValidationFrequency = 25;
-SaveFrequency = 25;
-IterationSaveFrequency = 25;
+ValidationFrequency = 20;
+SaveFrequency = 20;
+IterationSaveFrequency = 20;
 
 %% Monitoring
 
