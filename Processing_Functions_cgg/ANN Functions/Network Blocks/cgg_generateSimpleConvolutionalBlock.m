@@ -167,11 +167,15 @@ switch Activation
         ActivationLayer = [];
 end
 
-if WantNormalization
-    Name_Normalization="normalization" + CoderBlock_Name;
-    NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
-else
-    NormalizationLayer = [];
+switch WantNormalization
+    case 'Batch'
+        Name_Normalization="normalization" + CoderBlock_Name;
+        NormalizationLayer = batchNormalizationLayer('Name',Name_Normalization);
+    case true
+        Name_Normalization="normalization" + CoderBlock_Name;
+        NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
+    otherwise
+        NormalizationLayer = [];
 end
 
 WantDropout = false;

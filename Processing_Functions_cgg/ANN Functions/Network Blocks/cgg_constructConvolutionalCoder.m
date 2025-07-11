@@ -35,31 +35,79 @@ if ~(exist('FinalActivation','var'))
 FinalActivation='None';
 end
 end
+
+if isfunction
+Activation = CheckVararginPairs('Activation', 'ReLU', varargin{:});
+else
+if ~(exist('Activation','var'))
+Activation='ReLU';
+end
+end
 %%
 
 CropSizes = cgg_getCropAmount(InputSize(1:2),Stride,length(FilterHiddenSizes));
 
 NumFilters = length(FilterSizes);
 Coder_Name = sprintf("_%s",Coder);
+if iscell(FilterSizes)
+    RepeatFilterSize = FilterSizes{end};
+else
+    RepeatFilterSize = FilterSizes(end);
+end
 %%
 
 if ~WantSplitAreas
     CoderBlock = cgg_constructSingleAreaConvolutionalCoder(FilterSizes,FilterHiddenSizes,NaN,'Stride',Stride,'CropSizes',CropSizes,varargin{:});
     CombinationName="convolutioncombination" + Coder_Name;
+    CombinationRepeatConvolutionName="repeatconvolutioncombination" + Coder_Name;
+    % CombinationRepeatNormalizationName="repeatnormalizationcombination" + Coder_Name;
     CombinationActivationName="activationcombination" + Coder_Name;
     CombinationNormalizationName="normalizationcombination" + Coder_Name;
     CombinationActivationLayer = [];
     switch FinalActivation
         case 'Sigmoid'
             CombinationActivationLayer = [sigmoidLayer("Name", CombinationActivationName)
-                layerNormalizationLayer("Name",CombinationNormalizationName)];
+                batchNormalizationLayer("Name",CombinationNormalizationName)
+                % layerNormalizationLayer("Name",CombinationNormalizationName)
+                ];
         case 'Tanh'
             CombinationActivationLayer = [tanhLayer("Name", CombinationActivationName)
-                layerNormalizationLayer("Name",CombinationNormalizationName)];
+                batchNormalizationLayer("Name",CombinationNormalizationName)
+                % layerNormalizationLayer("Name",CombinationNormalizationName)
+                ];
+        case 'Convolutional'
+            CombinationActivationBeforeName="activationbeforecombination" + Coder_Name;
+            CombinationActivationAfterName="activationaftercombination" + Coder_Name;
+            CombinationFinalName="convolutionfinalcombination" + Coder_Name;
+            switch Activation
+                case 'SoftSign'
+                    this_Layer_Before = softplusLayer("Name",CombinationActivationBeforeName);
+                    this_Layer_After = softplusLayer("Name",CombinationActivationAfterName);
+                case 'ReLU'
+                    this_Layer_Before = reluLayer("Name",CombinationActivationBeforeName);
+                    this_Layer_After = reluLayer("Name",CombinationActivationAfterName);
+                case 'Leaky ReLU'
+                    this_Layer_Before = leakyReluLayer("Name",CombinationActivationBeforeName);
+                    this_Layer_After = leakyReluLayer("Name",CombinationActivationAfterName);
+                case 'GeLU'
+                    this_Layer_Before = geluLayer("Name",CombinationActivationBeforeName);
+                    this_Layer_After = geluLayer("Name",CombinationActivationAfterName);
+                otherwise
+                    this_Layer_Before = [];
+                    this_Layer_After = [];
+            end
+            CombinationActivationLayer = [this_Layer_Before
+                convolution2dLayer(RepeatFilterSize,FilterHiddenSizes(1),"Name",CombinationFinalName,"Padding",'same',"WeightsInitializer","he")
+                % batchNormalizationLayer("Name",CombinationNormalizationName)
+                this_Layer_After];
         case 'None'
     end
-    CombinationLayer = [convolution2dLayer(1,InputSize(3),"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")
-        CombinationActivationLayer];
+    % CombinationLayer = [convolution2dLayer(1,InputSize(3),"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")
+    %     CombinationActivationLayer];
+    CombinationLayer = [convolution2dLayer(RepeatFilterSize,FilterHiddenSizes(1),"Name",CombinationRepeatConvolutionName,"Padding",'same',"WeightsInitializer","he")
+        % batchNormalizationLayer("Name",CombinationRepeatNormalizationName)
+        CombinationActivationLayer
+        convolution2dLayer(1,InputSize(3),"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")];
     CombinationLG = layerGraph(CombinationLayer);
     CoderBlock = cgg_combineLayerGraphs(CoderBlock,CombinationLG);
 else
@@ -83,6 +131,8 @@ AreaBlocks = cgg_constructSingleAreaConvolutionalCoder(FilterSizes,FilterHiddenS
 switch Coder
     case 'Decoder'
 CombinationName="convolutioncombination" + Coder_Name + Area_Name;
+CombinationRepeatConvolutionName="repeatconvolutioncombination" + Coder_Name + Area_Name;
+% CombinationRepeatNormalizationName="repeatnormalizationcombination" + Coder_Name + Area_Name;
 CombinationActivationName="activationcombination" + Coder_Name + Area_Name;
 CombinationNormalizationName="normalizationcombination" + Coder_Name + Area_Name;
 CombinationActivationLayer = [];
@@ -90,17 +140,50 @@ this_Source = CombinationName;
 switch FinalActivation
     case 'Sigmoid'
         CombinationActivationLayer = [sigmoidLayer("Name", CombinationActivationName)
-            layerNormalizationLayer("Name",CombinationNormalizationName)];
-        this_Source = CombinationNormalizationName;
+            batchNormalizationLayer("Name",CombinationNormalizationName)];
+            % layerNormalizationLayer("Name",CombinationNormalizationName)];
+        % this_Source = CombinationNormalizationName;
     case 'Tanh'
         CombinationActivationLayer = [tanhLayer("Name", CombinationActivationName)
-            layerNormalizationLayer("Name",CombinationNormalizationName)];
-        this_Source = CombinationNormalizationName;
+            batchNormalizationLayer("Name",CombinationNormalizationName)];
+            % layerNormalizationLayer("Name",CombinationNormalizationName)];
+        % this_Source = CombinationNormalizationName;
+    case 'Convolutional'
+        CombinationActivationBeforeName="activationbeforecombination" + Coder_Name + Area_Name;
+        CombinationActivationAfterName="activationaftercombination" + Coder_Name + Area_Name;
+        CombinationFinalName="convolutionfinalcombination" + Coder_Name + Area_Name;
+        switch Activation
+            case 'SoftSign'
+                this_Layer_Before = softplusLayer("Name",CombinationActivationBeforeName);
+                this_Layer_After = softplusLayer("Name",CombinationActivationAfterName);
+            case 'ReLU'
+                this_Layer_Before = reluLayer("Name",CombinationActivationBeforeName);
+                this_Layer_After = reluLayer("Name",CombinationActivationAfterName);
+            case 'Leaky ReLU'
+                this_Layer_Before = leakyReluLayer("Name",CombinationActivationBeforeName);
+                this_Layer_After = leakyReluLayer("Name",CombinationActivationAfterName);
+            case 'GeLU'
+                this_Layer_Before = geluLayer("Name",CombinationActivationBeforeName);
+                this_Layer_After = geluLayer("Name",CombinationActivationAfterName);
+            otherwise
+                this_Layer_Before = [];
+                this_Layer_After = [];
+        end
+        CombinationActivationLayer = [this_Layer_Before
+                convolution2dLayer(RepeatFilterSize,FilterHiddenSizes(1),"Name",CombinationFinalName,"Padding",'same',"WeightsInitializer","he")
+                % batchNormalizationLayer("Name",CombinationNormalizationName)
+                this_Layer_After];
+            % CombinationActivationLayer = [convolution2dLayer(RepeatFilterSize,FilterHiddenSizes(1),"Name",CombinationActivationName,"Padding",'same',"WeightsInitializer","he")];
+            % this_Source = CombinationActivationName;
     case 'None'
 end
 
-CombinationLayer = [convolution2dLayer(1,1,"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")
-    CombinationActivationLayer];
+% CombinationLayer = [convolution2dLayer(1,1,"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")
+%     CombinationActivationLayer];
+CombinationLayer = [convolution2dLayer(RepeatFilterSize,FilterHiddenSizes(1),"Name",CombinationRepeatConvolutionName,"Padding",'same',"WeightsInitializer","he")
+    % batchNormalizationLayer("Name",CombinationRepeatNormalizationName)
+    CombinationActivationLayer
+    convolution2dLayer(1,1,"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")];
 CombinationLG = layerGraph(CombinationLayer);
 AreaBlocks = cgg_connectLayerGraphs(AreaBlocks,CombinationLG);
     otherwise
