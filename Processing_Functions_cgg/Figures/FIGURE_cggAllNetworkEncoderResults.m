@@ -1,6 +1,6 @@
 
 clc; clear; close all;
-rng('shuffle');
+rng('shuffle'); 
 %%
 if ~isempty(getenv('SLURM_JOB_CPUS_PER_NODE'))
 cores = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
