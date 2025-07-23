@@ -55,6 +55,7 @@ InitialLearningRate = 0.01;
 WeightReconstruction = 100;
 WeightKL = 1;
 WeightClassification = 1;
+WeightOffsetAndScale = 0;
 RescaleLossEpoch = 1;
 WeightedLoss = 'Inverse'; % Name of type of weighted loss ['', 'Inverse']
 Optimizer = 'ADAM'; % Name of Optimizer ['ADAM', 'SGD']
@@ -64,6 +65,8 @@ LossType_Classifier='CrossEntropy';
 L2Factor = 1e-4;
 
 maxworkerMiniBatchSize=100;
+
+NumEpochsFull_Final = 1000;
 
 
 %% Data Augmentation Parameters
@@ -93,15 +96,15 @@ WantSaveNet = false;
 WantSaveOptimalNet = true;
 %% Learning Rate Parameters
 
-LearningRateDecay = 0.75;
-LearningRateEpochDrop = 5;
-LearningRateEpochRamp = 5;
+LearningRateDecay = 0.8;
+LearningRateEpochDrop = 10;
+LearningRateEpochRamp = 10;
 
 %% Validation and Saving
 
-ValidationFrequency = 20;
-SaveFrequency = 20;
-IterationSaveFrequency = 20;
+ValidationFrequency = 2;
+SaveFrequency = 2;
+IterationSaveFrequency = 2;
 
 %% Monitoring
 
