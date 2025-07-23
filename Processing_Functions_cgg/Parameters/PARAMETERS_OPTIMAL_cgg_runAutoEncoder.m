@@ -34,6 +34,7 @@ WeightReconstruction = LossFactorReconstruction;
 LossFactorKL = 1;
 WeightKL = LossFactorKL;
 WeightClassification = 1;
+WeightOffsetAndScale = 0;
 WeightedLoss = 'Inverse'; % Name of type of weighted loss ['', 'Inverse']
 Optimizer = 'ADAM'; % Name of Optimizer ['ADAM', 'SGD']
 Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
@@ -43,6 +44,8 @@ LossType_Classifier='CrossEntropy';
 RescaleLossEpoch = 1;
 
 maxworkerMiniBatchSize=10;
+
+NumEpochsFull_Final = 1000;
 
 
 %% Data Augmentation Parameters

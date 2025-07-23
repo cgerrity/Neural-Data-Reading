@@ -38,6 +38,7 @@ InitialLearningRate = 0.01;
 WeightReconstruction = 100;
 WeightKL = 0.1; % WeightKL = 1;
 WeightClassification = 1000; % WeightClassification = 1;
+WeightOffsetAndScale = 0;
 RescaleLossEpoch = 1;
 WeightedLoss = 'Inverse'; % Name of type of weighted loss ['', 'Inverse']
 Optimizer = 'ADAM'; % Name of Optimizer ['ADAM', 'SGD']
@@ -47,6 +48,8 @@ LossType_Classifier='CrossEntropy';
 L2Factor = 1e-4;
 
 maxworkerMiniBatchSize=100;
+
+NumEpochsFull_Final = 1000;
 
 %% Data Augmentation Parameters
 
