@@ -43,6 +43,46 @@ if ~(exist('Activation','var'))
 Activation='ReLU';
 end
 end
+
+if isfunction
+WantLearnableScale = CheckVararginPairs('WantLearnableScale', true, varargin{:});
+else
+if ~(exist('WantLearnableScale','var'))
+WantLearnableScale=true;
+end
+end
+
+if isfunction
+WantLearnableOffset = CheckVararginPairs('WantLearnableOffset', true, varargin{:});
+else
+if ~(exist('WantLearnableOffset','var'))
+WantLearnableOffset=true;
+end
+end
+
+if isfunction
+UniqueDimension = CheckVararginPairs('UniqueDimension', [1,3], varargin{:});
+else
+if ~(exist('UniqueDimension','var'))
+UniqueDimension=[1,3];
+end
+end
+
+if isfunction
+HiddenSizeAugment = CheckVararginPairs('HiddenSizeAugment', 250, varargin{:});
+else
+if ~(exist('HiddenSizeAugment','var'))
+HiddenSizeAugment=250;
+end
+end
+
+if isfunction
+TimeFilterProportion = CheckVararginPairs('TimeFilterProportion', 0.5, varargin{:});
+else
+if ~(exist('TimeFilterProportion','var'))
+TimeFilterProportion=0.5;
+end
+end
 %%
 
 CropSizes = cgg_getCropAmount(InputSize(1:2),Stride,length(FilterHiddenSizes));
@@ -54,6 +94,12 @@ if iscell(FilterSizes)
 else
     RepeatFilterSize = FilterSizes(end);
 end
+
+TimeFilterSize = 1:length(InputSize);
+TimeFilterSize(UniqueDimension) = [];
+TimeFilterSize = max([1,round(InputSize(TimeFilterSize)*TimeFilterProportion)]);
+TimeFilterSize = [TimeFilterSize,TimeFilterSize];
+TimeFilterSize(UniqueDimension==1 | UniqueDimension==2) = 1;
 %%
 
 if ~WantSplitAreas
@@ -183,8 +229,20 @@ end
 CombinationLayer = [convolution2dLayer(RepeatFilterSize,FilterHiddenSizes(1),"Name",CombinationRepeatConvolutionName,"Padding",'same',"WeightsInitializer","he")
     % batchNormalizationLayer("Name",CombinationRepeatNormalizationName)
     CombinationActivationLayer
-    convolution2dLayer(1,1,"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")];
+    convolution2dLayer(TimeFilterSize,1,"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")];
 CombinationLG = layerGraph(CombinationLayer);
+if WantLearnableOffset || WantLearnableScale
+% [~,Source,~,~] = cgg_identifyUnconnectedLayers(CombinationLG);
+% FIXME: Adjust InputSize to account for other options
+AugmentBlock = cgg_generateAugmentBlock(HiddenSizeAugment,[InputSize(1:2),1],WantLearnableScale,WantLearnableOffset,"Decoder" + Coder_Name + Area_Name,'UniqueDimension',UniqueDimension,varargin{:});
+CombinationLG = cgg_combineLayerGraphs(CombinationLG,AugmentBlock);
+this_Source = "output_Augment_Decoder" + Coder_Name + Area_Name;
+NameAugmentTarget = "target_Augment_Decoder" + Coder_Name + Area_Name;
+NameAugmentLearnable = "learnable_Augment_Decoder" + Coder_Name + Area_Name;
+CombinationLG = connectLayers(CombinationLG,CombinationRepeatConvolutionName,NameAugmentLearnable);
+CombinationLG = connectLayers(CombinationLG,CombinationName,NameAugmentTarget);
+end
+
 AreaBlocks = cgg_connectLayerGraphs(AreaBlocks,CombinationLG);
     otherwise
         if NumFilters > 1
@@ -215,7 +273,12 @@ end
 % [AreaInputs,~,~,~] = cgg_identifyUnconnectedLayers(CoderBlock);
 [AreaInputs,~] = cgg_identifyUnconnectedLayers(CoderBlock);
 AreaSplitName="splitArea";
-AreaSplitLayer = cgg_splitLayer(AreaSplitName,InputSize,SplitDimension);
+SplitLayerInputSize = InputSize;
+switch Coder
+    case 'Decoder'
+SplitLayerInputSize(SplitDimension) = SplitLayerInputSize(SplitDimension)*FilterHiddenSizes(end);
+end
+AreaSplitLayer = cgg_splitLayer(AreaSplitName,SplitLayerInputSize,SplitDimension,"NumNewSplits",NumAreas);
 % switch Coder
 %     case 'Encoder'
 %         AreaSplitLayer = cgg_splitLayer(AreaSplitName,InputSize,SplitDimension);
