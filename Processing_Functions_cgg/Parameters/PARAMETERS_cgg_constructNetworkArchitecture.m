@@ -176,9 +176,9 @@ switch ArchitectureType
         BottleNeckDepth = 1;
     case 'Convolutional'
         IsSimple = false;
-        FilterSizes = {[2,10]};
+        FilterSizes = {[4,20]};
         WantSplitAreas = true;
-        Stride = 2;
+        Stride = 3;
         DownSampleMethod = 'MaxPool';
         UpSampleMethod = 'Transpose Convolution - Point-Wise';
         Dropout = 0;
@@ -195,9 +195,9 @@ switch ArchitectureType
         BottleNeckDepth = 1;
     case 'Resnet'
         IsSimple = false;
-        FilterSizes = {[2,10]};
+        FilterSizes = {[4,20]};
         WantSplitAreas = true;
-        Stride = 2;
+        Stride = 3;
         DownSampleMethod = 'MaxPool';
         UpSampleMethod = 'Transpose Convolution - Point-Wise';
         Dropout = 0;
@@ -257,17 +257,17 @@ switch ArchitectureType
         WantNormalization = false;
         Transform = 'GRU';
         Activation = 'ReLU';
-        FinalActivation = 'None';
+        FinalActivation = 'Convolutional';
         WantResnet = true;
         IsVariational = false;
         needReshape = false;
         OutputFullyConnected = false;
         BottleNeckDepth = 1;
-    case 'Multi-Filter Resnet ~ Stride 2 ~ Filter Size {[1,5],[2,10],[4,20]}'
+    case 'Multi-Filter Resnet ~ Stride 3 ~ Filter Size {[1,5],[2,10],[4,20]}'
         IsSimple = false;
         FilterSizes = {[1,5],[2,10],[4,20]};
         WantSplitAreas = true;
-        Stride = 2;
+        Stride = 3;
         DownSampleMethod = 'MaxPool';
         UpSampleMethod = 'Transpose Convolution - Point-Wise';
         Dropout = 0;
