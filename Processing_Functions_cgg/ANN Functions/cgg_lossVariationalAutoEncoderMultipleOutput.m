@@ -90,7 +90,7 @@ switch LossType
 
         [TargetSequence,TargetProbabilities_New] = cgg_getTargetSequenceFromCTC(this_Y,this_ClassNames);
 
-        this_ClassConfidenceTMP=double(extractdata(TargetProbabilities_New));
+        this_ClassConfidenceTMP=double(cgg_extractData(TargetProbabilities_New));
         this_ClassConfidenceTMP=this_ClassConfidenceTMP(:,:);
         ClassConfidenceTMP{didx}=this_ClassConfidenceTMP;
 
@@ -111,7 +111,7 @@ switch LossType
     this_T=dlarray(this_T,this_Y.dims);
     loss = crossentropy(this_Y,this_T);
 
-    this_ClassConfidenceTMP=double(extractdata(this_Y));
+    this_ClassConfidenceTMP=double(cgg_extractData(this_Y));
     this_ClassConfidenceTMP=this_ClassConfidenceTMP(:,:);
     ClassConfidenceTMP{didx}=this_ClassConfidenceTMP;
     
@@ -143,21 +143,21 @@ end
 
 [loss_Reconstruction,loss_KL] = cgg_lossELBO_v2(Y_Reconstruction,T_Reconstruction,mu,logSigmaSq);
 
-% Maximum_Loss_Reconstruction=max(extractdata(WeightReconstruction*loss_Reconstruction),[],"all");
-% Maximum_Loss_KL=max(extractdata(WeightKL*loss_KL),[],"all");
-% Maximum_Loss_Feature=max(extractdata(WeightFeature*loss_Feature),[],"all");
+% Maximum_Loss_Reconstruction=max(cgg_extractData(WeightReconstruction*loss_Reconstruction),[],"all");
+% Maximum_Loss_KL=max(cgg_extractData(WeightKL*loss_KL),[],"all");
+% Maximum_Loss_Feature=max(cgg_extractData(WeightFeature*loss_Feature),[],"all");
 
-% Loss_Reconstruction=extractdata(WeightReconstruction*loss_Reconstruction);
-% Loss_KL=extractdata(WeightKL*loss_KL);
-% Loss_Feature=extractdata(WeightFeature*loss_Feature);
+% Loss_Reconstruction=cgg_extractData(WeightReconstruction*loss_Reconstruction);
+% Loss_KL=cgg_extractData(WeightKL*loss_KL);
+% Loss_Feature=cgg_extractData(WeightFeature*loss_Feature);
 
 Loss_Reconstruction=WeightReconstruction*loss_Reconstruction;
 Loss_KL=WeightKL*loss_KL;
 Loss_Feature=WeightFeature*loss_Feature;
 
-% Mean_Loss_Reconstruction=mean(extractdata(WeightReconstruction*loss_Reconstruction),"all");
-% Mean_Loss_KL=mean(extractdata(WeightKL*loss_KL),"all");
-% Mean_Loss_Feature=mean(extractdata(WeightFeature*loss_Feature),"all");
+% Mean_Loss_Reconstruction=mean(cgg_extractData(WeightReconstruction*loss_Reconstruction),"all");
+% Mean_Loss_KL=mean(cgg_extractData(WeightKL*loss_KL),"all");
+% Mean_Loss_Feature=mean(cgg_extractData(WeightFeature*loss_Feature),"all");
 
 % Message_Loss=sprintf('Reconstruction Loss: %f, KL Loss: %f, Feature Loss: %f',Loss_Reconstruction,Loss_KL,Loss_Feature);
 % disp(Message_Loss);

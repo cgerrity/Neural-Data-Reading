@@ -553,7 +553,7 @@ monitor.RunTerm = sprintf('_Run-%d',Run);
             MonitorUpdate.iteration = Monitor_Values.iteration;
             MonitorUpdate.learningrate = Monitor_Values.learningrate;
             MonitorUpdate.lossTraining = ...
-                extractdata(LossInformation_Training.Loss_Encoder);
+                cgg_extractData(LossInformation_Training.Loss_Encoder);
 
             FieldName_MostCommon_Training = ...
                 sprintf('MostCommon_%s_Training',monitor.MatchType);
@@ -625,27 +625,12 @@ monitor.RunTerm = sprintf('_Run-%d',Run);
             % MonitorUpdate.Loss_KL = LossInformation_Training.Loss_KL;
             % MonitorUpdate.Loss_Classification = LossInformation_Training.Loss_Classification;
 
-            if isdlarray(LossInformation_Training.Loss_Reconstruction_Weighted)
-                MonitorUpdate.Loss_Reconstruction = extractdata(...
-                    LossInformation_Training.Loss_Reconstruction_Weighted); 
-            else
-                MonitorUpdate.Loss_Reconstruction = ...
-                    LossInformation_Training.Loss_Reconstruction_Weighted;
-            end
-            if isdlarray(LossInformation_Training.Loss_KL_Weighted)
-                MonitorUpdate.Loss_KL = extractdata(...
-                    LossInformation_Training.Loss_KL_Weighted); 
-            else
-                MonitorUpdate.Loss_KL = ...
-                    LossInformation_Training.Loss_KL_Weighted;
-            end
-            if isdlarray(LossInformation_Training.Loss_Classification_Weighted)
-                MonitorUpdate.Loss_Classification = extractdata(...
-                    LossInformation_Training.Loss_Classification_Weighted); 
-            else
-                MonitorUpdate.Loss_Classification = ...
-                    LossInformation_Training.Loss_Classification_Weighted;
-            end
+            MonitorUpdate.Loss_Reconstruction = cgg_extractData(...
+                LossInformation_Training.Loss_Reconstruction_Weighted); 
+            MonitorUpdate.Loss_KL = cgg_extractData(...
+                LossInformation_Training.Loss_KL_Weighted); 
+            MonitorUpdate.Loss_Classification = cgg_extractData(...
+                LossInformation_Training.Loss_Classification_Weighted); 
 
             MonitorUpdate.lossValidation = NaN;
             MonitorUpdate.accuracyValidation = NaN;
@@ -654,8 +639,8 @@ monitor.RunTerm = sprintf('_Run-%d',Run);
             HasValidationCM_Table = istable(CM_Table_Validation);
 
             if HasValidationLoss
-                MonitorUpdate.lossValidation = ...
-                    extractdata(LossInformation_Validation.Loss_Encoder);
+            MonitorUpdate.lossValidation = ...
+                cgg_extractData(LossInformation_Validation.Loss_Encoder);
             end
 
             if HasValidationCM_Table

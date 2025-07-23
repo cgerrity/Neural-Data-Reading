@@ -35,8 +35,8 @@ Monitor_Values.Gradients_PreThreshold = Gradients_PreThreshold;
 % Monitor_Values.iteration = iteration;
 % Monitor_Values.learningrate = learningrate;
 % 
-% Monitor_Values.lossTraining = extractdata(LossInformation_Training.Loss_Encoder);
-% Monitor_Values.lossValidation = extractdata(LossInformation_Validation.Loss_Encoder);
+% Monitor_Values.lossTraining = cgg_extractData(LossInformation_Training.Loss_Encoder);
+% Monitor_Values.lossValidation = cgg_extractData(LossInformation_Validation.Loss_Encoder);
 % 
 % AccuracyMeasures = cfg_Monitor.AccuracyMeasures;
 % for midx = 1:length(AccuracyMeasures)
@@ -115,7 +115,8 @@ if ~isempty(Classifier)
     end
 else
     if HasValidationLoss
-    this_loss = extractdata(LossInformation_Validation.Loss_Encoder);
+        this_loss = ...
+            cgg_extractData(LossInformation_Validation.Loss_Encoder);
     if this_loss < Monitor_Values.MinimumValidationLoss
         IsOptimal = true;
         Monitor_Values.MinimumValidationLoss = this_loss;

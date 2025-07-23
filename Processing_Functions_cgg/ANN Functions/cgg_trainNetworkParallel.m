@@ -481,7 +481,7 @@ MostCommon_Accuracy_Measure=NaN;
 RandomChance_Accuracy_Measure=NaN;
 Stratified_Accuracy_Measure=NaN;
 if HasClassifier
-TrueValue=double(extractdata(ValidationT)');
+TrueValue=double(cgg_extractData(ValidationT)');
 [MostCommon,RandomChance,Stratified] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchType,IsQuaddle);
 [MostCommon_Accuracy_Measure,RandomChance_Accuracy_Measure,Stratified_Accuracy_Measure] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchType_Accuracy_Measure,IsQuaddle);
 end
@@ -493,7 +493,7 @@ MostCommon_Accuracy_Measure_Testing=NaN;
 RandomChance_Accuracy_Measure_Testing=NaN;
 Stratified_Accuracy_Measure_Testing=NaN;
 if HasClassifier
-TrueValue_Testing=double(extractdata(TestingT)');
+TrueValue_Testing=double(cgg_extractData(TestingT)');
 [MostCommon_Testing,RandomChance_Testing,Stratified_Testing] = cgg_getBaselineAccuracyMeasures(TrueValue_Testing,ClassNames,MatchType,IsQuaddle);
 [MostCommon_Accuracy_Measure_Testing,RandomChance_Accuracy_Measure_Testing,Stratified_Accuracy_Measure_Testing] = cgg_getBaselineAccuracyMeasures(TrueValue_Testing,ClassNames,MatchType_Accuracy_Measure,IsQuaddle);
 end
@@ -510,17 +510,17 @@ InitializeMbq = minibatchqueue(DataStore_Training,...
 [~,~,~,~,InitialLossReconstruction,InitialLossClassification,InitialLossKL,~,~,~] = ModelLoss_Initial(net,InitializeX,InitializeT,NaN,NaN);
 
 if IsVariational
-    UnweigtedLossKL = extractdata(InitialLossKL{2});
+    UnweigtedLossKL = cgg_extractData(InitialLossKL{2});
 else
     UnweigtedLossKL = NaN;
 end
 if HasClassifier
-    UnweigtedLossClassification = extractdata(InitialLossClassification{2});
+    UnweigtedLossClassification = cgg_extractData(InitialLossClassification{2});
 else
     UnweigtedLossClassification = NaN;
 end
 if HasReconstruction
-    UnweigtedLossReconstruction = extractdata(InitialLossReconstruction{2});
+    UnweigtedLossReconstruction = cgg_extractData(InitialLossReconstruction{2});
 else
     UnweigtedLossReconstruction = NaN;
 end
@@ -613,12 +613,12 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
             %%
             % Aggregate the losses on all workers.
             workerNormalizationFactor = workerMiniBatchSize(this_workerIDX)./MiniBatchSize;
-            loss = spmdPlus(workerNormalizationFactor*extractdata(workerLoss));
-            LossReconstruction = spmdPlus(workerNormalizationFactor*extractdata(workerLossReconstruction{1}));
-            LossClassification = spmdPlus(workerNormalizationFactor*extractdata(workerLossClassification{1}));
-            LossKL = spmdPlus(workerNormalizationFactor*extractdata(workerLossKL{1}));
+            loss = spmdPlus(workerNormalizationFactor*cgg_extractData(workerLoss));
+            LossReconstruction = spmdPlus(workerNormalizationFactor*cgg_extractData(workerLossReconstruction{1}));
+            LossClassification = spmdPlus(workerNormalizationFactor*cgg_extractData(workerLossClassification{1}));
+            LossKL = spmdPlus(workerNormalizationFactor*cgg_extractData(workerLossKL{1}));
 
-            LossReconstructionPerArea = spmdPlus(workerNormalizationFactor*extractdata(workerLossReconstruction{3}));
+            LossReconstructionPerArea = spmdPlus(workerNormalizationFactor*cgg_extractData(workerLossReconstruction{3}));
             % Aggregate the accuracy on all workers.
             accuracyTrain = spmdPlus(workerNormalizationFactor*workerAccuracy);
             Window_AccuracyTrain = spmdPlus(workerNormalizationFactor*workerWindow_Accuracy);
@@ -712,22 +712,12 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
                     Loss_ReconstructionValidation = Loss_ReconstructionValidation{1};
                     Loss_KLValidation = Loss_KLValidation{1};
                     Loss_ClassificationValidation = Loss_ClassificationValidation{1};
-                    if isdlarray(Loss_ReconstructionValidation)
-                        Loss_ReconstructionValidation=extractdata(Loss_ReconstructionValidation);
-                    end
-                    if isdlarray(Loss_ReconstructionValidationPerArea)
-                        Loss_ReconstructionValidationPerArea=extractdata(Loss_ReconstructionValidationPerArea);
-                    end
-                    if isdlarray(Loss_KLValidation)
-                        Loss_KLValidation=extractdata(Loss_KLValidation);
-                    end
-                    if isdlarray(Loss_ClassificationValidation)
-                        Loss_ClassificationValidation=extractdata(Loss_ClassificationValidation);
-                    end
+                    Loss_ReconstructionValidation=cgg_extractData(Loss_ReconstructionValidation);
+                    Loss_ReconstructionValidationPerArea=cgg_extractData(Loss_ReconstructionValidationPerArea);
+                    Loss_KLValidation=cgg_extractData(Loss_KLValidation);
+                    Loss_ClassificationValidation=cgg_extractData(Loss_ClassificationValidation);
                 end
-                if isdlarray(lossValidation)
-                lossValidation=extractdata(lossValidation);
-                end
+                lossValidation=cgg_extractData(lossValidation);
                 end
             
                 %%
@@ -856,17 +846,17 @@ IterationVariablesName = {'CurrentIteration','CurrentTime'};
 
         if mod(epoch+1,RescaleLossEpoch) == 1 || RescaleLossEpoch == 1
         if IsVariational
-            UnweigtedLossKL = spmdPlus(workerNormalizationFactor*extractdata(workerLossKL{2}));
+            UnweigtedLossKL = spmdPlus(workerNormalizationFactor*cgg_extractData(workerLossKL{2}));
         else
             UnweigtedLossKL = NaN;
         end
         if HasClassifier
-            UnweigtedLossClassification = spmdPlus(workerNormalizationFactor*extractdata(workerLossClassification{2}));
+            UnweigtedLossClassification = spmdPlus(workerNormalizationFactor*cgg_extractData(workerLossClassification{2}));
         else
             UnweigtedLossClassification = NaN;
         end
         if HasReconstruction
-            UnweigtedLossReconstruction = spmdPlus(workerNormalizationFactor*extractdata(workerLossReconstruction{2}));
+            UnweigtedLossReconstruction = spmdPlus(workerNormalizationFactor*cgg_extractData(workerLossReconstruction{2}));
         else
             UnweigtedLossReconstruction = NaN;
         end

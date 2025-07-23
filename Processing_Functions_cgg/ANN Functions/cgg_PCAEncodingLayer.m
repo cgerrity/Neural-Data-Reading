@@ -73,7 +73,7 @@ classdef cgg_PCAEncodingLayer < nnet.layer.Layer ...
             
             % Store spatial dimensions in the layer for future reference
             layer.SpatialDimensions = FormatInformation.Size.Spatial;
-            X_Input = extractdata(X);
+            X_Input = cgg_extractData(X);
             % fprintf('Dimensions of Input: %s\n',X.dims);
             % fprintf('Size of Input: [%d,%d,%d,%d,%d]\n',size(X));
             if layer.ApplyPerTimePoint

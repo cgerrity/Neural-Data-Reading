@@ -165,10 +165,10 @@ resetExampleTerm(ReconstructionMonitor);
 end
 %%
 
-selectionFun_Training=@(x_array) dlarray(cell2mat(arrayfun(@(x1,x2) extractdata(x_array(:,x1,x2)),BatchIDX,WindowIDX_Training,"UniformOutput",false)),'CBT');
+selectionFun_Training=@(x_array) dlarray(cell2mat(arrayfun(@(x1,x2) cgg_extractData(x_array(:,x1,x2)),BatchIDX,WindowIDX_Training,"UniformOutput",false)),'CBT');
 TargetProbabilities_Training=cellfun(@(x) selectionFun_Training(x),Y_Classification_Training,"UniformOutput",false);
 
-selectionFun_Validation=@(x_array) dlarray(cell2mat(arrayfun(@(x1,x2) extractdata(x_array(:,x1,x2)),BatchIDX,WindowIDX_Validation,"UniformOutput",false)),'CBT');
+selectionFun_Validation=@(x_array) dlarray(cell2mat(arrayfun(@(x1,x2) cgg_extractData(x_array(:,x1,x2)),BatchIDX,WindowIDX_Validation,"UniformOutput",false)),'CBT');
 TargetProbabilities_Validation=cellfun(@(x) selectionFun_Validation(x),Y_Classification_Validation,"UniformOutput",false);
 
 %%
@@ -328,12 +328,12 @@ BottleNeckRecurrentWeightIDX=BottleNeckIDX & RecurrentWeightIDX;
 BottleNeckRecurrentWeightIDX=find(BottleNeckRecurrentWeightIDX,1,'last');
 
 OutputWeights=InputNet.Learnables.Value(OutputWeightIDX,1);
-OutputWeights = cellfun(@(x) double(extractdata(x)), OutputWeights, 'UniformOutput', false);
+OutputWeights = cellfun(@(x) double(cgg_extractData(x)), OutputWeights, 'UniformOutput', false);
 OutputWeights = cell2mat(OutputWeights);
 if IsRecurrent
-BottleNeckWeights=double(extractdata(InputNet.Learnables.Value{BottleNeckRecurrentWeightIDX,1}));
+BottleNeckWeights=double(cgg_extractData(InputNet.Learnables.Value{BottleNeckRecurrentWeightIDX,1}));
 else
-BottleNeckWeights=double(extractdata(InputNet.Learnables.Value{BottleNeckWeightIDX,1}));
+BottleNeckWeights=double(cgg_extractData(InputNet.Learnables.Value{BottleNeckWeightIDX,1}));
 end
 
 if IsSkip
@@ -353,9 +353,7 @@ if WantActivations
     % InputNet=resetState(InputNet);
     InputNet=cgg_resetState(InputNet);
     [Y_Activation_Training,~] = predict(InputNet,XTraining,Outputs=InputNet.Layers(BottleNeckActivationIDX).Name);
-    if isdlarray(Y_Activation_Training)
-        Y_Activation_Training = extractdata(Y_Activation_Training);
-    end
+    Y_Activation_Training = cgg_extractData(Y_Activation_Training);
 end
 
 this_TileIDX=tilenum(Tiled_Plot,1,ColumnsPerExample*NumExamples+1);
@@ -406,12 +404,12 @@ this_OutputIDX=InputNet.Learnables.Layer==this_LayerName;
 this_OutputWeightIDX=this_OutputIDX & WeightIDX;
 this_OutputWeightIDX = find(this_OutputWeightIDX,1,"first");
 
-this_OutputWeights=double(extractdata(InputNet.Learnables.Value{this_OutputWeightIDX,1}));
+this_OutputWeights=double(cgg_extractData(InputNet.Learnables.Value{this_OutputWeightIDX,1}));
 
 % this_ClassifierIDX = contains(InputNet.Learnables.Layer,sprintf("Dim_%d",cidx));
 % this_ClassifierWeightIDX=this_ClassifierIDX & WeightIDX;
 % this_ClassifierWeights = {InputNet.Learnables.Value{this_ClassifierWeightIDX,1}};
-% this_ClassifierWeights = cellfun(@(x) extractdata(x),this_ClassifierWeights,"UniformOutput",false);
+% this_ClassifierWeights = cellfun(@(x) cgg_extractData(x),this_ClassifierWeights,"UniformOutput",false);
 
 [this_NumClasses,~] = size(this_OutputWeights);
 

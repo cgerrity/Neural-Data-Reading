@@ -118,7 +118,7 @@ end
 
 %%
 
-TrueValue=double(extractdata(ValidationT)');
+TrueValue=double(cgg_extractData(ValidationT)');
 
 % [MostCommon,RandomChance] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchType)
 % 
@@ -191,8 +191,8 @@ spmd
 
             % Aggregate the losses on all workers.
             workerNormalizationFactor = workerMiniBatchSize(this_workerIDX)./miniBatchSize;
-            loss = spmdPlus(workerNormalizationFactor*extractdata(workerLoss));
-            LossVector = spmdPlus(workerNormalizationFactor*extractdata(workerLossVector));
+            loss = spmdPlus(workerNormalizationFactor*cgg_extractData(workerLoss));
+            LossVector = spmdPlus(workerNormalizationFactor*cgg_extractData(workerLossVector));
 
             % Aggregate the accuracy on all workers.
             accuracyTrain = spmdPlus(workerNormalizationFactor*workerAccuracy);
@@ -227,7 +227,7 @@ spmd
 
 %             if mod(iteration,2)==1
 %             [lossValidation,~,~,accuracyValidation] = dlfeval(ValidationLoss,net);
-%             lossValidation=extractdata(lossValidation);
+%             lossValidation=cgg_extractData(lossValidation);
 %             end
             
             %%
@@ -238,7 +238,7 @@ spmd
             % net=resetState(net);
             net = cgg_resetState(net);
             [lossValidation,~,~,accuracyValidation] = dlfeval(ValidationLoss,net);
-            lossValidation=extractdata(lossValidation);
+            lossValidation=cgg_extractData(lossValidation);
             end
 
             % Send training progress information to the client.

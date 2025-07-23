@@ -362,11 +362,11 @@ BalancedAccuracy_Rescaled = (BalancedAccuracy_Prediction-BalancedAccuracy_Random
 % % loss_perchannel = dlarray(0);
 % loss_perchannel = [];
 % for cidx = 1:channels
-% loss_perchannel(cidx) = extractdata(mse(Y(:,:,cidx,:,:),targets(:,:,cidx,:,:)));
+% loss_perchannel(cidx) = cgg_extractData(mse(Y(:,:,cidx,:,:),targets(:,:,cidx,:,:)));
 % % loss_perchannel(cidx) = mse(Y(:,:,cidx,:,:),targets(:,:,cidx,:,:));
 % end
 % 
-% loss_perchannel_scalar=extractdata(loss_perchannel);
+% loss_perchannel_scalar=cgg_extractData(loss_perchannel);
 % 
 % loss_perchannel_normalized = loss_perchannel./loss_perchannel_scalar;
 % loss_perchannel_rescaled = loss_perchannel_normalized * mean(loss_perchannel_scalar);

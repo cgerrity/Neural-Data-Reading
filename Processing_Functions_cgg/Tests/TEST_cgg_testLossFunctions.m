@@ -61,7 +61,7 @@ X(~Mask_NaN) = 0;
 Loss_NaNIncorrect_NoMask = 0.5*l2loss(Y,X);
 LossMSE_NaNIncorrect = mse(Y,X);
 
-fprintf("NaN Correct No Mask: %f\n",extractdata(Loss_NaNCorrect_NoMask));
-fprintf("NaN Correct Mask: %f\n",extractdata(Loss_NaNCorrect_Mask));
-fprintf("NaN Incorrect No Mask: %f\n",extractdata(Loss_NaNIncorrect_NoMask));
-fprintf("NaN Incorrect Mask: %f\n",extractdata(Loss_NaNIncorrect_Mask));
+fprintf("NaN Correct No Mask: %f\n",cgg_extractData(Loss_NaNCorrect_NoMask));
+fprintf("NaN Correct Mask: %f\n",cgg_extractData(Loss_NaNCorrect_Mask));
+fprintf("NaN Incorrect No Mask: %f\n",cgg_extractData(Loss_NaNIncorrect_NoMask));
+fprintf("NaN Incorrect Mask: %f\n",cgg_extractData(Loss_NaNIncorrect_Mask));

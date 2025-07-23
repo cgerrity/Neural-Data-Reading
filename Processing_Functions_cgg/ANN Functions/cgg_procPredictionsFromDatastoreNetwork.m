@@ -92,7 +92,7 @@ while hasdata(MaxMbq)
 
 [X,T,this_DataNumber] = next(MaxMbq);
 
-this_DataNumber = extractdata(this_DataNumber);
+this_DataNumber = cgg_extractData(this_DataNumber);
 
 Y=cell(NumOutputs,1);
 

@@ -111,7 +111,7 @@ end
 
 
 
-X = extractdata(X_Input);
+X = cgg_extractData(X_Input);
 [PermuteDimensions,ReshapeSize] = cgg_getPCALayerInformation(X_Input,...
         'WantPerTime',WantPerTime);
 X = cgg_setNaNToValue(X,0);
