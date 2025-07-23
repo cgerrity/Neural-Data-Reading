@@ -52,10 +52,21 @@ LossType='CrossEntropy';
 end
 end
 
+if isfunction
+WantGradient = CheckVararginPairs('WantGradient', false, varargin{:});
+else
+if ~(exist('WantGradient','var'))
+WantGradient=false;
+end
+end
+
 %%
 
-
 [Window_Prediction,Window_TrueValue,Loss] = cgg_getPredictionFromClassifierProbabilities(T,Y,ClassNames,'wantLoss',wantLoss,'Weights',Weights,'IsQuaddle',IsQuaddle,'LossType',LossType,'NumTimeSteps',NumTimeSteps,'NumBatches',NumTrials);
+
+if WantGradient
+    Loss = cgg_extractData(Loss);
+end
 
 %%
 Window_TrueValue_Table = permute(Window_TrueValue,[2,3,1]);
@@ -67,9 +78,7 @@ if NumTrials == 1
     Window_TrueValue_Table = Window_TrueValue_Table';
 end
 
-if isdlarray(DataNumber)
-    DataNumber = extractdata(DataNumber);
-end
+DataNumber = cgg_extractData(DataNumber);
 DataNumber = diag(diag(DataNumber));
 
 %%
