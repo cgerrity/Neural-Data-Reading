@@ -72,7 +72,7 @@ TrueValue=T;
 % 
 % [~,T,~] = next(Mbq);
 % 
-% TrueValue=double(extractdata(T)');
+% TrueValue=double(cgg_extractData(T)');
 
 AccuracyMeasures = cfg_Monitor.AccuracyMeasures;
 

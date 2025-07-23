@@ -29,7 +29,7 @@ this_Prediction=ClassNames{didx}(this_Y_Decoded(:));
 
 Prediction(:,didx)=this_Prediction;
 
-this_ClassConfidenceTMP=double(extractdata(this_Y));
+this_ClassConfidenceTMP=double(cgg_extractData(this_Y));
 this_ClassConfidenceTMP=this_ClassConfidenceTMP(:,:);
 ClassConfidenceTMP{didx}=this_ClassConfidenceTMP;
 end

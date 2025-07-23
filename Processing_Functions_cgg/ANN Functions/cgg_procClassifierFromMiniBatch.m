@@ -15,9 +15,7 @@ DataNumber = NaN(NumTrials,1);
 CurrentTrialCount = 1;
 
 %%%%%%%
-if isdlarray(DataNumber)
-DataNumber = extractdata(DataNumber);
-end
+DataNumber = cgg_extractData(DataNumber);
 
 Y=cell(NumOutputs,1);
 

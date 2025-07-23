@@ -57,12 +57,8 @@ end
 
 TrialDim = finddim(Y_Encoded,"B");
 
-if isdlarray(Y_Encoded)
-Y_Encoded = extractdata(Y_Encoded);
-end
-if isdlarray(T)
-T = extractdata(T);
-end
+Y_Encoded = cgg_extractData(Y_Encoded);
+T = cgg_extractData(T);
 
 Y_Permute_Order = 1:ndims(Y_Encoded);
 Y_Permute_Order(TrialDim) = [];

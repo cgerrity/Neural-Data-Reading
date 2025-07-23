@@ -167,7 +167,7 @@ for IDX = 1:length(OutputNames)
     OutputTable_Cell{IDX,3} = OutputExample{IDX}.dims;
     OutputTable_Cell{IDX,4} = size(OutputExample{IDX});
     OutputTable_Cell{IDX,5} = numel(OutputExample{IDX});
-    OutputTable_Cell{IDX,6} = double([min(extractdata(OutputExample{IDX}(:))),max(extractdata(OutputExample{IDX}(:)))]);
+    OutputTable_Cell{IDX,6} = double([min(cgg_extractData(OutputExample{IDX}(:))),max(cgg_extractData(OutputExample{IDX}(:)))]);
     OutputTable_Cell{IDX,7} = OutputTable_Cell{IDX,6}(2)-OutputTable_Cell{IDX,6}(1);
     % OutputTable_Cell{IDX} = {OutputNames{IDX},IDX,OutputExample{IDX}.dims, size(OutputExample{IDX}),prod(size(OutputExample{IDX}))};
 % disp({OutputNames{IDX},IDX,OutputExample{IDX}.dims, size(OutputExample{IDX}),prod(size(OutputExample{IDX}))})
@@ -287,42 +287,42 @@ analyzeNetwork(InputNet);
 X_Encoded=forward(initialize(Encoder),X_Input);
 X_Decoded=forward(initialize(Decoder),X_Encoded);
 [NumChannels,~,NumAreas,NumExamples,NumWindows] = size(X_Input);
-%%
-close all;
-sel_S = randi(NumChannels);
-sel_C = randi(NumAreas);
-sel_B = randi(NumExamples);
-sel_T = randi(NumWindows);
-plot(squeeze(X_Input(sel_S,:,sel_C,sel_B,sel_T)));
-hold on;
-plot(squeeze(X_Decoded(sel_S,:,sel_C,sel_B,sel_T)));
-hold off;
-ylim([-1,1]);
-
-%%
-close all;
-
-Num_C = size(X_Encoded,1);
-sel_C = randi(Num_C);
-% sel_C = 1;
-sel_B = randi(NumExamples);
-plot(squeeze(X_Encoded(sel_C,sel_B,:)));
-hold on;
-sel_B = randi(NumExamples);
-plot(squeeze(X_Encoded(sel_C,sel_B,:)));
-% plot(squeeze(X_Encoded_2(sel_C,sel_B,:)));
-hold off;
+% %%
+% close all;
+% sel_S = randi(NumChannels);
+% sel_C = randi(NumAreas);
+% sel_B = randi(NumExamples);
+% sel_T = randi(NumWindows);
+% plot(squeeze(X_Input(sel_S,:,sel_C,sel_B,sel_T)));
+% hold on;
+% plot(squeeze(X_Decoded(sel_S,:,sel_C,sel_B,sel_T)));
+% hold off;
 % ylim([-1,1]);
-%
-figure;
-sel_S = randi(NumChannels);
-sel_C = randi(NumAreas);
-sel_B = randi(NumExamples);
-sel_T = randi(NumWindows);
-plot(squeeze(X_Decoded(sel_S,:,sel_C,sel_B,sel_T)));
-hold on;
-sel_B = randi(NumExamples);
-plot(squeeze(X_Decoded(sel_S,:,sel_C,sel_B,sel_T)));
-% plot(squeeze(X_Decoded_2(sel_S,:,sel_C,sel_B,sel_T)));
-hold off;
-ylim([-1,1]);
+% 
+% %%
+% close all;
+% 
+% Num_C = size(X_Encoded,1);
+% sel_C = randi(Num_C);
+% % sel_C = 1;
+% sel_B = randi(NumExamples);
+% plot(squeeze(X_Encoded(sel_C,sel_B,:)));
+% hold on;
+% sel_B = randi(NumExamples);
+% plot(squeeze(X_Encoded(sel_C,sel_B,:)));
+% % plot(squeeze(X_Encoded_2(sel_C,sel_B,:)));
+% hold off;
+% % ylim([-1,1]);
+% %
+% figure;
+% sel_S = randi(NumChannels);
+% sel_C = randi(NumAreas);
+% sel_B = randi(NumExamples);
+% sel_T = randi(NumWindows);
+% plot(squeeze(X_Decoded(sel_S,:,sel_C,sel_B,sel_T)));
+% hold on;
+% sel_B = randi(NumExamples);
+% plot(squeeze(X_Decoded(sel_S,:,sel_C,sel_B,sel_T)));
+% % plot(squeeze(X_Decoded_2(sel_S,:,sel_C,sel_B,sel_T)));
+% hold off;
+% ylim([-1,1]);
