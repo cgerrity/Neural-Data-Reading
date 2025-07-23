@@ -22,7 +22,7 @@ Partition_Dir = INcfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Partition.path
 
 if contains(ExtraSaveTerm,'Subset')
 Partition_NameExt = 'KFoldPartition_Subset.mat';
-elseif contains(ExtraSaveTerm,'All')
+elseif contains(ExtraSaveTerm,'All') || isempty(ExtraSaveTerm)
 Partition_NameExt = 'KFoldPartition.mat';
 else
 Partition_NameExt = sprintf('KFoldPartition_%s.mat',ExtraSaveTerm);
