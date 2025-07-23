@@ -102,6 +102,14 @@ end
 end
 
 if isfunction
+WeightOffsetAndScale = CheckVararginPairs('WeightOffsetAndScale', NaN, varargin{:});
+else
+if ~(exist('WeightOffsetAndScale','var'))
+WeightOffsetAndScale=NaN;
+end
+end
+
+if isfunction
 ClassNames = CheckVararginPairs('ClassNames', [], varargin{:});
 else
 if ~(exist('ClassNames','var'))
@@ -175,6 +183,7 @@ Loss_Reconstruction = NaN;
 Loss_KL = NaN;
 Loss_Reconstruction_PerArea = NaN;
 Loss_Classification_PerDimension = NaN;
+Loss_OffsetAndScale = 0;
 CM_Table = NaN;
 
 %%
@@ -251,6 +260,14 @@ else
     Y_Mean = [];
     Y_logSigmaSq = [];
 end
+if any(contains({Decoder.Layers(:).Name},"reshape_offset_Augment")) || ...
+        any(contains({Decoder.Layers(:).Name},"reshape_scale_Augment")) ...
+        && ~isnan(WeightOffsetAndScale)
+    this_Loss_OffsetAndScale = cgg_lossOffsetAndScale(X,Y_Encoded,Decoder,State,'wantPredict',wantPredict,'WantGradient',WantGradient);
+    Loss_OffsetAndScale = Loss_OffsetAndScale + this_Loss_OffsetAndScale*Normalization_Factor;
+else
+    Loss_OffsetAndScale = NaN;
+end
 Y_Reconstruction = Y_Decoded{contains(OutputNames_Decoder,'Decoder')};
 
 if IsEncoderLearnable || IsDecoderLearnable
@@ -258,7 +275,7 @@ if IsEncoderLearnable || IsDecoderLearnable
     cgg_getDecoderOutputs(Y_Reconstruction,Y_Mean,Y_logSigmaSq,...
     T_Reconstruction,Loss_Reconstruction,Loss_KL,...
     Loss_Reconstruction_PerArea,Normalization_Factor,...
-    'LossType_Decoder',LossType_Decoder);
+    'LossType_Decoder',LossType_Decoder,'WantGradient',WantGradient);
 end
 
 end
@@ -278,7 +295,7 @@ end
     T_Classified,Y_Classified,ClassNames,DataNumber,...
     Loss_Classification_PerDimension,CM_Table,Normalization_Factor,...
     'IsQuaddle',IsQuaddle,'wantLoss',wantLoss,'Weights',Weights,...
-    'LossType',LossType_Classifier);
+    'LossType',LossType_Classifier,'WantGradient',WantGradient);
 
 end
 
@@ -292,8 +309,9 @@ end
 
 [LossInformation] = cgg_getLossInformation(Loss_Reconstruction,...
     Loss_KL,Loss_Reconstruction_PerArea,...
-    Loss_Classification_PerDimension,LossInformation,...
-    WantUpdateLossPrior,WeightReconstruction,WeightKL,WeightClassification);
+    Loss_Classification_PerDimension,Loss_OffsetAndScale, ...
+    LossInformation,WantUpdateLossPrior,WeightReconstruction, ...
+    WeightKL,WeightClassification,WeightOffsetAndScale);
 
 % %% Get Loss
 % 
@@ -319,14 +337,23 @@ if WantGradient
     Gradients.Encoder = dlupdate(L2Regularizer,Gradients.Encoder,Encoder.Learnables);
     end
     if HasDecoder && IsDecoderLearnable
-        Gradients.Decoder = dlgradient(LossInformation.Loss_Decoder,Decoder.Learnables);
+        Gradients.Decoder = dlgradient(LossInformation.Loss_Encoder,Decoder.Learnables);
         Gradients.Decoder = dlupdate(L2Regularizer,Gradients.Decoder,Decoder.Learnables);
     end
     if HasClassifier && IsClassifierLearnable
-        Gradients.Classifier = dlgradient(LossInformation.Loss_Classifier,Classifier.Learnables);
+        Gradients.Classifier = dlgradient(LossInformation.Loss_Encoder,Classifier.Learnables);
         Gradients.Classifier = dlupdate(L2Regularizer,Gradients.Classifier,Classifier.Learnables);
     end
 end
+
+% No gradient is calculated after this point so this will only add to the
+% memory requirements if it is passed as a dlarray
+LossInformation.Loss_Encoder = ...
+    cgg_extractData(LossInformation.Loss_Encoder);
+LossInformation.Loss_Decoder = ...
+    cgg_extractData(LossInformation.Loss_Decoder);
+LossInformation.Loss_Classifier = ...
+    cgg_extractData(LossInformation.Loss_Classifier);
 
 end
 
