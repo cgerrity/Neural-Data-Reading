@@ -30,6 +30,7 @@ ModelName=cfg_Encoder.ModelName;
 WeightReconstruction=cfg_Encoder.WeightReconstruction;
 WeightKL=cfg_Encoder.WeightKL;
 WeightClassification=cfg_Encoder.WeightClassification;
+WeightOffsetAndScale=cfg_Encoder.WeightOffsetAndScale;
 RescaleLossEpoch = cfg_Encoder.RescaleLossEpoch;
 WeightedLoss = cfg_Encoder.WeightedLoss;
 ClassifierName = cfg_Encoder.ClassifierName;
@@ -163,7 +164,8 @@ fprintf(MessageUnsupervised);
     'IterationSaveFrequency',IterationSaveFrequency,...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
     'RescaleLossEpoch',RescaleLossEpoch,'cfg_Monitor',cfg_Monitor, ...
-    'L2Factor',L2Factor,'WantSaveOptimalNet',WantSaveOptimalNet);
+    'L2Factor',L2Factor,'WantSaveOptimalNet',WantSaveOptimalNet, ...
+    'WeightOffsetAndScale',WeightOffsetAndScale);
 
 %% Get Optimal Autoencoder
 
@@ -223,7 +225,8 @@ fprintf(MessageSupervised);
     'IterationSaveFrequency',IterationSaveFrequency,...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
     'RescaleLossEpoch',RescaleLossEpoch,'cfg_Monitor',cfg_Monitor, ...
-    'L2Factor',L2Factor,'WantSaveOptimalNet',WantSaveOptimalNet);
+    'L2Factor',L2Factor,'WantSaveOptimalNet',WantSaveOptimalNet, ...
+    'WeightOffsetAndScale',WeightOffsetAndScale);
 
 
 %%

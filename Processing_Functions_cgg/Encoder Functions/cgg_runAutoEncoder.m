@@ -54,6 +54,8 @@ if ~isnan(SessionRunIDX)
     Fold = mod(SessionRunIDX-1,10)+1;
     SessionIDX = floor((SessionRunIDX-1)/10)+1;
     cfg_Encoder.Subset = replace(cfg_Session(SessionIDX).SessionName,'-','_');
+    cfg_Encoder.NumEpochsFull = cfg_Encoder.NumEpochsFull_Final;
+    cfg_Encoder.NumEpochsSession = cfg_Encoder.NumEpochsFull;
 end
 
 %%
@@ -176,6 +178,12 @@ cfg_Encoder.STDWhiteNoise = CheckVararginPairs('STDWhiteNoise', cfg_Encoder.STDW
 end
 if isfunction
 cfg_Encoder.STDRandomWalk = CheckVararginPairs('STDRandomWalk', cfg_Encoder.STDRandomWalk, varargin{:});
+end
+if isfunction
+cfg_Encoder.WantNormalization = CheckVararginPairs('WantNormalization', cfg_Encoder.WantNormalization, varargin{:});
+end
+if isfunction
+cfg_Encoder.WeightOffsetAndScale = CheckVararginPairs('WeightOffsetAndScale', cfg_Encoder.WeightOffsetAndScale, varargin{:});
 end
 
 %%

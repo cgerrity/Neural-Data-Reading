@@ -55,6 +55,7 @@ else
     Activation = cfg.Activation;
     FinalActivation = cfg.FinalActivation;
     WantResnet = cfg.WantResnet;
+    HiddenSizeAugment = cfg.HiddenSizeBottleNeck;
 
     DecoderBlocks = cgg_constructConvolutionalCoder(FilterSizes, ...
         FilterHiddenSizes,InputSize,'WantSplitAreas',WantSplitAreas, ...
@@ -62,11 +63,14 @@ else
         'UpSampleMethod',UpSampleMethod,'Stride',Stride, ...
         'WantNormalization',WantNormalization,'Dropout',Dropout, ...
         'Activation',Activation,'FinalActivation',FinalActivation,...
-        'WantResnet',WantResnet,'Coder',Coder);
+        'WantResnet',WantResnet,'Coder',Coder, ...
+        'HiddenSizeAugment',HiddenSizeAugment);
 
+
+    ReshapeFilterHiddenSize = FilterHiddenSizes(end)*InputSize(3);
     [~,UpSampleSizes] = cgg_getCropAmount(InputSize(1:2),Stride,length(FilterHiddenSizes));
 PreDecoderBlock = [functionLayer(@(X) dlarray(X,"CBTSS"),Formattable=true,Acceleratable=true,Name="addspatial_BottleNeck")
-        transposedConv2dLayer(UpSampleSizes{1},InputSize(3),"Name","reshape_BottleNeck",'Stride',UpSampleSizes{1})];
+        transposedConv2dLayer(UpSampleSizes{1},ReshapeFilterHiddenSize,"Name","reshape_BottleNeck",'Stride',UpSampleSizes{1})];
 
 % PostDecoderBlock = convolution2dLayer(1,InputSize(3),"Name","Combination_Decoder","Padding",'same');
 
