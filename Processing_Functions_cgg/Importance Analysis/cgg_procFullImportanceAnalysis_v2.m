@@ -1,4 +1,4 @@
-function RemovalPlotTable = cgg_procFullImportanceAnalysis(cfg_Encoder,EpochDir,cfg,varargin)
+function RemovalPlotTable = cgg_procFullImportanceAnalysis_v2(cfg_Encoder,EpochDir,cfg,varargin)
 %CGG_PROCFULLIMPORTANCEANALYSIS Summary of this function goes here
 %   Detailed explanation goes here
 isfunction=exist('varargin','var');
@@ -107,6 +107,22 @@ WantDelay=true;
 end
 end
 
+if isfunction
+TrialFilter = CheckVararginPairs('TrialFilter', 'All', varargin{:});
+else
+if ~(exist('TrialFilter','var'))
+TrialFilter='All';
+end
+end
+
+if isfunction
+TargetFilter = CheckVararginPairs('TargetFilter', 'Overall', varargin{:});
+else
+if ~(exist('TargetFilter','var'))
+TargetFilter='Overall';
+end
+end
+
 %%
 
 rng('shuffle');
@@ -149,9 +165,25 @@ Folds = EncoderParameters.Fold;
 Folds = Folds{1};
 % NumFolds = length(Folds);
 
-ThresholdTable = cgg_getRandomChanceThreshold(EpochDir,Folds,cfg_Encoder,'SessionName',SessionName,varargin{:});
+% ThresholdTable = cgg_getNullThreshold(EpochDir,Folds,cfg_Encoder,'SessionName',SessionName,'MatchType',MatchType,'TrialFilter',TrialFilter,'TargetFilter',TargetFilter,varargin{:});
 %%
+
+IA_PassTable = cgg_getOverallPassTable(Folds,EpochDir,'SessionName',SessionName,'MatchType',MatchType);
+RepeatPass = true;
+
+while RepeatPass
+IA_PassTable = IA_PassTable(randperm(size(IA_PassTable,1)),:);
+
+for pidx = 1:height(IA_PassTable)
+    cgg_runImportanceAnalysis(IA_PassTable(pidx,:),EpochDir,varargin)
+% Insert run of Importance Analysis
+end
+
 IA_PassTable = cgg_getOverallPassTable(Folds,EpochDir,'SessionName',SessionName);
+
+RepeatPass = ~all(IA_PassTable.IsComplete & ~IA_PassTable.HasFlag);
+end
+
 %%
 
 MessagePart1 = '+++ Single Removal Channel\n';
