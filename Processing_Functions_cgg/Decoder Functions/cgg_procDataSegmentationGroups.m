@@ -1,4 +1,4 @@
-function [OutputIDX,OutputNames] = cgg_procDataSegmentationGroups(Dimension_Each,CorrectTrial,PreviousTrialCorrect,Dimensionality,Gain,Loss,Learned,ProbeProcessing,TargetFeature,ReactionTime,TrialChosen,SessionName,DataNumber,SharedFeatureCoding,TrialsFromLP,TrialsFromLPCategory)
+function [OutputIDX,OutputNames] = cgg_procDataSegmentationGroups(Dimension_Each,CorrectTrial,PreviousTrialCorrect,Dimensionality,Gain,Loss,Learned,ProbeProcessing,TargetFeature,ReactionTime,TrialChosen,SessionName,Block,DataNumber,SharedFeatureCoding,TrialsFromLP,TrialsFromLPCategory,TrialsFromLPCategoryFine)
 %CGG_PROCDATASEGMENTATIONGROUPS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -82,6 +82,11 @@ Counter_IDX=Counter_IDX+1;
 OutputIDX(Counter_IDX)=TrialsFromLPCategory;
 OutputNames(Counter_IDX)="Trials From Learning Point Category";
 
+% Fine Trials From Learning Point
+Counter_IDX=Counter_IDX+1;
+OutputIDX(Counter_IDX)=TrialsFromLPCategoryFine;
+OutputNames(Counter_IDX)="Fine Grain Trials From Learning Point Category";
+
 % SessionName
 
 [cfg] = DATA_cggAllSessionInformationConfiguration;
@@ -93,6 +98,11 @@ if isempty(SessionNumber)
 end
 OutputIDX(Counter_IDX)=SessionNumber;
 OutputNames(Counter_IDX)="Session Name";
+
+% Block
+Counter_IDX=Counter_IDX+1;
+OutputIDX(Counter_IDX)=Block;
+OutputNames(Counter_IDX)="Block";
 
 % DataNumber
 Counter_IDX=Counter_IDX+1;

@@ -1,4 +1,4 @@
-function [ClassNames,NumClasses,ClassPercent,ClassCounts] = cgg_getClassesFromDataStore(DataStore)
+function [ClassNames,NumClasses,ClassPercent,ClassCounts,Values] = cgg_getClassesFromDataStore(DataStore)
 %CGG_GETCLASSESFROMDATASTORE Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -24,6 +24,7 @@ end
 end
 end
 
+Values = NumClasses;
 ClassCounts=cell(1,NumDimensions);
 ClassNames=cell(1,NumDimensions);
 ClassPercent=cell(1,NumDimensions);

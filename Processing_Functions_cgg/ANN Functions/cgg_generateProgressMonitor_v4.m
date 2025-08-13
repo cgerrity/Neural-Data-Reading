@@ -553,24 +553,32 @@ monitor.RunTerm = sprintf('_Run-%d',Run);
             MonitorUpdate.iteration = Monitor_Values.iteration;
             MonitorUpdate.learningrate = Monitor_Values.learningrate;
             MonitorUpdate.lossTraining = ...
-                extractdata(LossInformation_Training.Loss_Encoder);
+                cgg_extractData(LossInformation_Training.Loss_Encoder);
 
             FieldName_MostCommon_Training = ...
                 sprintf('MostCommon_%s_Training',monitor.MatchType);
             FieldName_RandomChance_Training = ...
                 sprintf('RandomChance_%s_Training',monitor.MatchType);
+            FieldName_Stratified_Training = ...
+                sprintf('Stratified_%s_Training',monitor.MatchType);
             RandomChance_Baseline_Training = ...
                 Monitor_Values.(FieldName_RandomChance_Training);
             MostCommon_Baseline_Training = ...
                 Monitor_Values.(FieldName_MostCommon_Training);
+            Stratified_Baseline_Training = ...
+                Monitor_Values.(FieldName_Stratified_Training);
             FieldName_MostCommon_Validation = ...
                 sprintf('MostCommon_%s_Validation',monitor.MatchType);
             FieldName_RandomChance_Validation = ...
                 sprintf('RandomChance_%s_Validation',monitor.MatchType);
+            FieldName_Stratified_Validation = ...
+                sprintf('Stratified_%s_Validation',monitor.MatchType);
             RandomChance_Baseline_Validation = ...
                 Monitor_Values.(FieldName_RandomChance_Validation);
             MostCommon_Baseline_Validation = ...
                 Monitor_Values.(FieldName_MostCommon_Validation);
+            Stratified_Baseline_Validation = ...
+                Monitor_Values.(FieldName_Stratified_Validation);
 
             FieldName_IsScaled_Training = ...
                 sprintf('IsScaled_%s_Training',monitor.MatchType);
@@ -589,7 +597,8 @@ monitor.RunTerm = sprintf('_Run-%d',Run);
                 ClassNames,'MatchType',monitor.MatchType,...
                 'IsQuaddle',Monitor_Values.IsQuaddle,...
                 'RandomChance',RandomChance_Baseline_Training,...
-                'MostCommon',MostCommon_Baseline_Training);
+                'MostCommon',MostCommon_Baseline_Training,...
+                'Stratified',Stratified_Baseline_Training);
             else
                 accuracyTraining = NaN;
             end
@@ -597,42 +606,31 @@ monitor.RunTerm = sprintf('_Run-%d',Run);
             MonitorUpdate.accuracyTrain = accuracyTraining;
 
             if IsScaled_Validation
-            ChanceLevel_Validation = max([MostCommon_Baseline_Validation,RandomChance_Baseline_Validation]);
+            % ChanceLevel_Validation = max([Stratified_Baseline_Validation,MostCommon_Baseline_Validation,RandomChance_Baseline_Validation]);
+            ChanceLevel_Validation = Stratified_Baseline_Validation;
             MostCommon_Validation = (MostCommon_Baseline_Validation-ChanceLevel_Validation)/(1-ChanceLevel_Validation);
             RandomChance_Validation = (RandomChance_Baseline_Validation-ChanceLevel_Validation)/(1-ChanceLevel_Validation);
+            Stratified_Validation = (Stratified_Baseline_Validation-ChanceLevel_Validation)/(1-ChanceLevel_Validation);
             else
             MostCommon_Validation = MostCommon_Baseline_Validation;
-            RandomChance_Validation = RandomChance_Baseline_Validation;  
+            RandomChance_Validation = RandomChance_Baseline_Validation;
+            Stratified_Validation = Stratified_Baseline_Validation; 
             end
             
             MonitorUpdate.majorityclass = MostCommon_Validation;
             MonitorUpdate.randomchance = RandomChance_Validation;
+            MonitorUpdate.stratified = Stratified_Validation;
 
             % MonitorUpdate.Loss_Reconstruction = LossInformation_Training.Loss_Reconstruction; 
             % MonitorUpdate.Loss_KL = LossInformation_Training.Loss_KL;
             % MonitorUpdate.Loss_Classification = LossInformation_Training.Loss_Classification;
 
-            if isdlarray(LossInformation_Training.Loss_Reconstruction_Weighted)
-                MonitorUpdate.Loss_Reconstruction = extractdata(...
-                    LossInformation_Training.Loss_Reconstruction_Weighted); 
-            else
-                MonitorUpdate.Loss_Reconstruction = ...
-                    LossInformation_Training.Loss_Reconstruction_Weighted;
-            end
-            if isdlarray(LossInformation_Training.Loss_KL_Weighted)
-                MonitorUpdate.Loss_KL = extractdata(...
-                    LossInformation_Training.Loss_KL_Weighted); 
-            else
-                MonitorUpdate.Loss_KL = ...
-                    LossInformation_Training.Loss_KL_Weighted;
-            end
-            if isdlarray(LossInformation_Training.Loss_Classification_Weighted)
-                MonitorUpdate.Loss_Classification = extractdata(...
-                    LossInformation_Training.Loss_Classification_Weighted); 
-            else
-                MonitorUpdate.Loss_Classification = ...
-                    LossInformation_Training.Loss_Classification_Weighted;
-            end
+            MonitorUpdate.Loss_Reconstruction = cgg_extractData(...
+                LossInformation_Training.Loss_Reconstruction_Weighted); 
+            MonitorUpdate.Loss_KL = cgg_extractData(...
+                LossInformation_Training.Loss_KL_Weighted); 
+            MonitorUpdate.Loss_Classification = cgg_extractData(...
+                LossInformation_Training.Loss_Classification_Weighted); 
 
             MonitorUpdate.lossValidation = NaN;
             MonitorUpdate.accuracyValidation = NaN;
@@ -641,8 +639,8 @@ monitor.RunTerm = sprintf('_Run-%d',Run);
             HasValidationCM_Table = istable(CM_Table_Validation);
 
             if HasValidationLoss
-                MonitorUpdate.lossValidation = ...
-                    extractdata(LossInformation_Validation.Loss_Encoder);
+            MonitorUpdate.lossValidation = ...
+                cgg_extractData(LossInformation_Validation.Loss_Encoder);
             end
 
             if HasValidationCM_Table
@@ -651,7 +649,8 @@ monitor.RunTerm = sprintf('_Run-%d',Run);
                     ClassNames,'MatchType',monitor.MatchType,...
                     'IsQuaddle',Monitor_Values.IsQuaddle,...
                     'RandomChance',RandomChance_Baseline_Validation,...
-                    'MostCommon',MostCommon_Baseline_Validation);
+                    'MostCommon',MostCommon_Baseline_Validation,...
+                    'Stratified',Stratified_Baseline_Validation);
 
             MonitorUpdate.accuracyValidation = accuracyValidation;
             end

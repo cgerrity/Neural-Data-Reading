@@ -4,10 +4,12 @@ clc; clear; close all;
 
 %%
 
-HiddenSizes = [8,16,32];
-LatentSize = [10];
+HiddenSize = [8,16,32];
+% HiddenSize = [8,16];
+LatentSize = [250];
+WantNormalization = 'Group';
 
-NetworkToView = 'Decoder';
+NetworkToView = 'Encoder';
 Pause_Time = 0;
 
 wantGrouped = false;
@@ -22,8 +24,14 @@ wantGrouped = false;
 % ModelName = 'Variational GRU - Dropout 0.5';
 % ModelName = 'LSTM';
 % ModelName = 'LSTM - Normalized';
-ModelName = 'Convolutional';
-% ModelName = 'Multi-Filter Convolution';
+% ModelName = 'Convolutional';
+% ModelName = 'Convolutional-Test';
+% ModelName = 'Resnet';
+% ModelName = 'Multi-Filter Resnet ~ Stride 2 ~ Filter Size {[1,5],[2,10],[4,20]}';
+% ModelName = 'Logistic Regression';o
+% ModelName = 'PCA';
+% ModelName = 'Multi-Filter Convolutional';
+ModelName = 'Convolutional ~ Stride 4 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Offset ~ Feedforward';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh';
@@ -31,22 +39,31 @@ ModelName = 'Convolutional';
 % ModelName = 'Variational Convolutional Resnet 3x3 - Split Area - Leaky ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh';
 % ModelName = 'Variational Convolutional Multi-Filter [3,5,7] - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM';
 
-% ClassifierName = 'Deep LSTM - Dropout 0.5';
-ClassifierName = 'Deep Feedforward - Dropout 0.5';
+ClassifierName = 'Deep LSTM - Dropout 0.5';
+% ClassifierName = 'Deep Feedforward - Dropout 0.5';
+% ClassifierName = 'Logistic';
 LossType = 'Classification';
-ClassifierHiddenSize = [500];
+ClassifierHiddenSize = [500,250];
 
-NumChannels = 9;
-DataWidth = 17;
-NumWindows = 3;
-NumAreas = 3;
-NumExamples = 8;
+NumChannels = 58;
+DataWidth = 100;
+NumWindows = 59;
+NumAreas = 6;
+NumExamples = 4;
 
 NumClasses = [1,4,4,4];
 
+WantPerTime = true;
 %%
+
 InputSize = [NumChannels,DataWidth,NumAreas];
-HiddenSizes = [HiddenSizes,LatentSize];
+
+HiddenSize = [HiddenSize,LatentSize];
+if strcmp(ModelName,'Logistic Regression')
+    % HiddenSize = prod(InputSize);
+    HiddenSize = [];
+    ClassifierName = 'Logistic';
+end
 
 RandomChannelNaN = randi(NumChannels);
 RandomAreaNaN = randi(NumAreas);
@@ -55,6 +72,7 @@ RandomAreaNaN = randi(NumAreas);
 
 X_Input=randn([InputSize,NumWindows,NumExamples]);
 X_Input(RandomChannelNaN,:,RandomAreaNaN,:,:) = NaN;
+X_Input = smoothdata(X_Input,2,"movmean",20);
 DataFormat='SSCTB';
 X_Input = dlarray(X_Input,DataFormat);
 
@@ -71,18 +89,47 @@ X_Input = dlarray(X_Input,DataFormat);
 % end
 % X_TEST = dlarray(X_TEST,DataFormat);
 %%
+cfg_Encoder = struct();
+cfg_Encoder.WantNormalization = WantNormalization;
+PCAInformation = struct();
+if strcmp(ModelName,'PCA')
+PCAInformation = cgg_getPCAForLayer(X_Input,'WantPerTime',WantPerTime);
+% ApplyPerTimePoint = WantPerTime;
+% OutputDimension = max(OutputDimensionAll);
+% FormatInformation = cgg_getDataFormatInformation(X_Input);
+% SpatialDimensions = FormatInformation.Size.Spatial;
+% OriginalChannels = FormatInformation.Size.Channel;
+% 
+% PCAInformation = struct();
+% 
+% PCAInformation.PCCoefficients = PCCoefficients;
+% PCAInformation.PCMean = PCMean;
+% PCAInformation.OutputDimension = OutputDimension;
+% PCAInformation.OutputDimensionAll = OutputDimensionAll;
+% PCAInformation.ApplyPerTimePoint = ApplyPerTimePoint;
+% PCAInformation.SpatialDimensions = SpatialDimensions;
+% PCAInformation.OriginalChannels = OriginalChannels;
+
+% cfg_Encoder.PCAInformation = PCAInformation;
+end
+%%
 
 [Encoder,Decoder] = cgg_constructNetworkArchitecture(ModelName,...
-    'InputSize',InputSize,'HiddenSize',HiddenSizes);
+    'InputSize',InputSize,'HiddenSize',HiddenSize,'cfg_Encoder',cfg_Encoder,'PCAInformation',PCAInformation);
+
+HiddenSizeBottleNeck = cgg_getBottleNeckSize(Encoder);
+
+Classifier = cgg_constructClassifierArchitecture(NumClasses,'ClassifierName',ClassifierName,'ClassifierHiddenSize',ClassifierHiddenSize,'LossType',LossType,'HiddenSizeBottleNeck',HiddenSizeBottleNeck);
 
 switch NetworkToView
     case 'Encoder'
-        InputNet= initialize(Encoder);
+        InputNet= initialize(Encoder,X_Input);
         X_Network = X_Input;
     case 'Decoder'
-        InputNet= initialize(Decoder);
-        Encoder = initialize(Encoder);
+        Encoder = initialize(Encoder,X_Input);
         X_Network = forward(Encoder,X_Input);
+        Decoder = initialize(Decoder,X_Network);
+        InputNet= initialize(Decoder);
     case 'Classifier'
         InputNet= initialize(Classifier);
         Encoder = initialize(Encoder);
@@ -90,18 +137,18 @@ switch NetworkToView
 end
 
 %%
-InputNet_Grouped = InputNet;
-for aidx = 1:NumAreas
-    for lidx = 1:length(HiddenSizes)-1
-this_Name = sprintf("Area-%d_Layer-%d",aidx,lidx);
-this_LayerIDX = find(contains({InputNet_Grouped.Layers(:).Name},this_Name));
-InputNet_Grouped = groupLayers(InputNet_Grouped,this_LayerIDX,GroupNames=this_Name);
-    end
-end
-
-if wantGrouped
-InputNet = InputNet_Grouped;
-end
+% InputNet_Grouped = InputNet;
+% for aidx = 1:NumAreas
+%     for lidx = 1:length(HiddenSizes)-1
+% this_Name = sprintf("Area-%d_Layer-%d",aidx,lidx);
+% this_LayerIDX = find(contains({InputNet_Grouped.Layers(:).Name},this_Name));
+% InputNet_Grouped = groupLayers(InputNet_Grouped,this_LayerIDX,GroupNames=this_Name);
+%     end
+% end
+% 
+% if wantGrouped
+% InputNet = InputNet_Grouped;
+% end
 
 %%
 NumLayers = length(InputNet.Layers);
@@ -127,7 +174,7 @@ for IDX = 1:length(OutputNames)
     OutputTable_Cell{IDX,3} = OutputExample{IDX}.dims;
     OutputTable_Cell{IDX,4} = size(OutputExample{IDX});
     OutputTable_Cell{IDX,5} = numel(OutputExample{IDX});
-    OutputTable_Cell{IDX,6} = double([min(extractdata(OutputExample{IDX}(:))),max(extractdata(OutputExample{IDX}(:)))]);
+    OutputTable_Cell{IDX,6} = double([min(cgg_extractData(OutputExample{IDX}(:))),max(cgg_extractData(OutputExample{IDX}(:)))]);
     OutputTable_Cell{IDX,7} = OutputTable_Cell{IDX,6}(2)-OutputTable_Cell{IDX,6}(1);
     % OutputTable_Cell{IDX} = {OutputNames{IDX},IDX,OutputExample{IDX}.dims, size(OutputExample{IDX}),prod(size(OutputExample{IDX}))};
 % disp({OutputNames{IDX},IDX,OutputExample{IDX}.dims, size(OutputExample{IDX}),prod(size(OutputExample{IDX}))})
@@ -139,7 +186,7 @@ OutputTable = table(OutputTable_Cell);
 
 plot([OutputTable_Cell{:,7}])
 pause(Pause_Time);
-close all
+% close all
 
 analyzeNetwork(InputNet);
 
@@ -205,3 +252,84 @@ analyzeNetwork(InputNet);
 % P_Difference = tcdf(-abs(T_Difference),DF_Difference) + tcdf(abs(T_Difference),DF_Difference,'upper');
 
 
+%%
+
+% WantPerTime = true;
+% 
+% [pcaCoeff, pcaMean, outputDim] = cgg_getPCAForLayer(X_Input,'WantPerTime',WantPerTime);
+% maxOutputDim_timePoint = max(outputDim);
+% FormatInformation = cgg_getDataFormatInformation(X_Input);
+% S = FormatInformation.Size.Spatial;
+% C = FormatInformation.Size.Channel;
+% 
+% RemoveNaNFunc = @(x) cgg_setNaNToValue(x,0);
+% layers = [sequenceInputLayer(InputSize,"Name","Input_Encoder","Normalization",RemoveNaNFunc)
+%     cgg_PCAEncodingLayer(...
+%         Name="PCA_Encoder", ...
+%         PCCoefficients=pcaCoeff, ...
+%         PCMean=pcaMean, ...
+%         ApplyPerTimePoint=WantPerTime, ...
+%         OutputDimension=maxOutputDim_timePoint)
+%     cgg_PCADecodingLayer(...
+%         Name="PCA_Decoder", ...
+%         PCCoefficients=pcaCoeff, ...
+%         PCMean=pcaMean, ...
+%         ApplyPerTimePoint=WantPerTime, ...
+%         OriginalChannels=C, ...
+%         SpatialDimensions=S)];
+% 
+% net = dlnetwork(layerGraph(layers));
+% 
+% X=forward(net,X_Input);
+
+% layer = cgg_PCADecodingLayer(...
+%         Name="PCA_Decoder", ...
+%         PCCoefficients=pcaCoeff, ...
+%         PCMean=pcaMean, ...
+%         ApplyPerTimePoint=WantPerTime, ...
+%         OriginalChannels=C, ...
+%         SpatialDimensions=S);
+%%
+
+X_Encoded=forward(initialize(Encoder),X_Input);
+X_Decoded=forward(initialize(Decoder),X_Encoded);
+[NumChannels,~,NumAreas,NumExamples,NumWindows] = size(X_Input);
+% %%
+% close all;
+% sel_S = randi(NumChannels);
+% sel_C = randi(NumAreas);
+% sel_B = randi(NumExamples);
+% sel_T = randi(NumWindows);
+% plot(squeeze(X_Input(sel_S,:,sel_C,sel_B,sel_T)));
+% hold on;
+% plot(squeeze(X_Decoded(sel_S,:,sel_C,sel_B,sel_T)));
+% hold off;
+% ylim([-1,1]);
+% 
+% %%
+% close all;
+% 
+% Num_C = size(X_Encoded,1);
+% sel_C = randi(Num_C);
+% % sel_C = 1;
+% sel_B = randi(NumExamples);
+% plot(squeeze(X_Encoded(sel_C,sel_B,:)));
+% hold on;
+% sel_B = randi(NumExamples);
+% plot(squeeze(X_Encoded(sel_C,sel_B,:)));
+% % plot(squeeze(X_Encoded_2(sel_C,sel_B,:)));
+% hold off;
+% % ylim([-1,1]);
+% %
+% figure;
+% sel_S = randi(NumChannels);
+% sel_C = randi(NumAreas);
+% sel_B = randi(NumExamples);
+% sel_T = randi(NumWindows);
+% plot(squeeze(X_Decoded(sel_S,:,sel_C,sel_B,sel_T)));
+% hold on;
+% sel_B = randi(NumExamples);
+% plot(squeeze(X_Decoded(sel_S,:,sel_C,sel_B,sel_T)));
+% % plot(squeeze(X_Decoded_2(sel_S,:,sel_C,sel_B,sel_T)));
+% hold off;
+% ylim([-1,1]);

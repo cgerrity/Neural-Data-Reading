@@ -26,9 +26,22 @@ if cfg.IsSimple
             'WantNormalization',WantNormalization,...
             'Transform',Transform,'Activation',Activation);
     EncoderBlocks = layerGraph(EncoderBlocks);
+elseif strcmp(cfg.Transform,'PCA')
+    PCCoefficients = cfg.PCAInformation.PCCoefficients;
+    PCMean = cfg.PCAInformation.PCMean;
+    ApplyPerTimePoint = cfg.PCAInformation.ApplyPerTimePoint;
+    OutputDimension = cfg.PCAInformation.OutputDimension;
+
+    EncoderBlocks = cgg_PCAEncodingLayer(...
+        Name="PCA_Encoder", ...
+        PCCoefficients=PCCoefficients, ...
+        PCMean=PCMean, ...
+        ApplyPerTimePoint=ApplyPerTimePoint, ...
+        OutputDimension=OutputDimension);
+    EncoderBlocks = layerGraph(EncoderBlocks);
 else
 
-    FilterSizes = cfg.FilterSizes;
+    % FilterSizes = cfg.FilterSizes;
     FilterHiddenSizes = HiddenSizeAutoEncoder;
     InputSize = cfg.InputSize;
     WantSplitAreas = cfg.WantSplitAreas;
@@ -39,6 +52,9 @@ else
     Dropout = cfg.Dropout;
     Activation = cfg.Activation;
     WantResnet = cfg.WantResnet;
+    FilterSizePercent = cfg.FilterSizePercent;
+    FilterSizes = cellfun(@(x) ceil(InputSize(1:2)*x), ...
+        FilterSizePercent,'UniformOutput',false);
 
     EncoderBlocks = cgg_constructConvolutionalCoder(FilterSizes, ...
         FilterHiddenSizes,InputSize,'WantSplitAreas',WantSplitAreas, ...

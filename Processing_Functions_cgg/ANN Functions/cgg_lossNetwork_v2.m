@@ -176,7 +176,7 @@ switch LossType
 
         [TargetSequence,TargetProbabilities_New] = cgg_getTargetSequenceFromCTC(this_Y,this_ClassNames);
 
-        this_ClassConfidenceTMP=double(extractdata(TargetProbabilities_New));
+        this_ClassConfidenceTMP=double(cgg_extractData(TargetProbabilities_New));
         this_ClassConfidenceTMP=this_ClassConfidenceTMP(:,:);
         ClassConfidenceTMP{didx}=this_ClassConfidenceTMP;
 
@@ -202,11 +202,11 @@ switch LossType
     loss = crossentropy(this_Y,this_T,this_Weights);
     end
 
-    this_ClassConfidenceTMP=double(extractdata(this_Y));
+    this_ClassConfidenceTMP=double(cgg_extractData(this_Y));
     this_ClassConfidenceTMP=this_ClassConfidenceTMP(:,:);
     ClassConfidenceTMP{didx}=this_ClassConfidenceTMP;
 
-    this_Window_ClassConfidenceTMP=double(extractdata(this_Y));
+    this_Window_ClassConfidenceTMP=double(cgg_extractData(this_Y));
     Window_ClassConfidenceTMP{didx}=this_Window_ClassConfidenceTMP;
     
     this_T_Decoded = onehotdecode(this_T,ClassNames{didx},1);

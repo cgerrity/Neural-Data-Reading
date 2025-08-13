@@ -20,7 +20,8 @@ end
 end
 
 
-Network=resetState(Network);
+% Network=resetState(Network);
+Network=cgg_resetState(Network);
 if WantPredict
     if ~isempty(OutputNames)
         Output=cell(length(OutputNames),1);

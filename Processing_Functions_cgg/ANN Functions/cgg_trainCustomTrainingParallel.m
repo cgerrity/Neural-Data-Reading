@@ -127,7 +127,7 @@ spmd
 
             % Aggregate the losses on all workers.
             workerNormalizationFactor = workerMiniBatchSize(this_workerIDX)./miniBatchSize;
-            loss = spmdPlus(workerNormalizationFactor*extractdata(workerLoss));
+            loss = spmdPlus(workerNormalizationFactor*cgg_extractData(workerLoss));
 
             % Aggregate the network state on all workers.
             net.State = aggregateState(workerState,workerNormalizationFactor,...
@@ -158,7 +158,7 @@ spmd
 
             if mod(iteration,ValidationFrequency)==1
             [lossValidation,~,~] = dlfeval(ValidationLoss,net);
-            lossValidation=extractdata(lossValidation);
+            lossValidation=cgg_extractData(lossValidation);
             end
 
             % Send training progress information to the client.

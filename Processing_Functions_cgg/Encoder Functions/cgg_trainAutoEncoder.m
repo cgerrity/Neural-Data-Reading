@@ -103,7 +103,7 @@ size(Output_TEST_Z)
 size(Output_TEST_mu)
 size(Output_TEST_sig)
 % 
-% disp(sum(extractdata(isnan(Output_TEST)),"all"))
+% disp(sum(cgg_extractData(isnan(Output_TEST)),"all"))
 
 %% Session Specific AutoEncoder
 

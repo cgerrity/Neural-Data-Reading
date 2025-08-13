@@ -45,6 +45,14 @@ IsQuaddle=true;
 end
 end
 
+if isfunction
+Weights = CheckVararginPairs('Weights', [], varargin{:});
+else
+if ~(exist('Weights','var'))
+Weights=[];
+end
+end
+
 %%
 
 VariableNames=CM_Table.Properties.VariableNames;
@@ -107,16 +115,28 @@ for idx=1:NumIterations
 
     if hasIterationColumn
     this_idx=IterationValues(idx);
-
-    this_CM_Table=CM_Table(CM_Table.IterationNumber==this_idx,:);
+    IterationRowIDX = CM_Table.IterationNumber==this_idx;
+    this_CM_Table=CM_Table(IterationRowIDX,:);
+        if isempty(Weights)
+            this_Weights = Weights;
+        else
+            this_Weights = Weights(IterationRowIDX,:);
+        end
     else
     this_CM_Table=CM_Table;
+    this_Weights = Weights;
     end
 
     if all(~strcmp(FilterColumn,'All') & ~strcmp(FilterColumn,'Target Feature'))
         % this_CM_Table=...
         % this_CM_Table((this_CM_Table.(FilterColumn)==FilterValue),:);
         this_CM_Table=this_CM_Table(FilterRowIDX,:);
+        if isempty(Weights)
+            this_Weights = Weights;
+        else
+            this_Weights = this_Weights(FilterRowIDX,:);
+        end
+        % fprintf('??? Debug 1-> CM Table Rows: %d Weights Rows: %d\n',height(this_CM_Table),size(this_Weights,1));
     end
 
     NumPredictions=numel(PredictionIndices);
@@ -151,9 +171,13 @@ for idx=1:NumIterations
     end
 
     if isfunction
+        WeightIDX = find(strcmp(varargin,'Weights'));
+        WeightRemovalIDX = [WeightIDX,WeightIDX+1];
+        varargin(WeightRemovalIDX) = [];
+        % fprintf('??? Debug 2-> True Value Rows: %d Prediction Rows: %d Weights Rows: %d\n',size(CombinedTrueValue,1),size(CombinedPrediction,1),size(this_Weights,1));
     [Accuracy(idx)] = cgg_calcAllPerformanceMetrics(...
     CombinedTrueValue,CombinedPrediction,ClassNames,'MatchType',...
-    MatchType,'IsQuaddle',IsQuaddle,varargin{:});
+    MatchType,'IsQuaddle',IsQuaddle,'Weights',this_Weights,varargin{:});
     else
     [Accuracy(idx)] = cgg_calcAllPerformanceMetrics(...
     CombinedTrueValue,CombinedPrediction,ClassNames,'MatchType',...

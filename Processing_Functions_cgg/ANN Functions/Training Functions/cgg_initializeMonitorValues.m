@@ -72,7 +72,7 @@ TrueValue=T;
 % 
 % [~,T,~] = next(Mbq);
 % 
-% TrueValue=double(extractdata(T)');
+% TrueValue=double(cgg_extractData(T)');
 
 AccuracyMeasures = cfg_Monitor.AccuracyMeasures;
 
@@ -92,23 +92,29 @@ for midx = 1:length(AccuracyMeasures)
     this_FieldName_IsScaled = sprintf('IsScaled_%s_%s',MatchType,PartitionType);
     Monitor_Values.(this_FieldName_IsScaled) = IsScaled;
 
-[MostCommon,RandomChance] = cgg_getBaselineAccuracyMeasures(TrueValue,Monitor_Values.ClassNames,MatchType_Calc,IsQuaddle);
+[MostCommon,RandomChance,Stratified] = cgg_getBaselineAccuracyMeasures(TrueValue,Monitor_Values.ClassNames,MatchType_Calc,IsQuaddle);
     this_FieldName_MostCommon = sprintf('MostCommon_%s_%s',MatchType,PartitionType);
     this_FieldName_MajorityClass = sprintf('majorityclass_%s_%s',MatchType,PartitionType);
     this_FieldName_RandomChance = sprintf('RandomChance_%s_%s',MatchType,PartitionType);
     this_FieldName_randomchance = sprintf('randomchance_%s_%s',MatchType,PartitionType);
+    this_FieldName_Stratified = sprintf('Stratified_%s_%s',MatchType,PartitionType);
+    this_FieldName_stratified = sprintf('stratified_%s_%s',MatchType,PartitionType);
 
     Monitor_Values.(this_FieldName_MostCommon) = MostCommon;
     Monitor_Values.(this_FieldName_MajorityClass) = MostCommon;
     Monitor_Values.(this_FieldName_RandomChance) = RandomChance;
     Monitor_Values.(this_FieldName_randomchance) = RandomChance;
+    Monitor_Values.(this_FieldName_Stratified) = Stratified;
+    Monitor_Values.(this_FieldName_stratified) = Stratified;
 
     if midx == 1
     this_FieldName_OptimalMostCommon = sprintf('MostCommon_%s_%s','Optimal',PartitionType);
     this_FieldName_OptimalRandomChance = sprintf('RandomChance_%s_%s','Optimal',PartitionType);
+    this_FieldName_OptimalStratified = sprintf('Stratified_%s_%s','Optimal',PartitionType);
     Monitor_Values.OptimalAccuracyMeasure = MatchType;
     Monitor_Values.(this_FieldName_OptimalMostCommon) = MostCommon;
     Monitor_Values.(this_FieldName_OptimalRandomChance) = RandomChance;
+    Monitor_Values.(this_FieldName_OptimalStratified) = Stratified;
     this_FieldName_OptimalIsScaled = sprintf('IsScaled_%s_%s','Optimal',PartitionType);
     Monitor_Values.(this_FieldName_OptimalIsScaled) = IsScaled;
     end

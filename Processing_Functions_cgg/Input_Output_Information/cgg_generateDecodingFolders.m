@@ -13,6 +13,14 @@ else
     end
 end
 
+if isfunction
+WantDirectory = CheckVararginPairs('WantDirectory', true, varargin{:});
+else
+if ~(exist('WantDirectory','var'))
+WantDirectory=true;
+end
+end
+
 cfg=struct();
 
 cfg.TargetDir.path=TargetDir;
@@ -20,13 +28,13 @@ cfg.TargetDir.path=TargetDir;
 
 % Make the All Sessions folder name.
 cfg_tmp=cfg.TargetDir;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Aggregate Data','Aggregate_Data',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Aggregate Data','Aggregate_Data',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir=cfg_tmp;
 %% Epoched Data Folder
 
 % Make the Epoched_Data folder name.
 cfg_tmp=cfg.TargetDir.Aggregate_Data;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Epoched Data','Epoched_Data',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Epoched Data','Epoched_Data',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data=cfg_tmp;
 
 %% Epoch Folder
@@ -38,17 +46,17 @@ if ~isempty(Epoch)
     
 % Make the Epoch folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data;
-[cfg_tmp,~] = cgg_generateFolderAndPath(Epoch,'Epoch',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(Epoch,'Epoch',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data=cfg_tmp;
 
 % Make the Target folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Target','Target',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Target','Target',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 % Make the Data folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Data','Data',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Data','Data',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 if isfunction
@@ -57,7 +65,7 @@ if Data_Normalized
 
 % Make the Normalized Data output folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Data_Normalized','Data_Normalized',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Data_Normalized','Data_Normalized',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 end % End for whether to make the Normalized Data Folder
@@ -69,7 +77,7 @@ if NormalizationInformation
 
 % Make the Normalization Information output folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Normalization Information','NormalizationInformation',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Normalization Information','NormalizationInformation',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 end % End for whether to make the Normalization Information Folder
@@ -77,17 +85,17 @@ end % End for whether this is being called within a function
 
 % Make the Processing folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Processing','Processing',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Processing','Processing',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 % Make the Decoding folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Decoding','Decoding',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Decoding','Decoding',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 % Make the Partition folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Partition','Partition',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Partition','Partition',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 if isfunction
@@ -96,12 +104,12 @@ if ~isempty(Decoder)
 
 % Make the Fold folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Decoding;
-[cfg_tmp,~] = cgg_generateFolderAndPath(Decoder,'Decoder',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(Decoder,'Decoder',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Decoding=cfg_tmp;
 
 % Make the Decoder Plot folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Decoding.Decoder;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Plots','Plots',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Plots','Plots',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Decoding.Decoder=cfg_tmp;
 
 if isfunction
@@ -112,7 +120,7 @@ FoldName=sprintf('Fold_%d',Fold);
 
 % Make the Fold folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Decoding.Decoder;
-[cfg_tmp,~] = cgg_generateFolderAndPath(FoldName,'Fold',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(FoldName,'Fold',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Decoding.Decoder=cfg_tmp;
 
 end % End for whether there exists any input for the Fold
@@ -127,7 +135,7 @@ if ~isempty(Encoding)
 
 % Make the Encoding folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Encoding','Encoding',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Encoding','Encoding',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 if isfunction
@@ -136,7 +144,7 @@ if ~isempty(Target)
 
 % Make the Target folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding;
-[cfg_tmp,~] = cgg_generateFolderAndPath(Target,'Target',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(Target,'Target',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding=cfg_tmp;
 
 if isfunction
@@ -147,7 +155,7 @@ FoldName=sprintf('Fold_%d',Fold);
 
 % Make the Fold folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.Target;
-[cfg_tmp,~] = cgg_generateFolderAndPath(FoldName,'Fold',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(FoldName,'Fold',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.Target=cfg_tmp;
 
 end % End for whether there exists any input for the Fold
@@ -172,13 +180,13 @@ if ~isempty(DistributionType)||~isempty(ImportanceAnalysis)...
 
 % Make the Plot output folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Plots','Plots',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Plots','Plots',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 if ~isempty(PlotFolder)
 % Make the Plot Folder Variance folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots;
-[cfg_tmp,~] = cgg_generateFolderAndPath(PlotFolder,'PlotFolder',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(PlotFolder,'PlotFolder',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots=cfg_tmp;
 
 PlotSubFolder = CheckVararginPairs('PlotSubFolder', '', varargin{:});
@@ -190,7 +198,7 @@ end
 for sidx=1:length(PlotSubFolder)
     SubFolderFieldName=sprintf('SubFolder_%d',sidx);
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots.PlotFolder;
-[cfg_tmp,~] = cgg_generateFolderAndPath(PlotSubFolder{sidx},SubFolderFieldName,cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(PlotSubFolder{sidx},SubFolderFieldName,cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots.PlotFolder=cfg_tmp;
 
 PlotSubSubFolder = CheckVararginPairs('PlotSubSubFolder', '', varargin{:});
@@ -203,7 +211,7 @@ end
 for ssidx=1:length(PlotSubSubFolder)
     SubSubFolderFieldName=sprintf('SubSubFolder_%d',ssidx);
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots.PlotFolder.(SubFolderFieldName);
-[cfg_tmp,~] = cgg_generateFolderAndPath(PlotSubSubFolder{ssidx},SubSubFolderFieldName,cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(PlotSubSubFolder{ssidx},SubSubFolderFieldName,cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots.PlotFolder.(SubFolderFieldName)=cfg_tmp;
 end % End Loop for all subsubfolders folders
 end % End for whether there are plot subsubfolders folders
@@ -214,7 +222,7 @@ end % End for whether there are plot folders
 if ~isempty(ExplainedVariance)
 % Make the Explained Variance folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Explained Variance','ExplainedVariance',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Explained Variance','ExplainedVariance',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots=cfg_tmp;
 
 ExplainedVariance_Zoom = CheckVararginPairs('ExplainedVariance_Zoom', '', varargin{:});
@@ -226,7 +234,7 @@ end
 for zidx=1:length(ExplainedVariance_Zoom)
     ZoomFieldName=sprintf('Zoom_%d',zidx);
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots.ExplainedVariance;
-[cfg_tmp,~] = cgg_generateFolderAndPath(ExplainedVariance_Zoom{zidx},ZoomFieldName,cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(ExplainedVariance_Zoom{zidx},ZoomFieldName,cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots.ExplainedVariance=cfg_tmp;
 end % End Loop for all zoom folders
 end % End for whether there are zoom folders
@@ -235,33 +243,33 @@ end % End for whether there are explained variance folders
 if ~isempty(DistributionType)
 % Make the Data Distribution folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Data Distribution','Distribution',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Data Distribution','Distribution',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots=cfg_tmp;
 end
 
 if ~isempty(ImportanceAnalysis)
 % Make the Importance Analysis folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Importance Analysis','ImportanceAnalysis',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Importance Analysis','ImportanceAnalysis',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots=cfg_tmp;
 
 % Make the Importance Analysis Data folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots.ImportanceAnalysis;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Importance Analysis Data','ImportanceAnalysisData',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Importance Analysis Data','ImportanceAnalysisData',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots.ImportanceAnalysis=cfg_tmp;
 end
 
 if ~isempty(PlotData)
 % Make the PlotData folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Plot Data','PlotData',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Plot Data','PlotData',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots=cfg_tmp;
 end
 
 if ~isempty(Accuracy)
 % Make the Accuracy folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Accuracy','Accuracy',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Accuracy','Accuracy',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Plots=cfg_tmp;
 end
 

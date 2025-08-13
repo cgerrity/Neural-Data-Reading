@@ -303,7 +303,8 @@ while hasdata(MaxMbq) && ~StopChecking
     % disp({'After:While',StopChecking})
 
 [X,T,DataNumber] = next(MaxMbq);
-Encoder=resetState(Encoder);
+% Encoder=resetState(Encoder);
+Encoder=cgg_resetState(Encoder);
 [Y_Encoded] = predict(Encoder,X);
 
 X_Parallel = parallel.pool.Constant(X);
@@ -357,7 +358,7 @@ parfor ridx = 1:NumIA
             this_aidx = this_AreaRemoval(acidx);
             this_X(this_cidx,:,this_aidx,:,:) = 0;
         end
-        % Encoder=resetState(Encoder);
+        % Encoder=cgg_resetState(Encoder);
         % [this_Y_Encoded] = predict(Encoder,this_X);
         [this_Y_Encoded] = cgg_procNetworkPass(this_X,Encoder);
     else
@@ -369,7 +370,7 @@ parfor ridx = 1:NumIA
         this_Y_Encoded(this_LatentRemoval,:,:) = 0;
     end
 
-% Classifier=resetState(Classifier);
+% Classifier=cgg_resetState(Classifier);
 % Y_Classified=cell(NumDimensions,1);
 % [Y_Classified{:},~] = predict(Classifier,this_Y_Encoded,Outputs=OutputNames_Classifier);
 [Y_Classified,~] = cgg_procNetworkPass(this_Y_Encoded,Classifier,'OutputNames',OutputNames_Classifier);

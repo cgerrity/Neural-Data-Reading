@@ -23,10 +23,25 @@ end
 %%
     % Read the file into a table
     EncodingParameters = ReadYaml(filePath,0,true);
+    % disp(filePath)
+    if isempty(EncodingParameters)
+        fprintf('!!! Encoding Parameters File is Empty\n');
+        return
+    end
     EncodingParameters = rmfield(EncodingParameters,'varargin');
     Fold = EncodingParameters.Fold;
 
     EncodingParameters = rmfield(EncodingParameters,'Fold');
+    if isfield(EncodingParameters,'WantSaveOptimalNet')
+    EncodingParameters = rmfield(EncodingParameters,'WantSaveOptimalNet');
+    end
+    
+    if iscell(EncodingParameters.HiddenSizes)
+    EncodingParameters.FirstHiddenSize = EncodingParameters.HiddenSizes{1};
+    else
+    EncodingParameters.FirstHiddenSize = EncodingParameters.HiddenSizes(1);
+    end
+    EncodingParameters.NumberOfLayers = length(EncodingParameters.HiddenSizes);
 
     [FolderPath,~,~] = fileparts(filePath);
     if WantValidation
@@ -38,7 +53,8 @@ end
     % disp(CM_TablePathNameExt);
 
     if isfile(CM_TablePathNameExt)
-        m_CM_Table = matfile(CM_TablePathNameExt,"Writable",false);
+        % m_CM_Table = matfile(CM_TablePathNameExt,"Writable",false);
+        m_CM_Table = load(CM_TablePathNameExt);
         CM_Table = m_CM_Table.CM_Table;
     else
         return
@@ -47,7 +63,8 @@ end
     IterationPathNameExt = fullfile(FolderPath,'CurrentIteration.mat');
 
     if isfile(IterationPathNameExt)
-        m_Iteration= matfile(IterationPathNameExt,"Writable",false);
+        % m_Iteration= matfile(IterationPathNameExt,"Writable",false);
+        m_Iteration= load(IterationPathNameExt);
         Epoch = m_Iteration.Epoch;
     else
         return

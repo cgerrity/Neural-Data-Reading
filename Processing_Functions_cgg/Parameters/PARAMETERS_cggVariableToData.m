@@ -49,6 +49,8 @@ switch VariableSet
         PlotSubFolder = 'Trial Outcome';
     case 'Adaptive Beta'
         PlotSubFolder = 'Adaptive Beta';
+    case 'Prediction Error Category'
+        PlotSubFolder = 'Prediction Error Category';
     case 'ZZZZZZ'
         PlotSubFolder = 'ZZZZZZ';
     otherwise
@@ -112,6 +114,11 @@ switch VariableSet
         Target_Fun=@(x) double(cgg_loadTargetArray(x,'CorrectTrial',true));
     case 'Adaptive Beta'
         Target_Fun=@(x) cgg_loadTargetArray(x,'OtherValue','AdaptiveBeta');
+    case 'Prediction Error Category'
+        PredictionError_Fun=@(x) mean(cgg_loadTargetArray(x,'PredictionError',true));
+        Dimensionality_Fun=@(x) cgg_loadTargetArray(x,'Dimensionality',true);
+        RangeType = 'EqualCount';
+        Target_Fun=@(x) cgg_getPredictionErrorCategory(PredictionError_Fun(x),Dimensionality_Fun(x),RangeType);
     case 'ZZZZZ'
         Target_Fun=@(x) cgg_loadTargetArray(x,'OtherValue','R');
     otherwise

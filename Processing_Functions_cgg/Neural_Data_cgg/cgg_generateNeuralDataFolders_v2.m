@@ -6,6 +6,14 @@ function [cfg] = cgg_generateNeuralDataFolders_v2(probe_area,varargin)
 isfunction=exist('varargin','var');
 
 if isfunction
+WantDirectory = CheckVararginPairs('WantDirectory', true, varargin{:});
+else
+if ~(exist('WantDirectory','var'))
+WantDirectory=true;
+end
+end
+
+if isfunction
 inputfolder = CheckVararginPairs('inputfolder', '', varargin{:});
 if isempty(inputfolder)
     inputfolder = uigetdir(['/Volumes/','Womelsdorf Lab','/DATA_neural'], 'Choose the input data folder');
@@ -44,26 +52,26 @@ cfg.inputfolder.path=inputfolder;
 
 % Make the Experiment and Session output folder names.
 cfg_tmp=cfg.outdatadir;
-[cfg_tmp,~] = cgg_generateFolderAndPath(ExperimentName,'Experiment',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(ExperimentName,'Experiment',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir=cfg_tmp;
 
 cfg_tmp=cfg.outdatadir.Experiment;
-[cfg_tmp,~] = cgg_generateFolderAndPath(SessionName,'Session',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(SessionName,'Session',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir.Experiment=cfg_tmp;
 
 % Make the Activity output folder names.
 cfg_tmp=cfg.outdatadir.Experiment.Session;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Activity','Activity',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Activity','Activity',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir.Experiment.Session=cfg_tmp;
 
 % Make the Parameters folder names.
 cfg_tmp=cfg.outdatadir.Experiment.Session;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Parameters','Parameters',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Parameters','Parameters',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir.Experiment.Session=cfg_tmp;
 
 % Make the Area output folder names.
 cfg_tmp=cfg.outdatadir.Experiment.Session.Activity;
-[cfg_tmp,~] = cgg_generateFolderAndPath(probe_area,'Area',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(probe_area,'Area',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir.Experiment.Session.Activity=cfg_tmp;
 
 % FIXME: EDITTED THIS TO MAKE FOR EASIER FINDING OF ACTIVITY DOUBLE CHECK
@@ -71,24 +79,24 @@ cfg.outdatadir.Experiment.Session.Activity=cfg_tmp;
 
 % Make the Processed Activity output folder names.
 cfg_tmp=cfg.outdatadir.Experiment.Session.Activity.Area;
-[cfg_tmp,~] = cgg_generateFolderAndPath('WideBand','WideBand',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('WideBand','WideBand',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir.Experiment.Session.Activity.Area=cfg_tmp;
 
 cfg_tmp=cfg.outdatadir.Experiment.Session.Activity.Area;
-[cfg_tmp,~] = cgg_generateFolderAndPath('LFP','LFP',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('LFP','LFP',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir.Experiment.Session.Activity.Area=cfg_tmp;
 
 cfg_tmp=cfg.outdatadir.Experiment.Session.Activity.Area;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Spike','Spike',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Spike','Spike',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir.Experiment.Session.Activity.Area=cfg_tmp;
 
 cfg_tmp=cfg.outdatadir.Experiment.Session.Activity.Area;
-[cfg_tmp,~] = cgg_generateFolderAndPath('MUA','MUA',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('MUA','MUA',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir.Experiment.Session.Activity.Area=cfg_tmp;
 
 % Make the Channel Clustering Folder output folder names
 cfg_tmp=cfg.outdatadir.Experiment.Session.Activity.Area;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Connected','Connected',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Connected','Connected',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir.Experiment.Session.Activity.Area=cfg_tmp;
 
 

@@ -215,7 +215,7 @@ InputNet= initialize(NetFull);
 %%
 
 % X_TEST(1,1,1,1,1)=1000;
-% InputNet_Modified = resetState(InputNet_Modified);
+% InputNet_Modified = cgg_resetState(InputNet_Modified);
 % OutputNames_Modified={InputNet_Modified.Layers(:).Name};
 % OutputExample_Modified=cell(1,length(OutputNames_Modified));
 % [OutputExample_Modified{:}]=forward(InputNet_Modified,X_TEST_Modified,Outputs=OutputNames_Modified);

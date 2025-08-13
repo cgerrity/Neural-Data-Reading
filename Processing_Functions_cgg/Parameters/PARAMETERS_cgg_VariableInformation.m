@@ -66,6 +66,11 @@ switch VariableSet
         VariableInformation(2,:) = {0,"Error","text"};
     case 'Adaptive Beta'
         VariableInformation(1,:) = {1,"Adaptive beta","text"};
+    case 'Prediction Error Category'
+        VariableInformation(1,:) = {1,"Low","text"};
+        VariableInformation(2,:) = {2,"Medium","text"};
+        VariableInformation(3,:) = {3,"High","text"};
+        VariableInformation(4,:) = {0,"Unlearned","text"};
     case 'ZZZZZZZ'
         VariableInformation(1,:) = {1,"ZZZZZZZ","text"};
     otherwise

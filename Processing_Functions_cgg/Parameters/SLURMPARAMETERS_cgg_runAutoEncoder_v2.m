@@ -1,42 +1,48 @@
-function cfgSLURM = SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX)
+function [cfgSLURM,IsInccidentalBaseRepeat] = ...
+    SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX)
 %SLURMPARAMETERS_CGG_RUNAUTOENCODER Summary of this function goes here
 %   Detailed explanation goes here
 
 SLURMIDX_Count = 10;
+NotBase = true;
+cfg = PARAMETERS_OPTIMAL_cgg_runAutoEncoder_v2();
 %%
-Fold = 1;
-ModelName = 'GRU';
-DataWidth = 100;
-WindowStride = 50;
-HiddenSizes = [1000,500,250];
-InitialLearningRate = 0.01;
-WeightReconstruction = 100;
-WeightKL = 1;
-WeightClassification = 1;
-MiniBatchSize = 100;
-GradientThreshold=100;
-Subset = true;
-Epoch = 'Decision';
-Target = 'Dimension';
-WeightedLoss = 'Inverse';
-Optimizer = 'ADAM';
-ClassifierName = 'Deep LSTM - Dropout 0.5';
-ClassifierHiddenSize=[250,100,50];
-STDChannelOffset = 0.3;
-STDWhiteNoise = 0.15;
-STDRandomWalk = 0.007;
-NumEpochsAutoEncoder=0;
-NumEpochsFull = 30;
-Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
-LossType_Decoder = 'MSE';
-LossType_Classifier='CrossEntropy';
-maxworkerMiniBatchSize=100;
-L2Factor = 1e-4;
-Dropout = 0.5;
-WantNormalization = false;
-Activation = '';
-IsVariational = true;
-BottleNeckDepth = 1;
+Fold = 2;
+ModelName = cfg.ModelName;
+DataWidth = cfg.DataWidth;
+WindowStride = cfg.WindowStride;
+HiddenSizes = cfg.HiddenSizes;
+InitialLearningRate = cfg.InitialLearningRate;
+WeightReconstruction = cfg.WeightReconstruction;
+WeightKL = cfg.WeightKL;
+WeightClassification = cfg.WeightClassification;
+MiniBatchSize = cfg.MiniBatchSize;
+GradientThreshold=cfg.GradientThreshold;
+Subset = cfg.Subset;
+Epoch = cfg.Epoch;
+Target = cfg.Target;
+WeightedLoss = cfg.WeightedLoss;
+Optimizer = cfg.Optimizer;
+ClassifierName = cfg.ClassifierName;
+ClassifierHiddenSize=cfg.ClassifierHiddenSize;
+STDChannelOffset = cfg.STDChannelOffset;
+STDWhiteNoise = cfg.STDWhiteNoise;
+STDRandomWalk = cfg.STDRandomWalk;
+NumEpochsAutoEncoder=cfg.NumEpochsAutoEncoder;
+NumEpochsFull = cfg.NumEpochsFull;
+Normalization = cfg.Normalization;
+LossType_Decoder = cfg.LossType_Decoder;
+LossType_Classifier=cfg.LossType_Classifier;
+maxworkerMiniBatchSize=cfg.maxworkerMiniBatchSize;
+L2Factor = cfg.L2Factor;
+Dropout = cfg.Dropout;
+WantNormalization = cfg.WantNormalization;
+Activation = cfg.Activation;
+IsVariational = cfg.IsVariational;
+BottleNeckDepth = cfg.BottleNeckDepth;
+WantSaveOptimalNet = cfg.WantSaveOptimalNet;
+
+%%
 
 SLURMDescription = '>>> Current SLURM Aim is %s\n';
 Description = repmat({'Base'},[SLURMIDX_Count,1]);
@@ -52,28 +58,56 @@ NumEpochsAutoEncoder = repmat({NumEpochsAutoEncoder},[SLURMIDX_Count,1]);
 ClassifierName = repmat({ClassifierName},[SLURMIDX_Count,1]);
 HiddenSizes = repmat({HiddenSizes},[SLURMIDX_Count,1]);
 Activation = repmat({Activation},[SLURMIDX_Count,1]);
+WantNormalization = repmat({WantNormalization},[SLURMIDX_Count,1]);
+IsVariational = repmat({IsVariational},[SLURMIDX_Count,1]);
+WeightReconstruction = repmat({WeightReconstruction},[SLURMIDX_Count,1]);
+WeightKL = repmat({WeightKL},[SLURMIDX_Count,1]);
+WeightClassification = repmat({WeightClassification},[SLURMIDX_Count,1]);
+MiniBatchSize = repmat({MiniBatchSize},[SLURMIDX_Count,1]);
 
 CurrentIDX = 1;%FIXME: Issue
     Description{CurrentIDX} = 'Feedforward Network'; % <<<<<<<<
     ModelName{CurrentIDX} = 'Feedforward';
+    WantNormalization{CurrentIDX} = true;
+    % IsVariational{CurrentIDX} = true;
+    % WeightReconstruction{CurrentIDX} = 1; 
+    % WeightKL{CurrentIDX} = 1e-4; 
+    % WeightClassification{CurrentIDX} = 10000;
 CurrentIDX = CurrentIDX +1;% Good
     Description{CurrentIDX} = 'LSTM Network'; % <<<<<<<<
-    ModelName{CurrentIDX} = 'LSTM'; 
+    ModelName{CurrentIDX} = 'LSTM';
+    % WeightReconstruction{CurrentIDX} = 100; 
+    % WeightKL{CurrentIDX} = 1e-4; 
+    % WeightClassification{CurrentIDX} = 1;
 CurrentIDX = CurrentIDX +1;%FIXME: Time
-    Description{CurrentIDX} = 'Convolutional Network - Gradient Accumulation size 10'; % <<<<<<<<
+    Description{CurrentIDX} = 'Convolutional Network - Gradient Accumulation size 25'; % <<<<<<<<
     ModelName{CurrentIDX} = 'Convolutional'; 
-    maxworkerMiniBatchSize{CurrentIDX} = 10;
-    HiddenSizes{CurrentIDX} = [8,16,32];
+    maxworkerMiniBatchSize{CurrentIDX} = 25; % 25 on small GPU at least 20 on big GPU
+    % MiniBatchSize{CurrentIDX} = 5;
+    HiddenSizes{CurrentIDX} = [8,16,32,cfg.HiddenSizes(end)];
+    WantNormalization{CurrentIDX} = 'Instance';
+    % IsVariational{CurrentIDX} = false;
+    % WeightReconstruction{CurrentIDX} = 100; 
+    % WeightKL{CurrentIDX} = 1e-4; 
+    % WeightClassification{CurrentIDX} = 1;
 CurrentIDX = CurrentIDX +1;%FIXME: Time
-    Description{CurrentIDX} = 'Resnet Network - Gradient Accumulation size 10'; % <<<<<<<<
+    Description{CurrentIDX} = 'Resnet Network - Gradient Accumulation size 20'; % <<<<<<<<
     ModelName{CurrentIDX} = 'Resnet';
-    maxworkerMiniBatchSize{CurrentIDX} = 10;
-    HiddenSizes{CurrentIDX} = [8,16,32];
+    maxworkerMiniBatchSize{CurrentIDX} = 20; % 20 on small GPU
+    HiddenSizes{CurrentIDX} = [8,16,32,cfg.HiddenSizes(end)];
+    WantNormalization{CurrentIDX} = 'Instance';
+    % WeightReconstruction{CurrentIDX} = 100; 
+    % WeightKL{CurrentIDX} = 1e-4; 
+    % WeightClassification{CurrentIDX} = 1;
 CurrentIDX = CurrentIDX +1;%FIXME: Time
-    Description{CurrentIDX} = 'Multi-Filter Network - Gradient Accumulation size 10'; % <<<<<<<<
+    Description{CurrentIDX} = 'Multi-Filter Network - Gradient Accumulation size 25'; % <<<<<<<<
     ModelName{CurrentIDX} = 'Multi-Filter Convolutional'; 
-    maxworkerMiniBatchSize{CurrentIDX} = 5;
-    HiddenSizes{CurrentIDX} = [8,16,32]; 
+    maxworkerMiniBatchSize{CurrentIDX} = 25; % 2 on small GPU at least 25 on big GPU
+    HiddenSizes{CurrentIDX} = [8,16,32,cfg.HiddenSizes(end)];
+    WantNormalization{CurrentIDX} = 'Instance';
+    % WeightReconstruction{CurrentIDX} = 100; 
+    % WeightKL{CurrentIDX} = 1e-4; 
+    % WeightClassification{CurrentIDX} = 1;
 CurrentIDX = CurrentIDX +1;% Good
     Description{CurrentIDX} = 'Self-supervised epochs - 10'; % <<<<<<<<
     NumEpochsAutoEncoder{CurrentIDX} = 10;
@@ -291,55 +325,70 @@ WeightKL = repmat({WeightKL},[SLURMIDX_Count,1]);
 WeightClassification = repmat({WeightClassification},[SLURMIDX_Count,1]);
 
 CurrentIDX = 1;%FIXME: Time
-    Description{CurrentIDX} = 'Weights Ratio - 1:1:1 (R:C:K)'; % <<<<<<<<
-    WeightReconstruction{CurrentIDX} = 1; 
-    WeightKL{CurrentIDX} = 1; 
+    Description{CurrentIDX} = 'Reconstruction Weight - 1'; % <<<<<<<<
+    WeightReconstruction{CurrentIDX} = 1;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 1'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 1;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 1'; % <<<<<<<<
     WeightClassification{CurrentIDX} = 1;
 CurrentIDX = CurrentIDX +1;%FIXME: Time
-    Description{CurrentIDX} = 'Weights Ratio - 1:1:1e-4 (R:C:K)'; % <<<<<<<<
-    WeightReconstruction{CurrentIDX} = 1; 
-    WeightKL{CurrentIDX} = 1e-4; 
-    WeightClassification{CurrentIDX} = 1;
+    Description{CurrentIDX} = 'Reconstruction Weight - 2'; % <<<<<<<<
+    WeightReconstruction{CurrentIDX} = 2;
 CurrentIDX = CurrentIDX +1;%FIXME: Time
-    Description{CurrentIDX} = 'Weights Ratio - 2:1:1e-4 (R:C:K)'; % <<<<<<<<
-    WeightReconstruction{CurrentIDX} = 2; 
-    WeightKL{CurrentIDX} = 1e-4; 
-    WeightClassification{CurrentIDX} = 1;
+    Description{CurrentIDX} = 'Reconstruction Weight - 10'; % <<<<<<<<
+    WeightReconstruction{CurrentIDX} = 10;
 CurrentIDX = CurrentIDX +1;%FIXME: Time
-    Description{CurrentIDX} = 'Weights Ratio - 1:2:1e-4 (R:C:K)'; % <<<<<<<<
-    WeightReconstruction{CurrentIDX} = 1; 
-    WeightKL{CurrentIDX} = 1e-4; 
-    WeightClassification{CurrentIDX} = 2;
+    Description{CurrentIDX} = 'Reconstruction Weight - 100'; % <<<<<<<<
+    WeightReconstruction{CurrentIDX} = 100;
 CurrentIDX = CurrentIDX +1;%FIXME: Time
-    Description{CurrentIDX} = 'Weights Ratio - 10:1:1 (R:C:K)'; % <<<<<<<<
-    WeightReconstruction{CurrentIDX} = 10; 
-    WeightKL{CurrentIDX} = 1; 
-    WeightClassification{CurrentIDX} = 1;
+    Description{CurrentIDX} = 'Reconstruction Weight - 1000'; % <<<<<<<<
+    WeightReconstruction{CurrentIDX} = 1000;
 CurrentIDX = CurrentIDX +1;%FIXME: Time
-    Description{CurrentIDX} = 'Weights Ratio - 1:10:1 (R:C:K)'; % <<<<<<<<
-    WeightReconstruction{CurrentIDX} = 1; 
-    WeightKL{CurrentIDX} = 1; 
-    WeightClassification{CurrentIDX} = 10;
+    Description{CurrentIDX} = 'KL Weight - 1e-4'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 1e-4;
 CurrentIDX = CurrentIDX +1;%FIXME: Time
-    Description{CurrentIDX} = 'Weights Ratio - 1:100:1 (R:C:K)'; % <<<<<<<<
-    WeightReconstruction{CurrentIDX} = 1; 
-    WeightKL{CurrentIDX} = 1; 
-    WeightClassification{CurrentIDX} = 100;
+    Description{CurrentIDX} = 'KL Weight - 1e-5'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 1e-5;
 CurrentIDX = CurrentIDX +1;%FIXME: Time
-    Description{CurrentIDX} = 'Weights Ratio - 100:1:1e-4 (R:C:K)'; % <<<<<<<<
-    WeightReconstruction{CurrentIDX} = 100; 
-    WeightKL{CurrentIDX} = 1e-4; 
-    WeightClassification{CurrentIDX} = 1;
-CurrentIDX = CurrentIDX +1;%FIXME: Time
-    Description{CurrentIDX} = 'Weights Ratio - 1:1:1e-3 (R:C:K)'; % <<<<<<<<
-    WeightReconstruction{CurrentIDX} = 1; 
-    WeightKL{CurrentIDX} = 1e-3; 
-    WeightClassification{CurrentIDX} = 1;
-CurrentIDX = CurrentIDX +1;%FIXME: Time
-    Description{CurrentIDX} = 'Weights Ratio - 1:1:1e-2 (R:C:K)'; % <<<<<<<<
-    WeightReconstruction{CurrentIDX} = 1; 
-    WeightKL{CurrentIDX} = 1e-2; 
-    WeightClassification{CurrentIDX} = 1;
+    Description{CurrentIDX} = 'KL Weight - 1e-6'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 1e-6;
+% CurrentIDX = CurrentIDX +1;%FIXME: Time
+%     Description{CurrentIDX} = 'Weights Ratio - 1:1:1e-4 (R:C:K)'; % <<<<<<<<
+%     WeightReconstruction{CurrentIDX} = 1; 
+%     WeightKL{CurrentIDX} = 1e-4; 
+%     WeightClassification{CurrentIDX} = 1;
+% CurrentIDX = CurrentIDX +1;%FIXME: Time
+%     Description{CurrentIDX} = 'Weights Ratio - 2:1:1e-4 (R:C:K)'; % <<<<<<<<
+%     WeightReconstruction{CurrentIDX} = 2; 
+%     WeightKL{CurrentIDX} = 1e-4; 
+%     WeightClassification{CurrentIDX} = 1;
+% CurrentIDX = CurrentIDX +1;%FIXME: Time
+%     Description{CurrentIDX} = 'Weights Ratio - 1:2:1e-4 (R:C:K)'; % <<<<<<<<
+%     WeightReconstruction{CurrentIDX} = 1; 
+%     WeightKL{CurrentIDX} = 1e-4; 
+%     WeightClassification{CurrentIDX} = 2;
+% CurrentIDX = CurrentIDX +1;%FIXME: Time
+%     Description{CurrentIDX} = 'Weights Ratio - 1:10:1 (R:C:K)'; % <<<<<<<<
+%     WeightReconstruction{CurrentIDX} = 1; 
+%     WeightKL{CurrentIDX} = 1; 
+%     WeightClassification{CurrentIDX} = 10;
+% CurrentIDX = CurrentIDX +1;%FIXME: Time
+%     Description{CurrentIDX} = 'Weights Ratio - 1:100:1 (R:C:K)'; % <<<<<<<<
+%     WeightReconstruction{CurrentIDX} = 1; 
+%     WeightKL{CurrentIDX} = 1; 
+%     WeightClassification{CurrentIDX} = 100;
+% CurrentIDX = CurrentIDX +1;%FIXME: Time
+%     Description{CurrentIDX} = 'Weights Ratio - 1:1:1e-3 (R:C:K)'; % <<<<<<<<
+%     WeightReconstruction{CurrentIDX} = 1; 
+%     WeightKL{CurrentIDX} = 1e-3; 
+%     WeightClassification{CurrentIDX} = 1;
+% CurrentIDX = CurrentIDX +1;%FIXME: Time
+%     Description{CurrentIDX} = 'Weights Ratio - 1:1:1e-2 (R:C:K)'; % <<<<<<<<
+%     WeightReconstruction{CurrentIDX} = 1; 
+%     WeightKL{CurrentIDX} = 1e-2; 
+%     WeightClassification{CurrentIDX} = 1;
 
 %% SLURM Choice 8
     case 8
@@ -469,10 +518,112 @@ CurrentIDX = CurrentIDX +1;
     WeightKL{CurrentIDX} = 1e-4; 
     WeightClassification{CurrentIDX} = 100;
 
+%% SLURM Choice 11
+    case 11
+
+ModelName = repmat({ModelName},[SLURMIDX_Count,1]);
+HiddenSizes = repmat({HiddenSizes},[SLURMIDX_Count,1]);
+ClassifierHiddenSize = repmat({ClassifierHiddenSize},[SLURMIDX_Count,1]);
+WeightReconstruction = repmat({WeightReconstruction},[SLURMIDX_Count,1]);
+WeightKL = repmat({WeightKL},[SLURMIDX_Count,1]);
+WeightClassification = repmat({WeightClassification},[SLURMIDX_Count,1]);
+
+CurrentIDX = 1;
+    Description{CurrentIDX} = 'Logistic Regression'; % <<<<<<<<
+    ModelName{CurrentIDX} = 'Logistic Regression';
+CurrentIDX = CurrentIDX +1;
+    Description{CurrentIDX} = 'Hidden Sizes - [250,100,50] - 3 layers ~ Much Lower'; % <<<<<<<<
+    HiddenSizes{CurrentIDX} = [250,100,50];
+CurrentIDX = CurrentIDX +1;
+    Description{CurrentIDX} = 'Small Network with Large Classification Weight'; % <<<<<<<<
+    HiddenSizes{CurrentIDX} = [250];
+    ClassifierHiddenSize{CurrentIDX} = [100];
+    WeightReconstruction{CurrentIDX} = 1; 
+    WeightKL{CurrentIDX} = 1e-4; 
+    WeightClassification{CurrentIDX} = 10000;
+CurrentIDX = CurrentIDX +1;
+    Description{CurrentIDX} = 'PCA'; % <<<<<<<<
+    ModelName{CurrentIDX} = 'PCA';
+
+%% SLURM Choice 12
+    case 12
+
+WeightReconstruction = repmat({WeightReconstruction},[SLURMIDX_Count,1]);
+WeightKL = repmat({WeightKL},[SLURMIDX_Count,1]);
+WeightClassification = repmat({WeightClassification},[SLURMIDX_Count,1]);
+
+CurrentIDX = 1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 2'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 2;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 10'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 10;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 100'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 100;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 1000'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 1000;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 0.1'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 0.1;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 0.1'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 0.1;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 0.01'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 0.01;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 1e-3'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 1e-3;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 10'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 10;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Reconstruction Weight - 0.1'; % <<<<<<<<
+    WeightReconstruction{CurrentIDX} = 0.1;
+
+%% SLURM Choice 13
+    case 13
+
+NumEpochsAutoEncoder = repmat({NumEpochsAutoEncoder},[SLURMIDX_Count,1]);
+
+CurrentIDX = 1;% Good
+    Description{CurrentIDX} = 'Self-supervised epochs - 10'; % <<<<<<<<
+    NumEpochsAutoEncoder{CurrentIDX} = 10;
+CurrentIDX = CurrentIDX +1;% Good
+    Description{CurrentIDX} = 'Self-supervised epochs - 10'; % <<<<<<<<
+    NumEpochsAutoEncoder{CurrentIDX} = 10;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 100'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 100;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 1000'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 1000;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Classification Weight - 0.1'; % <<<<<<<<
+    WeightClassification{CurrentIDX} = 0.1;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 0.1'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 0.1;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 0.01'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 0.01;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 1e-3'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 1e-3;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'KL Weight - 10'; % <<<<<<<<
+    WeightKL{CurrentIDX} = 10;
+CurrentIDX = CurrentIDX +1;%FIXME: Time
+    Description{CurrentIDX} = 'Reconstruction Weight - 0.1'; % <<<<<<<<
+    WeightReconstruction{CurrentIDX} = 0.1;
+
 %% SLURM Choice Default
     otherwise
-
+NotBase = false;
 Fold = {1;2;3;4;5;6;7;8;9;10};
+% WantSaveOptimalNet = repmat({true},[SLURMIDX_Count,1]);
 % NumEpochsFull = 500;
 for idx = 1:length(Description)
 Description{idx} = sprintf('Base Case - Fold %d',Fold{idx});
@@ -489,7 +640,8 @@ VariableNames = {'Fold','ModelName','DataWidth','WindowStride',...
     'STDWhiteNoise','STDRandomWalk','NumEpochsAutoEncoder',...
     'NumEpochsFull','Optimizer','Normalization','LossType_Decoder',...
     'LossType_Classifier','maxworkerMiniBatchSize','L2Factor',...
-    'Dropout','WantNormalization','Activation','IsVariational','BottleNeckDepth'};
+    'Dropout','WantNormalization','Activation','IsVariational',...
+    'BottleNeckDepth','WantSaveOptimalNet'};
 
 %%
 
@@ -507,6 +659,9 @@ for vidx = 1:length(VariableNames)
 
     cfgSLURM.(this_VariableName) = this_Variable;
 end
+
+IsSubset = cgg_isSubsetStruct(cfg,rmfield(cfgSLURM,'Fold'));
+IsInccidentalBaseRepeat = IsSubset && NotBase;
 
 fprintf(SLURMDescription,Description{SLURMIDX});
 

@@ -1,7 +1,15 @@
-function cgg_plotOverallAccuracy(FullTable,cfg)
+function cgg_plotOverallAccuracy(FullTable,cfg,varargin)
 %CGG_PLOTOVERALLACCURACY Summary of this function goes here
 %   Detailed explanation goes here
+isfunction=exist('varargin','var');
 
+if isfunction
+IsAttentional = CheckVararginPairs('IsAttentional', false, varargin{:});
+else
+if ~(exist('IsAttentional','var'))
+IsAttentional=false;
+end
+end
 %%
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
@@ -33,6 +41,19 @@ Y_Limit_Set = [0,0.35];
 Y_Tick_Label_Size = 36;
 Y_Tick_Size = 0.05;
 %%
+WantCombined = ismember('Session Number', FullTable.Properties.VariableNames);
+
+if WantCombined
+    if IsAttentional
+    Y_Limit_Set = [0,0.4];
+    Y_Tick_Size = 0.1;
+    else
+    Y_Limit_Set = [0,0.2];
+    Y_Tick_Size = 0.05;
+    end
+    % CountPerSample = FullTable.NumSessions;
+end
+%%
 
 % Decoders=FullTable.Properties.RowNames;
 LoopNames=FullTable.Properties.RowNames;
@@ -40,12 +61,22 @@ LoopNames=FullTable.Properties.RowNames;
 % [NumDecoders,~]=size(FullTable);
 [NumLoops,~]=size(FullTable);
 
+BarWidth = max([NumLoops,BarWidth]);
+
+if NumLoops > 12
+    X_Tick_Label_Size = 24;
+    ErrorCapSize = ErrorCapSize*(12/NumLoops);
+else
+    X_Tick_Label_Size = Y_Tick_Label_Size;
+end
+
 %%
+cfg.LoopType = cgg_setNaming(cfg.LoopType);
+ExtraSaveTerm = cgg_setNaming(cfg.ExtraSaveTerm);
 
-ExtraSaveTerm=cfg.ExtraSaveTerm;
-
-RandomChance=cfg.RandomChance;
-MostCommon=cfg.MostCommon;
+% RandomChance=cfg.RandomChance;
+% MostCommon=cfg.MostCommon;
+% Stratified=cfg.Stratified;
 
 Accuracy_All=FullTable.(cfg_Names.TableNameAccuracy);
 
@@ -55,14 +86,14 @@ Accuracy_All=FullTable.(cfg_Names.TableNameAccuracy);
 LoopNames_Cat = categorical(LoopNames);
 LoopNames_Cat = reordercats(LoopNames_Cat,LoopNames);
 
-fig_accuracy=figure;
-fig_accuracy.Units="normalized";
-fig_accuracy.Position=[0,0,1,1];
-fig_accuracy.Units="inches";
-fig_accuracy.PaperUnits="inches";
-PlotPaperSize=fig_accuracy.Position;
-PlotPaperSize(1:2)=[];
-fig_accuracy.PaperSize=PlotPaperSize;
+% fig_accuracy=figure;
+% fig_accuracy.Units="normalized";
+% fig_accuracy.Position=[0,0,1,1];
+% fig_accuracy.Units="inches";
+% fig_accuracy.PaperUnits="inches";
+% PlotPaperSize=fig_accuracy.Position;
+% PlotPaperSize(1:2)=[];
+% fig_accuracy.PaperSize=PlotPaperSize;
 
 if NumLoops<8
 PlotColor(1,:)=[0 0.4470 0.7410];
@@ -87,119 +118,131 @@ InvalidPlots = false(NumLoops,1);
 
 % Values=cell(NumDecoders,1);
 % ColorOrder=cell(NumDecoders,1);
-Values=cell(NumLoops,1);
+% Values=cell(NumLoops,1);
 ColorOrder=cell(NumLoops,1);
-%%
-hold on
-% for didx=1:NumDecoders
-for lidx=1:NumLoops
-
-    this_Accuracy=Accuracy_All{lidx};
-
-    if ~isempty(this_Accuracy)
-
-[NumFolds,NumIterations]=size(this_Accuracy);
-
-Y_Value_Final=this_Accuracy(:,NumIterations);
-
-Values{lidx}=Y_Value_Final;
-
-XValues=1:NumIterations;
-YValues=this_Accuracy;
-
-[this_p_Mean,this_p_Error] = cgg_plotLinePlotWithShadedError(XValues,YValues,PlotColor(lidx,:));
-
-    this_p_Mean.LineWidth = Line_Width;
-    % this_p_Mean.DisplayName = Decoders{lidx};
-    this_p_Mean.DisplayName = LoopNames{lidx};
-
-    ColorOrder{lidx}=this_p_Mean.Color;
-
-    p_Mean(lidx)=this_p_Mean;
-    p_Error(lidx)=this_p_Error;
-    else
-        InvalidPlots(lidx)=true;
-    end
-
-    Y_Upper=max([Y_Upper;YValues(:)]);
-    Y_Lower=min([Y_Lower;YValues(:)]);
-
-end
-
-YLimLower=Y_Lower*(1-RangeFactorLower);
-YLimUpper=Y_Upper*(1+RangeFactorUpper);
-
-YLimLower=max([0,YLimLower]);
-YLimUpper=min([1,YLimUpper]);
-
-YLimLower=RangeAccuracyLower;
-YLimUpper=RangeAccuracyUpper;
-
-p_Random=yline(RandomChance);
-p_MostCommon=yline(MostCommon);
-
-p_MostCommon.LineWidth = Line_Width;
-p_Random.LineWidth = Line_Width;
-p_MostCommon.DisplayName = 'Most Common';
-p_Random.DisplayName = 'Random Chance';
-
-% p_Mean(NumDecoders+1)=p_Random;
-p_Mean(NumLoops+1)=p_MostCommon;
-p_Mean(NumLoops+2)=p_Random;
-
-hold off
-
-p_Mean(InvalidPlots)=[];
-p_Error(InvalidPlots)=[];
-
-% ValueNames=Decoders;
+% %%
+% hold on
+% % for didx=1:NumDecoders
+% for lidx=1:NumLoops
+% 
+%     this_Accuracy=Accuracy_All{lidx};
+% 
+%     if ~isempty(this_Accuracy)
+% 
+% [NumFolds,NumIterations]=size(this_Accuracy);
+% 
+% Y_Value_Final=this_Accuracy(:,NumIterations);
+% 
+Values=FullTable.Accuracy;
+% 
+% XValues=1:NumIterations;
+% YValues=this_Accuracy;
+% 
+% [this_p_Mean,this_p_Error] = cgg_plotLinePlotWithShadedError(XValues,YValues,PlotColor(lidx,:));
+% 
+%     this_p_Mean.LineWidth = Line_Width;
+%     % this_p_Mean.DisplayName = Decoders{lidx};
+%     this_p_Mean.DisplayName = LoopNames{lidx};
+% 
+%     ColorOrder{lidx}=this_p_Mean.Color;
+% 
+%     p_Mean(lidx)=this_p_Mean;
+%     p_Error(lidx)=this_p_Error;
+%     else
+%         InvalidPlots(lidx)=true;
+%     end
+% 
+%     Y_Upper=max([Y_Upper;YValues(:)]);
+%     Y_Lower=min([Y_Lower;YValues(:)]);
+% 
+% end
+% 
+% YLimLower=Y_Lower*(1-RangeFactorLower);
+% YLimUpper=Y_Upper*(1+RangeFactorUpper);
+% 
+% YLimLower=max([0,YLimLower]);
+% YLimUpper=min([1,YLimUpper]);
+% 
+% YLimLower=RangeAccuracyLower;
+% YLimUpper=RangeAccuracyUpper;
+% 
+% % p_Random=yline(RandomChance);
+% % p_MostCommon=yline(MostCommon);
+% % p_Stratified=yline(Stratified);
+% 
+% % p_MostCommon.LineWidth = Line_Width;
+% % p_Random.LineWidth = Line_Width;
+% % p_Stratified.LineWidth = Line_Width;
+% % p_MostCommon.DisplayName = 'Most Common';
+% % p_Random.DisplayName = 'Random Chance';
+% % p_Stratified.DisplayName = 'Stratified';
+% 
+% % p_Mean(NumDecoders+1)=p_Random;
+% % p_Mean(NumLoops+1)=p_MostCommon;
+% % p_Mean(NumLoops+2)=p_Random;
+% % p_Mean(NumLoops+3)=p_Stratified;
+% 
+% hold off
+% 
+% p_Mean(InvalidPlots)=[];
+% p_Error(InvalidPlots)=[];
+% 
+% % ValueNames=Decoders;
 ValueNames=LoopNames;
-
-% Values{NumDecoders+1}=RandomChance;
-% ValueNames{NumDecoders+1}='Random Chance';
-% ColorOrder{NumDecoders+1}=p_Random.Color;
-
-Values(InvalidPlots)=[];
-ValueNames(InvalidPlots)=[];
-ColorOrder(InvalidPlots)=[];
-ColorOrder=cell2mat(ColorOrder);
-
-legend(p_Mean,'Location','best','FontSize',Legend_Size);
-
-Y_Name = 'Accuracy';
-if contains(cfg.MatchType,'Scaled')
-Y_Name = 'Normalized Accuracy';
-end
-
-xlabel('Iteration','FontSize',X_Name_Size);
-ylabel(Y_Name,'FontSize',Y_Name_Size);
-Accuracy_Title=sprintf('Accuracy over %d Iterations and %d Folds',NumIterations,NumFolds);
-title(Accuracy_Title,'FontSize',Title_Size);
-
-xticks([1,Tick_Size:Tick_Size:NumIterations]);
-ylim([YLimLower,YLimUpper]);
-ylim([0,1]);
+% 
+% % Values{NumDecoders+1}=RandomChance;
+% % ValueNames{NumDecoders+1}='Random Chance';
+% % ColorOrder{NumDecoders+1}=p_Random.Color;
+% 
+% Values(InvalidPlots)=[];
+% ValueNames(InvalidPlots)=[];
+% ColorOrder(InvalidPlots)=[];
+% ColorOrder=cell2mat(ColorOrder);
+% 
+% legend(p_Mean,'Location','best','FontSize',Legend_Size);
+% 
+% Y_Name = 'Accuracy';
+% if contains(cfg.MatchType,'Scaled')
+% Y_Name = 'Normalized Accuracy';
+% end
+% 
+% xlabel('Iteration','FontSize',X_Name_Size);
+% ylabel(Y_Name,'FontSize',Y_Name_Size);
+% Accuracy_Title=sprintf('Accuracy over %d Iterations and %d Folds',NumIterations,NumFolds);
+% title(Accuracy_Title,'FontSize',Title_Size);
+% 
+% xticks([1,Tick_Size:Tick_Size:NumIterations]);
+% ylim([YLimLower,YLimUpper]);
+% ylim([0,1]);
 
 %%
-
-cfg_Plot = cgg_generateDecodingFolders('TargetDir',cfg.TargetDir,...
-    'Epoch',cfg.Epoch,'Accuracy',true);
-cfg_tmp = cgg_generateDecodingFolders('TargetDir',cfg.ResultsDir,...
-    'Epoch',cfg.Epoch,'Accuracy',true);
+cfg_Sessions = DATA_cggAllSessionInformationConfiguration;
+outdatadir=cfg_Sessions(1).outdatadir;
+TargetDir=outdatadir;
+ResultsDir=cfg_Sessions(1).temporarydir;
+% cfg_Plot = cgg_generateDecodingFolders('TargetDir',cfg.TargetDir,...
+%     'Epoch',cfg.Epoch,'Accuracy',true);
+% cfg_tmp = cgg_generateDecodingFolders('TargetDir',cfg.ResultsDir,...
+%     'Epoch',cfg.Epoch,'Accuracy',true);
+cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+    'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
+cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+    'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
 cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
 
-drawnow;
-
-SavePath=cfg_Plot.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Accuracy.path;
-SaveName=['Accuracy_Over_Iterations' ExtraSaveTerm '_Type_' cfg.LoopType];
-
-SaveNameExt=[SaveName '.pdf'];
-
-SavePathNameExt=[SavePath filesep SaveNameExt];
-
-saveas(fig_accuracy,SavePathNameExt,'pdf');
-
-close all
+% drawnow;
+% 
+% % SavePath=cfg_Plot.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Accuracy.path;
+SavePath = cgg_getDirectory(cfg_Plot.ResultsDir,'SubFolder_1');
+% SaveName=['Accuracy_Over_Iterations' ExtraSaveTerm '_Type_' cfg.LoopType];
+% 
+% SaveNameExt=[SaveName '.pdf'];
+% 
+% SavePathNameExt=[SavePath filesep SaveNameExt];
+% 
+% saveas(fig_accuracy,SavePathNameExt,'pdf');
+% 
+% close all
 
 %% Bar Graph
 
@@ -213,12 +256,12 @@ PlotPaperSize(1:2)=[];
 fig_accuracy_bar.PaperSize=PlotPaperSize;
 
 LabelAngle = 30;
-% ColorOrder = '';
+ColorOrder = PlotColor;
 if length(ValueNames) == 6
 ColorOrder = cfg_Plotting.Rainbow;
 end
 % disp(isempty(ColorOrder))
-[b_Plot] = cgg_plotBarGraphWithError(Values,ValueNames,'ColorOrder',ColorOrder,'X_TickFontSize',Y_Tick_Label_Size,'ErrorLineWidth',Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',true,'LabelAngle',LabelAngle,'InFigure',fig_accuracy_bar,'X_Name','','BarWidth',BarWidth);
+[b_Plot] = cgg_plotBarGraphWithError(Values,ValueNames,'ColorOrder',ColorOrder,'X_TickFontSize',X_Tick_Label_Size,'ErrorLineWidth',Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',true,'LabelAngle',LabelAngle,'InFigure',fig_accuracy_bar,'X_Name','','BarWidth',BarWidth);
 
 % p_MostCommon=yline(MostCommon,"-",'Most Common');
 % p_Random=yline(RandomChance,"-",'Random Chance');
@@ -242,7 +285,8 @@ Y_Label = sprintf('{\\fontsize{%d}%s}',Y_Name_Size,Y_Name);
 % ylabel(Y_Name,'FontSize',Y_Name_Size);
 ylabel(Y_Label);
 
-Bar_Title=sprintf('Accuracy of %s over %d Folds',cfg.LoopTitle,NumFolds);
+% Bar_Title=sprintf('Accuracy of %s over %d Folds',cfg.LoopTitle,NumFolds);
+% Bar_Title=sprintf('Accuracy of %s over %d Folds',cfg.LoopTitle,NumFolds);
 % title(Bar_Title,'FontSize',Title_Size);
 
 % ylim([0,Y_Upper*(1+RangeFactorUpper)]);
@@ -259,15 +303,19 @@ if ~(isempty(Y_Ticks) || any(isnan(Y_Ticks)))
 yticks(Y_Ticks);
 end
 
+
+%%
 drawnow;
-SavePath=cfg_Plot.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Accuracy.path;
-SaveName=['Accuracy_Overall' ExtraSaveTerm '_Type_' cfg.LoopType];
+% SavePath=cfg_Plot.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Accuracy.path;
+% SaveName=['Accuracy_Overall' ExtraSaveTerm '_Type_' cfg.LoopType];
+SaveName=['Peak-Accuracy' ExtraSaveTerm cfg.LoopType];
 
 SaveNameExt=[SaveName '.pdf'];
 
 SavePathNameExt=[SavePath filesep SaveNameExt];
 
-saveas(fig_accuracy_bar,SavePathNameExt,'pdf');
+exportgraphics(fig_accuracy_bar,SavePathNameExt,'ContentType','vector');
+% saveas(fig_accuracy_bar,SavePathNameExt,'pdf');
 
 close all
 

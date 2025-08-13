@@ -9,7 +9,8 @@ CurrentCases = {'Classifier Hidden Size','Classifier','Data Width', ...
     'Batch Size','Model','Data Augmentation','Unsupervised Epochs', ...
     'Optimizer','Normalization','Weighted Loss','Stride', ...
     'Gradient Accumulation Size','Loss Weights','Bottleneck Depth','Dropout', ...
-    'Gradient Threshold','Decoder Loss Type'};
+    'Gradient Threshold','Decoder Loss Type','Layers','Initial Units',...
+    'Classification Weight','KL Weight','Reconstruction Weight','Session'};
 %%
 
 
@@ -25,7 +26,7 @@ switch SweepType
         SweepNameIgnore = "WindowStride";
     case 'Hidden Size'
         SweepName = "HiddenSizes";
-        SweepNameIgnore = "maxworkerMiniBatchSize";
+        SweepNameIgnore = ["maxworkerMiniBatchSize","NumberOfLayers","FirstHiddenSize"];
     case 'Initial Learning Rate'
         SweepName = "InitialLearningRate";
         SweepNameIgnore = [];
@@ -40,7 +41,8 @@ switch SweepType
         SweepNameIgnore = "maxworkerMiniBatchSize";
     case 'Model'
         SweepName = "ModelName";
-        SweepNameIgnore = ["HiddenSizes","maxworkerMiniBatchSize","Activation"];
+        SweepNameIgnore = ["HiddenSizes","maxworkerMiniBatchSize","Activation","FirstHiddenSize","WantNormalization","NumberOfLayers"];
+        % SweepNameIgnore = ["HiddenSizes","maxworkerMiniBatchSize","Activation","WeightReconstruction","WeightClassification","WeightKL","WantNormalization","LossFactorKL","LossFactorReconstruction","FirstHiddenSize"];
     case 'Data Augmentation'
         SweepName = "Normalization";
         SweepNameIgnore = [];
@@ -65,6 +67,15 @@ switch SweepType
     case 'Loss Weights'
         SweepName = ["WeightReconstruction","WeightClassification","WeightKL"];
         SweepNameIgnore = ["LossFactorKL","LossFactorReconstruction"];
+    case 'Reconstruction Weight'
+        SweepName = "WeightReconstruction";
+        SweepNameIgnore = ["LossFactorKL","LossFactorReconstruction"];
+    case 'KL Weight'
+        SweepName = "WeightKL";
+        SweepNameIgnore = ["LossFactorKL","LossFactorReconstruction"];
+    case 'Classification Weight'
+        SweepName = "WeightClassification";
+        SweepNameIgnore = ["LossFactorKL","LossFactorReconstruction"];
     case 'Bottleneck Depth'
         SweepName = "BottleNeckDepth";
         SweepNameIgnore = [];
@@ -77,6 +88,15 @@ switch SweepType
     case 'Decoder Loss Type'
         SweepName = "LossType_Decoder";
         SweepNameIgnore = [];
+    case 'Layers'
+        SweepName = "NumberOfLayers";
+        SweepNameIgnore = ["HiddenSizes"];
+    case 'Initial Units'
+        SweepName = "FirstHiddenSize";
+        SweepNameIgnore = ["HiddenSizes"];
+    case 'Session'
+        SweepName = "Subset";
+        SweepNameIgnore = ["NumEpochsSession","NumEpochsFull"];
     otherwise
         SweepName = [];
         SweepNameIgnore = [];

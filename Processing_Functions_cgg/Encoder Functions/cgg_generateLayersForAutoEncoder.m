@@ -72,16 +72,22 @@ for stidx=NumStacks:-1:1
     this_Decoder_DropOutName=sprintf("dropout_Decoder_%d",stidx);
     this_Decoder_ActivationName=sprintf("activation_Decoder_%d",stidx);
     % this_Decoder_DropOutName=sprintf("dropout_Decoder_%d",stidx);
-    if WantNormalization
-        this_Encoder_NormalizationName=sprintf("normalization_Encoder_%d",stidx);
-        this_Decoder_NormalizationName=sprintf("normalization_Decoder_%d",stidx);
-        
-        this_Encoder_NormalizationLayer = layerNormalizationLayer('Name',this_Encoder_NormalizationName);
-        this_Decoder_NormalizationLayer = layerNormalizationLayer('Name',this_Decoder_NormalizationName);
-    else
-        this_Encoder_NormalizationLayer = [];
-        this_Decoder_NormalizationLayer = [];
-    end
+
+    this_Encoder_NormalizationName=sprintf("normalization_Encoder_%d",stidx);
+    this_Decoder_NormalizationName=sprintf("normalization_Decoder_%d",stidx);
+    this_Encoder_NormalizationLayer = cgg_selectNormalizationLayer(WantNormalization,this_Encoder_NormalizationName);
+    this_Decoder_NormalizationLayer = cgg_selectNormalizationLayer(WantNormalization,this_Decoder_NormalizationName);
+
+    % if WantNormalization
+    %     this_Encoder_NormalizationName=sprintf("normalization_Encoder_%d",stidx);
+    %     this_Decoder_NormalizationName=sprintf("normalization_Decoder_%d",stidx);
+    % 
+    %     this_Encoder_NormalizationLayer = layerNormalizationLayer('Name',this_Encoder_NormalizationName);
+    %     this_Decoder_NormalizationLayer = layerNormalizationLayer('Name',this_Decoder_NormalizationName);
+    % else
+    %     this_Encoder_NormalizationLayer = [];
+    %     this_Decoder_NormalizationLayer = [];
+    % end
 
     switch Activation
         case 'SoftSign'

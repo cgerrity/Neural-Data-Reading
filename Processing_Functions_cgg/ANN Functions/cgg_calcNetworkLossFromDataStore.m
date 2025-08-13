@@ -31,7 +31,8 @@ while hasdata(workerMbq) && ~stopRequest
 
     Iteration = Iteration + 1;
 
-    net=resetState(net);
+    % net=resetState(net);
+    net=cgg_resetState(net);
 
     % Read a mini-batch of data.
     [workerX,workerT] = next(workerMbq);
@@ -42,14 +43,14 @@ while hasdata(workerMbq) && ~stopRequest
 
     if Iteration>1
         % Aggregate the losses on all workers.
-        loss = loss + workerNormalizationFactor*extractdata(workerLoss);
-        LossReconstruction = LossReconstruction + workerNormalizationFactor*extractdata(workerLossReconstruction{1});
-        LossClassification = LossClassification + workerNormalizationFactor*extractdata(workerLossClassification{1});
-        LossKL = LossKL + workerNormalizationFactor*extractdata(workerLossKL{1});
+        loss = loss + workerNormalizationFactor*cgg_extractData(workerLoss);
+        LossReconstruction = LossReconstruction + workerNormalizationFactor*cgg_extractData(workerLossReconstruction{1});
+        LossClassification = LossClassification + workerNormalizationFactor*cgg_extractData(workerLossClassification{1});
+        LossKL = LossKL + workerNormalizationFactor*cgg_extractData(workerLossKL{1});
 
-        UnweigtedLossReconstruction = UnweigtedLossReconstruction + workerNormalizationFactor*extractdata(workerLossReconstruction{2});
-        UnweigtedLossClassification = UnweigtedLossClassification + workerNormalizationFactor*extractdata(workerLossClassification{2});
-        UnweigtedLossKL = UnweigtedLossKL + workerNormalizationFactor*extractdata(workerLossKL{2});
+        UnweigtedLossReconstruction = UnweigtedLossReconstruction + workerNormalizationFactor*cgg_extractData(workerLossReconstruction{2});
+        UnweigtedLossClassification = UnweigtedLossClassification + workerNormalizationFactor*cgg_extractData(workerLossClassification{2});
+        UnweigtedLossKL = UnweigtedLossKL + workerNormalizationFactor*cgg_extractData(workerLossKL{2});
 
         % Aggregate the gradients on all workers.
         Gradients.Value = dlupdate(@cgg_aggregateGradients,workerGradients.Value,{workerNormalizationFactor},Gradients.Value);
@@ -58,14 +59,14 @@ while hasdata(workerMbq) && ~stopRequest
         Window_Prediction = cat(2,Window_TrueValue,workerClassifierOutput{2});
     else
         % Aggregate the losses on all workers.
-        loss = workerNormalizationFactor*extractdata(workerLoss);
-        LossReconstruction = workerNormalizationFactor*extractdata(workerLossReconstruction{1});
-        LossClassification = workerNormalizationFactor*extractdata(workerLossClassification{1});
-        LossKL = workerNormalizationFactor*extractdata(workerLossKL{1});
+        loss = workerNormalizationFactor*cgg_extractData(workerLoss);
+        LossReconstruction = workerNormalizationFactor*cgg_extractData(workerLossReconstruction{1});
+        LossClassification = workerNormalizationFactor*cgg_extractData(workerLossClassification{1});
+        LossKL = workerNormalizationFactor*cgg_extractData(workerLossKL{1});
 
-        UnweigtedLossReconstruction = workerNormalizationFactor*extractdata(workerLossReconstruction{2});
-        UnweigtedLossClassification = workerNormalizationFactor*extractdata(workerLossClassification{2});
-        UnweigtedLossKL = workerNormalizationFactor*extractdata(workerLossKL{2});
+        UnweigtedLossReconstruction = workerNormalizationFactor*cgg_extractData(workerLossReconstruction{2});
+        UnweigtedLossClassification = workerNormalizationFactor*cgg_extractData(workerLossClassification{2});
+        UnweigtedLossKL = workerNormalizationFactor*cgg_extractData(workerLossKL{2});
 
         % Aggregate the gradients on all workers.
         Gradients = workerGradients;
