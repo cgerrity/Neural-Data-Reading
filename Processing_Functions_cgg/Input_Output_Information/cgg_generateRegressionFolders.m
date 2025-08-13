@@ -25,6 +25,14 @@ else
     end
 end
 
+if isfunction
+WantDirectory = CheckVararginPairs('WantDirectory', true, varargin{:});
+else
+if ~(exist('WantDirectory','var'))
+WantDirectory=true;
+end
+end
+
 cfg=struct();
 
 cfg.outdatadir.path=outdatadir;
@@ -34,21 +42,21 @@ cfg.inputfolder.path=inputfolder;
 
 % Make the Experiment and Session output folder names.
 cfg_tmp=cfg.outdatadir;
-[cfg_tmp,~] = cgg_generateFolderAndPath(ExperimentName,'Experiment',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(ExperimentName,'Experiment',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir=cfg_tmp;
 
 cfg_tmp=cfg.outdatadir.Experiment;
-[cfg_tmp,~] = cgg_generateFolderAndPath(SessionName,'Session',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(SessionName,'Session',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir.Experiment=cfg_tmp;
 
 % Make the Activity output folder names.
 cfg_tmp=cfg.outdatadir.Experiment.Session;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Regression','Regression',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Regression','Regression',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir.Experiment.Session=cfg_tmp;
 
 % Make the Area output folder names.
 cfg_tmp=cfg.outdatadir.Experiment.Session.Regression;
-[cfg_tmp,~] = cgg_generateFolderAndPath(probe_area,'Area',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(probe_area,'Area',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.outdatadir.Experiment.Session.Regression=cfg_tmp;
 
 

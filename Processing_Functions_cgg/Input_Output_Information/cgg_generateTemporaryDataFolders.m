@@ -13,6 +13,14 @@ else
     end
 end
 
+if isfunction
+WantDirectory = CheckVararginPairs('WantDirectory', true, varargin{:});
+else
+if ~(exist('WantDirectory','var'))
+WantDirectory=true;
+end
+end
+
 cfg=struct();
 
 cfg.TemporaryDir.path=TemporaryDir;
@@ -20,7 +28,7 @@ cfg.TemporaryDir.path=TemporaryDir;
 
 % Make the All Sessions folder name.
 cfg_tmp=cfg.TemporaryDir;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Aggregate Data','Aggregate_Data',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Aggregate Data','Aggregate_Data',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TemporaryDir=cfg_tmp;
 %% Epoch Folders
 
@@ -31,22 +39,22 @@ if ~isempty(Epoch)
     
 % Make the Epoched_Data folder name.
 cfg_tmp=cfg.TemporaryDir.Aggregate_Data;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Temporary Epoched Data','Epoched_Data',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Temporary Epoched Data','Epoched_Data',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TemporaryDir.Aggregate_Data=cfg_tmp;
     
 % Make the Epoch folder names.
 cfg_tmp=cfg.TemporaryDir.Aggregate_Data.Epoched_Data;
-[cfg_tmp,~] = cgg_generateFolderAndPath(Epoch,'Epoch',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(Epoch,'Epoch',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TemporaryDir.Aggregate_Data.Epoched_Data=cfg_tmp;
 
 % Make the Target folder names.
 cfg_tmp=cfg.TemporaryDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Target','Target',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Target','Target',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TemporaryDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 % Make the Data folder names.
 cfg_tmp=cfg.TemporaryDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Data','Data',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Data','Data',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TemporaryDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 
