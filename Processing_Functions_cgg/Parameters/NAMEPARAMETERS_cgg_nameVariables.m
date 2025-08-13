@@ -43,7 +43,8 @@ ExtraSaveTermAR='AR_%d';
 ExtraSaveTermWindowStride='Stride_%d';
 ExtraSaveTermDataWidth='Width_%d';
 
-ExtraSaveTermFilterColumn='Split';
+% ExtraSaveTermFilterColumn='Split';
+ExtraSaveTermFilterColumn='';
 
 %% Epoch Names
 % Names for the different epochs for the data
