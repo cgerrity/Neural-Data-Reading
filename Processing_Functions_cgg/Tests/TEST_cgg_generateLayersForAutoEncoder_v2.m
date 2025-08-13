@@ -5,9 +5,11 @@ clc; clear; close all;
 %%
 
 HiddenSize = [8,16,32];
+% HiddenSize = [8,16];
 LatentSize = [250];
+WantNormalization = 'Group';
 
-NetworkToView = 'Decoder';
+NetworkToView = 'Encoder';
 Pause_Time = 0;
 
 wantGrouped = false;
@@ -22,11 +24,14 @@ wantGrouped = false;
 % ModelName = 'Variational GRU - Dropout 0.5';
 % ModelName = 'LSTM';
 % ModelName = 'LSTM - Normalized';
-ModelName = 'Convolutional';
+% ModelName = 'Convolutional';
+% ModelName = 'Convolutional-Test';
+% ModelName = 'Resnet';
 % ModelName = 'Multi-Filter Resnet ~ Stride 2 ~ Filter Size {[1,5],[2,10],[4,20]}';
-% ModelName = 'Logistic Regression';
+% ModelName = 'Logistic Regression';o
 % ModelName = 'PCA';
 % ModelName = 'Multi-Filter Convolutional';
+ModelName = 'Convolutional ~ Stride 4 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Offset ~ Feedforward';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh';
@@ -40,10 +45,10 @@ ClassifierName = 'Deep LSTM - Dropout 0.5';
 LossType = 'Classification';
 ClassifierHiddenSize = [500,250];
 
-NumChannels = 2;
+NumChannels = 58;
 DataWidth = 100;
 NumWindows = 59;
-NumAreas = 3;
+NumAreas = 6;
 NumExamples = 4;
 
 NumClasses = [1,4,4,4];
@@ -85,6 +90,7 @@ X_Input = dlarray(X_Input,DataFormat);
 % X_TEST = dlarray(X_TEST,DataFormat);
 %%
 cfg_Encoder = struct();
+cfg_Encoder.WantNormalization = WantNormalization;
 PCAInformation = struct();
 if strcmp(ModelName,'PCA')
 PCAInformation = cgg_getPCAForLayer(X_Input,'WantPerTime',WantPerTime);
@@ -117,12 +123,13 @@ Classifier = cgg_constructClassifierArchitecture(NumClasses,'ClassifierName',Cla
 
 switch NetworkToView
     case 'Encoder'
-        InputNet= initialize(Encoder);
+        InputNet= initialize(Encoder,X_Input);
         X_Network = X_Input;
     case 'Decoder'
-        InputNet= initialize(Decoder);
-        Encoder = initialize(Encoder);
+        Encoder = initialize(Encoder,X_Input);
         X_Network = forward(Encoder,X_Input);
+        Decoder = initialize(Decoder,X_Network);
+        InputNet= initialize(Decoder);
     case 'Classifier'
         InputNet= initialize(Classifier);
         Encoder = initialize(Encoder);

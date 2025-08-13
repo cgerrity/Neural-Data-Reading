@@ -59,6 +59,14 @@ if ~(exist('AugmentEquation','var'))
 AugmentEquation='mX+b+X';
 end
 end
+
+if isfunction
+AugmentFilterHiddenSizes = CheckVararginPairs('AugmentFilterHiddenSizes', 8, varargin{:});
+else
+if ~(exist('AugmentFilterHiddenSizes','var'))
+AugmentFilterHiddenSizes=8;
+end
+end
 %% Augment parameters
 
 switch Transform
@@ -71,9 +79,11 @@ switch Transform
         Activation='';
 end
 
-if ~isempty(BlockNameAddition)
-    BlockNameAddition = "_" + BlockNameAddition;
-end
+% BlockNameAddition_NoUnderscore = BlockNameAddition;
+
+% if ~isempty(BlockNameAddition)
+%     BlockNameAddition = "_" + BlockNameAddition;
+% end
 
 %%
 
@@ -81,6 +91,8 @@ NonUniqueDimension = 1:length(OutputSize);
 NonUniqueDimension(UniqueDimension) = [];
 InputSize_Reshape = OutputSize;
 InputSize_Reshape(NonUniqueDimension) = 1;
+FilterSize = OutputSize;
+FilterSize(UniqueDimension) = 1;
 
 
 NumAugmentValues = WantLearnableOffset + WantLearnableScale;
@@ -125,8 +137,12 @@ AugmentBlock = cgg_generateSimpleBlock(HiddenSize,NaN, ...
     'Coder',"Augment" + BlockNameAddition,'Dropout',Dropout, ...
     'WantNormalization',WantNormalization,'Transform',Transform, ...
     'Activation',Activation);
+Name_Convolution = "convolution_Augment" + BlockNameAddition;
+ConvolutionNumFilters = OutputSize(3)*NumAugmentValues*AugmentFilterHiddenSizes;
+AugmentConvolution = convolution2dLayer(FilterSize(1:2),ConvolutionNumFilters,"Name",Name_Convolution,"WeightsInitializer","he");
 
 AugmentBlock = [LearnableLayer
+    AugmentConvolution
     AugmentBlock
     fullyConnectedLayer(SizeAugmentValues,"Name",FullyConnectedName,"WeightsInitializer","he")];
 

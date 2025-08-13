@@ -81,16 +81,8 @@ switch Transform
             fullyConnectedLayer(HiddenSize,"Name",Name_Transform);
 end
 
-switch WantNormalization
-    case 'Batch'
-        Name_Normalization="normalization" + CoderLevel_Name;
-        NormalizationLayer = batchNormalizationLayer('Name',Name_Normalization);
-    case true
-        Name_Normalization="normalization" + CoderLevel_Name;
-        NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
-    otherwise
-        NormalizationLayer = [];
-end
+Name_Normalization="normalization" + CoderLevel_Name;
+NormalizationLayer = cgg_selectNormalizationLayer(WantNormalization,Name_Normalization);
 
 switch Activation
     case 'SoftSign'

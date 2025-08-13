@@ -24,17 +24,8 @@ end
 
 
 Name_GRU=sprintf("gru_Decoder_%d",DecoderLevel);
-
-switch WantNormalization
-    case 'Batch'
-        Name_Normalization=sprintf("normalization_Decoder_%d",DecoderLevel);
-        NormalizationLayer = batchNormalizationLayer('Name',Name_Normalization);
-    case true
-        Name_Normalization=sprintf("normalization_Decoder_%d",DecoderLevel);
-        NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
-    otherwise
-        NormalizationLayer = [];
-end
+Name_Normalization=sprintf("normalization_Decoder_%d",DecoderLevel);
+NormalizationLayer = cgg_selectNormalizationLayer(WantNormalization,Name_Normalization);
 
 WantDropout = false;
 if Dropout > 0
