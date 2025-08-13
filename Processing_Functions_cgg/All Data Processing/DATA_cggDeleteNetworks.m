@@ -2,9 +2,18 @@
 clc; clear; close all;
 %%
 
+PauseTime = 1800;
+Time_Limit = 32;
+
+Time_Counter = 0;
+
+while Time_Counter < Time_Limit
+Time_Counter = Time_Counter + 1;
+
 SLURMChoice_All = 4;
-SLURMIDX_All = [1,2,3,5,7,9,10];
+SLURMIDX_All = [1,2];
 Fold_All = 1:10;
+Optimality = 'Current';
 
 for cidx = 1:length(SLURMChoice_All)
     for idx = 1:length(SLURMIDX_All)
@@ -91,8 +100,12 @@ cfg_Network = cgg_generateEncoderSubFolders_v2(Encoding_Dir,cfg_Encoder);
 
 %%
 
-cgg_deleteNetworks(cfg_Network,'Optimality','Optimal')
+cgg_deleteNetworks(cfg_Network,'Optimality',Optimality)
 
         end
     end
+end
+
+
+pause(PauseTime);
 end
