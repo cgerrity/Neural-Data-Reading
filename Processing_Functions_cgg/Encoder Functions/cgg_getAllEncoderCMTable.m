@@ -53,7 +53,8 @@ end
     % disp(CM_TablePathNameExt);
 
     if isfile(CM_TablePathNameExt)
-        m_CM_Table = matfile(CM_TablePathNameExt,"Writable",false);
+        % m_CM_Table = matfile(CM_TablePathNameExt,"Writable",false);
+        m_CM_Table = load(CM_TablePathNameExt);
         CM_Table = m_CM_Table.CM_Table;
     else
         return
@@ -62,7 +63,8 @@ end
     IterationPathNameExt = fullfile(FolderPath,'CurrentIteration.mat');
 
     if isfile(IterationPathNameExt)
-        m_Iteration= matfile(IterationPathNameExt,"Writable",false);
+        % m_Iteration= matfile(IterationPathNameExt,"Writable",false);
+        m_Iteration= load(IterationPathNameExt);
         Epoch = m_Iteration.Epoch;
     else
         return

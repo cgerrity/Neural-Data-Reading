@@ -269,7 +269,7 @@ HasDecoder = ~isempty(Decoder);
 HasClassifier = ~isempty(Classifier);
 
 %% Get Initial values
-
+fprintf('*** Getting Initial Values\n');
 % Initialize Epoch and Iteration counters
 [Iteration,Epoch,Run,MaximumValidationAccuracy,...
     MinimumValidationLoss,OptimizerVariables] = ...
@@ -286,14 +286,16 @@ OptimizerVariables = cgg_initializeAllOptimizerVariables(Optimizer,...
     WeightedLoss);
 
 %% Generate Monitors
-
+fprintf('*** Generating Monitors\n');
 MonitorTable = cgg_generateAllMonitors(cfg_Monitor,Run);
+fprintf('*** Initializing Monitors with Training\n');
 Monitor_Values = cgg_initializeMonitorValues([],DataStore_Training,DataFormat,IsQuaddle,cfg_Monitor,'Training');
+fprintf('*** Initializing Monitors with Validation\n');
 Monitor_Values = cgg_initializeMonitorValues(Monitor_Values,DataStore_Validation,DataFormat,IsQuaddle,cfg_Monitor,'Validation');
 Monitor_Values.MaximumValidationAccuracy = MaximumValidationAccuracy;
 Monitor_Values.MinimumValidationLoss = MinimumValidationLoss;
 %% Establish Loss Functions
-
+fprintf('*** Establishing Loss Functions\n');
 ModelLoss_Training = ...
     @(DataStore,Encoder_Net,Decoder_Net,Classifier_Net,...
     LossInformation_Var,WantUpdateLossPrior,WeightKL_Var) ...
@@ -376,7 +378,7 @@ while Epoch <= NumEpochs
         Iteration = Iteration + 1;
         fprintf('~~~ Current Epoch: %d ~~~ Current Iteration: %d\n',Epoch,Iteration);
         LastIteration = (MiniBatchIDX == NumBatches) && (Epoch == NumEpochs);
-        
+
         % Get Datastore for only the mini-batch size desired
         [this_DataStore_Training,SessionName,SessionNumber] = ...
             cgg_getCurrentIterationDataStore(MiniBatchTable,...
@@ -408,6 +410,10 @@ while Epoch <= NumEpochs
 
         if HasDecoder
         % Update Gradient Threshold
+        % GradientThreshold_Decoder = GradientThreshold;
+        % if Epoch <= GradientThresholdEpoch
+        % GradientThreshold_Decoder = GradientThreshold*(10^(Epoch-GradientThresholdEpoch));
+        % end
         Gradients.Decoder = cgg_calcGradientThreshold(Gradients.Decoder,GradientThreshold);
 
         % Update Networks using gradients

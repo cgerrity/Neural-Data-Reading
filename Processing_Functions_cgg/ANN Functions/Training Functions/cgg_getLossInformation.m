@@ -9,6 +9,10 @@ WantWeightedLoss_KL = ~isnan(WeightKL);
 WantWeightedLoss_Classification = ~isnan(WeightClassification);
 WantWeightedLoss_OffsetAndScale = ~isnan(WeightOffsetAndScale);
 
+% if WeightKL == 0
+% Loss_KL = NaN;
+% end
+
 %%
 Loss_Classification = sum(Loss_Classification_PerDimension);
 NumDimensions = length(Loss_Classification_PerDimension);

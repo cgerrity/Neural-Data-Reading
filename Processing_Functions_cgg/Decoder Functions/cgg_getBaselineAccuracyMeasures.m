@@ -5,10 +5,10 @@ function [MostCommon,RandomChance,Stratified] = cgg_getBaselineAccuracyMeasures(
 isfunction=exist('varargin','var');
 
 if isfunction
-NumIterRand = CheckVararginPairs('NumIterRand', 10000, varargin{:});
+NumIterRand = CheckVararginPairs('NumIterRand', 1000, varargin{:});
 else
 if ~(exist('NumIterRand','var'))
-NumIterRand=10000;
+NumIterRand=1000;
 end
 end
 
@@ -23,8 +23,8 @@ end
 %% Random Chance
 
 NumDimensions=length(ClassNames);
-[Dim1,~]=size(TrueValue);
-if Dim1==NumDimensions
+[Dim1,Dim2]=size(TrueValue);
+if Dim1==NumDimensions && Dim2~=NumDimensions
     TrueValue=TrueValue';
 end
 
