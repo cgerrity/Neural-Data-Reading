@@ -142,10 +142,12 @@ end
 end
 
 if isfunction
-WantPreFetch = CheckVararginPairs('WantPreFetch', true, varargin{:});
+w = getCurrentWorker;
+WantPreFetch = CheckVararginPairs('WantPreFetch', isempty(w), varargin{:});
 else
 if ~(exist('WantPreFetch','var'))
-WantPreFetch=true;
+w = getCurrentWorker;
+WantPreFetch=isempty(w);
 end
 end
 %%
@@ -207,6 +209,7 @@ if ~isMATLABReleaseOlderThan("R2024a")
     PreprocessingEnvironment = "serial";
     if WantPreFetch
         PreprocessingEnvironment = "parallel";
+        % PreprocessingEnvironment = "background";
     end
 MaxMbq = minibatchqueue(InDatastore,...
         MiniBatchSize=maxworkerMiniBatchSize,...
@@ -260,8 +263,8 @@ else
     Y_Mean = [];
     Y_logSigmaSq = [];
 end
-if any(contains({Decoder.Layers(:).Name},"reshape_offset_Augment")) || ...
-        any(contains({Decoder.Layers(:).Name},"reshape_scale_Augment")) ...
+if (any(contains({Decoder.Layers(:).Name},"reshape_offset_Augment")) || ...
+        any(contains({Decoder.Layers(:).Name},"reshape_scale_Augment"))) ...
         && ~isnan(WeightOffsetAndScale)
     this_Loss_OffsetAndScale = cgg_lossOffsetAndScale(X,Y_Encoded,Decoder,State,'wantPredict',wantPredict,'WantGradient',WantGradient);
     Loss_OffsetAndScale = Loss_OffsetAndScale + this_Loss_OffsetAndScale*Normalization_Factor;
@@ -334,10 +337,12 @@ if WantGradient
     L2Regularizer = @(grad,param) grad + L2Factor.*param;
     if IsEncoderLearnable
     Gradients.Encoder = dlgradient(LossInformation.Loss_Encoder,Encoder.Learnables);
+    fprintf('??? Encoder Gradient is: %d\n',mean(cellfun(@(x) mean(double(cgg_extractData(x)),"all"),{Gradients.Encoder.Value{:}})));
     Gradients.Encoder = dlupdate(L2Regularizer,Gradients.Encoder,Encoder.Learnables);
     end
     if HasDecoder && IsDecoderLearnable
         Gradients.Decoder = dlgradient(LossInformation.Loss_Encoder,Decoder.Learnables);
+        fprintf('??? Decoder Gradient is: %d\n',mean(cellfun(@(x) mean(double(cgg_extractData(x)),"all"),{Gradients.Decoder.Value{:}})));
         Gradients.Decoder = dlupdate(L2Regularizer,Gradients.Decoder,Decoder.Learnables);
     end
     if HasClassifier && IsClassifierLearnable

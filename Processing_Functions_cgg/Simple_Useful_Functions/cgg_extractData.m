@@ -8,5 +8,8 @@ function Array = cgg_extractData(Array)
 if isdlarray(Array)
 Array = extractdata(Array);
 end
+if isgpuarray(Array)
+Array = gather(Array);
+end
 end
 

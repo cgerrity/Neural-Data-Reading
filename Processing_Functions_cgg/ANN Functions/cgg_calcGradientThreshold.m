@@ -6,7 +6,7 @@ epsilon=0.0000001;
 
 GradientsNew = Gradients;
 
-if isempty(Gradients)
+if isempty(Gradients) || isnan(GradientThreshold)
     return
 end
 
