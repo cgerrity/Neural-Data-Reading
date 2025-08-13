@@ -1,11 +1,23 @@
-function [Encoder,Decoder,Classifier] = cgg_trainAllAutoEncoder_v2(DataStore_Training,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network)
+function [Encoder,Decoder,Classifier] = cgg_trainAllAutoEncoder_v2(DataStore_Training,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network,varargin)
 %CGG_TRAINALLAUTOENCODER Summary of this function goes here
 %   Detailed explanation goes here
+
+isfunction=exist('varargin','var');
+
+if isfunction
+PCAInformation = CheckVararginPairs('PCAInformation', [], varargin{:});
+else
+if ~(exist('PCAInformation','var'))
+PCAInformation=[];
+end
+end
 
 
 MessageUnsupervised = '+++ Unsupervised Training\n';
 MessageSupervised = '+++ Supervised Training\n';
 MessageEnd = '=== End of Run\n';
+MessageDelete_Current = '!!! Deleting Current Run Networks - Keeping Optimal\n';
+MessageDelete_Optimal = '!!! Deleting Optimal Networks - Keeping None\n';
 %%
 
 HiddenSizes=cfg_Encoder.HiddenSizes;
@@ -18,6 +30,7 @@ ModelName=cfg_Encoder.ModelName;
 WeightReconstruction=cfg_Encoder.WeightReconstruction;
 WeightKL=cfg_Encoder.WeightKL;
 WeightClassification=cfg_Encoder.WeightClassification;
+WeightOffsetAndScale=cfg_Encoder.WeightOffsetAndScale;
 RescaleLossEpoch = cfg_Encoder.RescaleLossEpoch;
 WeightedLoss = cfg_Encoder.WeightedLoss;
 ClassifierName = cfg_Encoder.ClassifierName;
@@ -32,6 +45,7 @@ maxworkerMiniBatchSize=cfg_Encoder.maxworkerMiniBatchSize;
 IsQuaddle=cfg_Encoder.IsQuaddle;
 
 WantSaveNet = cfg_Encoder.WantSaveNet;
+WantSaveOptimalNet = cfg_Encoder.WantSaveOptimalNet;
 WantSaveNet_tmp = true;
 
 ValidationFrequency = cfg_Encoder.ValidationFrequency;
@@ -57,6 +71,11 @@ DataSize=size(Example_Data);
 
 InputSize=DataSize(1:3);
 NumWindows=1;
+
+if strcmp(ModelName,'Logistic Regression')
+    HiddenSizes = [];
+    ClassifierName = 'Logistic';
+end
 
 if length(DataSize)>3
 NumWindows=DataSize(4);
@@ -111,7 +130,7 @@ elseif HasAutoEncoder
     m_AutoEncoder_Decoder = matfile(AutoEncoder_DecoderSavePathNameExt,"Writable",false);
     Decoder=m_AutoEncoder_Decoder.Decoder;
 else
-    [Encoder,Decoder] = cgg_constructNetworkArchitecture(ModelName,'InputSize',InputSize,'HiddenSize',HiddenSizes,'cfg_Encoder',cfg_Encoder);
+    [Encoder,Decoder] = cgg_constructNetworkArchitecture(ModelName,'InputSize',InputSize,'HiddenSize',HiddenSizes,'cfg_Encoder',cfg_Encoder,'PCAInformation',PCAInformation);
     Encoder = initialize(Encoder);
     Decoder = initialize(Decoder);
 end
@@ -145,7 +164,25 @@ fprintf(MessageUnsupervised);
     'IterationSaveFrequency',IterationSaveFrequency,...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
     'RescaleLossEpoch',RescaleLossEpoch,'cfg_Monitor',cfg_Monitor, ...
-    'L2Factor',L2Factor);
+    'L2Factor',L2Factor,'WantSaveOptimalNet',WantSaveOptimalNet, ...
+    'WeightOffsetAndScale',WeightOffsetAndScale);
+
+%% Get Optimal Autoencoder
+
+AutoEncoder_Optimal_EncoderSavePathNameExt = [AutoEncoding_Dir filesep 'Encoder-Optimal.mat'];
+AutoEncoder_Optimal_DecoderSavePathNameExt = [AutoEncoding_Dir filesep 'Decoder-Optimal.mat'];
+
+HasAutoEncoder_Optimal = isfile(AutoEncoder_Optimal_EncoderSavePathNameExt) && ...
+    isfile(AutoEncoder_Optimal_DecoderSavePathNameExt);
+
+% Get the optimal autoencoder only if it exists. Otherwise the current
+% autoencoder is used
+if HasAutoEncoder_Optimal
+    m_AutoEncoder_Encoder = matfile(AutoEncoder_Optimal_EncoderSavePathNameExt,"Writable",false);
+    Encoder=m_AutoEncoder_Encoder.Encoder;
+    m_AutoEncoder_Decoder = matfile(AutoEncoder_Optimal_DecoderSavePathNameExt,"Writable",false);
+    Decoder=m_AutoEncoder_Decoder.Decoder;
+end
 
 %% Full Network (Encoder, Decoder, Classifier)
 
@@ -188,11 +225,13 @@ fprintf(MessageSupervised);
     'IterationSaveFrequency',IterationSaveFrequency,...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
     'RescaleLossEpoch',RescaleLossEpoch,'cfg_Monitor',cfg_Monitor, ...
-    'L2Factor',L2Factor);
+    'L2Factor',L2Factor,'WantSaveOptimalNet',WantSaveOptimalNet, ...
+    'WeightOffsetAndScale',WeightOffsetAndScale);
 
 
 %%
 if ~WantSaveNet
+    fprintf(MessageDelete_Current);
     if isfile(FullNetwork_EncoderSavePathNameExt)
         delete(FullNetwork_EncoderSavePathNameExt);
     end
@@ -208,7 +247,32 @@ if ~WantSaveNet
     if isfile(AutoEncoder_DecoderSavePathNameExt)
         delete(AutoEncoder_DecoderSavePathNameExt);
     end
+end
 
+if ~WantSaveOptimalNet
+    AutoEncoder_EncoderSavePathNameExt = [AutoEncoding_Dir filesep 'Encoder-Optimal.mat'];
+    AutoEncoder_DecoderSavePathNameExt = [AutoEncoding_Dir filesep 'Decoder-Optimal.mat'];
+    
+    FullNetwork_EncoderSavePathNameExt = [Encoding_Dir filesep 'Encoder-Optimal.mat'];
+    FullNetwork_DecoderSavePathNameExt = [Encoding_Dir filesep 'Decoder-Optimal.mat'];
+    FullNetwork_ClassifierSavePathNameExt = [Encoding_Dir filesep 'Classifier-Optimal.mat'];
+
+    fprintf(MessageDelete_Optimal);
+    if isfile(FullNetwork_EncoderSavePathNameExt)
+        delete(FullNetwork_EncoderSavePathNameExt);
+    end
+    if isfile(FullNetwork_DecoderSavePathNameExt)
+        delete(FullNetwork_DecoderSavePathNameExt);
+    end
+    if isfile(FullNetwork_ClassifierSavePathNameExt)
+        delete(FullNetwork_ClassifierSavePathNameExt);
+    end
+    if isfile(AutoEncoder_EncoderSavePathNameExt)
+        delete(AutoEncoder_EncoderSavePathNameExt);
+    end
+    if isfile(AutoEncoder_DecoderSavePathNameExt)
+        delete(AutoEncoder_DecoderSavePathNameExt);
+    end
 end
 
 %%

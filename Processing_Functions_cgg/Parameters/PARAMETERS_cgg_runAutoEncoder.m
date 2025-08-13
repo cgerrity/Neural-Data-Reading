@@ -50,11 +50,12 @@ ClassifierHiddenSize=[250,100,50];
 NumEpochsAutoEncoder = 0;
 MiniBatchSize = 100;
 GradientThreshold = 100;
-NumEpochsFull = 30;
+NumEpochsFull = 100;
 InitialLearningRate = 0.01;
 WeightReconstruction = 100;
 WeightKL = 1;
 WeightClassification = 1;
+WeightOffsetAndScale = 0;
 RescaleLossEpoch = 1;
 WeightedLoss = 'Inverse'; % Name of type of weighted loss ['', 'Inverse']
 Optimizer = 'ADAM'; % Name of Optimizer ['ADAM', 'SGD']
@@ -64,6 +65,8 @@ LossType_Classifier='CrossEntropy';
 L2Factor = 1e-4;
 
 maxworkerMiniBatchSize=100;
+
+NumEpochsFull_Final = 1000;
 
 
 %% Data Augmentation Parameters
@@ -90,7 +93,7 @@ wantStratifiedPartition = true;
 MatchType_Accuracy_Measure = 'macroF1';
 
 WantSaveNet = false;
-
+WantSaveOptimalNet = true;
 %% Learning Rate Parameters
 
 LearningRateDecay = 0.9;

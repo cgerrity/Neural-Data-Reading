@@ -12,6 +12,14 @@ LossType_Decoder='MSE';
 end
 end
 
+if isfunction
+WantGradient = CheckVararginPairs('WantGradient', false, varargin{:});
+else
+if ~(exist('WantGradient','var'))
+WantGradient=false;
+end
+end
+
 switch LossType_Decoder
     case 'MSE'
 [Loss_Reconstruction,Loss_KL,Loss_Reconstruction_perchannel] = cgg_lossELBO_v2(Y_Reconstruction,T_Reconstruction,Y_Mean,Y_logSigmaSq);
@@ -20,6 +28,16 @@ switch LossType_Decoder
     otherwise
 [Loss_Reconstruction,Loss_KL,Loss_Reconstruction_perchannel] = cgg_lossELBO_v2(Y_Reconstruction,T_Reconstruction,Y_Mean,Y_logSigmaSq);
 end
+
+%%
+if ~WantGradient
+    Loss_Reconstruction = cgg_extractData(Loss_Reconstruction);
+    Loss_KL = cgg_extractData(Loss_KL);
+    Loss_Reconstruction_perchannel = ...
+        cgg_extractData(Loss_Reconstruction_perchannel);
+end
+
+%%
 
 if isempty(InLoss_Reconstruction) || isnan(InLoss_Reconstruction)
 Loss_Reconstruction = Loss_Reconstruction*Normalization_Factor;

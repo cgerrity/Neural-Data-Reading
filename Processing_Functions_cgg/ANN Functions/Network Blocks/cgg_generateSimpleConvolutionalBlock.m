@@ -75,6 +75,14 @@ if ~(exist('WantResNet','var'))
 WantResNet=false;
 end
 end
+
+if isfunction
+WantPreActivation = CheckVararginPairs('WantPreActivation', false, varargin{:});
+else
+if ~(exist('WantPreActivation','var'))
+WantPreActivation=false;
+end
+end
 %%
 
 % CoderBlock_Name = sprintf("_%s",Coder);
@@ -115,23 +123,30 @@ switch DownSampleMethod
 end
 
 %%
+CropLayer = [];
 
 switch UpSampleMethod
     case 'Transpose Convolution - Point-Wise'
         UpSampleName="transposeconv" + CoderBlock_Name;
         UpSampleLayer = transposedConv2dLayer(FilterSize,NumFilters,"Name",UpSampleName,'Stride',Stride,"Cropping","same","WeightsInitializer","he");
+        % UpSampleLayer = transposedConv2dLayer(FilterSize,NumFilters,"Name",UpSampleName,'Stride',Stride,"Cropping",0,"WeightsInitializer","he");
         CropName="crop" + CoderBlock_Name;
-        UpSampleLayer = [UpSampleLayer
-            cgg_cropLayer(CropName,CropAmount)];
+        % UpSampleLayer = [UpSampleLayer
+        %     cgg_cropLayer(CropName,CropAmount)];
+        CropLayer = cgg_cropLayer(CropName,CropAmount);
         ConvolutionalStride = 1;
         ConvolutionalFilterSize = 1;
+        ConvolutionalFilterSize = Stride*2;
     case 'Transpose Convolution'
         UpSampleName="transposeconv" + CoderBlock_Name;
         UpSampleLayer = transposedConv2dLayer(FilterSize,NumFilters,"Name",UpSampleName,'Stride',Stride,"Cropping","same","WeightsInitializer","he");
+        % UpSampleLayer = transposedConv2dLayer(FilterSize,NumFilters,"Name",UpSampleName,'Stride',Stride,"Cropping",0,"WeightsInitializer","he");
         CropName="crop" + CoderBlock_Name;
-        UpSampleLayer = [UpSampleLayer
-            cgg_cropLayer(CropName,CropAmount)];
+        % UpSampleLayer = [UpSampleLayer
+        %     cgg_cropLayer(CropName,CropAmount)];
+        CropLayer = cgg_cropLayer(CropName,CropAmount);
         ConvolutionalStride = 1;
+        ConvolutionalFilterSize = Stride*2;
     case 'None'
         ConvolutionalStride = 1;
         UpSampleLayer = [];
@@ -149,30 +164,35 @@ ConvolutionalLayer = convolution2dLayer(ConvolutionalFilterSize,NumFilters,"Name
 % else
 %     PointWiseConvolutionLayer = [];
 % end
-
+Name_PreActivation = "activation-pre" + CoderBlock_Name;
 switch Activation
     case 'SoftSign'
         Name_Activation = "activation" + CoderBlock_Name;
         ActivationLayer = softplusLayer("Name",Name_Activation);
+        PreActivationLayer = softplusLayer("Name",Name_PreActivation);
     case 'ReLU'
         Name_Activation = "activation" + CoderBlock_Name;
         ActivationLayer = reluLayer("Name",Name_Activation);
+        PreActivationLayer = reluLayer("Name",Name_PreActivation);
     case 'Leaky ReLU'
         Name_Activation = "activation" + CoderBlock_Name;
         ActivationLayer = leakyReluLayer("Name",Name_Activation);
+        PreActivationLayer = leakyReluLayer("Name",Name_PreActivation);
     case 'GeLU'
         Name_Activation = "activation" + CoderBlock_Name;
         ActivationLayer = geluLayer("Name",Name_Activation);
+        PreActivationLayer = geluLayer("Name",Name_PreActivation);
     otherwise
         ActivationLayer = [];
+        PreActivationLayer = [];
 end
 
-if WantNormalization
-    Name_Normalization="normalization" + CoderBlock_Name;
-    NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
-else
-    NormalizationLayer = [];
+if ~WantPreActivation
+    PreActivationLayer = [];
 end
+
+Name_Normalization="normalization" + CoderBlock_Name;
+NormalizationLayer = cgg_selectNormalizationLayer(WantNormalization,Name_Normalization);
 
 WantDropout = false;
 if Dropout > 0
@@ -197,7 +217,9 @@ end
 
 Block = [
     UpSampleLayer
+    PreActivationLayer
     ConvolutionalLayer
+    CropLayer
     DropoutLayer
     ActivationLayer
     NormalizationLayer

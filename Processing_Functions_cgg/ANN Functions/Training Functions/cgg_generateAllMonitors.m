@@ -513,6 +513,7 @@ end
 
 if cfg_Monitor.WantGradientMonitor
 
+    if cfg_Monitor.WantEncoderGradient 
 TableIDX = TableIDX + 1;
 SaveTerm = '-Encoder';
 [Monitor,DataNames] = cgg_generateGradientMonitor(...
@@ -554,7 +555,9 @@ this_TableRange = TableIDX;
 
 MonitorTable(this_TableRange,:) = this_Monitor;
 
-if cfg_Monitor.WantReconstructionLoss
+    end
+
+if cfg_Monitor.WantReconstructionLoss && cfg_Monitor.WantDecoderGradient 
 TableIDX = TableIDX + 1;
 SaveTerm = '-Decoder';
 [Monitor,DataNames] = cgg_generateGradientMonitor(...

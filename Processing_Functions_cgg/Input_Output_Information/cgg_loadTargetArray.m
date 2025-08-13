@@ -122,6 +122,14 @@ end
 end
 
 if isfunction
+TrialsFromLPCategoryFine = CheckVararginPairs('TrialsFromLPCategoryFine', false, varargin{:});
+else
+if ~(exist('TrialsFromLPCategoryFine','var'))
+TrialsFromLPCategoryFine=false;
+end
+end
+
+if isfunction
 SharedFeatureCoding = CheckVararginPairs('SharedFeatureCoding', false, varargin{:});
 else
 if ~(exist('SharedFeatureCoding','var'))
@@ -142,6 +150,14 @@ SessionName = CheckVararginPairs('SessionName', '', varargin{:});
 else
 if ~(exist('SessionName','var'))
 SessionName=[];
+end
+end
+
+if isfunction
+Block = CheckVararginPairs('Block', false, varargin{:});
+else
+if ~(exist('Block','var'))
+Block=false;
 end
 end
 
@@ -215,12 +231,16 @@ elseif TrialsFromLP
 TargetType='TrialsFromLP';
 elseif TrialsFromLPCategory
 TargetType='TrialsFromLPCategory';
+elseif TrialsFromLPCategoryFine
+TargetType='TrialsFromLPCategoryFine';
 elseif SharedFeatureCoding
 TargetType='SharedFeatureCoding';
 elseif SharedFeature
 TargetType='SharedFeature';
 elseif ~isempty(SessionName)
 TargetType='SessionName';
+elseif Block
+TargetType='Block';
 elseif DataNumber
 TargetType='DataNumber';
 elseif PredictionError
@@ -253,6 +273,8 @@ end
 if PreviousTrialCorrect||AllTargets
     if iscell(Target.PreviousTrialCorrect)
     this_PreviousTrialCorrect=strcmp(Target.PreviousTrialCorrect{1},'True');
+    elseif ischar(Target.PreviousTrialCorrect)
+    this_PreviousTrialCorrect=strcmp(Target.PreviousTrialCorrect,'True');
     else
     this_PreviousTrialCorrect=false;
     end
@@ -330,7 +352,17 @@ this_TrialsFromLP=Target.TrialsFromLP;
 if isnan(this_TrialsFromLP)
 this_TrialsFromLP=-Inf;
 end
-this_TrialsFromLPCategory = cgg_calcTrialsFromLPCategories(this_TrialsFromLP);
+this_TrialsFromLPCategory = cgg_calcTrialsFromLPCategories(this_TrialsFromLP,false);
+end
+
+% Selecting Fine Grain Trials from Learning Point Category
+
+if TrialsFromLPCategoryFine||AllTargets
+this_TrialsFromLP=Target.TrialsFromLP;
+if isnan(this_TrialsFromLP)
+this_TrialsFromLP=-Inf;
+end
+this_TrialsFromLPCategoryFine = cgg_calcTrialsFromLPCategories(this_TrialsFromLP,true);
 end
 
 % Selecting Shared Feature Coding
@@ -349,6 +381,12 @@ end
 
 if ~isempty(SessionName)||AllTargets
 this_SessionName = Target.SessionName;
+end
+
+% Selecting Block Number
+
+if Block||AllTargets
+this_Block=Target.Block;
 end
 
 % Selecting Data Number
@@ -405,12 +443,16 @@ switch TargetType
         Target = this_TrialsFromLP;
     case 'TrialsFromLPCategory'
         Target = this_TrialsFromLPCategory;
+    case 'TrialsFromLPCategoryFine'
+        Target = this_TrialsFromLPCategoryFine;
     case 'SharedFeatureCoding'
         Target = this_SharedFeatureCoding;
     case 'SharedFeature'
         Target = this_SharedFeature;
     case 'SessionName'
         Target = this_SessionName;
+    case 'Block'
+        Target = this_Block;
     case 'DataNumber'
         Target = this_DataNumber;
     case 'PredictionError'
@@ -421,7 +463,7 @@ switch TargetType
         Target = this_OtherValue;
     case 'AllTargets'
         Target=cell(1,2);
-        [Target{1},Target{2}] = cgg_procDataSegmentationGroups(this_Dimension_Each,this_CorrectTrial,this_PreviousTrialCorrect,this_Dimensionality,this_Gain,this_Loss,this_Learned,this_ProbeProcessing,this_TargetFeature,this_ReactionTime,this_TrialChosen,this_SessionName,this_DataNumber,this_SharedFeatureCoding,this_TrialsFromLP,this_TrialsFromLPCategory);
+        [Target{1},Target{2}] = cgg_procDataSegmentationGroups(this_Dimension_Each,this_CorrectTrial,this_PreviousTrialCorrect,this_Dimensionality,this_Gain,this_Loss,this_Learned,this_ProbeProcessing,this_TargetFeature,this_ReactionTime,this_TrialChosen,this_SessionName,this_Block,this_DataNumber,this_SharedFeatureCoding,this_TrialsFromLP,this_TrialsFromLPCategory,this_TrialsFromLPCategoryFine);
     otherwise
 end
 

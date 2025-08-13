@@ -24,13 +24,8 @@ end
 
 
 Name_GRU=sprintf("gru_Decoder_%d",DecoderLevel);
-
-if WantNormalization
-    Name_Normalization=sprintf("normalization_Decoder_%d",DecoderLevel);
-    NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
-else
-    NormalizationLayer = [];
-end
+Name_Normalization=sprintf("normalization_Decoder_%d",DecoderLevel);
+NormalizationLayer = cgg_selectNormalizationLayer(WantNormalization,Name_Normalization);
 
 WantDropout = false;
 if Dropout > 0

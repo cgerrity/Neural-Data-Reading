@@ -1,6 +1,6 @@
 function gradients = aggregateGradients(gradients,factor)
 
-gradients = extractdata(gradients);
+gradients = cgg_extractData(gradients);
 gradients = spmdPlus(factor*gradients);
 
 end

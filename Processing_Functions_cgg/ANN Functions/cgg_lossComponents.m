@@ -1,4 +1,4 @@
-function [LossInformation,CM_Table,Gradients] = cgg_lossComponents(...
+function [LossInformation,CM_Table,Gradients,State] = cgg_lossComponents(...
     Encoder,Decoder,Classifier,InDatastore,varargin)
 %CGG_LOSSCOMPONENTS Summary of this function goes here
 %   Detailed explanation goes here
@@ -102,6 +102,14 @@ end
 end
 
 if isfunction
+WeightOffsetAndScale = CheckVararginPairs('WeightOffsetAndScale', NaN, varargin{:});
+else
+if ~(exist('WeightOffsetAndScale','var'))
+WeightOffsetAndScale=NaN;
+end
+end
+
+if isfunction
 ClassNames = CheckVararginPairs('ClassNames', [], varargin{:});
 else
 if ~(exist('ClassNames','var'))
@@ -132,19 +140,39 @@ if ~(exist('DataType','var'))
 DataType='Training';
 end
 end
+
+if isfunction
+w = getCurrentWorker;
+WantPreFetch = CheckVararginPairs('WantPreFetch', isempty(w), varargin{:});
+else
+if ~(exist('WantPreFetch','var'))
+w = getCurrentWorker;
+WantPreFetch=isempty(w);
+end
+end
 %%
 HasDecoder = ~isempty(Decoder);
 HasClassifier = ~isempty(Classifier);
 
+IsEncoderLearnable = ~isempty(Encoder.Learnables);
+IsDecoderLearnable = true;
+IsClassifierLearnable = true;
+
 %%
+State = struct();
+State.Encoder = Encoder.State;
 
 if HasDecoder
 OutputNames_Decoder = Decoder.OutputNames;
 NumOutputs_Decoder = length(OutputNames_Decoder);
+IsDecoderLearnable = ~isempty(Decoder.Learnables);
+State.Decoder = Decoder.State;
 end
 if HasClassifier
 OutputNames_Classifier = Classifier.OutputNames;
 NumOutputs_Classifier = length(OutputNames_Classifier);
+IsClassifierLearnable = ~isempty(Classifier.Learnables);
+State.Classifier = Classifier.State;
 NumDimensions = NumOutputs_Classifier;
 LossType_Classifier = repmat({'CrossEntropy'},1,NumDimensions);
 LossType_Classifier(contains(OutputNames_Classifier,'CTC')) = {'CTC'};
@@ -157,19 +185,51 @@ Loss_Reconstruction = NaN;
 Loss_KL = NaN;
 Loss_Reconstruction_PerArea = NaN;
 Loss_Classification_PerDimension = NaN;
+Loss_OffsetAndScale = 0;
 CM_Table = NaN;
 
 %%
 
+if ~(IsEncoderLearnable || IsDecoderLearnable)
+WeightReconstruction=NaN;
+WeightKL=NaN;
+end
+if ~IsEncoderLearnable
+    Encoder = initialize(Encoder);
+end
+if ~IsDecoderLearnable
+    Decoder = initialize(Decoder);
+end
+if ~IsClassifierLearnable
+    Classifier = initialize(Classifier);
+end
+
+%%
+if ~isMATLABReleaseOlderThan("R2024a")
+    PreprocessingEnvironment = "serial";
+    if WantPreFetch
+        PreprocessingEnvironment = "parallel";
+        % PreprocessingEnvironment = "background";
+    end
 MaxMbq = minibatchqueue(InDatastore,...
         MiniBatchSize=maxworkerMiniBatchSize,...
-        MiniBatchFormat=DataFormat);
+        MiniBatchFormat=DataFormat,...
+        PreprocessingEnvironment=PreprocessingEnvironment,...
+        OutputEnvironment="auto");
+else
+MaxMbq = minibatchqueue(InDatastore,...
+        MiniBatchSize=maxworkerMiniBatchSize,...
+        MiniBatchFormat=DataFormat,...
+        DispatchInBackground=WantPreFetch,...
+        OutputEnvironment="auto");
+end
 NumTrials=numpartitions(InDatastore);
 
 %%
-
+NumPasses = 0;
 while hasdata(MaxMbq)
-
+NumPasses = NumPasses + 1;
+% fprintf('??? Current gradient aggregation pass through is %d\n',NumPasses);
 [X,T,DataNumber] = next(MaxMbq);
 
 Normalization_Factor = length(DataNumber)/NumTrials;
@@ -179,20 +239,22 @@ T_Reconstruction = X;
 
 %% Encoder
 Encoder=resetState(Encoder);
+Encoder = cgg_updateState(Encoder,State.Encoder);
 if wantPredict
-    [Y_Encoded] = predict(Encoder,X);
+    [Y_Encoded,~] = predict(Encoder,X);
 else
-    [Y_Encoded] = forward(Encoder,X);
+    [Y_Encoded,State.Encoder] = forward(Encoder,X);
 end
 
 %% Decoder
 if HasDecoder
     Decoder=resetState(Decoder);
+    Decoder = cgg_updateState(Decoder,State.Decoder);
     Y_Decoded=cell(NumOutputs_Decoder,1);
 if wantPredict
     [Y_Decoded{:},~] = predict(Decoder,Y_Encoded,Outputs=OutputNames_Decoder);
 else
-    [Y_Decoded{:},~] = forward(Decoder,Y_Encoded,Outputs=OutputNames_Decoder);
+    [Y_Decoded{:},State.Decoder] = forward(Decoder,Y_Encoded,Outputs=OutputNames_Decoder);
 end
 if any(contains(OutputNames_Decoder,'mean')) && any(contains(OutputNames_Decoder,'log-variance'))
 Y_Mean = Y_Decoded{contains(OutputNames_Decoder,'mean')};
@@ -201,32 +263,42 @@ else
     Y_Mean = [];
     Y_logSigmaSq = [];
 end
+if (any(contains({Decoder.Layers(:).Name},"reshape_offset_Augment")) || ...
+        any(contains({Decoder.Layers(:).Name},"reshape_scale_Augment"))) ...
+        && ~isnan(WeightOffsetAndScale)
+    this_Loss_OffsetAndScale = cgg_lossOffsetAndScale(X,Y_Encoded,Decoder,State,'wantPredict',wantPredict,'WantGradient',WantGradient);
+    Loss_OffsetAndScale = Loss_OffsetAndScale + this_Loss_OffsetAndScale*Normalization_Factor;
+else
+    Loss_OffsetAndScale = NaN;
+end
 Y_Reconstruction = Y_Decoded{contains(OutputNames_Decoder,'Decoder')};
 
+if IsEncoderLearnable || IsDecoderLearnable
 [Loss_Reconstruction,Loss_KL,Loss_Reconstruction_PerArea] = ...
     cgg_getDecoderOutputs(Y_Reconstruction,Y_Mean,Y_logSigmaSq,...
     T_Reconstruction,Loss_Reconstruction,Loss_KL,...
     Loss_Reconstruction_PerArea,Normalization_Factor,...
-    'LossType_Decoder',LossType_Decoder);
+    'LossType_Decoder',LossType_Decoder,'WantGradient',WantGradient);
+end
 
 end
 
 %% Classifier
 if HasClassifier
     Classifier=resetState(Classifier);
+    Classifier = cgg_updateState(Classifier,State.Classifier);
     Y_Classified=cell(NumDimensions,1);
-
 if wantPredict
     [Y_Classified{:},~] = predict(Classifier,Y_Encoded,Outputs=OutputNames_Classifier);
 else
-    [Y_Classified{:},~] = forward(Classifier,Y_Encoded,Outputs=OutputNames_Classifier);
+    [Y_Classified{:},State.Classifier] = forward(Classifier,Y_Encoded,Outputs=OutputNames_Classifier);
 end
 
 [Loss_Classification_PerDimension,CM_Table] = cgg_getClassifierOutputsFromProbabilities(...
     T_Classified,Y_Classified,ClassNames,DataNumber,...
     Loss_Classification_PerDimension,CM_Table,Normalization_Factor,...
     'IsQuaddle',IsQuaddle,'wantLoss',wantLoss,'Weights',Weights,...
-    'LossType',LossType_Classifier);
+    'LossType',LossType_Classifier,'WantGradient',WantGradient);
 
 end
 
@@ -240,38 +312,53 @@ end
 
 [LossInformation] = cgg_getLossInformation(Loss_Reconstruction,...
     Loss_KL,Loss_Reconstruction_PerArea,...
-    Loss_Classification_PerDimension,LossInformation,...
-    WantUpdateLossPrior,WeightReconstruction,WeightKL,WeightClassification);
+    Loss_Classification_PerDimension,Loss_OffsetAndScale, ...
+    LossInformation,WantUpdateLossPrior,WeightReconstruction, ...
+    WeightKL,WeightClassification,WeightOffsetAndScale);
 
-%% Get Loss
-
-Loss_Decoder = LossInformation.Loss_Decoder;
-Loss_Classifier = LossInformation.Loss_Classifier;
-Loss_Encoder = LossInformation.Loss_Encoder;
+% %% Get Loss
+% 
+% Loss_Decoder = LossInformation.Loss_Decoder;
+% Loss_Classifier = LossInformation.Loss_Classifier;
+% Loss_Encoder = LossInformation.Loss_Encoder;
 
 %%
-Gradients_Encoder = [];
-Gradients_Decoder = [];
-Gradients_Classifier = [];
+% Gradients_Encoder = [];
+% Gradients_Decoder = [];
+% Gradients_Classifier = [];
+
+Gradients = struct();
+Gradients.Encoder = [];
+Gradients.Decoder = [];
+Gradients.Classifier = [];
 
 if WantGradient
     %Regularize gradients
     L2Regularizer = @(grad,param) grad + L2Factor.*param;
-    Gradients_Encoder = dlgradient(Loss_Encoder,Encoder.Learnables);
-    Gradients_Encoder = dlupdate(L2Regularizer,Gradients_Encoder,Encoder.Learnables);
-    if HasDecoder
-        Gradients_Decoder = dlgradient(Loss_Decoder,Decoder.Learnables);
-        Gradients_Decoder = dlupdate(L2Regularizer,Gradients_Decoder,Decoder.Learnables);
+    if IsEncoderLearnable
+    Gradients.Encoder = dlgradient(LossInformation.Loss_Encoder,Encoder.Learnables);
+    fprintf('??? Encoder Gradient is: %d\n',mean(cellfun(@(x) mean(double(cgg_extractData(x)),"all"),{Gradients.Encoder.Value{:}})));
+    Gradients.Encoder = dlupdate(L2Regularizer,Gradients.Encoder,Encoder.Learnables);
     end
-    if HasClassifier
-        Gradients_Classifier = dlgradient(Loss_Classifier,Classifier.Learnables);
-        Gradients_Classifier = dlupdate(L2Regularizer,Gradients_Classifier,Classifier.Learnables);
+    if HasDecoder && IsDecoderLearnable
+        Gradients.Decoder = dlgradient(LossInformation.Loss_Encoder,Decoder.Learnables);
+        fprintf('??? Decoder Gradient is: %d\n',mean(cellfun(@(x) mean(double(cgg_extractData(x)),"all"),{Gradients.Decoder.Value{:}})));
+        Gradients.Decoder = dlupdate(L2Regularizer,Gradients.Decoder,Decoder.Learnables);
+    end
+    if HasClassifier && IsClassifierLearnable
+        Gradients.Classifier = dlgradient(LossInformation.Loss_Encoder,Classifier.Learnables);
+        Gradients.Classifier = dlupdate(L2Regularizer,Gradients.Classifier,Classifier.Learnables);
     end
 end
 
-Gradients = struct();
-Gradients.Encoder = Gradients_Encoder;
-Gradients.Decoder = Gradients_Decoder;
-Gradients.Classifier = Gradients_Classifier;
+% No gradient is calculated after this point so this will only add to the
+% memory requirements if it is passed as a dlarray
+LossInformation.Loss_Encoder = ...
+    cgg_extractData(LossInformation.Loss_Encoder);
+LossInformation.Loss_Decoder = ...
+    cgg_extractData(LossInformation.Loss_Decoder);
+LossInformation.Loss_Classifier = ...
+    cgg_extractData(LossInformation.Loss_Classifier);
+
 end
 

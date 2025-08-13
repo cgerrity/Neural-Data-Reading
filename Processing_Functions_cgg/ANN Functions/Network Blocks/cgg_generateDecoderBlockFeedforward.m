@@ -35,13 +35,8 @@ end
 Name_FullyConnected=sprintf("fc_Decoder_%d",DecoderLevel);
 Name_Activation=sprintf("activation_Decoder_%d",DecoderLevel);
 
-if WantNormalization
-    Name_Normalization=sprintf("normalization_Decoder_%d",DecoderLevel);
-    NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
-else
-    NormalizationLayer = [];
-end
-
+Name_Normalization=sprintf("normalization_Decoder_%d",DecoderLevel);
+NormalizationLayer = cgg_selectNormalizationLayer(WantNormalization,Name_Normalization);
 
 switch Activation
     case 'SoftSign'

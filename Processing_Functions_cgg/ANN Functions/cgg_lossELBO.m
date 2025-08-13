@@ -9,8 +9,8 @@ reconstructionLoss = mse(Y,T);
 KL = -0.5 * sum(1 + logSigmaSq - mu.^2 - exp(logSigmaSq),1);
 KL = mean(KL);
 
-Maximum_Loss_Reconstruction=max(extractdata(reconstructionLoss),[],"all");
-Maximum_Loss_KL=max(extractdata(KL),[],"all");
+Maximum_Loss_Reconstruction=max(cgg_extractData(reconstructionLoss),[],"all");
+Maximum_Loss_KL=max(cgg_extractData(KL),[],"all");
 
 Message_Loss=sprintf('Reconstruction Loss: %f, KL Loss: %f',Maximum_Loss_Reconstruction,Maximum_Loss_KL);
 disp(Message_Loss);

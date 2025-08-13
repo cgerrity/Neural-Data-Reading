@@ -12,7 +12,7 @@ this_Batch = BatchIDX;
 IsDataWidth1 = size(Y_Reconstruction_Training,2) == 1;
 
 this_Y_Reconstruction_Training = Y_Reconstruction_Training(this_Channel,:,this_Area,this_Batch,:);
-this_Y_Reconstruction_Training = double(extractdata(this_Y_Reconstruction_Training));
+this_Y_Reconstruction_Training = double(cgg_extractData(this_Y_Reconstruction_Training));
 this_Y_Reconstruction_Training = squeeze(this_Y_Reconstruction_Training);
 if IsDataWidth1
     this_Y_Reconstruction_Training = num2cell(this_Y_Reconstruction_Training,2);
@@ -21,12 +21,12 @@ else
 end
 
 this_T_Reconstruction_Training = T_Reconstruction_Training(this_Channel,:,this_Area,this_Batch,:);
-this_T_Reconstruction_Training = double(extractdata(this_T_Reconstruction_Training));
+this_T_Reconstruction_Training = double(cgg_extractData(this_T_Reconstruction_Training));
 this_T_Reconstruction_Training = squeeze(this_T_Reconstruction_Training);
 this_T_Reconstruction_Training = num2cell(this_T_Reconstruction_Training,1);
 
 this_Y_Reconstruction_Validation = Y_Reconstruction_Validation(this_Channel,:,this_Area,this_Batch,:);
-this_Y_Reconstruction_Validation = double(extractdata(this_Y_Reconstruction_Validation));
+this_Y_Reconstruction_Validation = double(cgg_extractData(this_Y_Reconstruction_Validation));
 this_Y_Reconstruction_Validation = squeeze(this_Y_Reconstruction_Validation);
 if IsDataWidth1
     this_Y_Reconstruction_Validation = num2cell(this_Y_Reconstruction_Validation,2);
@@ -35,7 +35,7 @@ else
 end
 
 this_T_Reconstruction_Validation = T_Reconstruction_Validation(this_Channel,:,this_Area,this_Batch,:);
-this_T_Reconstruction_Validation = double(extractdata(this_T_Reconstruction_Validation));
+this_T_Reconstruction_Validation = double(cgg_extractData(this_T_Reconstruction_Validation));
 this_T_Reconstruction_Validation = squeeze(this_T_Reconstruction_Validation);
 this_T_Reconstruction_Validation = num2cell(this_T_Reconstruction_Validation,1);
 
@@ -63,8 +63,8 @@ WantDimensions = ~isempty(Y_Classification_Training);
 
 if WantDimensions
 if NumDimensions~=0
-FeaturesTrueTraining=squeeze(extractdata(T_Classification_Training(:,this_Batch,:)));
-FeaturesTrueValidation=squeeze(extractdata(T_Classification_Validation(:,this_Batch,:)));
+FeaturesTrueTraining=squeeze(cgg_extractData(T_Classification_Training(:,this_Batch,:)));
+FeaturesTrueValidation=squeeze(cgg_extractData(T_Classification_Validation(:,this_Batch,:)));
 end
 
 
@@ -76,11 +76,11 @@ for didx = 1:NumDimensions
 
    this_Data_Classification_Training = Y_Classification_Training{didx};
    this_Data_Classification_Training = this_Data_Classification_Training(:,this_Batch,:);
-   this_Data_Classification_Training = double(extractdata(this_Data_Classification_Training));
+   this_Data_Classification_Training = double(cgg_extractData(this_Data_Classification_Training));
 
    this_Data_Classification_Validation = Y_Classification_Validation{didx};
    this_Data_Classification_Validation = this_Data_Classification_Validation(:,this_Batch,:);
-   this_Data_Classification_Validation = double(extractdata(this_Data_Classification_Validation));
+   this_Data_Classification_Validation = double(cgg_extractData(this_Data_Classification_Validation));
 
    PlotUpdate_Training = [];
    PlotUpdate_Validation = [];
@@ -107,8 +107,8 @@ end
 % disp(size(T_Classification_Training))
 
 % if NumDimensions~=0
-% FeaturesTrueTraining=squeeze(extractdata(T_Classification_Training(:,this_Batch,:)));
-% FeaturesTrueValidation=squeeze(extractdata(T_Classification_Validation(:,this_Batch,:)));
+% FeaturesTrueTraining=squeeze(cgg_extractData(T_Classification_Training(:,this_Batch,:)));
+% FeaturesTrueValidation=squeeze(cgg_extractData(T_Classification_Validation(:,this_Batch,:)));
 % end
 
 SubTitle_Training = 'Training: [%d';

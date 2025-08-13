@@ -35,8 +35,8 @@ Monitor_Values.Gradients_PreThreshold = Gradients_PreThreshold;
 % Monitor_Values.iteration = iteration;
 % Monitor_Values.learningrate = learningrate;
 % 
-% Monitor_Values.lossTraining = extractdata(LossInformation_Training.Loss_Encoder);
-% Monitor_Values.lossValidation = extractdata(LossInformation_Validation.Loss_Encoder);
+% Monitor_Values.lossTraining = cgg_extractData(LossInformation_Training.Loss_Encoder);
+% Monitor_Values.lossValidation = cgg_extractData(LossInformation_Validation.Loss_Encoder);
 % 
 % AccuracyMeasures = cfg_Monitor.AccuracyMeasures;
 % for midx = 1:length(AccuracyMeasures)
@@ -107,7 +107,7 @@ HasValidationCM_Table = istable(CM_Table_Validation);
 
 if ~isempty(Classifier)
     if HasValidationCM_Table
-    [~,~,WindowAccuracyValidation] = cgg_procConfusionMatrixWindowsFromTable(CM_Table_Validation,Monitor_Values.ClassNames,'MatchType',Monitor_Values.OptimalAccuracyMeasure,'IsQuaddle',Monitor_Values.IsQuaddle,'RandomChance',Monitor_Values.RandomChance_Optimal_Validation,'MostCommon',Monitor_Values.MostCommon_Optimal_Validation);
+    [~,~,WindowAccuracyValidation] = cgg_procConfusionMatrixWindowsFromTable(CM_Table_Validation,Monitor_Values.ClassNames,'MatchType',Monitor_Values.OptimalAccuracyMeasure,'IsQuaddle',Monitor_Values.IsQuaddle,'RandomChance',Monitor_Values.RandomChance_Optimal_Validation,'MostCommon',Monitor_Values.MostCommon_Optimal_Validation,'Stratified',Monitor_Values.Stratified_Optimal_Validation);
     if max(WindowAccuracyValidation) > Monitor_Values.MaximumValidationAccuracy
         IsOptimal = true;
         Monitor_Values.MaximumValidationAccuracy = max(WindowAccuracyValidation);
@@ -115,7 +115,8 @@ if ~isempty(Classifier)
     end
 else
     if HasValidationLoss
-    this_loss = extractdata(LossInformation_Validation.Loss_Encoder);
+        this_loss = ...
+            cgg_extractData(LossInformation_Validation.Loss_Encoder);
     if this_loss < Monitor_Values.MinimumValidationLoss
         IsOptimal = true;
         Monitor_Values.MinimumValidationLoss = this_loss;

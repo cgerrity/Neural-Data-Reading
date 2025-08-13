@@ -107,7 +107,7 @@ ExtraSaveTerm=[ExtraSaveTerm '_' sprintf(ExtraSaveTermAR,ARModelOrder)];
 % ExtraSaveTerm=[ExtraSaveTerm '_' 'AR'];
 end
 if ~isempty(FilterColumn)
-ExtraSaveTerm=[ExtraSaveTerm '_' ExtraSaveTermFilterColumn ...
+ExtraSaveTerm=[ExtraSaveTerm ExtraSaveTermFilterColumn ...
     sprintf('_%s',string(FilterColumn))];
 end
 

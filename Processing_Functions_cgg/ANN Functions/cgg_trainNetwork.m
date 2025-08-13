@@ -79,6 +79,14 @@ end
 end
 
 if isfunction
+WeightOffsetAndScale = CheckVararginPairs('WeightOffsetAndScale', NaN, varargin{:});
+else
+if ~(exist('WeightOffsetAndScale','var'))
+WeightOffsetAndScale=NaN;
+end
+end
+
+if isfunction
 GradientThreshold = CheckVararginPairs('GradientThreshold', 1, varargin{:});
 else
 if ~(exist('GradientThreshold','var'))
@@ -159,6 +167,22 @@ end
 end
 
 if isfunction
+WeightEpochRamp = CheckVararginPairs('WeightEpochRamp', 10, varargin{:});
+else
+if ~(exist('WeightEpochRamp','var'))
+WeightEpochRamp=10;
+end
+end
+
+if isfunction
+WeightDelayEpoch = CheckVararginPairs('WeightDelayEpoch', 15, varargin{:});
+else
+if ~(exist('WeightDelayEpoch','var'))
+WeightDelayEpoch=15;
+end
+end
+
+if isfunction
 WantSaveNet = CheckVararginPairs('WantSaveNet', false, varargin{:});
 else
 if ~(exist('WantSaveNet','var'))
@@ -214,6 +238,22 @@ L2Factor=1e-4;
 end
 end
 
+if isfunction
+WantFullBatch = CheckVararginPairs('WantFullBatch', false, varargin{:});
+else
+if ~(exist('WantFullBatch','var'))
+WantFullBatch=false;
+end
+end
+
+if isfunction
+WantSaveOptimalNet = CheckVararginPairs('WantSaveOptimalNet', true, varargin{:});
+else
+if ~(exist('WantSaveOptimalNet','var'))
+WantSaveOptimalNet=true;
+end
+end
+
 MessageAlreadyTrained = '!!! Network trained to maximum number of epochs\n';
 
 %% No Epochs
@@ -229,7 +269,7 @@ HasDecoder = ~isempty(Decoder);
 HasClassifier = ~isempty(Classifier);
 
 %% Get Initial values
-
+fprintf('*** Getting Initial Values\n');
 % Initialize Epoch and Iteration counters
 [Iteration,Epoch,Run,MaximumValidationAccuracy,...
     MinimumValidationLoss,OptimizerVariables] = ...
@@ -246,51 +286,58 @@ OptimizerVariables = cgg_initializeAllOptimizerVariables(Optimizer,...
     WeightedLoss);
 
 %% Generate Monitors
-
+fprintf('*** Generating Monitors\n');
 MonitorTable = cgg_generateAllMonitors(cfg_Monitor,Run);
+fprintf('*** Initializing Monitors with Training\n');
 Monitor_Values = cgg_initializeMonitorValues([],DataStore_Training,DataFormat,IsQuaddle,cfg_Monitor,'Training');
+fprintf('*** Initializing Monitors with Validation\n');
 Monitor_Values = cgg_initializeMonitorValues(Monitor_Values,DataStore_Validation,DataFormat,IsQuaddle,cfg_Monitor,'Validation');
 Monitor_Values.MaximumValidationAccuracy = MaximumValidationAccuracy;
 Monitor_Values.MinimumValidationLoss = MinimumValidationLoss;
 %% Establish Loss Functions
-
+fprintf('*** Establishing Loss Functions\n');
 ModelLoss_Training = ...
     @(DataStore,Encoder_Net,Decoder_Net,Classifier_Net,...
-    LossInformation_Var,WantUpdateLossPrior) ...
+    LossInformation_Var,WantUpdateLossPrior,WeightKL_Var) ...
     cgg_lossComponents(Encoder_Net,Decoder_Net,Classifier_Net,...
     DataStore,'Weights',Weights,'DataFormat',DataFormat,...
     'wantPredict',false,'wantLoss',true,'IsQuaddle',IsQuaddle,...
     'WantGradient',true,'WantUpdateLossPrior',WantUpdateLossPrior,...
     'LossInformation',LossInformation_Var,...
-    'WeightReconstruction',WeightReconstruction,'WeightKL',WeightKL,...
+    'WeightReconstruction',WeightReconstruction,'WeightKL',WeightKL_Var,...
     'WeightClassification',WeightClassification,...
     'ClassNames',ClassNames,'LossType_Decoder',LossType_Decoder,...
     'DataType','Training',...
-    'maxworkerMiniBatchSize',maxworkerMiniBatchSize,'L2Factor',L2Factor);
+    'maxworkerMiniBatchSize',maxworkerMiniBatchSize, ...
+    'L2Factor',L2Factor,'WeightOffsetAndScale',WeightOffsetAndScale);
 ModelLoss_Validation = ...
-    @(Encoder_Net,Decoder_Net,Classifier_Net,LossInformation_Var) ...
+    @(Encoder_Net,Decoder_Net,Classifier_Net,LossInformation_Var,...
+    WeightKL_Var) ...
     cgg_lossComponents(Encoder_Net,Decoder_Net,Classifier_Net,...
     DataStore_Validation,'Weights',Weights,'DataFormat',DataFormat,...
     'wantPredict',true,'wantLoss',true,'IsQuaddle',IsQuaddle,...
     'WantGradient',false,'WantUpdateLossPrior',false,...
     'LossInformation',LossInformation_Var,...
-    'WeightReconstruction',WeightReconstruction,'WeightKL',WeightKL,...
+    'WeightReconstruction',WeightReconstruction,'WeightKL',WeightKL_Var,...
     'WeightClassification',WeightClassification,...
     'ClassNames',ClassNames,'LossType_Decoder',LossType_Decoder,...
     'DataType','Validation',...
-    'maxworkerMiniBatchSize',maxworkerMiniBatchSize,'L2Factor',L2Factor);
+    'maxworkerMiniBatchSize',maxworkerMiniBatchSize, ...
+    'L2Factor',L2Factor,'WeightOffsetAndScale',WeightOffsetAndScale);
 ModelLoss_Testing = ...
-    @(Encoder_Net,Decoder_Net,Classifier_Net,LossInformation_Var) ...
+    @(Encoder_Net,Decoder_Net,Classifier_Net,LossInformation_Var,...
+    WeightKL_Var) ...
     cgg_lossComponents(Encoder_Net,Decoder_Net,Classifier_Net,...
     DataStore_Testing,'Weights',Weights,'DataFormat',DataFormat,...
     'wantPredict',true,'wantLoss',false,'IsQuaddle',IsQuaddle,...
     'WantGradient',false,'WantUpdateLossPrior',false,...
     'LossInformation',LossInformation_Var,...
-    'WeightReconstruction',WeightReconstruction,'WeightKL',WeightKL,...
+    'WeightReconstruction',WeightReconstruction,'WeightKL',WeightKL_Var,...
     'WeightClassification',WeightClassification,...
     'ClassNames',ClassNames,'LossType_Decoder',LossType_Decoder,...
     'DataType','Testing',...
-    'maxworkerMiniBatchSize',maxworkerMiniBatchSize,'L2Factor',L2Factor);
+    'maxworkerMiniBatchSize',maxworkerMiniBatchSize, ...
+    'L2Factor',L2Factor,'WeightOffsetAndScale',WeightOffsetAndScale);
 
 %% Training
 
@@ -308,12 +355,17 @@ while Epoch <= NumEpochs
         InitialLearningRate,LearningRateDecay,LearningRateEpochDrop,...
         LearningRateEpochRamp);
 
+    % Anneal KL Weight
+    WeightKL_Anneal = cgg_annealWeight(Epoch,WeightKL,...
+        WeightDelayEpoch,WeightEpochRamp);
+
     % Shuffle the DataStore for training
     DataStore_Training = shuffle(DataStore_Training);
 
     % Get the mini-batch table for this training epoch
     [MiniBatchTable,NumBatches] = ...
-    cgg_procAllSessionMiniBatchTable(DataStore_Training,MiniBatchSize);
+    cgg_procAllSessionMiniBatchTable(DataStore_Training,MiniBatchSize,...
+    WantFullBatch);
 
     % Shuffle the mini-batches from the mini-batch table
     MiniBatchTable = MiniBatchTable(randperm(size(MiniBatchTable,1)),:);
@@ -324,6 +376,8 @@ while Epoch <= NumEpochs
     while HasData
         MiniBatchIDX = MiniBatchIDX + 1;
         Iteration = Iteration + 1;
+        fprintf('~~~ Current Epoch: %d ~~~ Current Iteration: %d\n',Epoch,Iteration);
+        LastIteration = (MiniBatchIDX == NumBatches) && (Epoch == NumEpochs);
 
         % Get Datastore for only the mini-batch size desired
         [this_DataStore_Training,SessionName,SessionNumber] = ...
@@ -331,10 +385,17 @@ while Epoch <= NumEpochs
             MiniBatchIDX,DataStore_Training);
     
         %% Calculate Loss and Gradients
-        [LossInformation_Training,CM_Table_Training,Gradients] = ...
-            dlfeval(ModelLoss_Training,this_DataStore_Training,...
-            Encoder,Decoder,Classifier,...
-            LossInformation_Training,WantUpdateLossPrior);
+        %FIXME: Gradient accumulation can be performed by looping over this
+        %step
+        % [LossInformation_Training,CM_Table_Training,Gradients,State] = ...
+        %     dlfeval(ModelLoss_Training,this_DataStore_Training,...
+        %     Encoder,Decoder,Classifier,...
+        %     LossInformation_Training,WantUpdateLossPrior,WeightKL_Anneal);
+        [LossInformation_Training,CM_Table_Training,Gradients,State] = ...
+            cgg_procGradientAggregation(ModelLoss_Training, ...
+            this_DataStore_Training,Encoder,Decoder,Classifier, ...
+            LossInformation_Training,WantUpdateLossPrior, ...
+            WeightKL_Anneal,maxworkerMiniBatchSize);
         WantUpdateLossPrior = false;
     
         %% Update Gradient Threshold
@@ -344,14 +405,22 @@ while Epoch <= NumEpochs
         % Update Networks using gradients
         [Encoder,OptimizerVariables.Encoder] = cgg_procUpdateNetworks(...
             Encoder,Gradients.Encoder,LearningRate,Optimizer,OptimizerVariables.Encoder);
+        % Update state
+        Encoder = cgg_updateState(Encoder,State.Encoder);
 
         if HasDecoder
         % Update Gradient Threshold
+        % GradientThreshold_Decoder = GradientThreshold;
+        % if Epoch <= GradientThresholdEpoch
+        % GradientThreshold_Decoder = GradientThreshold*(10^(Epoch-GradientThresholdEpoch));
+        % end
         Gradients.Decoder = cgg_calcGradientThreshold(Gradients.Decoder,GradientThreshold);
 
         % Update Networks using gradients
         [Decoder,OptimizerVariables.Decoder] = cgg_procUpdateNetworks(...
             Decoder,Gradients.Decoder,LearningRate,Optimizer,OptimizerVariables.Decoder);
+        % Update state
+        Decoder = cgg_updateState(Decoder,State.Decoder);
         end
 
         if HasClassifier
@@ -361,13 +430,15 @@ while Epoch <= NumEpochs
         % Update Networks using gradients
         [Classifier,OptimizerVariables.Classifier] = cgg_procUpdateNetworks(...
             Classifier,Gradients.Classifier,LearningRate,Optimizer,OptimizerVariables.Classifier);
+        % Update state
+        Classifier = cgg_updateState(Classifier,State.Classifier);
         end
 
         %% Get Measures
 
-        if mod(Iteration,ValidationFrequency)==1 || FirstIteration || ValidationFrequency == 1
-        [LossInformation_Validation,CM_Table_Validation,~] = ...
-            ModelLoss_Validation(Encoder,Decoder,Classifier,LossInformation_Training);
+        if mod(Iteration,ValidationFrequency)==1 || FirstIteration || ValidationFrequency == 1 || LastIteration
+        [LossInformation_Validation,CM_Table_Validation,~,~] = ...
+            ModelLoss_Validation(Encoder,Decoder,Classifier,LossInformation_Training,WeightKL_Anneal);
         FirstIteration = false;
         else
             LossInformation_Validation = [];
@@ -381,9 +452,14 @@ while Epoch <= NumEpochs
             LossInformation_Training,LossInformation_Validation,...
             CM_Table_Training,CM_Table_Validation,...
             Gradients,Gradients_PreThreshold);
-
+        %% Only Get Optimal Network for Annealed Weights  
+        if Epoch < WeightDelayEpoch + WeightEpochRamp
+            IsOptimal = false;
+            Monitor_Values.MaximumValidationAccuracy = -Inf;
+            Monitor_Values.MinimumValidationLoss = Inf;
+        end
         %%
-        SaveAll = mod(Iteration,SaveFrequency)==1 || SaveFrequency == 1;
+        SaveAll = mod(Iteration,SaveFrequency)==1 || SaveFrequency == 1 || LastIteration;
         cgg_updateAllMonitors(MonitorTable,Monitor_Values,SaveAll);
 
         %% Save Monitors when optimal condition is met
@@ -396,15 +472,16 @@ while Epoch <= NumEpochs
 
         %% Save Networks
         SaveNetwork = WantSaveNet && SaveAll;
+        SaveOptimal = WantSaveOptimalNet && IsOptimal;
         cgg_saveNetworks(Encoder,Decoder,Classifier,SaveNetwork,...
-            SaveDir,IsOptimal);
+            SaveDir,SaveOptimal);
 
         %% Save Validation Information
         cgg_saveValidationCMTable(CM_Table_Validation,IsOptimal,SaveDir);
 
         %% Save Testing Information
         cgg_saveCMTableFromSeparateNetwork(ModelLoss_Testing,...
-            Encoder,Decoder,Classifier,LossInformation_Training,...
+            Encoder,Decoder,Classifier,LossInformation_Training,WeightKL_Anneal,...
             IsOptimal,SaveDir);
 
         %% Save Iteration Parameters

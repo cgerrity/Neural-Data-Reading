@@ -38,6 +38,10 @@ end
 
 %%
 
+if strcmp(NetworkType,'Logistic')
+ClassifierHiddenSize = 1;
+end
+
 Depth = length(ClassifierHiddenSize);
 IsDeepClassifier = false;
 if Depth > 1
@@ -139,6 +143,9 @@ for didx=1:NumDimensions
         case 'Feedforward'
             this_Layer_Before = [fullyConnectedLayer(this_HiddenSize,"Name",this_Out_LayerName_FullyConnected)];
             this_Layer_After = [reluLayer("Name",this_Out_LayerName_Activation)];
+        case 'Logistic'
+            this_Layer_Before = [];
+            this_Layer_After = [];
         otherwise
     end
 

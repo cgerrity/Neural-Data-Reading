@@ -29,6 +29,14 @@ cfg_Encoder=struct();
 end
 end
 
+if isfunction
+PCAInformation = CheckVararginPairs('PCAInformation', [], varargin{:});
+else
+if ~(exist('PCAInformation','var'))
+PCAInformation=[];
+end
+end
+
 %% Parameters for Testing
 
 % NumBatches = 10;
@@ -40,6 +48,13 @@ end
 
 cfg = PARAMETERS_cgg_constructNetworkArchitecture(ArchitectureType);
 cfg.InputSize = InputSize;
+
+% cfg.WantLearnableScale = true;
+% cfg.WantLearnableOffset = true;
+
+if strcmp(ArchitectureType,'Logistic Regression')
+    HiddenSize = [];
+end
 
 %%
 
@@ -64,10 +79,29 @@ if isfield(cfg_Encoder,'BottleNeckDepth')
 cfg.BottleNeckDepth = cfg_Encoder.BottleNeckDepth;
 end
 
+% if isfield(cfg_Encoder,'WantLearnableScale')
+% cfg.WantLearnableScale = cfg_Encoder.WantLearnableScale;
+% end
+% 
+% if isfield(cfg_Encoder,'WantLearnableOffset')
+% cfg.WantLearnableOffset = cfg_Encoder.WantLearnableOffset;
+% end
+
+%%
+
+if ~isempty(PCAInformation)
+cfg.PCAInformation = PCAInformation;
+end
 %%
 
 HiddenSizeAutoEncoder = HiddenSize(1:end-1);
+if ~isempty(HiddenSize)
 HiddenSizeBottleNeck = HiddenSize(end);
+else
+HiddenSizeBottleNeck = [];
+end
+
+cfg.HiddenSizeBottleNeck = HiddenSizeBottleNeck;
 
 RemoveNaNFunc = @(x) cgg_setNaNToValue(x,0);
 
@@ -80,10 +114,16 @@ InputEncoderBlock = layerGraph(InputEncoderBlock);
 [PreDecoderBlock,DecoderBlocks,PostDecoderBlock] = ...
     cgg_selectDecoder(HiddenSizeAutoEncoder,cfg);
 
-if cfg.IsVariational
+if cfg.IsVariational && ~(strcmp(ArchitectureType,'Logistic Regression')...
+        || strcmp(ArchitectureType,'PCA'))
+    
     PreDecoderBlock = [ cgg_samplingLayer("Name",'SamplingLayer')
         PreDecoderBlock];
     HiddenSizeBottleNeck = HiddenSizeBottleNeck*2;
+end
+
+if strcmp(ArchitectureType,'PCA')
+    HiddenSizeBottleNeck = cfg.PCAInformation.OutputDimension;
 end
 
 if ~(isempty(PreDecoderBlock))
@@ -93,16 +133,17 @@ end
 if cfg.OutputFullyConnected
 PostDecoderBlock = [
     PostDecoderBlock
-    fullyConnectedLayer(prod(InputSize,"all"),"Name","fc_Decoder_Out")
-    functionLayer(@(X) dlarray(X,"CBTSS"),Formattable=true,Acceleratable=true,Name="Function_Decoder")];
+    fullyConnectedLayer(prod(InputSize,"all"),"Name","fc_Decoder_Out")];
+    % functionLayer(@(X) dlarray(X,"CBTSS"),Formattable=true,Acceleratable=true,Name="Function_Decoder")];
 end
 
-if ~(isempty(PostDecoderBlock))
+if ~(isempty(PostDecoderBlock)) && ~(isa(PostDecoderBlock,'nnet.cnn.LayerGraph') || isa(PostDecoderBlock,'dlnetwork'))
 PostDecoderBlock = layerGraph(PostDecoderBlock);
 end
 
 if cfg.needReshape
-    OutputBlock = [reshapeLayer_2("reshape_Decoder",InputSize)];
+    OutputBlock = [functionLayer(@(X) dlarray(X,"CBTSS"),Formattable=true,Acceleratable=true,Name="Function_Decoder")
+        reshapeLayer_2("reshape_Decoder",InputSize)];
     OutputBlock = layerGraph(OutputBlock);
 else
     OutputBlock = [];
@@ -110,10 +151,21 @@ end
 
 BottleNeck = cgg_selectBottleNeck(HiddenSizeBottleNeck,cfg);
 
+if ~isempty(HiddenSizeBottleNeck)
 InputDecoderBlock = sequenceInputLayer(HiddenSizeBottleNeck,"Name","Input_Decoder");
+else
+InputDecoderBlock = sequenceInputLayer(prod(InputSize),"Name","Input_Decoder");
+end
 
 InputDecoderBlock = layerGraph(InputDecoderBlock);
 
+% if cfg.WantLearnableScale || cfg.WantLearnableOffset
+%     UniqueDimension = [1,3];
+%     AugmentBlock = cgg_generateAugmentBlock(HiddenSizeAugment,InputSize,cfg.WantLearnableScale,cfg.WantLearnableOffset,"_Decoder",cfg,'UniqueDimension',UniqueDimension);
+%     [Destination_Augment,~,~,~] = cgg_identifyUnconnectedLayers(AugmentBlock);
+%     Destination_Augment_Target = Destination_Augment{contains(Destination_Augment,'target')};
+%     Destination_Augment_Learnable = Destination_Augment{contains(Destination_Augment,'learnable')};
+% end
 
 %%
 Encoder = InputEncoderBlock;
@@ -134,6 +186,7 @@ end
 Decoder = InputDecoderBlock;
 if ~isempty(PreDecoderBlock)
 Decoder = cgg_connectLayerGraphs(Decoder,PreDecoderBlock);
+% [~,Source_Augment_Learnable,~,~] = cgg_identifyUnconnectedLayers(Decoder);
 end
 if ~isempty(DecoderBlocks)
 Decoder = cgg_connectLayerGraphs(Decoder,DecoderBlocks);
@@ -144,6 +197,13 @@ end
 if ~isempty(OutputBlock)
 Decoder = cgg_connectLayerGraphs(Decoder,OutputBlock);
 end
+
+% if cfg.WantLearnableScale || cfg.WantLearnableOffset
+% [~,Source_Augment_Target,~,~] = cgg_identifyUnconnectedLayers(Decoder);
+% Decoder = cgg_combineLayerGraphs(Decoder,AugmentBlock);
+% Decoder = connectLayers(Decoder,Source_Augment_Learnable{1},Destination_Augment_Learnable);
+% Decoder = connectLayers(Decoder,Source_Augment_Target{1},Destination_Augment_Target);
+% end
 
 % Decoder = [InputDecoderBlock
 %             PreDecoderBlock

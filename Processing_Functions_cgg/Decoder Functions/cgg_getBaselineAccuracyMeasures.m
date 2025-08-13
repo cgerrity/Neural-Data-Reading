@@ -1,14 +1,14 @@
-function [MostCommon,RandomChance] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchType,IsQuaddle,varargin)
+function [MostCommon,RandomChance,Stratified] = cgg_getBaselineAccuracyMeasures(TrueValue,ClassNames,MatchType,IsQuaddle,varargin)
 %CGG_GETBASELINEACCURACYMEASURES Summary of this function goes here
 %   Detailed explanation goes here
 
 isfunction=exist('varargin','var');
 
 if isfunction
-NumIterRand = CheckVararginPairs('NumIterRand', 2000, varargin{:});
+NumIterRand = CheckVararginPairs('NumIterRand', 1000, varargin{:});
 else
 if ~(exist('NumIterRand','var'))
-NumIterRand=2000;
+NumIterRand=1000;
 end
 end
 
@@ -20,9 +20,11 @@ Weights=[];
 end
 end
 
+%% Random Chance
+
 NumDimensions=length(ClassNames);
-[Dim1,~]=size(TrueValue);
-if Dim1==NumDimensions
+[Dim1,Dim2]=size(TrueValue);
+if Dim1==NumDimensions && Dim2~=NumDimensions
     TrueValue=TrueValue';
 end
 
@@ -37,6 +39,15 @@ end
 RandomChance(idx) = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType,'Weights',Weights);
 end
 RandomChance=mean(RandomChance);
+%% Stratified
+
+Stratified=NaN(1,NumIterRand);
+parfor idx=1:NumIterRand
+Prediction = TrueValue(randperm(size(TrueValue, 1)), :);
+Stratified(idx) = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType,'Weights',Weights);
+end
+Stratified=mean(Stratified);
+%% Most Common
 
 switch MatchType
     case 'exact'
@@ -71,6 +82,8 @@ MostCommonPrediction=ModeTarget;
             MostCommonPrediction=PredictionTMP;
         end
 end
+
+%%
 
 Prediction=repmat(MostCommonPrediction,NumTrials,1);
 MostCommon = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType,'Weights',Weights);

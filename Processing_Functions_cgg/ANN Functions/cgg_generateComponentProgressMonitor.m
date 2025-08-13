@@ -551,6 +551,7 @@ monitor.DataNames = DataNames;
             % this_Tile.YLim = [this_Log_Min,this_Log_Max];
 
             this_Tile.YLim = cgg_getPlotRangeFromData_v2(this_LogGroupValues,0,100,NaN);
+            YLim_Regular{pidx} = cgg_getPlotRangeFromData_v2(this_GroupValues,monitor.RangeFactor,monitor.PlotPercentile,NaN);
             
             %%
             end
@@ -571,6 +572,31 @@ monitor.DataNames = DataNames;
             end
         end
 
+        function updateYAxis(monitor)
+            NumPlots = height(monitor.PlotTable);
+            for pidx = 1:NumPlots
+                this_Group = monitor.PlotTable{pidx,"Group"}{1};
+                this_GroupIDX = cell2mat(monitor.PlotTable.Group)==this_Group;
+                this_GroupValues = monitor.PlotTable{this_GroupIDX,"Values"};
+
+                DataLimits = cgg_getPlotRangeFromData_v2(this_GroupValues,monitor.RangeFactor,monitor.PlotPercentile,NaN);
+                this_Tile = monitor.PlotTable{pidx,"Tile"};
+                if iscell(this_Tile)
+                    this_Tile=this_Tile{1};
+                end
+
+                if DataLimits(2) > 0 && DataLimits(1) < 0
+                DataLimits(1)=0;
+                end
+                if any(isnan(DataLimits))
+                this_Tile.YLim = DataLimits;
+                end
+
+                this_Tile.YLim=DataLimits;
+            end
+            drawnow;
+        end
+
         function savePlot(monitor,IsOptimal)
             InSaveTerm = 'Current';
             if IsOptimal
@@ -579,6 +605,7 @@ monitor.DataNames = DataNames;
             SavePathNameExt = [monitor.SaveDir filesep ...
                 'Progress-Monitor-Component' monitor.SaveTerm '_Iteration-' ...
                 InSaveTerm monitor.RunTerm '.pdf'];
+            updateYAxis(monitor);
             saveas(monitor.Figure,SavePathNameExt);
 
             saveLogPlot(monitor,IsOptimal);

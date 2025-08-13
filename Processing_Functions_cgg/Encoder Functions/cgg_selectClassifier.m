@@ -31,6 +31,10 @@ switch ClassifierName
         DropoutPercent=0.25;
         NetworkType='LSTM';
         Layers_Classifier = cgg_generateLayersForLSTMClassifier(NumClasses,'LossType',LossType,'DropoutPercent',DropoutPercent,'NetworkType',NetworkType,varargin{:});
+    case 'Logistic'
+        DropoutPercent=0;
+        NetworkType='Logistic';
+        Layers_Classifier = cgg_generateLayersForClassifier(NumClasses,'LossType',LossType,'DropoutPercent',DropoutPercent,'NetworkType',NetworkType,varargin{:});
     otherwise
 end
 

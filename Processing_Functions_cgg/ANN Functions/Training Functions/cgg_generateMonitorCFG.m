@@ -57,10 +57,15 @@ LossType = 'Classification';
 
 NumDimensions = [];
 
+WantEncoderGradient = ~isempty(Encoder.Learnables);
+WantDecoderGradient = false;
+
 if HasDecoder
 IsVariational = any(contains(Decoder.OutputNames,'/mean')) && ...
     any(contains(Decoder.OutputNames,'/log-variance'));
 LossType = 'Regression';
+WantDecoderGradient = ~isempty(Decoder.Learnables);
+WantReconstructionLoss = ~isempty(Decoder.Learnables);
 end
 if HasClassifier
 LossType = 'Classification';
@@ -77,10 +82,13 @@ DataWidth = InputSize(2);
 
 cfg_Monitor.LossType = LossType;
 cfg_Monitor.WantKLLoss = IsVariational;
+% cfg_Monitor.WantReconstructionLoss = WantEncoderGradient || WantDecoderGradient;
 cfg_Monitor.WantReconstructionLoss = HasDecoder;
 cfg_Monitor.WantClassificationLoss = HasClassifier;
 cfg_Monitor.NumAreas = NumAreas;
 cfg_Monitor.DataWidth = DataWidth;
+cfg_Monitor.WantEncoderGradient = WantEncoderGradient;
+cfg_Monitor.WantDecoderGradient = WantDecoderGradient;
 
 if ~isempty(NumDimensions)
 cfg_Monitor.NumDimensions = NumDimensions;

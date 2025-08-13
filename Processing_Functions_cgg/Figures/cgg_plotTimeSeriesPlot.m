@@ -407,6 +407,10 @@ if isempty(Time_End)
     if SameNumWindows
         this_Time = Time_Start_Adjusted+((1:NumWindows)-1)*WindowStride;
     else
+        Time = cell(length(NumWindows),1);
+        for widx = 1:length(NumWindows)
+        Time{widx} = Time_Start_Adjusted+((1:NumWindows(widx))-1)*WindowStride;
+        end
         % Insert time for different window lengths
     end
 else
@@ -419,6 +423,15 @@ end
 
 TimeOffset = Time_Start+1.5;
 
+%%
+
+if isnumeric(CountPerSample)
+    CountPerSampleSize = size(CountPerSample);
+    if CountPerSampleSize(2) == NumPlots
+        CountPerSample = CountPerSample';
+    end
+end
+
 %% Plotting
 
 p_Plots = NaN(1,NumPlots);
@@ -429,6 +442,8 @@ p_Error = [];
 
 YMax=-Inf;
 YMin=Inf;
+% YMax=-1e20;
+% YMin=1e20;
 
     for pidx=1:NumPlots
 
@@ -438,6 +453,12 @@ YMin=Inf;
         elseif iscell(InData)
             this_Data=InData{pidx};
         end
+        if exist('Time','var')
+            this_Time = Time{pidx};
+        end
+        if isempty(this_Time)
+            continue
+        end
         if isnumeric(ErrorMetric)
             this_ErrorMetric=ErrorMetric(:,:,pidx);
         elseif iscell(ErrorMetric)
@@ -445,8 +466,15 @@ YMin=Inf;
         else
             this_ErrorMetric = ErrorMetric;
         end
+        if isnumeric(CountPerSample)
+            this_CountPerSample = CountPerSample(pidx,:);
+        elseif iscell(CountPerSample)
+            this_CountPerSample = CountPerSample{pidx};
+        else
+            this_CountPerSample = '';
+        end
 
-    [this_p_Plot,this_p_Error] = cgg_plotLinePlotWithShadedError(this_Time,this_Data,PlotColors{pidx},'wantCI',wantCI,'SignificanceValue',SignificanceValue,'YValues_STD',YValues_STD,'CountPerSample',CountPerSample,'DataTransform',DataTransform,'ErrorMetric',this_ErrorMetric,'Error_FaceAlpha',Error_FaceAlpha,'Error_EdgeAlpha',Error_EdgeAlpha);
+    [this_p_Plot,this_p_Error] = cgg_plotLinePlotWithShadedError(this_Time,this_Data,PlotColors{pidx},'wantCI',wantCI,'SignificanceValue',SignificanceValue,'YValues_STD',YValues_STD,'CountPerSample',this_CountPerSample,'DataTransform',DataTransform,'ErrorMetric',this_ErrorMetric,'Error_FaceAlpha',Error_FaceAlpha,'Error_EdgeAlpha',Error_EdgeAlpha);
 
     this_p_Plot.LineWidth = Line_Width;
     this_p_Plot.Color = PlotColors{pidx};
@@ -460,9 +488,17 @@ YMin=Inf;
     end
     hold off
 
+    if YMax == -Inf || YMin == Inf
+        YMax = 1;
+        YMin = 0;
+    end
+
     YRange=YMax-YMin;
     YUpper=YMax+(RangeFactorUpper*YRange);
     YLower=YMin-(RangeFactorLower*YRange);
+    if YUpper < YLower
+        YUpper = YLower;
+    end
 
     if YUpper == YLower
         YUpper = YUpper + 0.00001;

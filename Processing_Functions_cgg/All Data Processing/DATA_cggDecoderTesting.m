@@ -1067,10 +1067,10 @@ this_Example_Target=onehotdecode(this_Example_Target,[1:9,0],1);
 this_Example_Data_DLArray=dlarray(this_Example_Data,"SSCTB");
 
 Prediction_Reconstruction = forward(net_custom,this_Example_Data_DLArray);
-Prediction_Reconstruction = extractdata(Prediction_Reconstruction);
+Prediction_Reconstruction = cgg_extractData(Prediction_Reconstruction);
 
 Prediction_Classification = forward(net_tuning,this_Example_Data_DLArray);
-Prediction_Classification = extractdata(Prediction_Classification);
+Prediction_Classification = cgg_extractData(Prediction_Classification);
 
 % Prediction_Reconstruction = predict(net,this_Example_Data);
 % Prediction_Classification = predict(net_tuning,this_Example_Data);
@@ -1493,7 +1493,7 @@ spmd
 
             % Aggregate the losses on all workers.
             workerNormalizationFactor = workerMiniBatchSize(spmdIndex)./miniBatchSize;
-            loss = spmdPlus(workerNormalizationFactor*extractdata(workerLoss));
+            loss = spmdPlus(workerNormalizationFactor*cgg_extractData(workerLoss));
 
             % Aggregate the network state on all workers.
             net.State = aggregateState(workerState,workerNormalizationFactor,...

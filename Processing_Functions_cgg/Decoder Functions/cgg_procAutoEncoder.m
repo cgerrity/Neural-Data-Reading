@@ -142,10 +142,23 @@ WriteYaml(NetworkParametersPathNameExt, cfg_Encoder);
 
 kidx=Fold;
 
-cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm',ExtraSaveTerm);
+if isfield(cfg_Encoder,'Subset')
+    if islogical(cfg_Encoder.Subset)
+        cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','Subset');
+    else
+        cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm',cfg_Encoder.Subset);
+    end
+elseif cfg_Encoder.wantSubset
+    cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','Subset');
+else
+    cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','All');
+end
 
 Partition_PathNameExt = cfg_partition.Partition;
 
+if ~isfile(Partition_PathNameExt)
+    cgg_getKFoldPartitions('Epoch',cfg_Encoder.Epoch,'SingleSessionSubset',cfg_Encoder.Subset,'wantSubset',cfg_Encoder.wantSubset);
+end
 m_Partition = matfile(Partition_PathNameExt,'Writable',false);
 KFoldPartition=m_Partition.KFoldPartition;
 KFoldPartition=KFoldPartition(1);
@@ -167,6 +180,10 @@ Testing_IDX=test(KFoldPartition,kidx);
 DataAggregateDir = cgg_getDirectory(cfg.TargetDir,'Data');
 TargetAggregateDir = cgg_getDirectory(cfg.TargetDir,'Target');
 
+NormalizationInformationPath = [cgg_getDirectory(cfg.TargetDir,'Epoch') filesep 'Normalization Information'];
+NormalizationInformationPathNameExt = [NormalizationInformationPath filesep 'NormalizationInformation.mat'];
+NormalizationInformation = load(NormalizationInformationPathNameExt);
+NormalizationInformation = NormalizationInformation.NormalizationInformation;
 % if Data_Normalized
 % % DataAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Data_Normalized.path;
 % DataAggregateDir = cgg_getDirectory(cfg.TargetDir,'Data_Normalized');
@@ -175,14 +192,15 @@ TargetAggregateDir = cgg_getDirectory(cfg.TargetDir,'Target');
 TargetSession_Fun=@(x) cgg_loadTargetArray(x,'SessionName',true);
 SessionNameDataStore = fileDatastore(TargetAggregateDir,"ReadFcn",TargetSession_Fun);
 
+%%
 ChannelRemoval=[];
 WantDisp=false;
 WantRandomize=false;
 WantNaNZeroed=false;
 Want1DVector=false;
 
-Data_Fun=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'Normalization',Normalization,'NormalizationTable','');
-Data_Fun_Augmented=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'STDChannelOffset',STDChannelOffset,'STDWhiteNoise',STDWhiteNoise,'STDRandomWalk',STDRandomWalk,'Normalization',Normalization,'NormalizationTable','');
+Data_Fun=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'Normalization',Normalization,'NormalizationTable','','NormalizationInformation',NormalizationInformation);
+Data_Fun_Augmented=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'STDChannelOffset',STDChannelOffset,'STDWhiteNoise',STDWhiteNoise,'STDRandomWalk',STDRandomWalk,'Normalization',Normalization,'NormalizationTable','','NormalizationInformation',NormalizationInformation);
 
 switch Target
     case 'Dimension'
@@ -219,6 +237,21 @@ Testing_IDX = Testing_IDX(~DataIndex);
 DataStore_Training=subset(DataStore,Training_IDX);
 DataStore_Validation=subset(DataStore,Validation_IDX);
 DataStore_Testing=subset(DataStore,Testing_IDX);
+
+%% Get PCA Information
+
+if strcmp(cfg_Encoder.ModelName,'PCA')
+    WantPerTime = false;
+    PCAInformation = cgg_getPCAForLayer(DataStore_Training,'WantPerTime',WantPerTime);
+    PCAPathNameExt = [Encoding_Dir filesep 'PCAInformation.mat'];
+    PCAVariables = {PCAInformation.OutputDimensionAll,PCAInformation.ApplyPerTimePoint};
+    PCAVariablesName = {'OutputDimensionAll','ApplyPerTimePoint'};
+    cgg_saveVariableUsingMatfile(PCAVariables,PCAVariablesName,PCAPathNameExt);
+else
+    PCAInformation = [];
+end
+
+%%
 
 % Set the data augmentation read function
 DataStore_Training.UnderlyingDatastores{1}.ReadFcn = Data_Fun_Augmented;
@@ -335,11 +368,11 @@ SessionsList=SessionList_Training;
 
 switch NetworkTrainingVersion
     case 'Version 1'
-        cgg_trainAllAutoEncoder(InDataStore,DataStore_Validation,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,cfg_Network);
+        cgg_trainAllAutoEncoder(InDataStore,DataStore_Validation,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,cfg_Network,'PCAInformation',PCAInformation);
     case 'Version 2'
-        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network);
+        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network,'PCAInformation',PCAInformation);
     otherwise
-        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network);
+        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network,'PCAInformation',PCAInformation);
 end
 
 %% All Session Encoder Tuning

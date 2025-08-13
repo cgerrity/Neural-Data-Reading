@@ -60,7 +60,7 @@ switch Transform
         Name_Transform = ...
             sprintf("%s",TransformLayerName) + CoderLevel_Name;
         TransformLayer = ...
-            fullyConnectedLayer(HiddenSize,"Name",Name_Transform,"WeightsInitializer","glorot");
+            fullyConnectedLayer(HiddenSize,"Name",Name_Transform,"WeightsInitializer","he");
     case 'GRU'
         TransformLayerName = 'gru';
         Name_Transform = ...
@@ -81,12 +81,8 @@ switch Transform
             fullyConnectedLayer(HiddenSize,"Name",Name_Transform);
 end
 
-if WantNormalization
-    Name_Normalization="normalization" + CoderLevel_Name;
-    NormalizationLayer = layerNormalizationLayer('Name',Name_Normalization);
-else
-    NormalizationLayer = [];
-end
+Name_Normalization="normalization" + CoderLevel_Name;
+NormalizationLayer = cgg_selectNormalizationLayer(WantNormalization,Name_Normalization);
 
 switch Activation
     case 'SoftSign'
