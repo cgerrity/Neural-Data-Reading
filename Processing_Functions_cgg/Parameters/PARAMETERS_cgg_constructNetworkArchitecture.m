@@ -3,6 +3,16 @@ function cfg = PARAMETERS_cgg_constructNetworkArchitecture(ArchitectureType)
 %   Detailed explanation goes here
 
 
+WantPreActivation = false;
+WantPostDecoderConvolution = false;
+WantPreDecoderConvolution = false;
+WantLearnableOffset = false;
+WantLearnableScale = false;
+
+BottleNeckNormalization = 'Layer';
+
+%%
+
 switch ArchitectureType
     case 'Feedforward'
         IsSimple = true;
@@ -177,13 +187,14 @@ switch ArchitectureType
     case 'Convolutional'
         IsSimple = false;
         FilterSizes = {[4,20]};
-        WantSplitAreas = true;
-        Stride = 3;
+        FilterSizePercent = {0.3};
+        WantSplitAreas = false;
+        Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = false;
-        Transform = 'GRU';
+        Transform = 'Feedforward';
         % Activation = 'ReLU';
         Activation = 'Leaky ReLU';
         % FinalActivation = 'Tanh';
@@ -196,13 +207,14 @@ switch ArchitectureType
     case 'Resnet'
         IsSimple = false;
         FilterSizes = {[4,20]};
-        WantSplitAreas = true;
-        Stride = 3;
+        FilterSizePercent = {0.3};
+        WantSplitAreas = false;
+        Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = false;
-        Transform = 'GRU';
+        Transform = 'Feedforward';
         Activation = 'Leaky ReLU';
         % FinalActivation = 'Tanh';
         FinalActivation = 'Convolutional';
@@ -214,10 +226,11 @@ switch ArchitectureType
     case 'Resnet ~ Stride 2 ~ Filter Size {[4,20]}'
         IsSimple = false;
         FilterSizes = {[4,20]};
+        FilterSizePercent = {0.6};
         WantSplitAreas = true;
         Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = false;
         Transform = 'GRU';
@@ -232,13 +245,14 @@ switch ArchitectureType
     case 'Multi-Filter Convolutional'
         IsSimple = false;
         FilterSizes = [3,5,7];
-        WantSplitAreas = true;
+        FilterSizePercent = {0.2,0.3,0.4};
+        WantSplitAreas = false;
         Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = false;
-        Transform = 'GRU';
+        Transform = 'Feedforward';
         Activation = 'Leaky ReLU';
         FinalActivation = 'Convolutional';
         WantResnet = false;
@@ -249,10 +263,11 @@ switch ArchitectureType
     case 'Multi-Filter Resnet'
         IsSimple = false;
         FilterSizes = [3,5,7];
+        FilterSizePercent = {0.25,0.5,0.75};
         WantSplitAreas = true;
         Stride = 4;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = false;
         Transform = 'GRU';
@@ -263,13 +278,14 @@ switch ArchitectureType
         needReshape = false;
         OutputFullyConnected = false;
         BottleNeckDepth = 1;
-    case 'Multi-Filter Resnet ~ Stride 3 ~ Filter Size {[1,5],[2,10],[4,20]}'
+    case 'Multi-Filter Resnet ~ Stride 2 ~ Filter Size {[1,5],[2,10],[4,20]}'
         IsSimple = false;
         FilterSizes = {[1,5],[2,10],[4,20]};
+        FilterSizePercent = {0.25,0.5,0.75};
         WantSplitAreas = true;
-        Stride = 3;
+        Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = false;
         Transform = 'GRU';
@@ -284,10 +300,11 @@ switch ArchitectureType
     case 'Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM'
         IsSimple = false;
         FilterSizes = 3;
+        FilterSizePercent = {0.6};
         WantSplitAreas = true;
         Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = false;
         Transform = 'LSTM';
@@ -301,10 +318,11 @@ switch ArchitectureType
     case 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM'
         IsSimple = false;
         FilterSizes = 3;
+        FilterSizePercent = {0.6};
         WantSplitAreas = true;
         Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = false;
         Transform = 'LSTM';
@@ -318,10 +336,11 @@ switch ArchitectureType
     case 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM'
         IsSimple = false;
         FilterSizes = 3;
+        FilterSizePercent = {0.6};
         WantSplitAreas = true;
         Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = true;
         Transform = 'LSTM';
@@ -335,10 +354,11 @@ switch ArchitectureType
     case 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh'
         IsSimple = false;
         FilterSizes = 3;
+        FilterSizePercent = {0.6};
         WantSplitAreas = true;
         Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = true;
         Transform = 'LSTM';
@@ -352,10 +372,11 @@ switch ArchitectureType
     case 'Variational Convolutional 3x3 - Split Area - Leaky ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh'
         IsSimple = false;
         FilterSizes = 3;
+        FilterSizePercent = {0.6};
         WantSplitAreas = true;
         Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = true;
         Transform = 'LSTM';
@@ -369,10 +390,11 @@ switch ArchitectureType
     case 'Variational Convolutional Resnet 3x3 - Split Area - Leaky ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh'
         IsSimple = false;
         FilterSizes = 3;
+        FilterSizePercent = {0.6};
         WantSplitAreas = true;
         Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = true;
         Transform = 'LSTM';
@@ -386,10 +408,11 @@ switch ArchitectureType
     case 'Variational Convolutional 3x3 - Split Area - Leaky ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM'
         IsSimple = false;
         FilterSizes = 3;
+        FilterSizePercent = {0.6};
         WantSplitAreas = true;
         Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = false;
         Transform = 'LSTM';
@@ -403,10 +426,11 @@ switch ArchitectureType
     case 'Convolutional Multi-Filter [3,5,7] - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM'
         IsSimple = false;
         FilterSizes = [3,5,7];
+        FilterSizePercent = {0.25,0.5,0.75};
         WantSplitAreas = true;
         Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = false;
         Transform = 'LSTM';
@@ -420,10 +444,11 @@ switch ArchitectureType
     case 'Variational Convolutional Multi-Filter [3,5,7] - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM'
         IsSimple = false;
         FilterSizes = [3,5,7];
+        FilterSizePercent = {0.25,0.5,0.75};
         WantSplitAreas = true;
         Stride = 2;
         DownSampleMethod = 'MaxPool';
-        UpSampleMethod = 'Transpose Convolution - Point-Wise';
+        UpSampleMethod = 'Transpose Convolution';
         Dropout = 0;
         WantNormalization = false;
         Transform = 'LSTM';
@@ -434,6 +459,307 @@ switch ArchitectureType
         needReshape = false;
         OutputFullyConnected = false;
         BottleNeckDepth = 2;
+    case 'Convolutional ~ Stride 3 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 3;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'GRU';
+        % Activation = 'ReLU';
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+    case 'Convolutional ~ Stride 4 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 4;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'GRU';
+        % Activation = 'ReLU';
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+    case 'Convolutional ~ Stride 2 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Feedforward ~ No Split Areas'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = false;
+        Stride = 2;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'Feedforward';
+        % Activation = 'ReLU';
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+    case 'Convolutional ~ Stride 2 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Offset ~ Feedforward ~ No Split Areas'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = false;
+        Stride = 2;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'Feedforward';
+        % Activation = 'ReLU';
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+        WantLearnableOffset = true;
+        WantLearnableScale = false;
+    case 'Convolutional ~ Stride 4 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Feedforward'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 4;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'Feedforward';
+        % Activation = 'ReLU';
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+    case 'Convolutional ~ Stride 4 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Offset'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 4;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'GRU';
+        % Activation = 'ReLU';
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+        WantLearnableOffset = true;
+        WantLearnableScale = false;
+    case 'Convolutional ~ Stride 4 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Offset ~ Feedforward'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 4;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'Feedforward';
+        % Activation = 'ReLU';
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+        WantLearnableOffset = true;
+        WantLearnableScale = false;
+    case 'Convolutional ~ Stride 4 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Offset and Scale'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 4;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'GRU';
+        % Activation = 'ReLU';
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+        WantLearnableOffset = true;
+        WantLearnableScale = true;
+    case 'Convolutional ~ Stride 4 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Offset and Scale ~ Feedforward'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 4;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'Feedforward';
+        % Activation = 'ReLU';
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+        WantLearnableOffset = true;
+        WantLearnableScale = true;
+    case 'Convolutional ~ Stride 3 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Preactivation'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 3;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'GRU';
+        % Activation = 'ReLU';
+        WantPreActivation = true;
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+    case 'Convolutional ~ Stride 3 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Preactivation ~ PostDecoderConvolution'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 3;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'GRU';
+        % Activation = 'ReLU';
+        WantPreActivation = true;
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+        WantPostDecoderConvolution = true;
+    case 'Convolutional ~ Stride 3 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ PostDecoderConvolution'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 3;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'GRU';
+        % Activation = 'ReLU';
+        WantPreActivation = false;
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+        WantPostDecoderConvolution = true;
+    case 'Convolutional ~ Stride 3 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ PreDecoderConvolution'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 3;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'GRU';
+        % Activation = 'ReLU';
+        WantPreActivation = false;
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+        WantPostDecoderConvolution = false;
+        WantPreDecoderConvolution = true;
+    case 'Resnet ~ Stride 3 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Preactivation ~ PostDecoderConvolution ~ PreDecoderConvolution'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 3;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'GRU';
+        % Activation = 'ReLU';
+        WantPreActivation = true;
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
+        WantPostDecoderConvolution = true;
+        WantPreDecoderConvolution = true;
 end
 
 

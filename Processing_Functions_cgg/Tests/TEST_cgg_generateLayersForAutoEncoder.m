@@ -233,7 +233,7 @@ for IDX = 1:length(OutputNames)
     OutputTable_Cell{IDX,3} = OutputExample{IDX}.dims;
     OutputTable_Cell{IDX,4} = size(OutputExample{IDX});
     OutputTable_Cell{IDX,5} = numel(OutputExample{IDX});
-    OutputTable_Cell{IDX,6} = double([min(cgg_extractData(OutputExample{IDX}(:))),max(cgg_extractData(OutputExample{IDX}(:)))]);
+    OutputTable_Cell{IDX,6} = double([min(extractdata(OutputExample{IDX}(:))),max(extractdata(OutputExample{IDX}(:)))]);
     OutputTable_Cell{IDX,7} = OutputTable_Cell{IDX,6}(2)-OutputTable_Cell{IDX,6}(1);
     % OutputTable_Cell{IDX} = {OutputNames{IDX},IDX,OutputExample{IDX}.dims, size(OutputExample{IDX}),prod(size(OutputExample{IDX}))};
 % disp({OutputNames{IDX},IDX,OutputExample{IDX}.dims, size(OutputExample{IDX}),prod(size(OutputExample{IDX}))})
@@ -246,7 +246,7 @@ pause(Pause_Time);
 close all
 
 % sel_Channel = 1:6;
-% aaaa = squeeze(cgg_extractData(OutputExample{IDX}(1,1,sel_Channel,1,1)));
+% aaaa = squeeze(extractdata(OutputExample{IDX}(1,1,sel_Channel,1,1)));
 
 % %%
 % 
@@ -257,7 +257,7 @@ close all
 %     OutputTable_Cell_Modified{IDX,3} = OutputExample_Modified{IDX}.dims;
 %     OutputTable_Cell_Modified{IDX,4} = size(OutputExample_Modified{IDX});
 %     OutputTable_Cell_Modified{IDX,5} = numel(OutputExample_Modified{IDX});
-%     OutputTable_Cell_Modified{IDX,6} = [min(cgg_extractData(OutputExample_Modified{IDX}(:))),max(cgg_extractData(OutputExample_Modified{IDX}(:)))];
+%     OutputTable_Cell_Modified{IDX,6} = [min(extractdata(OutputExample_Modified{IDX}(:))),max(extractdata(OutputExample_Modified{IDX}(:)))];
 %     % OutputTable_Cell{IDX} = {OutputNames{IDX},IDX,OutputExample{IDX}.dims, size(OutputExample{IDX}),prod(size(OutputExample{IDX}))};
 % % disp({OutputNames{IDX},IDX,OutputExample{IDX}.dims, size(OutputExample{IDX}),prod(size(OutputExample{IDX}))})
 % end

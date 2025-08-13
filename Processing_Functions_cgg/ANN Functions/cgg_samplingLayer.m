@@ -76,7 +76,9 @@ classdef cgg_samplingLayer < nnet.layer.Layer
             % Split statistics.
             mu = X(1:numLatentChannels,:,:);
             logSigmaSq = X(numLatentChannels+1:(end-IsnumLatentChannelsOdd),:,:);
-
+            if layer.WantDisplay
+            fprintf('??? Mean/Range of mu: [%f,%f]; Mean/Range of logSigmaSq: [%f,%f]\n',mean(mu,"all"),range(mu,"all"),mean(logSigmaSq,"all"),range(logSigmaSq,"all"));
+            end
             % Sample output.
             epsilon = randn(numLatentChannels,miniBatchSize,SizeTime,"like",X);
             sigma = exp(.5 * logSigmaSq);

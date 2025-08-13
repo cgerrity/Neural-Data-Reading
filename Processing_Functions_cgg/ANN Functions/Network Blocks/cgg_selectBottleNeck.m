@@ -33,7 +33,7 @@ elseif strcmp(cfg.Transform,'PCA')
     return
 else
     Dropout = cfg.Dropout;
-    WantNormalization = cfg.WantNormalization;
+    WantNormalization = cfg.BottleNeckNormalization;
     Transform = cfg.Transform;
     Activation = cfg.Activation;
 
@@ -57,6 +57,9 @@ else
             'WantNormalization',WantNormalization,...
             'Transform',Transform,'Activation',Activation);
 end
+
+BottleNeck = [BottleNeck
+    fullyConnectedLayer(HiddenSizeBottleNeck,"Name","fc_OUT_BottleNeck","WeightsInitializer","he")];
 
 BottleNeck = layerGraph(BottleNeck);
 

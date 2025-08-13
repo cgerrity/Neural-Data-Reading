@@ -52,7 +52,8 @@ CoderBlocks = [];
 for lidx = 1:NumLevels
     this_NumFilters = FilterHiddenSizes(lidx);
     this_CropAmount = CropSizes{lidx};
-this_CoderBlock = cgg_generateSimpleConvolutionalBlock(FilterSize,this_NumFilters,lidx,FilterNumber,AreaIDX,'CropAmount',this_CropAmount,varargin{:});
+    this_FilterSize = ceil(FilterSize/(Stride^(lidx-1)));
+this_CoderBlock = cgg_generateSimpleConvolutionalBlock(this_FilterSize,this_NumFilters,lidx,FilterNumber,AreaIDX,'CropAmount',this_CropAmount,varargin{:});
 
 
 if WantResNet

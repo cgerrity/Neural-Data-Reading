@@ -41,7 +41,7 @@ elseif strcmp(cfg.Transform,'PCA')
     EncoderBlocks = layerGraph(EncoderBlocks);
 else
 
-    FilterSizes = cfg.FilterSizes;
+    % FilterSizes = cfg.FilterSizes;
     FilterHiddenSizes = HiddenSizeAutoEncoder;
     InputSize = cfg.InputSize;
     WantSplitAreas = cfg.WantSplitAreas;
@@ -52,6 +52,9 @@ else
     Dropout = cfg.Dropout;
     Activation = cfg.Activation;
     WantResnet = cfg.WantResnet;
+    FilterSizePercent = cfg.FilterSizePercent;
+    FilterSizes = cellfun(@(x) ceil(InputSize(1:2)*x), ...
+        FilterSizePercent,'UniformOutput',false);
 
     EncoderBlocks = cgg_constructConvolutionalCoder(FilterSizes, ...
         FilterHiddenSizes,InputSize,'WantSplitAreas',WantSplitAreas, ...

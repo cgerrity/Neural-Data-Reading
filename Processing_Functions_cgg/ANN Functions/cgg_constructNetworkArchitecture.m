@@ -137,7 +137,7 @@ PostDecoderBlock = [
     % functionLayer(@(X) dlarray(X,"CBTSS"),Formattable=true,Acceleratable=true,Name="Function_Decoder")];
 end
 
-if ~(isempty(PostDecoderBlock))
+if ~(isempty(PostDecoderBlock)) && ~(isa(PostDecoderBlock,'nnet.cnn.LayerGraph') || isa(PostDecoderBlock,'dlnetwork'))
 PostDecoderBlock = layerGraph(PostDecoderBlock);
 end
 
