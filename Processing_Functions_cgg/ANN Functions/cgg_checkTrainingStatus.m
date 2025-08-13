@@ -1,4 +1,4 @@
-function cgg_checkTrainingStatus(cfg_Network,varargin)
+function [ResultFull,ResultAutoencoder] = cgg_checkTrainingStatus(cfg_Network,varargin)
 %CGG_CHECKTRAININGSTATUS Summary of this function goes here
 %   Detailed explanation goes here
 isfunction=exist('varargin','var');
@@ -20,6 +20,9 @@ end
 end
 
 %%
+
+ResultFull = NaN;
+ResultAutoencoder = NaN;
 
 if isempty(NumEpochsAutoEncoder)
     AutoEncoder_Message = '\t*** Current Autoencoder Training is at Epoch: %d \n\n';
@@ -56,21 +59,21 @@ end
 if exist('AutoEncoder_CurrentIteration','var')
     AutoEncoder_CurrentEpoch = AutoEncoder_CurrentIteration.Epoch;
     if isempty(NumEpochsAutoEncoder)
-        fprintf(AutoEncoder_Message,AutoEncoder_CurrentEpoch);
+        ResultAutoencoder = AutoEncoder_CurrentEpoch;
     else
-        AutoEncoder_Percent = min(AutoEncoder_CurrentEpoch/NumEpochsAutoEncoder*100,100);
-        fprintf(AutoEncoder_Message,AutoEncoder_Percent);
+        ResultAutoencoder = min(AutoEncoder_CurrentEpoch/NumEpochsAutoEncoder*100,100);
     end
+    fprintf(AutoEncoder_Message,ResultAutoencoder);
 end
 
 if exist('FullNetwork_CurrentIteration','var')
     FullNetwork_CurrentEpoch = FullNetwork_CurrentIteration.Epoch;
     if isempty(NumEpochsFull)
-        fprintf(FullNetwork_Message,FullNetwork_CurrentEpoch);
+        ResultFull = FullNetwork_CurrentEpoch;
     else
-        FullNetwork_Percent = min(FullNetwork_CurrentEpoch/NumEpochsFull*100,100);
-        fprintf(FullNetwork_Message,FullNetwork_Percent);
+        ResultFull = min(FullNetwork_CurrentEpoch/NumEpochsFull*100,100);
     end
+        fprintf(FullNetwork_Message,ResultFull);
 end
 end
 
