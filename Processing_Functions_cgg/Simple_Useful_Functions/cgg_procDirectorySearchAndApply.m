@@ -1,4 +1,4 @@
-function aggregatedResult = cgg_procDirectorySearchAndApply(folderPath, fileName, funcHandle)
+function aggregatedResult = cgg_procDirectorySearchAndApply(folderPath, fileName, funcHandle,varargin)
 %CGG_PROCDIRECTORYSEARCHANDAPPLY Summary of this function goes here
 %   Detailed explanation goes here
 % function aggregatedResult = searchAndAggregate(folderPath, fileName, funcHandle, initialResult)
@@ -20,11 +20,26 @@ function aggregatedResult = cgg_procDirectorySearchAndApply(folderPath, fileName
     % Example usage:
     %   finalTable = searchAndAggregate('C:\example_folder', 'data.csv', @myAggregateFunction, initialTable)
 
+isfunction=exist('varargin','var');
+
+if isfunction
+IsSingleLevel = CheckVararginPairs('IsSingleLevel', false, varargin{:});
+else
+if ~(exist('IsSingleLevel','var'))
+IsSingleLevel=false;
+end
+end
+
+
     % Initialize the aggregated result with the initial input
     aggregatedResult = [];
 
     % Get the list of all files and folders in the folder and subfolders
-    filesAndFolders = dir(fullfile(folderPath, '**', fileName));
+    if IsSingleLevel
+        filesAndFolders = dir(fullfile(folderPath, '*', fileName));
+    else
+        filesAndFolders = dir(fullfile(folderPath, '**', fileName));
+    end
 
     % If no matching files are found, return the initial result
     if isempty(filesAndFolders)

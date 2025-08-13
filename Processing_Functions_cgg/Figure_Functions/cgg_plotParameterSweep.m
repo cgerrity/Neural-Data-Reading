@@ -40,7 +40,7 @@ Tick_Size = 2;
 
 Y_Upper=0;
 Y_Lower=1;
-Y_Limit_Set = [0,0.2];
+Y_Limit_Set = [0,0.25];
 Y_Tick_Label_Size = 36;
 Y_Tick_Size = 0.05;
 
@@ -88,7 +88,10 @@ CurrentCases = {'Classifier Hidden Size','Classifier','Data Width', ...
     'Optimizer','Normalization','Weighted Loss','Stride', ...
     'Gradient Accumulation Size','Loss Weights','Bottleneck Depth','Dropout', ...
     'Gradient Threshold','Decoder Loss Type','Layers','Initial Units',...
-    'Classification Weight','KL Weight','Reconstruction Weight'};
+    'Classification Weight','KL Weight','Reconstruction Weight','Session'};
+% CurrentCases = {'Model','Classification Weight','KL Weight','Reconstruction Weight'};
+% CurrentCases = {'Session'};
+CurrentCases = {'Model'};
 
 
 
@@ -118,6 +121,7 @@ this_X_Tick_Label_Size = Y_Tick_Label_Size;
 this_SweepAllNames = SweepAllNames;
 BarTitle = SweepType;
 this_Y_Limit_Set = Y_Limit_Set;
+this_BarWidth = BarWidth;
 switch SweepType
     case 'Classifier Hidden Size'
         this_X_Tick_Label_Size = 22;
@@ -130,6 +134,7 @@ switch SweepType
         this_SweepAllNames(BestIDX) = this_SweepAllNames(BestIDX) + "*";
     case 'Hidden Size'
         this_X_Tick_Label_Size = 22;
+        this_BarWidth = max([length(this_SweepAllNames),BarWidth]);
     case 'Model'
         BestIDX = contains(SweepAllNames,'*');
         this_SweepAllNames = SweepAllNames;
@@ -137,7 +142,8 @@ switch SweepType
         if find(BestIDX) == find(contains(SweepAllNames,'Multi-Filter'))
         this_SweepAllNames(BestIDX) = this_SweepAllNames(BestIDX) + "*";
         end
-        IndicesSorted = cgg_sortModelNamesForParameterSweep(this_SweepAllNames);
+        % IndicesSorted = cgg_sortModelNamesForParameterSweep(this_SweepAllNames);
+        [~,IndicesSorted] = sort(SweepAccuracy);
         this_SweepAllNames = this_SweepAllNames(IndicesSorted);
         SweepAccuracy = SweepAccuracy(IndicesSorted);
     case 'Variational'
@@ -162,8 +168,17 @@ switch SweepType
         this_SweepAllNames(BestIDX) = this_SweepAllNames(BestIDX) + "*";
     case 'Loss Weights'
         BarTitle  = {'Loss Weights','(Recontruction:Classification:Variational)'};
+        this_BarWidth = max([length(this_SweepAllNames),BarWidth]);
     case 'Initial Learning Rate'
         this_Y_Limit_Set = [0,0.25];
+    case 'Session'
+        BestIDX = contains(SweepAllNames,'*');
+        this_SweepAllNames = SweepAllNames;
+        this_SweepAllNames(contains(SweepAllNames,'true')) = "Subset";
+        this_SweepAllNames = cgg_setSessionNamesForParameterSweep(this_SweepAllNames);
+        this_SweepAllNames(BestIDX) = this_SweepAllNames(BestIDX) + "*";
+        this_BarWidth = max([length(this_SweepAllNames),BarWidth]);
+        this_X_Tick_Label_Size = 12;
 end
 
 %%
@@ -180,7 +195,7 @@ wantCI = false;
 wantSTD = true;
 
 % disp(isempty(ColorOrder))
-[b_Plot] = cgg_plotBarGraphWithError(SweepAccuracy,this_SweepAllNames,'X_TickFontSize',this_X_Tick_Label_Size,'ErrorLineWidth',Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',wantCI,'LabelAngle',LabelAngle,'InFigure',InFigure,'X_Name','','BarWidth',BarWidth,'wantSTD',wantSTD);
+[b_Plot] = cgg_plotBarGraphWithError(SweepAccuracy,this_SweepAllNames,'X_TickFontSize',this_X_Tick_Label_Size,'ErrorLineWidth',Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',wantCI,'LabelAngle',LabelAngle,'InFigure',InFigure,'X_Name','','BarWidth',this_BarWidth,'wantSTD',wantSTD);
 
 title(BarTitle,'FontSize',Title_Size);
 

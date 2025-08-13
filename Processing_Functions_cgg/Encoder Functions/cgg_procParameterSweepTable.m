@@ -200,12 +200,14 @@ for ridx = 1:height(SweepTable)
    this_SweepAccuracy = NaN(this_NumFolds,1);
    this_SweepWindowAccuracy = cell(this_NumFolds,1);
 
+   IsSameSubset = isequal(this_SweepTable.Subset,EncoderParameters_Best.Subset);
+
     for fidx = 1:this_NumFolds
         this_Fold_Sweep = Folds_Sweep(fidx);
         this_CM_Table = CMTable_Sweep{fidx};
         this_Fold_SweepIDX = this_Fold_Sweep == Folds;
 
-        if any(this_Fold_SweepIDX)
+        if any(this_Fold_SweepIDX) && IsSameSubset
         this_ClassNames = ClassNames{this_Fold_SweepIDX};
         this_MostCommon = MostCommon(this_Fold_SweepIDX);
         this_RandomChance = RandomChance(this_Fold_SweepIDX);
