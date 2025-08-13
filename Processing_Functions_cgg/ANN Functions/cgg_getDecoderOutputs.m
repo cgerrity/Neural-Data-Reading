@@ -30,7 +30,7 @@ switch LossType_Decoder
 end
 
 %%
-if WantGradient
+if ~WantGradient
     Loss_Reconstruction = cgg_extractData(Loss_Reconstruction);
     Loss_KL = cgg_extractData(Loss_KL);
     Loss_Reconstruction_perchannel = ...

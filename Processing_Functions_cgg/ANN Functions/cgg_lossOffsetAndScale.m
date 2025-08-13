@@ -97,7 +97,7 @@ end
 
 loss_OffsetAndScale = loss_Scale + loss_Offset;
 
-if WantGradient
+if ~WantGradient
     loss_OffsetAndScale = cgg_extractData(loss_OffsetAndScale);
 end
 
