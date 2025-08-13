@@ -6,6 +6,14 @@ function Identifiers_Table = cgg_getIdentifiersTable(cfg,wantSubset,varargin)
 isfunction=exist('varargin','var');
 
 if isfunction
+Epoch = CheckVararginPairs('Epoch', 'Decision', varargin{:});
+else
+if ~(exist('Epoch','var'))
+Epoch='Decision';
+end
+end
+
+if isfunction
 Identifiers = CheckVararginPairs('Identifiers', '', varargin{:});
 else
 if ~(exist('Identifiers','var'))
@@ -22,27 +30,61 @@ end
 end
 
 if isfunction
-AdditionalTarget = CheckVararginPairs('AdditionalTarget', '', varargin{:});
+AdditionalTarget = CheckVararginPairs('AdditionalTarget', {}, varargin{:});
 else
 if ~(exist('AdditionalTarget','var'))
-AdditionalTarget='';
+AdditionalTarget={};
+end
+end
+
+if isfunction
+Subset = CheckVararginPairs('Subset', '', varargin{:});
+else
+if ~(exist('Subset','var'))
+Subset='';
 end
 end
 
 %%
+Identifiers_TablePath = cgg_getDirectory(cfg.ResultsDir,'Processing');
+Identifiers_TableNameExt = 'Identifiers_Table.mat';
+Identifiers_TablePathNameExt = [Identifiers_TablePath filesep ...
+    Identifiers_TableNameExt];
 
-ExtraSaveTerm = cgg_generateExtraSaveTerm('wantSubset',wantSubset);
+if isfile(Identifiers_TablePathNameExt)
+    Identifiers_Table = load(Identifiers_TablePathNameExt);
+    Identifiers_Table = Identifiers_Table.Identifiers_Table;
+    HasAllTargets = all(ismember(AdditionalTarget, Identifiers_Table.Properties.VariableNames));
+end
 
-cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm',ExtraSaveTerm);
+%%
+if ~isempty(Subset)
+    if islogical(Subset)
+        cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','Subset');
+    else
+        cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm',Subset);
+    end
+elseif wantSubset
+    cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','Subset');
+else
+    cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','All');
+end
+%%
 
 Partition_PathNameExt = cfg_partition.Partition;
 
-m_Partition = matfile(Partition_PathNameExt,'Writable',false);
-KFoldPartition=m_Partition.KFoldPartition;
-KFoldPartition=KFoldPartition(1);
+if ~isfile(Partition_PathNameExt)
+    cgg_getKFoldPartitions('Epoch',Epoch,'SingleSessionSubset',Subset,'wantSubset',wantSubset);
+end
+
+m_Partition = load(Partition_PathNameExt);
+
+if isfield(m_Partition,'Indices')
 IndicesPartition=m_Partition.Indices;
+end
 
 %%
+if ~HasAllTargets
 
 if isempty(Identifiers)||isempty(IdentifierName)
 
@@ -65,9 +107,9 @@ end
 
 Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun);
 
-if wantSubset
-Target_ds=subset(Target_ds,IndicesPartition);
-end
+% if wantSubset
+% Target_ds=subset(Target_ds,IndicesPartition);
+% end
 
 %% Data Distributions to Analyze
 
@@ -86,6 +128,13 @@ InputNames{strcmp(InputNames,'Data Number')}='DataNumber';
 
 Identifiers_Table=array2table(InputIdentifiers,'VariableNames',InputNames);
 
+save(Identifiers_TablePathNameExt,"Identifiers_Table","-v7.3");
+end
+
+if wantSubset
+Identifiers_Table = sortrows(Identifiers_Table,"DataNumber","ascend");
+Identifiers_Table(~IndicesPartition,:) = [];
+end
 
 end
 

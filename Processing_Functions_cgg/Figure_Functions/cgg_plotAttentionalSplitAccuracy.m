@@ -1,4 +1,4 @@
-function cgg_plotAttentionalSplitWindowedAccuracy(FullTable,cfg)
+function cgg_plotAttentionalSplitAccuracy(FullTable,cfg)
 %CGG_PLOTATTENTIONALSPLITWINDOWEDACCURACY Summary of this function goes here
 %   Detailed explanation goes here
 cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
@@ -29,7 +29,7 @@ MatchType = '';
 this_cfg.ExtraSaveTerm='Attentional';
 this_cfg.LoopType = sprintf('%s',MatchType);
 
-cgg_plotWindowedAccuracy(AttentionalTable,this_cfg);
+cgg_plotOverallAccuracy(AttentionalTable,this_cfg);
 
 Split_Table=FullTable{seidx,cfg_Names.TableNameSplit_Table}{1};
 SplitNames = Split_Table.Properties.RowNames;
@@ -58,7 +58,7 @@ for aidx = 1:length(AttentionalNames)
 
 end
 
-cgg_plotWindowedAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true);
+cgg_plotOverallAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true);
 end
 
 for aidx = 1:length(AttentionalTableSwapped)
@@ -71,7 +71,7 @@ this_cfg.ExtraSaveTerm=sprintf('Attentional-%s',this_SplitName);
 this_cfg.LoopType=sprintf('%s',cfg.SplitExtraSaveTerm);
 this_AttentionalTable=AttentionalTableSwapped{aidx};
 
-cgg_plotWindowedAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true);
+cgg_plotOverallAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true);
 end
 
 end

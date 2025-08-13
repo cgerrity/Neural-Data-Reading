@@ -43,11 +43,13 @@ Legend_Size = 14;
 X_Name_Size = Y_Name_Size;
 
 %%
-RandomChance=cfg.RandomChance;
-MostCommon=cfg.MostCommon;
-Stratified=cfg.Stratified;
 
-ExtraSaveTerm=cfg.ExtraSaveTerm;
+cfg.LoopType = cgg_setNaming(cfg.LoopType);
+ExtraSaveTerm = cgg_setNaming(cfg.ExtraSaveTerm);
+
+% RandomChance=cfg.RandomChance;
+% MostCommon=cfg.MostCommon;
+Stratified=cfg.Stratified;
 
 Time_Start=cfg.Time_Start;
 SamplingFrequency=cfg.SamplingFrequency;
@@ -106,23 +108,39 @@ RangeAccuracyUpper = 0.5;
 Tick_Size = 0.1;
 end
 
+WantCombined = ismember('Session Number', FullTable.Properties.VariableNames);
+
+CountPerSample = '';
+if WantCombined
+    if IsAttentional
+RangeAccuracyLower = -0.05;
+RangeAccuracyUpper = 0.3;
+Tick_Size = 0.1;
+    else
+RangeAccuracyLower = -0.05;
+RangeAccuracyUpper = 0.1;
+Tick_Size = 0.05;
+    end
+    % CountPerSample = FullTable.NumSessions;
+end
+
 Y_Ticks = 0:Tick_Size:RangeAccuracyUpper;
 X_Ticks = cfg.Time_Start:Tick_Size_X:cfg.Time_End;
 
-[fig_plot,p_Plots,p_Error] = cgg_plotTimeSeriesPlot(Window_Accuracy_All,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'SamplingRate',SamplingFrequency,'X_Name',X_Name,'Y_Name',Y_Name,'PlotTitle',PlotTitle,'PlotNames',PlotNames,'wantIndicatorNames',wantIndicatorNames,'Y_Tick_Label_Size',Y_Tick_Label_Size,'X_Tick_Label_Size',Y_Tick_Label_Size,'PlotColors',PlotColors,'InFigure',fig_plot,'Y_Name_Size',Y_Name_Size,'X_Name_Size',X_Name_Size,'Y_Ticks',Y_Ticks,'X_Ticks',X_Ticks);
+[fig_plot,p_Plots,p_Error] = cgg_plotTimeSeriesPlot(Window_Accuracy_All,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'SamplingRate',SamplingFrequency,'X_Name',X_Name,'Y_Name',Y_Name,'PlotTitle',PlotTitle,'PlotNames',PlotNames,'wantIndicatorNames',wantIndicatorNames,'Y_Tick_Label_Size',Y_Tick_Label_Size,'X_Tick_Label_Size',Y_Tick_Label_Size,'PlotColors',PlotColors,'InFigure',fig_plot,'Y_Name_Size',Y_Name_Size,'X_Name_Size',X_Name_Size,'Y_Ticks',Y_Ticks,'X_Ticks',X_Ticks,'CountPerSample',CountPerSample);
 
 hold on
-p_Random=yline(RandomChance);
-p_MostCommon=yline(MostCommon);
-% p_Stratified=yline(Stratified);
+% p_Random=yline(RandomChance);
+% p_MostCommon=yline(MostCommon);
+p_Stratified=yline(Stratified);
 hold off
 
-p_MostCommon.LineWidth = Line_Width;
-p_Random.LineWidth = Line_Width;
-% p_Stratified.LineWidth = Line_Width;
-p_MostCommon.DisplayName = 'Most Common';
-p_Random.DisplayName = 'Random Chance';
-% p_Stratified.DisplayName = 'Stratified';
+% p_MostCommon.LineWidth = Line_Width;
+% p_Random.LineWidth = Line_Width;
+p_Stratified.LineWidth = Line_Width;
+% p_MostCommon.DisplayName = 'Most Common';
+% p_Random.DisplayName = 'Random Chance';
+p_Stratified.DisplayName = 'Stratified';
 
 % p_Plots(NumLoops+1)=p_MostCommon;
 % p_Plots(NumLoops+2)=p_Random;
@@ -150,15 +168,20 @@ xlim([cfg.Time_Start,cfg.Time_End]);
 drawnow;
 
 %%
+cfg_Sessions = DATA_cggAllSessionInformationConfiguration;
+outdatadir=cfg_Sessions(1).outdatadir;
+TargetDir=outdatadir;
+ResultsDir=cfg_Sessions(1).temporarydir;
 
-cfg_Plot = cgg_generateDecodingFolders('TargetDir',cfg.TargetDir,...
-    'Epoch',cfg.Epoch,'Accuracy',true);
-cfg_tmp = cgg_generateDecodingFolders('TargetDir',cfg.ResultsDir,...
-    'Epoch',cfg.Epoch,'Accuracy',true);
+cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+    'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
+cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+    'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
 cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
 
-SavePath=cfg_Plot.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Accuracy.path;
-SaveName=['Windowed_Accuracy' ExtraSaveTerm '_Type_' cfg.LoopType];
+% SavePath=cfg_Plot.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Accuracy.path;
+SavePath = cgg_getDirectory(cfg_Plot.ResultsDir,'SubFolder_1');
+SaveName=['Windowed_Accuracy' ExtraSaveTerm cfg.LoopType];
 
 SaveNameExt=[SaveName '.pdf'];
 SavePathNameExt=[SavePath filesep SaveNameExt];

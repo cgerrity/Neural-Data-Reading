@@ -50,6 +50,19 @@ Window_After_Data = 1.5;
 
 Window_Before_Baseline = 0;
 Window_After_Baseline = 0.5;
+%% PreProcessing Parameters
+cfg_PreProcessing = PARAMETERS_cgg_proc_NeuralDataPreparation('SessionName','none');
+switch Activity_Type
+    case 'MUA'
+        SamplingFrequency = cfg_PreProcessing.rect_samprate;
+    case 'LFP'
+        SamplingFrequency = cfg_PreProcessing.lfp_samprate;
+    case 'ZZZZ'
+        SamplingFrequency = cfg_PreProcessing.ZZZ;
+    otherwise
+        SamplingFrequency = cfg_PreProcessing.rect_samprate;
+end
+
 
 %% Regression Parameters
 
