@@ -12,6 +12,14 @@ else
     end
 end
 
+if isfunction
+WantDirectory = CheckVararginPairs('WantDirectory', true, varargin{:});
+else
+if ~(exist('WantDirectory','var'))
+WantDirectory=true;
+end
+end
+
 cfg=struct();
 
 cfg.TargetDir.path=TargetDir;
@@ -19,14 +27,14 @@ cfg.TargetDir.path=TargetDir;
 
 % Make the All Sessions folder name.
 cfg_tmp=cfg.TargetDir;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Aggregate Data','Aggregate_Data',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Aggregate Data','Aggregate_Data',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir=cfg_tmp;
 
 %% Plot Folder
 
 % Make the Plot folder name.
 cfg_tmp=cfg.TargetDir.Aggregate_Data;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Plots','Plots',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Plots','Plots',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data=cfg_tmp;
 
 %% Epoch Folders
@@ -38,32 +46,32 @@ if ~isempty(Epoch)
     
 % Make the Epoched_Data folder name.
 cfg_tmp=cfg.TargetDir.Aggregate_Data;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Epoched Data','Epoched_Data',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Epoched Data','Epoched_Data',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data=cfg_tmp;
     
 % Make the Epoch folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data;
-[cfg_tmp,~] = cgg_generateFolderAndPath(Epoch,'Epoch',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(Epoch,'Epoch',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data=cfg_tmp;
 
 % Make the Target folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Target','Target',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Target','Target',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 % Make the Data folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Data','Data',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Data','Data',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 % Make the Processing folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Processing','Processing',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Processing','Processing',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 % Make the Decoding folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Decoding','Decoding',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Decoding','Decoding',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 if isfunction
@@ -72,7 +80,7 @@ if Data_Normalized
 
 % Make the Normalized Data output folder names.
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Data_Normalized','Data_Normalized',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Data_Normalized','Data_Normalized',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch=cfg_tmp;
 
 end % End for whether to make the Normalized Data Folder
@@ -89,7 +97,7 @@ if isfunction
 Activity = CheckVararginPairs('Activity', '', varargin{:});
 if ~isempty(Activity)
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Plots;
-[cfg_tmp,~] = cgg_generateFolderAndPath(Activity,'Activity',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(Activity,'Activity',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Plots=cfg_tmp;
 end % End for whether there exists any input for the activity type
 end % End for whether this is being called within a function
@@ -102,7 +110,7 @@ for sidx=1:length(ActivitySubFolder)
 this_ActivitySubFolder=ActivitySubFolder{sidx};
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Plots.Activity;
 [cfg_tmp,~] = cgg_generateFolderAndPath(this_ActivitySubFolder,...
-    sprintf('ActivitySubFolder_%d',sidx),cfg_tmp);
+    sprintf('ActivitySubFolder_%d',sidx),cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Plots.Activity=cfg_tmp;
 end % End for looping through all sub folders of activity
 end % End for whether there exists any input for the subfolders and the 
@@ -116,7 +124,7 @@ if isfunction
 Folder = CheckVararginPairs('Folder', '', varargin{:});
 if ~isempty(Folder)
 cfg_tmp=cfg.TargetDir.Aggregate_Data;
-[cfg_tmp,~] = cgg_generateFolderAndPath(Folder,'Folder',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(Folder,'Folder',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data=cfg_tmp;
 
 % Make the Generic sub folder names.
@@ -125,7 +133,7 @@ SubFolder = CheckVararginPairs('SubFolder', '', varargin{:});
 if ~isempty(SubFolder)
 
 cfg_tmp=cfg.TargetDir.Aggregate_Data.Folder;
-[cfg_tmp,~] = cgg_generateFolderAndPath(SubFolder,'SubFolder',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(SubFolder,'SubFolder',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Folder=cfg_tmp;
 
 end % End for whether there exists any input for the new sub folder

@@ -1,7 +1,16 @@
-function cfg = cgg_generateEncoderSubFolders_v2(EncodingDir,cfg_Encoder)
+function cfg = cgg_generateEncoderSubFolders_v2(EncodingDir,cfg_Encoder,varargin)
 %CGG_GENERATEENCODERSUBFOLDERS Summary of this function goes here
 %   Detailed explanation goes here
 
+isfunction=exist('varargin','var');
+
+if isfunction
+WantDirectory = CheckVararginPairs('WantDirectory', true, varargin{:});
+else
+if ~(exist('WantDirectory','var'))
+WantDirectory=true;
+end
+end
 
 cfg=struct();
 cfg.EncodingDir.path=EncodingDir;
@@ -127,7 +136,7 @@ end
 
 % Make the Model Name folder name.
 cfg_tmp=cfg.EncodingDir;
-[cfg_tmp,~] = cgg_generateFolderAndPath(ModelName,'ModelName',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(ModelName,'ModelName',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir=cfg_tmp;
 
 %% Model Parameters Folder
@@ -172,7 +181,7 @@ NameBottleNeckDepth = sprintf('Bottle Neck Depth - %d',BottleNeckDepth);
 NameModelParameters = [NameModelParameters ' ~ ' NameBottleNeckDepth];
 
 cfg_tmp=cfg.EncodingDir.ModelName;
-[cfg_tmp,~] = cgg_generateFolderAndPath(NameModelParameters,'ModelParameters',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(NameModelParameters,'ModelParameters',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName=cfg_tmp;
 %% Data Width and Window Stride
 
@@ -190,7 +199,7 @@ else
 end
 NameWidthandStride = [NameDataWidth ' ~ ' NameWindowStride];
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters;
-[cfg_tmp,~] = cgg_generateFolderAndPath(NameWidthandStride,'WidthStride',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(NameWidthandStride,'WidthStride',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters=cfg_tmp;
 
 %% Normalization Folder
@@ -198,7 +207,7 @@ cfg.EncodingDir.ModelName.ModelParameters=cfg_tmp;
 % Make the Normalization name.
 NameNormalization = sprintf('Normalization - %s',Normalization);
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride;
-[cfg_tmp,~] = cgg_generateFolderAndPath(NameNormalization,'Normalization',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(NameNormalization,'Normalization',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride=cfg_tmp;
 %% Hidden Size Folder
 
@@ -209,7 +218,7 @@ else
     NameHiddenSize = ['Hidden Size - ' sprintf('%d',HiddenSize(1)) sprintf('-%d',HiddenSize(2:end))];
 end
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization;
-[cfg_tmp,~] = cgg_generateFolderAndPath(NameHiddenSize,'HiddenSize',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(NameHiddenSize,'HiddenSize',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization=cfg_tmp;
 
 %% Learning Folder
@@ -226,7 +235,7 @@ NameOptimizer = sprintf('Optimizer - %s',Optimizer);
 NameL2Factor = sprintf('L2 Factor - %.2e',L2Factor);
 NameLearning = [NameInitialLearningRate ' ~ ' NameGradientThreshold ' ~ ' NameOptimizer ' ~ ' NameL2Factor];
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize;
-[cfg_tmp,~] = cgg_generateFolderAndPath(NameLearning,'Learning',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(NameLearning,'Learning',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize=cfg_tmp;
 
 %% Mini Batch Size Folder
@@ -237,7 +246,7 @@ NameMiniBatchSize = sprintf('Mini Batch Size - %d',MiniBatchSize);
 NameMaxMiniBatchSize = sprintf('Max Accumulation - %d',maxworkerMiniBatchSize);
 NameMiniBatchFolder = [NameMiniBatchSize ' ~ ' NameMaxMiniBatchSize];
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning;
-[cfg_tmp,~] = cgg_generateFolderAndPath(NameMiniBatchFolder,'MiniBatchSize',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(NameMiniBatchFolder,'MiniBatchSize',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning=cfg_tmp;
 
 %% Data Augmentation  Folder
@@ -262,7 +271,7 @@ end
 NameDataAugmentation = [NameChannelOffset ' ~ ' NameWhiteNoise ...
     ' ~ ' NameRandomWalk];
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize;
-[cfg_tmp,~] = cgg_generateFolderAndPath(NameDataAugmentation,'DataAugmentation',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(NameDataAugmentation,'DataAugmentation',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize=cfg_tmp;
 
 %% Is Subset Folder
@@ -277,7 +286,7 @@ if ~islogical(SubsetSessionName)
     NameIsSubset = SubsetSessionName;
 end
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation;
-[cfg_tmp,~] = cgg_generateFolderAndPath(NameIsSubset,'IsSubset',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(NameIsSubset,'IsSubset',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation=cfg_tmp;
 
 %% AutoEncoder Folder
@@ -292,7 +301,7 @@ NameAutoEncoderEpochs = sprintf('AutoEncoder - Epochs - %d',NumEpochsAutoEncoder
 end
 NameAutoEncoder = [NameAutoEncoderEpochs ' ~ ' NameAutoEncoderLoss];
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset;
-[cfg_tmp,~] = cgg_generateFolderAndPath(NameAutoEncoder,'AutoEncoder',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(NameAutoEncoder,'AutoEncoder',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset=cfg_tmp;
 
 %% Loss Weight Folder
@@ -315,12 +324,12 @@ else
 end
 NameLoss = [NameWeightReconstruction ' ~ ' NameWeightClassification ' ~ ' NameWeightKL];
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset.AutoEncoder;
-[cfg_tmp,~] = cgg_generateFolderAndPath(NameLoss,'Loss',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(NameLoss,'Loss',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset.AutoEncoder=cfg_tmp;
 
 % Make the AutoEncoder Plot folder name.
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset.AutoEncoder.Loss;
-[cfg_tmp,~] = cgg_generateFolderAndPath('Information','AutoEncoderInformation',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath('Information','AutoEncoderInformation',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset.AutoEncoder.Loss=cfg_tmp;
 
 %% Classifier Folder
@@ -342,7 +351,7 @@ end
 NameClassifier = [NameClassifierModel ' ~ ' NameClassifierHiddenSizes ...
     ' ~ ' NameWeightedLoss];
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset.AutoEncoder.Loss;
-[cfg_tmp,~] = cgg_generateFolderAndPath(NameClassifier,'Classifier',cfg_tmp);
+[cfg_tmp,~] = cgg_generateFolderAndPath(NameClassifier,'Classifier',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset.AutoEncoder.Loss=cfg_tmp;
 
 end
