@@ -64,7 +64,7 @@ end
 
 [Window_Prediction,Window_TrueValue,Loss] = cgg_getPredictionFromClassifierProbabilities(T,Y,ClassNames,'wantLoss',wantLoss,'Weights',Weights,'IsQuaddle',IsQuaddle,'LossType',LossType,'NumTimeSteps',NumTimeSteps,'NumBatches',NumTrials);
 
-if WantGradient
+if ~WantGradient
     Loss = cgg_extractData(Loss);
 end
 
