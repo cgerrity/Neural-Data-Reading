@@ -10,7 +10,7 @@ CurrentCases = {'Classifier Hidden Size','Classifier','Data Width', ...
     'Optimizer','Normalization','Weighted Loss','Stride', ...
     'Gradient Accumulation Size','Loss Weights','Bottleneck Depth','Dropout', ...
     'Gradient Threshold','Decoder Loss Type','Layers','Initial Units',...
-    'Classification Weight','KL Weight','Reconstruction Weight'};
+    'Classification Weight','KL Weight','Reconstruction Weight','Session'};
 %%
 
 
@@ -41,7 +41,7 @@ switch SweepType
         SweepNameIgnore = "maxworkerMiniBatchSize";
     case 'Model'
         SweepName = "ModelName";
-        SweepNameIgnore = ["HiddenSizes","maxworkerMiniBatchSize","Activation","FirstHiddenSize"];
+        SweepNameIgnore = ["HiddenSizes","maxworkerMiniBatchSize","Activation","FirstHiddenSize","WantNormalization","NumberOfLayers"];
         % SweepNameIgnore = ["HiddenSizes","maxworkerMiniBatchSize","Activation","WeightReconstruction","WeightClassification","WeightKL","WantNormalization","LossFactorKL","LossFactorReconstruction","FirstHiddenSize"];
     case 'Data Augmentation'
         SweepName = "Normalization";
@@ -94,6 +94,9 @@ switch SweepType
     case 'Initial Units'
         SweepName = "FirstHiddenSize";
         SweepNameIgnore = ["HiddenSizes"];
+    case 'Session'
+        SweepName = "Subset";
+        SweepNameIgnore = ["NumEpochsSession","NumEpochsFull"];
     otherwise
         SweepName = [];
         SweepNameIgnore = [];
