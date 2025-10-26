@@ -1,14 +1,30 @@
-function [ClassNames,NumClasses,ClassPercent,ClassCounts,Values] = cgg_getClassesFromDataStore(DataStore)
+function [ClassNames,NumClasses,ClassPercent,ClassCounts,Values] = cgg_getClassesFromDataStore(DataStore,varargin)
 %CGG_GETCLASSESFROMDATASTORE Summary of this function goes here
 %   Detailed explanation goes here
 
-NumClasses=[];
+isfunction=exist('varargin','var');
 
-TargetDataStore=DataStore.UnderlyingDatastores{2};
+if isfunction
+TargetDataStoreIDX = CheckVararginPairs('TargetDataStoreIDX', 2, varargin{:});
+else
+if ~(exist('TargetDataStoreIDX','var'))
+TargetDataStoreIDX=2;
+end
+end
+
+% NumClasses=[];
+
+TargetDataStore=DataStore.UnderlyingDatastores{TargetDataStoreIDX};
 
 NumDimensions=length(preview(TargetDataStore));
 
-evalc('NumClasses=gather(tall(TargetDataStore));');
+% evalc('NumClasses=gather(tall(TargetDataStore));');
+
+if isa(gcp('nocreate'), 'parallel.ThreadPool')
+NumClasses = readall(TargetDataStore,UseParallel=false);
+else
+NumClasses = readall(TargetDataStore,UseParallel=true);
+end
 if iscell(NumClasses)
 if isnumeric(NumClasses{1})
     [Dim1,Dim2]=size(NumClasses{1});
