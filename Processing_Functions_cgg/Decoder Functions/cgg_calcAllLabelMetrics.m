@@ -44,7 +44,7 @@ for didx=1:NumDimension
     for cidx=1:NumClasses
         
         ClassCM=DimensionCM(cidx,:);
-        ClassName=ClassCM.Properties.RowNames{1};
+        % ClassName=ClassCM.Properties.RowNames{1};
         
         TP=ClassCM.TP;
         TN=ClassCM.TN;

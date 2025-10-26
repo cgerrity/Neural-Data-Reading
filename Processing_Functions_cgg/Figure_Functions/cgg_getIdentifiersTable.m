@@ -87,7 +87,7 @@ end
 if ~HasAllTargets
 
 if isempty(Identifiers)||isempty(IdentifierName)
-
+% TODO: Add capability for non-double values.
 TargetAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Target.path;
 Target_Fun=@(x) cgg_loadTargetArray(x);
 
@@ -101,6 +101,10 @@ Target_Fun = @(x) {[cell2mat(cgg_getDataFromIndices(Target_Fun(x),1)),...
     this_Target_Fun(x)], ...
     [cgg_getOutputFromCell(cgg_getDataFromIndices(Target_Fun(x),2)), ...
     string(this_Target)]};
+% Target_Fun = @(x) {[num2cell(cell2mat(cgg_getDataFromIndices(Target_Fun(x),1))),...
+%     this_Target_Fun(x)], ...
+%     [cgg_getOutputFromCell(cgg_getDataFromIndices(Target_Fun(x),2)), ...
+%     string(this_Target)]};
     end
 
 end
@@ -123,6 +127,7 @@ end
 %%
 
 InputIdentifiers=cell2mat(Identifiers);
+% InputIdentifiers=vertcat(Identifiers{:});
 InputNames=cellstr(IdentifierName);
 InputNames{strcmp(InputNames,'Data Number')}='DataNumber';
 
