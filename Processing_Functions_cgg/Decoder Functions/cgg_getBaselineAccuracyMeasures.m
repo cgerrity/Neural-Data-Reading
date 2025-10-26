@@ -20,6 +20,14 @@ Weights=[];
 end
 end
 
+if isfunction
+ClassPercent = CheckVararginPairs('ClassPercent', [], varargin{:});
+else
+if ~(exist('ClassPercent','var'))
+ClassPercent=[];
+end
+end
+
 %% Random Chance
 
 NumDimensions=length(ClassNames);
@@ -43,7 +51,11 @@ RandomChance=mean(RandomChance);
 
 Stratified=NaN(1,NumIterRand);
 parfor idx=1:NumIterRand
-Prediction = TrueValue(randperm(size(TrueValue, 1)), :);
+    if isempty(ClassPercent)
+        Prediction = TrueValue(randperm(size(TrueValue, 1)), :);
+    else
+        Prediction = cgg_generateStratifiedPredictions(ClassNames,ClassPercent,size(TrueValue, 1),'IsQuaddle',IsQuaddle);
+    end
 Stratified(idx) = cgg_calcAllAccuracyTypes(TrueValue,Prediction,ClassNames,MatchType,'Weights',Weights);
 end
 Stratified=mean(Stratified);

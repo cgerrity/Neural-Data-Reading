@@ -92,7 +92,13 @@ end
 TrueValue=CM_Table.TrueValue;
 
 if all(~strcmp(FilterColumn,'All') & ~strcmp(FilterColumn,'Target Feature'))
-    FilterRowIDX=all((CM_Table{:,FilterColumn}==FilterValue),2);
+    FilterFunc.Default = @(x,y) all((x{:,:}==y),2);
+    FilterFunc.Double = @(x,y) ismember(x,y);
+    FilterFunc.Cell = @(x,y) cellfun(@(x) any(ismember(x,y)),x,'UniformOutput',true);
+    FilterFunc.CellCombine = @(x,y) all(cell2mat(x),2);
+    FilterRowIDX = cgg_procFilterIdentifiersTable(CM_Table,FilterColumn,FilterValue,FilterFunc);
+
+    % FilterRowIDX=all((CM_Table{:,FilterColumn}==FilterValue),2);
     TrueValue=TrueValue(FilterRowIDX,:);
 end
 

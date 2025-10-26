@@ -55,7 +55,19 @@ end
 
 this_ClassIndices=1:NumClasses;
 
-this_DimensionCM=[];
+
+TableVariables = [["TP", "double"]; ...
+    ["FN", "double"]; ...
+    ["FP", "double"]; ...
+    ["TN", "double"]];
+
+NumVariables = size(TableVariables,1);
+this_DimensionCM = table('Size',[NumClasses,NumVariables],... 
+	    'VariableNames', TableVariables(:,1),...
+	    'VariableTypes', TableVariables(:,2),...
+        'RowNames',string(num2str(this_ClassNames)));
+
+% this_DimensionCM=[];
 
 for cidx=1:NumClasses
 
@@ -69,10 +81,12 @@ this_ClassTN=sum(this_CM(this_ClassRemoved,this_ClassRemoved),"all");
 this_ClassFP=sum(this_CM(this_ClassRemoved,cidx),"all");
 this_ClassFN=sum(this_CM(cidx,this_ClassRemoved),"all");
 
-this_ClassCM=table(this_ClassTP,this_ClassFN,this_ClassFP,this_ClassTN,'VariableNames',{'TP','FN','FP','TN'},'RowNames',{num2str(this_Class)});
+% this_ClassCM=table(this_ClassTP,this_ClassFN,this_ClassFP,this_ClassTN,'VariableNames',{'TP','FN','FP','TN'},'RowNames',{num2str(this_Class)});
 
-this_DimensionCM=[this_DimensionCM;this_ClassCM];
-
+% this_DimensionCM=[this_DimensionCM;this_ClassCM];
+% this_DimensionCM(cidx,:) = this_ClassCM;
+this_DimensionCM(cidx,:) = {this_ClassTP,this_ClassFN,this_ClassFP,this_ClassTN};
+% this_DimensionCM.Properties.RowNames{cidx} = num2str(this_Class);
 % this_ClassInstance=TrueValue(:,didx)==this_ClassNames(cidx);
 % this_ClassPrediction=Prediction(:,didx)==this_ClassNames(cidx);
 % 

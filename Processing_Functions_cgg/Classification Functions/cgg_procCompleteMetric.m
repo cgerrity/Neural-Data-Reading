@@ -13,10 +13,10 @@ end
 end
 
 if isfunction
-TrialFilter = CheckVararginPairs('TrialFilter', 'All', varargin{:});
+TrialFilter = CheckVararginPairs('TrialFilter', {'All'}, varargin{:});
 else
 if ~(exist('TrialFilter','var'))
-TrialFilter='All';
+TrialFilter={'All'};
 end
 end
 
@@ -147,6 +147,54 @@ if ~(exist('WantSpecificChance','var'))
 WantSpecificChance=true;
 end
 end
+
+if isfunction
+WantFilteredChance = CheckVararginPairs('WantFilteredChance', true, varargin{:});
+else
+if ~(exist('WantFilteredChance','var'))
+WantFilteredChance=true;
+end
+end
+
+if isfunction
+WantDisplay = CheckVararginPairs('WantDisplay', false, varargin{:});
+else
+if ~(exist('WantDisplay','var'))
+WantDisplay=false;
+end
+end
+
+if isfunction
+WantOutputChance = CheckVararginPairs('WantOutputChance', false, varargin{:});
+else
+if ~(exist('WantOutputChance','var'))
+WantOutputChance=false;
+end
+end
+
+if isfunction
+Target = CheckVararginPairs('Target', 'Dimension', varargin{:});
+else
+if ~(exist('Target','var'))
+Target='Dimension';
+end
+end
+
+if isfunction
+WantUseNullTable = CheckVararginPairs('WantUseNullTable', false, varargin{:});
+else
+if ~(exist('WantUseNullTable','var'))
+WantUseNullTable=false;
+end
+end
+
+if isfunction
+NullTable = CheckVararginPairs('NullTable', [], varargin{:});
+else
+if ~(exist('NullTable','var'))
+NullTable=[];
+end
+end
 %% Get CFG for any analysis
 % You can uncomment this section to generate the base cfg for further
 % testing
@@ -162,6 +210,16 @@ end
 %% Ensure Subset and wantSubset Agree
 [Subset,wantSubset] = cgg_verifySubset(Subset,wantSubset);
 
+%% Ensure Target is used in cfg_Encoder
+
+if ~isempty(Target)
+cfg_Encoder.Target = Target;
+end
+
+%% Rename Attentional Filter
+if strcmp(AttentionalFilter,"Overall")
+AttentionalFilter = [];
+end
 %% Get Timeline for Time Range specification
 
 if ~isempty(TimeRange)
@@ -196,14 +254,27 @@ end
 
 if isempty(Identifiers_Table)
 Identifiers_Table = cgg_getIdentifiersTable(cfg,wantSubset,'Epoch',Epoch,'AdditionalTarget',AdditionalTarget,'Subset',Subset);
+fprintf('@@@ Loaded Identifiers Table for %s\n',Subset);
+% if isempty(NullTable)
+%     disp('Within Iterations');
+% head(Identifiers_Table)
+% disp(size(Identifiers_Table));
+% end
 end
 
 %% Generate ClassNames
 
-TrueValueIDX=contains(Identifiers_Table.Properties.VariableNames,'Dimension ');
-TrueValue=Identifiers_Table{:,TrueValueIDX};
-Identifiers_Table.TrueValue = TrueValue;
-[ClassNames,~,~,~] = cgg_getClassesFromCMTable(Identifiers_Table);
+if isfield(cfg_Encoder,'Target')
+    Target = cfg_Encoder.Target;
+    if strcmp(Target, 'Dimension')
+        TrueValueIDX=contains(Identifiers_Table.Properties.VariableNames,'Dimension ');
+    else
+        TrueValueIDX=contains(Identifiers_Table.Properties.VariableNames,Target);
+    end
+    TrueValue=Identifiers_Table{:,TrueValueIDX};
+    Identifiers_Table.TrueValue = TrueValue;
+    [ClassNames,~,ClassPercent,~] = cgg_getClassesFromCMTable(Identifiers_Table);
+end
 
 %% Generate Attention Weights
 
@@ -221,26 +292,124 @@ CM_Table=join(CM_Table,Identifiers_Table);
 
 %% Filter Trials
 
-% if all(~strcmp(TrialFilter,'All'))
-%     FilterRowIDX=all((CM_Table{:,TrialFilter}==TrialFilter_Value),2);
-%     CM_Table(~FilterRowIDX,:)=[];
+% Determine the attentional filter weights
+if ~isempty(AttentionalFilter)
+    % Weights_Chance = Chance_Table.(AttentionalFilter);
+    Weights_Chance = Identifiers_Table.(AttentionalFilter);
+else
+    Weights_Chance = ones(size(Identifiers_Table.TrueValue));
+end
+
+% Select whether to calculate chance based on the full dataset or strictly
+% the set being analyzed
+if WantSpecificChance
+    % Chance_Table = Identifiers_Table;
+    SpecificTrials = ismember(Identifiers_Table.DataNumber,CM_Table.DataNumber);
+    Weights_Chance(~SpecificTrials,:) = 0;
+% else
+%     Chance_Table = Identifiers_Table;
+end
+
+% % Determine the attentional filter weights
+% if ~isempty(AttentionalFilter)
+%     Weights_Chance = Chance_Table.(AttentionalFilter);
+% else
+%     Weights_Chance = Weights;
 % end
 
-if WantSpecificChance
-    Chance_Table = CM_Table;
-else
-    Chance_Table = Identifiers_Table;
+% If WantFilteredChance is true then the chance levels are calculated using
+% all the examples but weights the filtered out components as zero instead
+% of not considering them. The TrueValues will represent the full set,
+% which will affect the calculations of MostCommon and Stratified chance.
+% ex. TrialFilter = 'Dimensionality'; TrialFilter_Value = 1;
+% WantFilteredChance = false; All trials are included when calculating
+% MostCommon and Stratified. 
+% WantFilteredChance = true; 1-D trials are examined for calculating
+% MostCommon and Stratified, but the possible values to consider are the
+% whole dataset. This setting reflects best how the model is trained and
+% the set to be analyzed. The TrueValues come from the whole dataset
+% similar to training, but only the filtered values are considered for what
+% values to examine.
+% An alternate method was tested where the TrueValues and data to be
+% examined come from the filtered dataset. This does not reflect the actual
+% training since this would eliminate the possibility of certain classes.
+% e.g. 3-D would have TrueValues that do not have any neutral features, but
+% the model is able to assign neutral to these features regardless, making
+% any comparison to the model unfair.
+
+if all(~strcmp(TrialFilter,'All')) && WantFilteredChance
+
+    FilterFunc.Default = @(x,y) all((x{:,:}==y),2);
+    FilterFunc.Double = @(x,y) ismember(x,y);
+    FilterFunc.Cell = @(x,y) cellfun(@(x) any(ismember(x,y)),x,'UniformOutput',true);
+    FilterFunc.CellCombine = @(x,y) all(cell2mat(x),2);
+    FilterRowIDX = cgg_procFilterIdentifiersTable(Identifiers_Table,TrialFilter,TrialFilter_Value,FilterFunc);
+
+    % DistributionVariable_Table=Identifiers_Table(:,TrialFilter);
+    % 
+    % if any(strcmp(DistributionVariable_Table.Properties.VariableTypes,"cell"))
+    % 
+    %     FilterRowIDX = false(size(DistributionVariable_Table));
+    %     for tidx = 1:size(DistributionVariable_Table,2)
+    %         this_Var = DistributionVariable_Table{:,tidx};
+    %     if strcmp(DistributionVariable_Table.Properties.VariableTypes{tidx},"cell")
+    %         FilterRowIDX(:,tidx) = cellfun(@(x) any(ismember(x,TrialFilter_Value(tidx))),this_Var,'UniformOutput',true);
+    %     else
+    %         FilterRowIDX(:,tidx) = this_Var == TrialFilter_Value(tidx);
+    %     end
+    %     end
+    %     FilterRowIDX = all(FilterRowIDX,2);
+    % else
+    % % FilterRowIDX=all((Chance_Table{:,TrialFilter}==TrialFilter_Value),2);
+    % FilterRowIDX=all((Identifiers_Table{:,TrialFilter}==TrialFilter_Value),2);
+    % % Chance_Table(~FilterRowIDX,:)=[];
+    % end
+
+    if isempty(Weights_Chance)
+    % Weights_Chance = ones(size(Chance_Table.TrueValue));
+    Weights_Chance = ones(size(Identifiers_Table.TrueValue));
+    end
+    Weights_Chance(~FilterRowIDX,:)=0;
 end
+
+%% Compare data numbers to ensure the proper trials have been selected
+if WantUseNullTable
+    cfg_Encoder.Subset = Subset;
+    cfg_Encoder.wantSubset = wantSubset;
+    TargetFilter = AttentionalFilter;
+    if isempty(NullTable)
+    NullTable = cgg_getNullTable(CM_Table,cfg,cfg_Encoder,'MatchType',MatchType,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'TargetFilter',TargetFilter,'Identifiers_Table',Identifiers_Table);
+    end
+    DataNumber_NullTable = NullTable.DataNumber;
+    this_DataNumber = CM_Table.DataNumber;
+    MatchingNullEntry = cellfun(@(x) isequal(sort(x),sort(this_DataNumber)),DataNumber_NullTable,'UniformOutput',true);
+    this_NullTable = NullTable(MatchingNullEntry,:);
+    if ~isempty(this_NullTable)
+    BaselineChanceDistribution = this_NullTable.BaselineChanceDistribution;
+    BaselineChanceDistribution = BaselineChanceDistribution{1};
+    MostCommon = mean(BaselineChanceDistribution);
+    RandomChance = mean(BaselineChanceDistribution);
+    Stratified = mean(BaselineChanceDistribution);
+    end
+end
+
 %% Generate Chance Levels
 
-if ~isempty(AttentionalFilter)
-Weights = Chance_Table.(AttentionalFilter);
+if (isempty(MostCommon) || isempty(RandomChance) || isempty(Stratified)) && IsScaled
+[MostCommon,RandomChance,Stratified] = cgg_getBaselineAccuracyMeasures(...
+    Identifiers_Table.TrueValue,ClassNames,MatchType_Calc,IsQuaddle,...
+    'Weights',Weights_Chance,'ClassPercent',ClassPercent);
+if WantDisplay
+fprintf('??? Chance Levels: Stratified~%.3f Random~%.3f Most Common~%.3f!\n',Stratified,RandomChance,MostCommon);
+end
 end
 
-if isempty(MostCommon) || isempty(RandomChance) || isempty(Stratified)
-[MostCommon,RandomChance,Stratified] = cgg_getBaselineAccuracyMeasures(...
-    Chance_Table.TrueValue,ClassNames,MatchType_Calc,IsQuaddle,...
-    'Weights',Weights);
+%% Output Chance Level if wanted
+
+if WantOutputChance
+    ChancePrediction = cgg_generateStratifiedPredictions(ClassNames,ClassPercent,size(CM_Table.TrueValue, 1),'IsQuaddle',IsQuaddle);
+    CM_Table = removevars(CM_Table,contains(CM_Table.Properties.VariableNames,'Window'));
+    CM_Table.Window_1 = ChancePrediction;
 end
 
 %% Calculation of Metric
@@ -260,13 +429,17 @@ end
 
 %%
 if exist("Time","var") && ~isempty(TimeRange)
-TimeRangeIndices = Time > min(Time_Range) & Time < max(Time_Range);
+TimeRangeIndices = Time > min(TimeRange) & Time < max(TimeRange);
 Window_Metric(~TimeRangeIndices) = [];
 end
 
 %%
 
-Metric = max(Window_Metric);
+if WantOutputChance
+    Metric = Stratified;
+else
+    Metric = max(Window_Metric);
+end
 
 end
 
