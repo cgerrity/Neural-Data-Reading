@@ -254,6 +254,22 @@ WantSaveOptimalNet=true;
 end
 end
 
+if isfunction
+GradientClipType = CheckVararginPairs('GradientClipType', 'SubNetwork', varargin{:});
+else
+if ~(exist('GradientClipType','var'))
+GradientClipType='SubNetwork';
+end
+end
+
+if isfunction
+Freeze_cfg = CheckVararginPairs('Freeze_cfg', struct(), varargin{:});
+else
+if ~(exist('Freeze_cfg','var'))
+Freeze_cfg=struct();
+end
+end
+
 MessageAlreadyTrained = '!!! Network trained to maximum number of epochs\n';
 
 %% No Epochs
@@ -264,9 +280,16 @@ if NumEpochs < 1
 end
 
 %% Identify the Networks
-
 HasDecoder = ~isempty(Decoder);
 HasClassifier = ~isempty(Classifier);
+
+%% Get frozen components
+WantFreeze = ~isempty(fieldnames(Freeze_cfg));
+if WantFreeze
+    cgg_getFrozenNetwork(Encoder,"Encoder",Freeze_cfg);
+    cgg_getFrozenNetwork(Decoder,"Decoder",Freeze_cfg);
+    cgg_getFrozenNetwork(Classifier,"Classifier",Freeze_cfg);
+end
 
 %% Get Initial values
 fprintf('*** Getting Initial Values\n');
@@ -329,7 +352,7 @@ ModelLoss_Testing = ...
     WeightKL_Var) ...
     cgg_lossComponents(Encoder_Net,Decoder_Net,Classifier_Net,...
     DataStore_Testing,'Weights',Weights,'DataFormat',DataFormat,...
-    'wantPredict',true,'wantLoss',false,'IsQuaddle',IsQuaddle,...
+    'wantPredict',true,'wantLoss',true,'IsQuaddle',IsQuaddle,...
     'WantGradient',false,'WantUpdateLossPrior',false,...
     'LossInformation',LossInformation_Var,...
     'WeightReconstruction',WeightReconstruction,'WeightKL',WeightKL_Var,...
@@ -358,6 +381,17 @@ while Epoch <= NumEpochs
     % Anneal KL Weight
     WeightKL_Anneal = cgg_annealWeight(Epoch,WeightKL,...
         WeightDelayEpoch,WeightEpochRamp);
+
+    % If weights are frozen unfreeze them after annealing period
+    if WantFreeze
+        Encoder = cgg_setFrozenNetwork(Epoch,Encoder,"Encoder",Freeze_cfg);
+        if HasDecoder
+        Decoder = cgg_setFrozenNetwork(Epoch,Decoder,"Decoder",Freeze_cfg);
+        end
+        if HasClassifier
+        Classifier = cgg_setFrozenNetwork(Epoch,Classifier,"Classifier",Freeze_cfg);
+        end
+    end
 
     % Shuffle the DataStore for training
     DataStore_Training = shuffle(DataStore_Training);
@@ -391,16 +425,21 @@ while Epoch <= NumEpochs
         %     dlfeval(ModelLoss_Training,this_DataStore_Training,...
         %     Encoder,Decoder,Classifier,...
         %     LossInformation_Training,WantUpdateLossPrior,WeightKL_Anneal);
+        tic;
         [LossInformation_Training,CM_Table_Training,Gradients,State] = ...
             cgg_procGradientAggregation(ModelLoss_Training, ...
             this_DataStore_Training,Encoder,Decoder,Classifier, ...
             LossInformation_Training,WantUpdateLossPrior, ...
             WeightKL_Anneal,maxworkerMiniBatchSize);
+        fprintf('??? Gradient Aggregation Time is %.3f\n',toc);
         WantUpdateLossPrior = false;
     
         %% Update Gradient Threshold
         Gradients_PreThreshold = Gradients;
-        Gradients.Encoder = cgg_calcGradientThreshold(Gradients.Encoder,GradientThreshold);
+
+        % Apply one global clip across all present fields in Gradients
+        [Gradients, ~] = cgg_getClippedGradient(Gradients,GradientThreshold,GradientClipType);
+        % Gradients.Encoder = cgg_calcGradientThreshold(Gradients.Encoder,GradientThreshold);
 
         % Update Networks using gradients
         [Encoder,OptimizerVariables.Encoder] = cgg_procUpdateNetworks(...
@@ -410,11 +449,7 @@ while Epoch <= NumEpochs
 
         if HasDecoder
         % Update Gradient Threshold
-        % GradientThreshold_Decoder = GradientThreshold;
-        % if Epoch <= GradientThresholdEpoch
-        % GradientThreshold_Decoder = GradientThreshold*(10^(Epoch-GradientThresholdEpoch));
-        % end
-        Gradients.Decoder = cgg_calcGradientThreshold(Gradients.Decoder,GradientThreshold);
+        % Gradients.Decoder = cgg_calcGradientThreshold(Gradients.Decoder,GradientThreshold);
 
         % Update Networks using gradients
         [Decoder,OptimizerVariables.Decoder] = cgg_procUpdateNetworks(...
@@ -425,7 +460,7 @@ while Epoch <= NumEpochs
 
         if HasClassifier
         % Update Gradient Threshold
-        Gradients.Classifier = cgg_calcGradientThreshold(Gradients.Classifier,GradientThreshold);
+        % Gradients.Classifier = cgg_calcGradientThreshold(Gradients.Classifier,GradientThreshold);
 
         % Update Networks using gradients
         [Classifier,OptimizerVariables.Classifier] = cgg_procUpdateNetworks(...

@@ -20,6 +20,8 @@ if cfg.IsSimple
     WantNormalization = cfg.WantNormalization;
     Transform = cfg.Transform;
     Activation = cfg.Activation;
+    HiddenSizeBottleNeck = cfg.HiddenSizeBottleNeck;
+    HiddenSizeAutoEncoder = [HiddenSizeAutoEncoder, HiddenSizeBottleNeck];
 
     DecoderBlocks = cgg_constructSimpleCoder(HiddenSizeAutoEncoder,...
             'Coder',Coder,'Dropout',Dropout,...
