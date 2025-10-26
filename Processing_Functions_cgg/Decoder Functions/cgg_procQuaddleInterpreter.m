@@ -1,6 +1,16 @@
-function [Prediction] = cgg_procQuaddleInterpreter(Prediction,ClassNames,ClassConfidence,wantZeroFeatureDetector)
+function [Prediction] = cgg_procQuaddleInterpreter(Prediction,ClassNames,ClassConfidence,wantZeroFeatureDetector,varargin)
 %CGG_PROCQUADDLEINTERPRETER Summary of this function goes here
 %   Detailed explanation goes here
+
+isfunction=exist('varargin','var');
+
+if isfunction
+WantRandom = CheckVararginPairs('WantRandom', false, varargin{:});
+else
+if ~(exist('WantRandom','var'))
+WantRandom=false;
+end
+end
 
 % Real Quaddle parameters go here
 
@@ -46,7 +56,16 @@ end
 
 if IncreaseFeatures
 NumChanges=QuaddleDimMin-NumDim;
+% [~,SortedCostConfidenceIDX]=sort(CostConfidence,'ascend');
+
+if WantRandom
+this_CostConfidence = -CostConfidence';
+RandomWeights = softmax(this_CostConfidence);
+SortedCostConfidenceIDX = cgg_getWeightedPermutation(1:length(RandomWeights),RandomWeights);
+else
 [~,SortedCostConfidenceIDX]=sort(CostConfidence,'ascend');
+end
+
 for cidx=1:NumChanges
 this_DimIDX=SortedCostConfidenceIDX(cidx);
 this_ClassNames=ClassNames{this_DimIDX};
@@ -56,7 +75,16 @@ end
 
 elseif DecreaseFeatures
 NumChanges=NumDim-QuaddleDimMax;
+% [~,SortedCostConfidenceIDX]=sort(CostConfidence,'descend');
+
+if WantRandom
+this_CostConfidence = CostConfidence';
+this_CostConfidence(isinf(this_CostConfidence)) = -Inf;
+RandomWeights = softmax(this_CostConfidence);
+SortedCostConfidenceIDX = cgg_getWeightedPermutation(1:length(RandomWeights),RandomWeights);
+else
 [~,SortedCostConfidenceIDX]=sort(CostConfidence,'descend');
+end
 for cidx=1:NumChanges
 this_DimIDX=SortedCostConfidenceIDX(cidx);
 Prediction(this_DimIDX)=0;
