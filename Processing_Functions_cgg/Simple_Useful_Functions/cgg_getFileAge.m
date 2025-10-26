@@ -8,6 +8,7 @@ function FileAge = cgg_getFileAge(FileName, timeUnit)
     % Outputs:
     %   - FileAge: Age of the file in specified time units
 
+    FileAge = NaN;
     % Default time unit
     if nargin < 2
         timeUnit = 'days';
@@ -17,7 +18,8 @@ function FileAge = cgg_getFileAge(FileName, timeUnit)
     fileInfo = dir(FileName);
 
     if isempty(fileInfo)
-        error('File not found.');
+        % error('File not found.');
+        return
     end
 
     % Retrieve the date of the last modification
