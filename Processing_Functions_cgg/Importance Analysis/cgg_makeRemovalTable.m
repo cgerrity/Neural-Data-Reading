@@ -36,6 +36,22 @@ MustIncludeTable=[];
 end
 end
 
+if isfunction
+Probe_Areas = CheckVararginPairs('Probe_Areas', [], varargin{:});
+else
+if ~(exist('Probe_Areas','var'))
+Probe_Areas=[];
+end
+end
+
+if isfunction
+LatentNames = CheckVararginPairs('LatentNames', [], varargin{:});
+else
+if ~(exist('LatentNames','var'))
+LatentNames=[];
+end
+end
+
 %%
 
 ChannelIndices = 1:NumChannels;
@@ -71,12 +87,22 @@ LatentTable(MustIncludeIndices,:) = [];
 LatentMustInclude = MustIncludeTable_Latent.LatentIndices;
 LatentMustInclude(isnan(LatentMustInclude)) = [];
 end
-%%
+%% FIXME
 
+if isempty(Probe_Areas)
 cfg_param = PARAMETERS_cgg_procFullTrialPreparation_v2('');
 Probe_Order=cfg_param.Probe_Order;
 [Probe_Dimensions,Probe_Areas,~,~] = cgg_getProbeDimensions(Probe_Order);
 Probe_Areas = Probe_Areas';
+end
+
+if isempty(LatentNames)
+    LatentSplitIDX = round(LatentSize/2);
+    LatentValues = [1;2];
+    LatentRemovalNameIndices = [ones([1,LatentSplitIDX])*LatentValues(1),ones([1,LatentSplitIDX])*LatentValues(2)];
+    LatentNames = {'Mean';'STD'};
+    LatentRemovalNameIndices = LatentRemovalNameIndices(1:LatentSize);
+end
 %%
 
 switch RemovalType
@@ -86,6 +112,8 @@ switch RemovalType
         if NumRemoved > NumOptions
             RemovalTable = NaN;
             return
+        elseif strcmp(NumRemoved,"All")
+            NumRemoved = NumOptions;
         end
         RemovalIndices = cgg_getCombinations(1:NumOptions, NumRemoved, NumEntries);
         NumEntries = size(RemovalIndices,1);
@@ -107,11 +135,14 @@ switch RemovalType
         AreaNames = AreaNames';
         end
         LatentRemovalIndices = NaN(NumEntries,NumRemoved);
+        LatentRemovalNames = repmat({'None'},[NumEntries,NumRemoved]);
     case 'Latent'
         NumOptions = height(LatentTable);
         if NumRemoved > NumOptions
             RemovalTable = NaN;
             return
+        elseif strcmp(NumRemoved,"All")
+            NumRemoved = NumOptions;
         end
         RemovalIndices = cgg_getCombinations(1:NumOptions, NumRemoved, NumEntries);
         NumEntries = size(RemovalIndices,1);
@@ -123,12 +154,15 @@ switch RemovalType
         end
         LatentRemovalIndices = [repmat(LatentMustInclude',[NumEntries,1]),LatentRemovalIndices];
         NumRemoved = size(LatentRemovalIndices,2);
+        LatentRemovalNames = LatentNames(LatentRemovalNameIndices(LatentRemovalIndices));
+
+        if NumEntries == 1
+        LatentRemovalNames = LatentRemovalNames';
+        end
 
         ChannelRemovalIndices = NaN(NumEntries,NumRemoved);
         AreaRemovalIndices = NaN(NumEntries,NumRemoved);
         AreaNames = repmat({'None'},[NumEntries,NumRemoved]);
-        
-        
 end
 
 
@@ -138,6 +172,7 @@ ChannelRemovalIndices = num2cell(ChannelRemovalIndices,2);
 AreaRemovalIndices = num2cell(AreaRemovalIndices,2);
 LatentRemovalIndices = num2cell(LatentRemovalIndices,2);
 AreaNames = num2cell(AreaNames,2);
+LatentRemovalNames = num2cell(LatentRemovalNames,2);
 
 %%
 
@@ -145,11 +180,12 @@ ChannelRemovalIndices = [{NaN(1,NumRemoved)};ChannelRemovalIndices];
 AreaRemovalIndices = [{NaN(1,NumRemoved)};AreaRemovalIndices];
 LatentRemovalIndices = [{NaN(1,NumRemoved)};LatentRemovalIndices];
 AreaNames = [{repmat({'None'},[1,NumRemoved])};AreaNames];
+LatentRemovalNames = [{repmat({'None'},[1,NumRemoved])};LatentRemovalNames];
 
 %%
 
 RemovalTable = table(AreaRemovalIndices,...
-    ChannelRemovalIndices,LatentRemovalIndices,AreaNames,'VariableNames',...
-    {'AreaRemoved','ChannelRemoved','LatentRemoved','AreaNames'});
+    ChannelRemovalIndices,LatentRemovalIndices,AreaNames,LatentRemovalNames,'VariableNames',...
+    {'AreaRemoved','ChannelRemoved','LatentRemoved','AreaNames','LatentNames'});
 
 end

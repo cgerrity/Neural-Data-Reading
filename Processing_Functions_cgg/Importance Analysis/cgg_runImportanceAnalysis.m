@@ -1,29 +1,19 @@
-function cgg_runImportanceAnalysis(PassTableEntry,EpochDir,varargin)
+function cgg_runImportanceAnalysis(PassTableEntry,cfg_Epoch,cfg_Encoder,varargin)
 %CGG_RUNIMPORTANCEANALYSIS Summary of this function goes here
 %   Detailed explanation goes here
 
-
-RemovalType = PassTableEntry.RemovalType;
-TrialFilter = PassTableEntry.TrialFilter;
-TargetFilter = PassTableEntry.TargetFilter;
+if ismember("Method", PassTableEntry.Properties.VariableNames)
 Method = PassTableEntry.Method;
-Fold = PassTableEntry.Fold;
-NumRemoved = PassTableEntry.NumRemoved;
-SessionName = PassTableEntry.SessionName;
-MatchType = PassTableEntry.MatchType;
+end
 
-
-[IsComplete,HasFlag,InProgress,~,~] = ...
-    cgg_checkAnyImportanceAnalysis(Method,NumRemoved,RemovalType,Fold,...
-    EpochDir,'SessionName',SessionName,'MatchType',MatchType, ...
-    'TrialFilter',TrialFilter,'TargetFilter',TargetFilter,varargin{:});
+[IsComplete,HasFlag,InProgress,~,~,~] = ...
+    cgg_checkAnyImportanceAnalysis(PassTableEntry,cfg_Epoch);
 
 ContinueAnalysis = (~IsComplete || HasFlag) && ~InProgress;
 
-[IAPathName,RemovalTablePathName] = ...
-    cgg_generateImportanceAnalysisFileNames(Method,NumRemoved,...
-    RemovalType,Fold,EpochDir,SessionName,MatchType,TrialFilter, ...
-    TargetFilter);
+[IAPathName,RemovalTablePathName,IATestPathName] = ...
+    cgg_generateImportanceAnalysisFileNames(PassTableEntry,cfg_Epoch,...
+    'WantDirectory',true);
 
 IALockFileContent = ['This file locks processes from performing the' ...
     'corresponding ablation. Until this file is deleted then no ' ...
@@ -46,17 +36,26 @@ if ~LockFileSuccess
     return
 end
 
+fprintf('   *** Running Importance Analysis Method: ');
 switch Method
-    case Rank
+    case 'Rank'
+        fprintf('Rank\n');
         % cgg_runRankImportanceAnalysis
-    case Random
+    case 'Random'
+        fprintf('Random\n');
         % cgg_runRandomImportanceAnalysis
-    case Sequetial
+    case 'Sequential'
+        fprintf('Sequential\n');
         % cgg_runSequentialImportanceAnalysis
+    case 'Block'
+        fprintf('Block\n');
+        cgg_runBlockImportanceAnalysis(PassTableEntry,cfg_Epoch,cfg_Encoder);
+    otherwise
+        fprintf('No Method Selected\n');
 end
 
 % Clean up the lock file after processing (whether successful or not)
-if exist(LockFilePathNameExt, 'file')
+if isfile(LockFilePathNameExt)
   delete(LockFilePathNameExt);
 end
 
