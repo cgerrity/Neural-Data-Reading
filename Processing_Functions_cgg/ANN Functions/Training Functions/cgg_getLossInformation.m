@@ -127,21 +127,27 @@ LossInformation.Loss_OffsetAndScale_Normalized = ...
 
 %% Rescale Loss
 
+% fprintf('??? Selecting Rescale Value\n');
 % if isdlarray(Loss_Classification_Normalized)
 if isdlarray(Loss_Classification)
     Rescale_Value = LossInformation.Prior_Loss_Classification;
+    % fprintf('??? Using Classification as rescale. Value is: %d\n',Rescale_Value);
 % elseif isdlarray(Loss_Reconstruction_Normalized)
 elseif isdlarray(Loss_Reconstruction)
     Rescale_Value = LossInformation.Prior_Loss_Reconstruction;
+    % fprintf('??? Using Reconstuction as rescale. Value is: %d\n',Rescale_Value);
 elseif ~(all(isnan(Loss_Classification),'all') || ...
         isempty(Loss_Classification))
     Rescale_Value = LossInformation.Prior_Loss_Classification;
+    % fprintf('??? Using Prior Classification as rescale. Value is: %d\n',Rescale_Value);
 elseif ~(all(isnan(Loss_Reconstruction),'all') || ...
         isempty(Loss_Reconstruction))
     Rescale_Value = LossInformation.Prior_Loss_Reconstruction;
+    % fprintf('??? Using Prior Reconstruction as rescale. Value is: %d\n',Rescale_Value);
 end
 
 if WantWeightedLoss_Reconstruction
+    % fprintf('??? Loss Reconstruction. Rescale Value is: %d\n',Rescale_Value);
 Loss_Reconstruction = Loss_Reconstruction.*Rescale_Value;
 end
 if WantWeightedLoss_KL
