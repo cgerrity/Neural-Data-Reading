@@ -1,0 +1,125 @@
+{
+  "profiles": [
+    {
+      "name": "Mac cgerrity with ACCRE mounted",
+      "system": "Personal Computer",
+      "match": {
+        "os": "mac",
+        "username": "cgerrity",
+        "wantTEBA": false
+      },
+      "paths": {
+        "input": "/Users/{username}/Documents/ACCRE",
+        "output": "/Users/{username}/Documents/ACCRE",
+        "temp": "/Users/{username}/Documents/ACCREDATA"
+      },
+      "tests": {
+        "mustExist": "/Users/{username}/Documents/ACCRE"
+      },
+      "priority": 120
+    },
+    {
+      "name": "Mac cgerrity via mounted volumes",
+      "system": "Personal Computer",
+      "match": {
+        "os": "mac",
+        "username": "cgerrity"
+      },
+      "paths": {
+        "input": "/Volumes/Womelsdorf Lab",
+        "output": "/Volumes/gerritcg''s home",
+        "temp": "/Volumes/gerritcg''s home"
+      },
+      "tests": {
+        "mustExist": "/Volumes/Womelsdorf Lab"
+      },
+      "priority": 90
+    },
+    {
+      "name": "Mac newuser via mounted volumes",
+      "system": "Personal Computer",
+      "match": {
+        "os": "mac",
+        "username": "newuser"
+      },
+      "paths": {
+        "input": "/Volumes/Womelsdorf Lab",
+        "output": "/Volumes/gerritcg''s home",
+        "temp": "/Volumes/gerritcg''s home"
+      },
+      "tests": {
+        "mustExist": "/Volumes/Womelsdorf Lab"
+      },
+      "priority": 70
+    },
+    {
+      "name": "TEBA default",
+      "system": "TEBA",
+      "match": {
+        "os": "linux",
+        "wantTEBA": true
+      },
+      "paths": {
+        "input": "/data",
+        "output": "/data/users/{username}",
+        "temp": "/data/users/{username}"
+      },
+      "tests": {
+        "mustExist": "/data"
+      },
+      "priority": 80
+    },
+    {
+      "name": "ACCRE default (accre hosts)",
+      "system": "ACCRE",
+      "match": {
+        "os": "linux",
+        "hostname": "accre*"
+      },
+      "paths": {
+        "input": "/home/{username}",
+        "output": "/home/{username}",
+        "temp": "/data/womelsdorflab/{username}"
+      },
+      "tests": {
+        "mustExist": "/home/{username}"
+      },
+      "priority": 75
+    },
+    {
+      "name": "ACCRE default (panfs hosts)",
+      "system": "ACCRE",
+      "match": {
+        "os": "linux",
+        "hostname": "panfs*"
+      },
+      "paths": {
+        "input": "/home/{username}",
+        "output": "/home/{username}",
+        "temp": "/data/womelsdorflab/{username}"
+      },
+      "tests": {
+        "mustExist": "/home/{username}"
+      },
+      "priority": 75
+    },
+    {
+      "name": "cgerrity@MacBook-Pro-52.local (Personal Computer)",
+      "system": "Personal Computer",
+      "match": {
+        "os": "mac",
+        "username": "cgerrity",
+        "hostname": "MacBook-Pro-52.local"
+      },
+      "paths": {
+        "input": "{homeDir}/Documents/ACCRE",
+        "output": "{homeDir}/Documents/ACCRE_DATA",
+        "temp": "{homeDir}/Documents/ACCRE_DATA"
+      },
+      "tests": {
+        "mustExist": "{homeDir}/Documents/ACCRE"
+      },
+      "priority": 50
+    }
+  ]
+}
