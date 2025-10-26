@@ -2,7 +2,7 @@
 clc; clear; close all;
 %%
 
-StatusType = 'All Parameters';
+StatusType = 'Session';
 
 switch StatusType
     case 'Paper'
@@ -18,9 +18,19 @@ Fold_All = 1;
 SessionRunIDX_All = 1:250;
     case 'All Parameters'
 SLURMChoice_All = {'Base',1,2,3,4,5,6,7,8,9,10,11,12};
-SLURMIDX_All = {1,[1,2,3,6,7,8,9,10],1:10,1:10,[1,2,3,5,7,9,10],1:10,1:10,1:10,1:10,1:10,1:6,[1,4],1:10};
+SLURMIDX_All = {1,[1,2,3,4,5,6,7,8,9,10],1:10,1:10,[1,2,3,5,7,9,10],1:10,1:10,1:10,1:10,1:10,1:6,[1,4],1:10};
 Fold_All = 1:10;
 SessionRunIDX_All = NaN;
+    case 'Convolutional'
+        SLURMChoice_All = {1};
+        SLURMIDX_All = {[3,4,5]};
+        Fold_All = 1:10;
+        SessionRunIDX_All = NaN;
+    case 'Models'
+        SLURMChoice_All = {1,11};
+        SLURMIDX_All = {[1,2,3,4,5],[1,4]};
+        Fold_All = 1:10;
+        SessionRunIDX_All = NaN;
 end
 
 %%
@@ -61,18 +71,17 @@ cfg_Encoder = PARAMETERS_cgg_runAutoEncoder();
 end
 
 if strcmp(SLURMChoice,'Base') && ~isnan(SLURMIDX)
-TableSLURM = SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX);
+TableSLURM = SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX, ...
+    'SessionRunIDX',SessionRunIDX);
 [Fold,cfg_Encoder] = cgg_assignSLURMEncoderParameters(cfg_Encoder,TableSLURM);
 elseif ~isnan(SLURMIDX) && ~isnan(SLURMChoice)
-TableSLURM = SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX);
+TableSLURM = SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX, ...
+    'SessionRunIDX',SessionRunIDX);
 [~,cfg_Encoder] = cgg_assignSLURMEncoderParameters(cfg_Encoder,TableSLURM);
 end
 
-if ~isnan(SessionRunIDX)
-    Fold = mod(SessionRunIDX-1,10)+1;
-    SessionIDX = floor((SessionRunIDX-1)/10)+1;
-    cfg_Encoder.Subset = replace(cfg_Session(SessionIDX).SessionName,'-','_');
-end
+[Fold,cfg_Encoder] = cgg_assignSLURMSession(...
+    Fold,SessionRunIDX,cfg_Session,cfg_Encoder);
 
 cfg_Encoder.Fold = Fold;
 Epoch=cfg_Encoder.Epoch;
@@ -157,3 +166,4 @@ TableFun = @(x) {PercentileFunction(x),MeanFunction(x)};
 
 % Use groupsummary to apply the function for each unique combination of 'Field1' and 'Field2' over 'Field3'
 ProgressTable_Percentile = groupsummary(ProgressTable, {'SLURMChoice', 'SLURMIDX'}, TableFun, 'Full Progress');
+ProgressTable_Percentile = splitvars(ProgressTable_Percentile,"fun1_Full Progress","NewVariableNames",["50th Percentile","Average"]);
