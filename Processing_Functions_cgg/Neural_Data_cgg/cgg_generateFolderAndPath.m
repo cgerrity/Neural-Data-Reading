@@ -12,7 +12,8 @@ WantDirectory=true;
 end
 end
 %%
-outdatadir=[cfg.path, filesep, foldername];
+% outdatadir=[cfg.path, filesep, foldername];
+outdatadir=fullfile(cfg.path,foldername);
 cfg.(Field_Name).path=outdatadir;
 
 if WantDirectory
