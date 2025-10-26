@@ -13,6 +13,7 @@ CurrentCases = {'Classifier Hidden Size','Classifier','Data Width', ...
     'Classification Weight','KL Weight','Reconstruction Weight','Session'};
 %%
 
+SweepNameAlwaysIgnore = "AccumulationInformation";
 
 switch SweepType
     case 'Classifier Hidden Size'
@@ -102,7 +103,7 @@ switch SweepType
         SweepNameIgnore = [];
 end
 
-
+SweepNameIgnore = [SweepNameIgnore,SweepNameAlwaysIgnore];
 
 
 end

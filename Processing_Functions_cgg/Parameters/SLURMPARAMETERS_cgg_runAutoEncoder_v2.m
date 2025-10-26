@@ -1,7 +1,19 @@
 function [cfgSLURM,IsInccidentalBaseRepeat] = ...
-    SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX)
+    SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX,varargin)
 %SLURMPARAMETERS_CGG_RUNAUTOENCODER Summary of this function goes here
 %   Detailed explanation goes here
+
+isfunction=exist('varargin','var');
+
+if isfunction
+SessionRunIDX = CheckVararginPairs('SessionRunIDX', NaN, varargin{:});
+else
+if ~(exist('SessionRunIDX','var'))
+SessionRunIDX=NaN;
+end
+end
+
+%%
 
 SLURMIDX_Count = 10;
 NotBase = true;
@@ -663,7 +675,9 @@ end
 IsSubset = cgg_isSubsetStruct(cfg,rmfield(cfgSLURM,'Fold'));
 IsInccidentalBaseRepeat = IsSubset && NotBase;
 
+if isnan(SessionRunIDX)
 fprintf(SLURMDescription,Description{SLURMIDX});
+end
 
 
 % disp(cfgSLURM);
