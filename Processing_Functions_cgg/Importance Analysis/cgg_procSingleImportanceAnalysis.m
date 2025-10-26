@@ -1,4 +1,4 @@
-function [IA_Table_Fold,IA_Table_Average] = cgg_procSingleImportanceAnalysis(cfg_Encoder,EpochDir,varargin)
+function [IA_Table_Fold,IA_Table_Average] = cgg_procSingleImportanceAnalysis(cfg_Encoder,cfg_Epoch,varargin)
 %CGG_PROCFULLIMPORTANCEANALYSIS Summary of this function goes here
 %   Detailed explanation goes here
 isfunction=exist('varargin','var');
@@ -136,6 +136,11 @@ if ~WantDelay
 PauseTime_Long = 1;
 PauseTime_Short = 1;
 end
+
+%%
+
+EpochDir_Main = cgg_getDirectory(cfg_Epoch.TargetDir,'Epoch');
+EpochDir_Results = cgg_getDirectory(cfg_Epoch.ResultsDir,'Epoch');
 %%
 Target = cfg_Encoder.Target;
 HiddenSize=cfg_Encoder.HiddenSizes;
@@ -162,7 +167,9 @@ wantSubset = cfg_Encoder.wantSubset;
 DataWidth = cfg_Encoder.DataWidth;
 WindowStride = cfg_Encoder.WindowStride;
 
-TargetDir = [EpochDir.Results filesep 'Encoding' filesep Target];
+% TargetDir = [cfg_Epoch.Results filesep 'Encoding' filesep Target];
+TargetDir = [EpochDir_Results filesep 'Encoding' filesep Target];
+% TargetDir = cgg_getDirectory(cfg_Epoch.ResultsDir,'Target');
 
 cfg_Network = cgg_generateEncoderSubFolders([TargetDir filesep 'Fold_1'],ModelName,DataWidth,WindowStride,HiddenSize,InitialLearningRate,WeightReconstruction,WeightKL,WeightClassification,MiniBatchSize,wantSubset,WeightedLoss,GradientThreshold,ClassifierName,ClassifierHiddenSize,STDChannelOffset,STDWhiteNoise,STDRandomWalk,Optimizer,NumEpochsAutoEncoder,Normalization,LossType_Decoder);
 EncodingParametersPath = cgg_getDirectory(cfg_Network,'Classifier');
@@ -188,7 +195,7 @@ RemovalTableSaveFunc = [];
 if WantRemovalTableAcrossFolds
 % RemovalTableSaveFunc = @(Table) cgg_saveRemovalTable(Table,Folds, ...
 %     EpochDir.Results,RemovalType,SessionName,SaveTerm);
-RemovalTableSaveFunc = @(Table) cgg_saveSameRemovalTableAcrossFolds(Table,Folds,EpochDir,RemovalType,SessionName,SaveTerm);
+RemovalTableSaveFunc = @(Table) cgg_saveSameRemovalTableAcrossFolds(Table,Folds,cfg_Epoch,RemovalType,SessionName,SaveTerm);
 end
 %% Function for Checking if Removal Tables are the same
 
@@ -221,7 +228,8 @@ Fold = Folds(fidx);
 % disp({Fold,NumRemoved});
 fprintf(CurrentMessage,Fold,NumRemoved);
 IA_AccuracyNameExt = sprintf('IA_Table%s_%s.mat',SaveTerm,MatchType);
-IA_AccuracyPathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,sprintf('Fold %d',Fold),SessionName,IA_AccuracyNameExt);
+% IA_AccuracyPathNameExt = fullfile(cfg_Epoch.Results,'Analysis','Importance Analysis',RemovalType,sprintf('Fold %d',Fold),SessionName,IA_AccuracyNameExt);
+IA_AccuracyPathNameExt = fullfile(EpochDir_Results,'Analysis','Importance Analysis',RemovalType,sprintf('Fold %d',Fold),SessionName,IA_AccuracyNameExt);
 
 if isfile(IA_AccuracyPathNameExt)
 m_IA_Table_Accuracy = matfile(IA_AccuracyPathNameExt,"Writable",false);
@@ -229,7 +237,8 @@ IA_Table_Accuracy = m_IA_Table_Accuracy.IA_Table;
 else
 
 IANameExt = sprintf('IA_Table%s.mat',SaveTerm);
-IAPathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,sprintf('Fold %d',Fold),SessionName,IANameExt);
+% IAPathNameExt = fullfile(cfg_Epoch.Results,'Analysis','Importance Analysis',RemovalType,sprintf('Fold %d',Fold),SessionName,IANameExt);
+IAPathNameExt = fullfile(EpochDir_Results,'Analysis','Importance Analysis',RemovalType,sprintf('Fold %d',Fold),SessionName,IANameExt);
 
 [HasIA_Table,HasRemovalTable] = cgg_checkImportanceAnalysis(IAPathNameExt);
 [IA_Table,RemovalTable,TablesMatch] = cgg_getImportanceAnalysis(IAPathNameExt);
@@ -269,17 +278,22 @@ end
 
 if HasIA_Table && TablesMatch
 % IA_Table = m_IA_Table.IA_Table;
-[~,~,~,ClassNames] = cgg_getDatastore(EpochDir.Main,SessionName,Fold,cfg_Encoder);
+% [~,~,~,ClassNames] = cgg_getDatastore(cfg_Epoch.Main,SessionName,Fold,cfg_Encoder);
+[~,~,~,ClassNames] = cgg_getDatastore(EpochDir_Main,SessionName,Fold,cfg_Encoder);
 if ~HasRemovalTable
-    cgg_saveImportanceAnalysis(IA_Table,EpochDir.Results,...
+    % cgg_saveImportanceAnalysis(IA_Table,cfg_Epoch.Results,...
+    % RemovalType,Fold,SessionName);
+    cgg_saveImportanceAnalysis(IA_Table,EpochDir_Results,...
     RemovalType,Fold,SessionName);
 end
 else
 
-[~,~,Testing,ClassNames] = cgg_getDatastore(EpochDir.Main,SessionName,Fold,cfg_Encoder);
+% [~,~,Testing,ClassNames] = cgg_getDatastore(cfg_Epoch.Main,SessionName,Fold,cfg_Encoder);
+[~,~,Testing,ClassNames] = cgg_getDatastore(EpochDir_Main,SessionName,Fold,cfg_Encoder);
 %%
 
-FoldDir = [EpochDir.Results filesep 'Encoding' filesep Target filesep sprintf('Fold_%d',Fold)];
+% FoldDir = [cfg_Epoch.Results filesep 'Encoding' filesep Target filesep sprintf('Fold_%d',Fold)];
+FoldDir = [EpochDir_Results filesep 'Encoding' filesep Target filesep sprintf('Fold_%d',Fold)];
 cfg_Network = cgg_generateEncoderSubFolders(FoldDir,ModelName,DataWidth,WindowStride,HiddenSize,InitialLearningRate,WeightReconstruction,WeightKL,WeightClassification,MiniBatchSize,wantSubset,WeightedLoss,GradientThreshold,ClassifierName,ClassifierHiddenSize,STDChannelOffset,STDWhiteNoise,STDRandomWalk,Optimizer,NumEpochsAutoEncoder,Normalization,LossType_Decoder);
 Encoding_Dir = cgg_getDirectory(cfg_Network,'Classifier');
 
@@ -319,7 +333,9 @@ end
 pause(randi(PauseTime_Long)-1);
 
 if ~StopChecking
-cgg_saveImportanceAnalysis(IA_Table,EpochDir.Results,...
+% cgg_saveImportanceAnalysis(IA_Table,cfg_Epoch.Results,...
+%     RemovalType,Fold,SessionName,'SaveTerm',SaveTerm);
+cgg_saveImportanceAnalysis(IA_Table,EpochDir_Results,...
     RemovalType,Fold,SessionName,'SaveTerm',SaveTerm);
 end
 
@@ -336,7 +352,10 @@ end
 
 pause(randi(PauseTime_Short)-1);
 
-cgg_saveImportanceAnalysis(IA_Table_Accuracy,EpochDir.Results,...
+% cgg_saveImportanceAnalysis(IA_Table_Accuracy,cfg_Epoch.Results,...
+%     RemovalType,Fold,SessionName,'MatchType',MatchType, ...
+%     'SaveTerm',SaveTerm);
+cgg_saveImportanceAnalysis(IA_Table_Accuracy,EpochDir_Results,...
     RemovalType,Fold,SessionName,'MatchType',MatchType, ...
     'SaveTerm',SaveTerm);
 end

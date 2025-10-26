@@ -1,4 +1,4 @@
-function [IA_Table_Fold,IA_Table_Average] = cgg_procSequentialImportanceAnalysis(cfg_Encoder,EpochDir,varargin)
+function [IA_Table_Fold,IA_Table_Average] = cgg_procSequentialImportanceAnalysis(cfg_Encoder,cfg_Epoch,varargin)
 %CGG_PROCSEQUENTIALIMPORTANCEANALYSIS Summary of this function goes here
 %   Detailed explanation goes here
 isfunction=exist('varargin','var');
@@ -135,10 +135,15 @@ if ~WantDelay
 PauseTime_Long = 1;
 PauseTime_Short = 1;
 end
+
+%%
+% EpochDir_Main = cgg_getDirectory(cfg_Epoch.TargetDir,'Epoch');
+EpochDir_Results = cgg_getDirectory(cfg_Epoch.ResultsDir,'Epoch');
 %%
 SaveTerm = '_Sequential';
 IANameExt = 'IA_Table_Sequential.mat';
-IAPathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IANameExt);
+% IAPathNameExt = fullfile(cfg_Epoch.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IANameExt);
+IAPathNameExt = fullfile(EpochDir_Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IANameExt);
 
 %%
 
@@ -151,7 +156,8 @@ MaxNumRemovalsFunc = @(y) max(NumRemovalsFunc(y));
 % IsLatentEmptyFunc = @(y) cellfun(@(x) isempty(x),y.LatentRemoved);
 % IsRowEmptyFunc = @(y) IsChannelEmptyFunc(y) | IsLatentEmptyFunc(y);
 
-AnalysisDir = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType);
+% AnalysisDir = fullfile(cfg_Epoch.Results,'Analysis','Importance Analysis',RemovalType);
+AnalysisDir = fullfile(EpochDir_Results,'Analysis','Importance Analysis',RemovalType);
 % IA_Func =@(y) cgg_getOutputFromIndices(@cgg_getImportanceAnalysis,y,1,3);
 RemovalTable_Func =@(y) cgg_getRemovalTable(y);
 
@@ -169,7 +175,7 @@ end
 %     CurrentNumRemovals_IA_Table = 0;
 % end
 
-[MaximumRemovals,NumChannels,NumAreas,LatentSize,BadChannelTable] = cgg_getMaximumNumberOfRemovals(cfg_Encoder,EpochDir,'RemovalType',RemovalType,'SessionName',SessionName);
+[MaximumRemovals,NumChannels,NumAreas,LatentSize,BadChannelTable] = cgg_getMaximumNumberOfRemovals(cfg_Encoder,cfg_Epoch,'RemovalType',RemovalType,'SessionName',SessionName);
 
 IsFinished_RemovalTable = CurrentNumRemovals_RemovalTable == MaximumRemovals;
 % IsFinished_IA_Table = CurrentNumRemovals_IA_Table == MaximumRemovals;
@@ -221,7 +227,7 @@ SaveTerm = '_Sequential-%d';
 pause(randi(PauseTime_Long)-1);
 
 [IA_Table_Fold,IA_Table_Average] = ...
-    cgg_procBestSequentialImportanceAnalysis(cfg_Encoder,EpochDir, ...
+    cgg_procBestSequentialImportanceAnalysis(cfg_Encoder,cfg_Epoch, ...
     'MatchType',MatchType,'NumRemoved',this_NumRemoved, ...
     'NumEntries',NumEntries, ...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize, ...
@@ -273,7 +279,8 @@ Fold_RemovalTable = Full_IA_Table_Fold{:,"RemovalTable"};
 
 pause(randi(PauseTime_Long)-1);
 
-cgg_saveRemovalTable(Fold_RemovalTable,Folds,EpochDir.Results,RemovalType,SessionName,SaveTerm,'ResetAnalysis',true);
+% cgg_saveRemovalTable(Fold_RemovalTable,Folds,cfg_Epoch.Results,RemovalType,SessionName,SaveTerm,'ResetAnalysis',true);
+cgg_saveRemovalTable(Fold_RemovalTable,Folds,EpochDir_Results,RemovalType,SessionName,SaveTerm,'ResetAnalysis',true);
 end % End of Iteration through Removals
 
 
@@ -284,7 +291,7 @@ end % End if not finished all Removals
 SaveTerm = '_Sequential';
 
 [IA_Table_Fold,IA_Table_Average] = cgg_procSingleImportanceAnalysis(...
-    cfg_Encoder,EpochDir,'MatchType',MatchType,'NumRemoved',1, ...
+    cfg_Encoder,cfg_Epoch,'MatchType',MatchType,'NumRemoved',1, ...
     'NumEntries',NumEntries, ...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize, ...
     'DataFormat',DataFormat,'IsQuaddle',IsQuaddle, ...
@@ -323,9 +330,11 @@ for ridx = 1:length(RemovedIDX)
     this_NumRemoved = RemovedIDX(ridx);
 SaveTerm = sprintf('_Sequential-%d',this_NumRemoved);
 IASingleNameExt = sprintf('IA_Table%s.mat',SaveTerm);
-IASinglePathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IASingleNameExt);
+% IASinglePathNameExt = fullfile(cfg_Epoch.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IASingleNameExt);
+IASinglePathNameExt = fullfile(EpochDir_Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IASingleNameExt);
 IA_AccuracySingleNameExt = sprintf('IA_Table%s_%s.mat',SaveTerm,MatchType);
-IA_AccuracySinglePathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IA_AccuracySingleNameExt);
+% IA_AccuracySinglePathNameExt = fullfile(cfg_Epoch.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IA_AccuracySingleNameExt);
+IA_AccuracySinglePathNameExt = fullfile(EpochDir_Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IA_AccuracySingleNameExt);
 
 % pause(randi(PauseTime_Short));
 
