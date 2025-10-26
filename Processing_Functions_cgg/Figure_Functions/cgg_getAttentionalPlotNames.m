@@ -31,13 +31,15 @@ end
 %% Distractor Dimension (Correct)
 this_IDX = strcmp(RowNames,'DistractorCorrect');
 if any(this_IDX)
-RowNames{this_IDX} = 'Distractor Dimension (Correct)';
+% RowNames{this_IDX} = 'Distractor Dimension (Correct)';
+RowNames{this_IDX} = 'Distractor (Correct)';
 end
 
 %% Distractor Dimension (Error)
 this_IDX = strcmp(RowNames,'DistractorError');
 if any(this_IDX)
-RowNames{this_IDX} = 'Distractor Dimension (Error)';
+% RowNames{this_IDX} = 'Distractor Dimension (Error)';
+RowNames{this_IDX} = 'Distractor (Error)';
 end
 
 AttentionalTable.Properties.RowNames = RowNames;

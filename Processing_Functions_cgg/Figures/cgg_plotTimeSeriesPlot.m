@@ -145,6 +145,14 @@ end
 end
 
 if isfunction
+PlotSubTitle = CheckVararginPairs('PlotSubTitle', '', varargin{:});
+else
+if ~(exist('PlotSubTitle','var'))
+PlotSubTitle='';
+end
+end
+
+if isfunction
 DecisionIndicatorColors = CheckVararginPairs('DecisionIndicatorColors', {'k','k','k'}, varargin{:});
 else
 if ~(exist('DecisionIndicatorColors','var'))
@@ -285,6 +293,14 @@ Title_Size = CheckVararginPairs('Title_Size', cfg_Plotting.Title_Size, varargin{
 else
 if ~(exist('Title_Size','var'))
 Title_Size=cfg_Plotting.Title_Size;
+end
+end
+
+if isfunction
+SubTitle_Size = CheckVararginPairs('SubTitle_Size', cfg_Plotting.SubTitle_Size, varargin{:});
+else
+if ~(exist('SubTitle_Size','var'))
+SubTitle_Size=cfg_Plotting.SubTitle_Size;
 end
 end
 
@@ -545,6 +561,15 @@ YMin=Inf;
         Title_Label = sprintf('\\fontsize{%d}%s',Title_Size,PlotTitle);
     end
 
+    if iscell(PlotSubTitle)
+        SubTitle_Label = cell(1,length(PlotSubTitle));
+        for sidx = 1:length(PlotSubTitle)
+            SubTitle_Label{sidx} = sprintf('{\\fontsize{%d}%s}',SubTitle_Size,PlotSubTitle{sidx});
+        end
+    else
+        SubTitle_Label = sprintf('\\fontsize{%d}%s',SubTitle_Size,PlotSubTitle);
+    end
+
     % xlabel(X_Name,'FontSize',X_Name_Size);
     % ylabel(Y_Name,'FontSize',Y_Name_Size);
     % title(PlotTitle,'FontSize',Title_Size);
@@ -552,6 +577,9 @@ YMin=Inf;
     ylabel(Y_Label);
     if ~isempty(PlotTitle)
     title(Title_Label);
+    end
+    if ~isempty(PlotSubTitle)
+    subtitle(SubTitle_Label);
     end
 
 %%

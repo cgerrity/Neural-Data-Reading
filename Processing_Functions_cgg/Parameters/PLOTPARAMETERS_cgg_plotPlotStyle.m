@@ -30,6 +30,7 @@ Main_SubTitle_Size=14;
 Main_SubSubTitle_Size=8;
 
 Title_Size=24;
+SubTitle_Size=12;
 
 Label_Size=14;
 Legend_Size = 18;
