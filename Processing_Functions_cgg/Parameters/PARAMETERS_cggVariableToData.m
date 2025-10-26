@@ -51,6 +51,8 @@ switch VariableSet
         PlotSubFolder = 'Adaptive Beta';
     case 'Prediction Error Category'
         PlotSubFolder = 'Prediction Error Category';
+    case 'Monkey'
+        PlotSubFolder = 'Monkey';
     case 'ZZZZZZ'
         PlotSubFolder = 'ZZZZZZ';
     otherwise
@@ -119,6 +121,9 @@ switch VariableSet
         Dimensionality_Fun=@(x) cgg_loadTargetArray(x,'Dimensionality',true);
         RangeType = 'EqualCount';
         Target_Fun=@(x) cgg_getPredictionErrorCategory(PredictionError_Fun(x),Dimensionality_Fun(x),RangeType);
+    case 'Monkey'
+        Target_Fun_SessionName=@(x) cgg_loadTargetArray(x,'SessionName',true);
+        Target_Fun = @(x) cgg_getDataFromIndices(split(Target_Fun_SessionName(x),'_'),1);
     case 'ZZZZZ'
         Target_Fun=@(x) cgg_loadTargetArray(x,'OtherValue','R');
     otherwise
