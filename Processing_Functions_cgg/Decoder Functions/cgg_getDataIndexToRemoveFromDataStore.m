@@ -1,18 +1,34 @@
-function [DataIndex,ClassesToRemove] = cgg_getDataIndexToRemoveFromDataStore(DataStore,ClassLowerCount)
+function [DataIndex,ClassesToRemove] = cgg_getDataIndexToRemoveFromDataStore(DataStore,ClassLowerCount,varargin)
 %CGG_GETCLASSESFROMDATASTORE Summary of this function goes here
 %   Detailed explanation goes here
 
-[ClassNames,~,~,ClassCounts] = cgg_getClassesFromDataStore(DataStore);
+isfunction=exist('varargin','var');
+
+if isfunction
+TargetDataStoreIDX = CheckVararginPairs('TargetDataStoreIDX', 2, varargin{:});
+else
+if ~(exist('TargetDataStoreIDX','var'))
+TargetDataStoreIDX=2;
+end
+end
+
+[ClassNames,~,~,ClassCounts] = cgg_getClassesFromDataStore(DataStore,'TargetDataStoreIDX',TargetDataStoreIDX);
 
 % ClassLowerCount = 11;
 
 ClassesToRemove = cellfun(@(x,y) y(x < ClassLowerCount),ClassCounts,ClassNames,"UniformOutput",false);
 
-AllTargets=[];
+% AllTargets=[];
 
-TargetDataStore=DataStore.UnderlyingDatastores{2};
+TargetDataStore=DataStore.UnderlyingDatastores{TargetDataStoreIDX};
 
-evalc('AllTargets=gather(tall(TargetDataStore));');
+if isa(gcp('nocreate'), 'parallel.ThreadPool')
+AllTargets = readall(TargetDataStore,UseParallel=false);
+else
+AllTargets = readall(TargetDataStore,UseParallel=true);
+end
+
+% evalc('AllTargets=gather(tall(TargetDataStore));');
 
 DataIndex = false(size(AllTargets));
 
