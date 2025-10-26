@@ -6,7 +6,7 @@ cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
 cfg.LoopType = cgg_setNaming(cfg.LoopType);
 % cfg.LoopNames{1} = cgg_setNaming(cfg.LoopNames{1});
 cfg.ExtraSaveTerm = cgg_setNaming(cfg.ExtraSaveTerm);
-cfg.SplitExtraSaveTerm = cgg_setNaming(cfg.SplitExtraSaveTerm);
+cfg.SplitExtraSaveTerm = cgg_setNaming(cfg.SplitExtraSaveTerm,'SurroundDeliminator',{'[',']'});
 
 for sidx = 1:height(FullTable)
 Split_Table=FullTable{sidx,cfg_Names.TableNameSplit_Table}{1};
@@ -18,6 +18,7 @@ this_cfg = cfg;
 this_cfg.ExtraSaveTerm=[this_cfg.LoopType this_cfg.ExtraSaveTerm];
 this_cfg.LoopType=cfg.SplitExtraSaveTerm;
 this_cfg.Subset = FullTable.Properties.RowNames{sidx};
+this_cfg.LoopTitle = FullTable.Properties.RowNames{sidx};
 
 cgg_plotOverallAccuracy(Split_Table,this_cfg);
 end

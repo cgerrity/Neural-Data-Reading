@@ -83,6 +83,9 @@ end
 NumSamples = length(XValues);
 
 Dim = find(~(Dimensions==NumSamples));
+if isempty(Dim)
+Dim = 1;
+end
 
 %%
 

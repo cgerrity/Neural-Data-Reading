@@ -42,6 +42,10 @@ Y_Name_Size = 20;
 Legend_Size = 14;
 X_Name_Size = Y_Name_Size;
 
+if IsAttentional
+    Legend_Size = 12;
+end
+
 %%
 
 cfg.LoopType = cgg_setNaming(cfg.LoopType);
@@ -77,10 +81,18 @@ PlotNames=FullTable.Properties.RowNames;
 % disp(PlotNames)
 NumLoops=length(PlotNames);
 
-MATLABPlotColors = cfg_Plotting.MATLABPlotColors;
-PlotColors=MATLABPlotColors;
+% MATLABPlotColors = cfg_Plotting.MATLABPlotColors;
+% PlotColors=MATLABPlotColors;
+% if length(PlotNames) == 6
+% PlotColors = num2cell(cfg_Plotting.Rainbow,2);
+% end
+
 if length(PlotNames) == 6
 PlotColors = num2cell(cfg_Plotting.Rainbow,2);
+elseif length(PlotNames)<8
+PlotColors=cfg_Plotting.MATLABPlotColors;
+else
+PlotColors=num2cell(turbo(length(PlotNames)),2);
 end
 
 
@@ -92,8 +104,9 @@ fig_plot.PaperUnits="inches";
 PlotPaperSize=fig_plot.Position;
 PlotPaperSize(1:2)=[];
 fig_plot.PaperSize=PlotPaperSize;
+drawnow;
 
-RangeAccuracyLower = -0.05;
+RangeAccuracyLower = -0.25;
 RangeAccuracyUpper = 0.3;
 % RangeAccuracyLower = -0.05;
 % RangeAccuracyUpper = 1;
@@ -109,9 +122,15 @@ Tick_Size = 0.1;
 end
 
 WantCombined = ismember('Session Number', FullTable.Properties.VariableNames);
-
 CountPerSample = '';
+PlotSubTitle = '';
+
 if WantCombined
+    NumSessions = cellfun(@(x) length(x),FullTable.("Session Number"));
+    IsGrouped = all(diff(NumSessions) == 0);
+    if IsGrouped
+        PlotSubTitle = sprintf('[N = %d]',NumSessions(1));
+    end
     if IsAttentional
 RangeAccuracyLower = -0.05;
 RangeAccuracyUpper = 0.3;
@@ -127,7 +146,7 @@ end
 Y_Ticks = 0:Tick_Size:RangeAccuracyUpper;
 X_Ticks = cfg.Time_Start:Tick_Size_X:cfg.Time_End;
 
-[fig_plot,p_Plots,p_Error] = cgg_plotTimeSeriesPlot(Window_Accuracy_All,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'SamplingRate',SamplingFrequency,'X_Name',X_Name,'Y_Name',Y_Name,'PlotTitle',PlotTitle,'PlotNames',PlotNames,'wantIndicatorNames',wantIndicatorNames,'Y_Tick_Label_Size',Y_Tick_Label_Size,'X_Tick_Label_Size',Y_Tick_Label_Size,'PlotColors',PlotColors,'InFigure',fig_plot,'Y_Name_Size',Y_Name_Size,'X_Name_Size',X_Name_Size,'Y_Ticks',Y_Ticks,'X_Ticks',X_Ticks,'CountPerSample',CountPerSample);
+[fig_plot,p_Plots,p_Error] = cgg_plotTimeSeriesPlot(Window_Accuracy_All,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'SamplingRate',SamplingFrequency,'X_Name',X_Name,'Y_Name',Y_Name,'PlotTitle',PlotTitle,'PlotNames',PlotNames,'wantIndicatorNames',wantIndicatorNames,'Y_Tick_Label_Size',Y_Tick_Label_Size,'X_Tick_Label_Size',Y_Tick_Label_Size,'PlotColors',PlotColors,'InFigure',fig_plot,'Y_Name_Size',Y_Name_Size,'X_Name_Size',X_Name_Size,'Y_Ticks',Y_Ticks,'X_Ticks',X_Ticks,'CountPerSample',CountPerSample,'PlotSubTitle',PlotSubTitle);
 
 hold on
 % p_Random=yline(RandomChance);
@@ -145,11 +164,16 @@ p_Stratified.DisplayName = 'Stratified';
 % p_Plots(NumLoops+1)=p_MostCommon;
 % p_Plots(NumLoops+2)=p_Random;
 
+NumColumns = 2;
+if NumLoops < 4
+    NumColumns = 1;
+end
+
 if NumLoops > 1
-legend(p_Plots,'Location','northeast','FontSize',Legend_Size,'NumColumns',2);
-legend('boxoff')
+    legend(p_Plots,'Location','northeast','FontSize',Legend_Size,'NumColumns',NumColumns);
+    legend('boxoff')
 else
-    legend([],'Location','northeast','FontSize',Legend_Size,'NumColumns',2);
+    legend([],'Location','northeast','FontSize',Legend_Size,'NumColumns',NumColumns);
     legend('boxoff')
     legend off;
 end
@@ -181,7 +205,7 @@ cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
 
 % SavePath=cfg_Plot.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Accuracy.path;
 SavePath = cgg_getDirectory(cfg_Plot.ResultsDir,'SubFolder_1');
-SaveName=['Windowed_Accuracy' ExtraSaveTerm cfg.LoopType];
+SaveName=['Windowed-Accuracy' cfg.LoopType ExtraSaveTerm];
 
 SaveNameExt=[SaveName '.pdf'];
 SavePathNameExt=[SavePath filesep SaveNameExt];
@@ -192,7 +216,8 @@ exportgraphics(fig_plot,SavePathNameExt,'ContentType','vector');
 % SavePathNameExt=[SavePath filesep SaveNameExt];
 % saveas(fig_plot,SavePathNameExt,'png');
 
-close all
+close(fig_plot);
+% close all
 
 end
 

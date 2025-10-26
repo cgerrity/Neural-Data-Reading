@@ -108,6 +108,9 @@ else
    EncoderParameters_Best  = BestRunTable;
 end
 
+%% Ensure Both Tables have the same variables
+
+[EncoderParameters_Best,EncoderParameters_CM_Table] = cgg_fillMissingTableVariables(EncoderParameters_Best,EncoderParameters_CM_Table,"Missing");
 %%
 % isempty(SweepNameIgnore)
 this_SweepNameIgnore = [SweepNameIgnore, SweepName];
@@ -119,8 +122,8 @@ Table_Sweep = removevars(EncoderParameters_CM_Table,["Fold","CM_Table"]);
 % Table_Sweep_Keep = Table_Sweep{:,SweepName};
 Table_Best_Keep = Table_Best{:,SweepName};
 
-Table_Sweep_Ignore = removevars(Table_Sweep,this_SweepNameIgnore);
-Table_Best = removevars(Table_Best,this_SweepNameIgnore);
+Table_Sweep_Ignore = removevars(Table_Sweep,this_SweepNameIgnore(ismember(this_SweepNameIgnore, Table_Sweep.Properties.VariableNames)));
+Table_Best = removevars(Table_Best,this_SweepNameIgnore(ismember(this_SweepNameIgnore, Table_Best.Properties.VariableNames)));
 
 MatchIDX_Ignore = ismember(Table_Sweep_Ignore,Table_Best);
 % MatchIDX_tmp = all(ismember(Table_Sweep_tmp,Table_Best_tmp),2);
@@ -261,6 +264,7 @@ end
 
 if ~isempty(RemoveIDX)
 fprintf('!!! Some Parameter Sweep entries were removed due to duplication. Highest number of folds selected\n');
+disp(SweepAllNames);
 end
 
 
