@@ -117,6 +117,8 @@ LossType_Decoder = cfg_Encoder.LossType_Decoder;
 STDChannelOffset = cfg_Encoder.STDChannelOffset;
 STDWhiteNoise = cfg_Encoder.STDWhiteNoise;
 STDRandomWalk = cfg_Encoder.STDRandomWalk;
+STDTimeShift = cfg_Encoder.STDTimeShift;
+WantSeparateTimeShift = cfg_Encoder.WantSeparateTimeShift;
 
 Target = cfg_Encoder.Target;
 
@@ -200,7 +202,7 @@ WantNaNZeroed=false;
 Want1DVector=false;
 
 Data_Fun=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'Normalization',Normalization,'NormalizationTable','','NormalizationInformation',NormalizationInformation);
-Data_Fun_Augmented=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'STDChannelOffset',STDChannelOffset,'STDWhiteNoise',STDWhiteNoise,'STDRandomWalk',STDRandomWalk,'Normalization',Normalization,'NormalizationTable','','NormalizationInformation',NormalizationInformation);
+Data_Fun_Augmented=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'STDChannelOffset',STDChannelOffset,'STDWhiteNoise',STDWhiteNoise,'STDRandomWalk',STDRandomWalk,'STDTimeShift',STDTimeShift,'WantSeparateTimeShift',WantSeparateTimeShift,'Normalization',Normalization,'NormalizationTable','','NormalizationInformation',NormalizationInformation);
 
 switch Target
     case 'Dimension'
@@ -216,18 +218,22 @@ DataNumber_Fun=@(x) cgg_loadTargetArray(x,'DataNumber',true);
 Data_ds = fileDatastore(DataAggregateDir,"ReadFcn",Data_Fun);
 Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun);
 DataNumber_ds = fileDatastore(TargetAggregateDir,"ReadFcn",DataNumber_Fun);
+Data_Augmented_ds = fileDatastore(DataAggregateDir,"ReadFcn",Data_Fun_Augmented);
 
 %
 % DataStore=combine(Data_ds,Target_ds);
 DataStore=combine(Data_ds,Target_ds,DataNumber_ds);
+DataStore_Augmented=combine(Data_Augmented_ds,Target_ds,DataNumber_ds);
 
 if wantSubset
 DataStore=subset(DataStore,IndicesPartition);
+DataStore_Augmented=subset(DataStore_Augmented,IndicesPartition);
 end
 
 %% Remove Examples that represent very few targets
 [DataIndex] = cgg_getDataIndexToRemoveFromDataStore(DataStore,ClassLowerCount);
 DataStore=subset(DataStore,~DataIndex);
+DataStore_Augmented=subset(DataStore_Augmented,~DataIndex);
 
 Training_IDX = Training_IDX(~DataIndex);
 Validation_IDX = Validation_IDX(~DataIndex);
@@ -235,6 +241,7 @@ Testing_IDX = Testing_IDX(~DataIndex);
 %%
 
 DataStore_Training=subset(DataStore,Training_IDX);
+DataStore_Training_Augmented=subset(DataStore_Augmented,Training_IDX);
 DataStore_Validation=subset(DataStore,Validation_IDX);
 DataStore_Testing=subset(DataStore,Testing_IDX);
 
@@ -263,7 +270,8 @@ else
     warning('The datastore does not support custom PreviewFcn.');
 end
 
-InDataStore=DataStore_Training;
+% InDataStore=DataStore_Training;
+InDataStore=DataStore_Training_Augmented;
 
 if wantSubset
 SessionNameDataStore=subset(SessionNameDataStore,IndicesPartition);
