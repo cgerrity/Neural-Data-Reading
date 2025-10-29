@@ -12,6 +12,14 @@ IsAttentional=false;
 end
 end
 
+if isfunction
+IsBlock = CheckVararginPairs('IsBlock', false, varargin{:});
+else
+if ~(exist('IsBlock','var'))
+IsBlock=false;
+end
+end
+
 %%
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
@@ -106,18 +114,30 @@ PlotPaperSize(1:2)=[];
 fig_plot.PaperSize=PlotPaperSize;
 drawnow;
 
-RangeAccuracyLower = -0.25;
+% RangeAccuracyLower = -0.25;
 RangeAccuracyUpper = 0.3;
-% RangeAccuracyLower = -0.05;
+RangeAccuracyLower = -0.05;
 % RangeAccuracyUpper = 1;
 % RangeAccuracyLower = 0.5;
 % RangeAccuracyUpper = 0.8;
 Tick_Size = 0.1;
 Tick_Size_X = 0.5;
 
+if IsBlock
+RangeAccuracyLower = -0.01;
+RangeAccuracyUpper = 0.10;
+Tick_Size = 0.1;
+end
+
 if IsAttentional
 RangeAccuracyLower = -0.05;
 RangeAccuracyUpper = 0.5;
+Tick_Size = 0.1;
+end
+
+if IsAttentional && IsBlock
+RangeAccuracyLower = -0.05;
+RangeAccuracyUpper = 0.2;
 Tick_Size = 0.1;
 end
 
@@ -197,18 +217,30 @@ outdatadir=cfg_Sessions(1).outdatadir;
 TargetDir=outdatadir;
 ResultsDir=cfg_Sessions(1).temporarydir;
 
+if IsBlock
+cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+    'Epoch',cfg.Epoch,'PlotFolder','Block IA','PlotSubFolder',cfg.Subset);
+cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+    'Epoch',cfg.Epoch,'PlotFolder','Block IA','PlotSubFolder',cfg.Subset);
+cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
+else
 cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
     'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
 cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
     'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
 cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
+end
 
 % SavePath=cfg_Plot.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Accuracy.path;
-SavePath = cgg_getDirectory(cfg_Plot.ResultsDir,'SubFolder_1');
-SaveName=['Windowed-Accuracy' cfg.LoopType ExtraSaveTerm];
+% SavePath = cgg_getDirectory(cfg_Plot.ResultsDir,'SubFolder_1');
+SavePath = string(cgg_getDirectory(cfg_Plot.ResultsDir,'SubFolder_1'));
 
-SaveNameExt=[SaveName '.pdf'];
-SavePathNameExt=[SavePath filesep SaveNameExt];
+% SaveName=['Windowed-Accuracy' cfg.LoopType ExtraSaveTerm];
+SaveName="Windowed-Accuracy" + string(cfg.LoopType) + string(ExtraSaveTerm);
+
+SaveNameExt=SaveName + ".pdf";
+% SavePathNameExt=[SavePath filesep SaveNameExt];
+SavePathNameExt=fullfile(SavePath, SaveNameExt);
 exportgraphics(fig_plot,SavePathNameExt,'ContentType','vector');
 % saveas(fig_plot,SavePathNameExt,'pdf');
 

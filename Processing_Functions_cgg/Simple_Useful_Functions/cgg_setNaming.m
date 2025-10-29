@@ -21,7 +21,7 @@ end
 end
 
 
-if ~isempty(Name)
+if ~(isempty(Name) || strcmp(Name,""))
     Name = replace(Name,' ','-');
 if startsWith(Name,'_')
     if ischar(Name)

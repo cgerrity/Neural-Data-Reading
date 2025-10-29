@@ -2,8 +2,6 @@ function RowNames = cgg_getSplitTableRowNames(TrialFilter,TypeValues)
 %CGG_GETSPLITTABLEROWNAMES Summary of this function goes here
 %   Detailed explanation goes here
 
-
-
 if all(~strcmp(TrialFilter,'All') & ~strcmp(TrialFilter,'Target Feature'))
     [NumTypes,NumColumns]=size(TypeValues);
 else
