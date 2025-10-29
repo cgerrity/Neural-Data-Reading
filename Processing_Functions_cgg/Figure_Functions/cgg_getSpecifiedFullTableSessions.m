@@ -88,39 +88,84 @@ NumFilters = length(AttentionalFilters);
 SplitNames = SessionFullTable.("Split Table"){1}.Properties.RowNames;
 NumSplits = length(SplitNames);
 
+HasBlock = ismember("Block", SessionFullTable.Properties.VariableNames);
+
+if HasBlock
+    RemovedAreas = unique(string(cellfun(@(x) join(x,"-"),...
+        vertcat(SessionFullTable.('Block'){:}).("Area Names"),...
+        "UniformOutput",false)));
+    RemovedAreas = ["None";RemovedAreas];
+    NumAreas = length(RemovedAreas);
+end
+
 %%
+if HasBlock
+    BlockTableVariables = [["Removed Areas", "cell"];...
+        ["Present Areas", "cell"]];
+    TableVariables = [["Accuracy", "cell"]; ...
+    ["Window Accuracy", "cell"]; ...
+    ["Area Names", "cell"]];
+    NumVariables = size(TableVariables,1);
+    BlockTable_Template = table('Size',[NumAreas,NumVariables],... 
+	    'VariableNames', TableVariables(:,1),...
+	    'VariableTypes', TableVariables(:,2));
+    BlockTable_Template.("Area Names") = RemovedAreas;
+    % BlockTable_Template.("Area Names") = RemovedAreas;
+    BlockTable_Template.Properties.RowNames = RemovedAreas;
+else
+    BlockTableVariables = [];
+end
+
 TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"]; ...
     ["Split Table", "cell"]; ...
     ["Attentional Table", "cell"]; ...
     ["Session Number", "cell"]];
+TableVariables = [TableVariables;BlockTableVariables];
 
 NumVariables = size(TableVariables,1);
 OutFullTable = table('Size',[1,NumVariables],... 
 	    'VariableNames', TableVariables(:,1),...
 	    'VariableTypes', TableVariables(:,2));
+if HasBlock
+    OutFullTable{:,"Removed Areas"} = {BlockTable_Template};
+    OutFullTable{:,"Not Present Areas"} = {BlockTable_Template};
+    OutFullTable{:,"Present Areas"} = {BlockTable_Template};
+end
 
 TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"]; ...
     % ["Split Table", "cell"]; ...
     ["Session Number", "cell"]];
+TableVariables = [TableVariables;BlockTableVariables];
 
 NumVariables = size(TableVariables,1);
 AttentionalTable_Template = table('Size',[NumFilters,NumVariables],... 
 	    'VariableNames', TableVariables(:,1),...
 	    'VariableTypes', TableVariables(:,2),...
         'RowNames',AttentionalFilters);
+if HasBlock
+    AttentionalTable_Template{:,"Removed Areas"} = {BlockTable_Template};
+    AttentionalTable_Template{:,"Not Present Areas"} = {BlockTable_Template};
+    AttentionalTable_Template{:,"Present Areas"} = {BlockTable_Template};
+end
 
 TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"];...
     % ["Attentional Table", "cell"]; ...
     ["Session Number", "cell"]];
+TableVariables = [TableVariables;BlockTableVariables];
 
 NumVariables = size(TableVariables,1);
 SplitTable_Template = table('Size',[NumSplits,NumVariables],... 
 	    'VariableNames', TableVariables(:,1),...
 	    'VariableTypes', TableVariables(:,2),...
         'RowNames',SplitNames);
+if HasBlock
+    SplitTable_Template{:,"Removed Areas"} = {BlockTable_Template};
+    SplitTable_Template{:,"Not Present Areas"} = {BlockTable_Template};
+    SplitTable_Template{:,"Present Areas"} = {BlockTable_Template};
+end
 
 AttentionalTable = AttentionalTable_Template;
 SplitTable = SplitTable_Template;
@@ -153,6 +198,7 @@ for sidx = 1:NumSessions
 % 
 % this_TestSignal = Series_Mean - Series_CI;
 % IsSignificant = any(this_TestSignal > ChanceLevel);
+
 IsSignificant = cgg_testAccuracyTableSignificance(this_FullTable,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
 OutFullTable = cgg_addSignificantAccuracyTableValues(OutFullTable,this_FullTable,sidx,IsSignificant);
 % if IsSignificant

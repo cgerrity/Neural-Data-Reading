@@ -10,6 +10,14 @@ if ~(exist('IsAttentional','var'))
 IsAttentional=false;
 end
 end
+
+if isfunction
+IsBlock = CheckVararginPairs('IsBlock', false, varargin{:});
+else
+if ~(exist('IsBlock','var'))
+IsBlock=false;
+end
+end
 %%
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
@@ -233,11 +241,19 @@ ResultsDir=cfg_Sessions(1).temporarydir;
 %     'Epoch',cfg.Epoch,'Accuracy',true);
 % cfg_tmp = cgg_generateDecodingFolders('TargetDir',cfg.ResultsDir,...
 %     'Epoch',cfg.Epoch,'Accuracy',true);
+if IsBlock
+cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+    'Epoch',cfg.Epoch,'PlotFolder','Block IA','PlotSubFolder',cfg.Subset);
+cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+    'Epoch',cfg.Epoch,'PlotFolder','Block IA','PlotSubFolder',cfg.Subset);
+cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
+else
 cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
     'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
 cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
     'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
 cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
+end
 
 % drawnow;
 % 
@@ -327,11 +343,15 @@ drawnow;
 % SavePath=cfg_Plot.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Accuracy.path;
 % SaveName=['Accuracy_Overall' ExtraSaveTerm '_Type_' cfg.LoopType];
 % SaveName=['Peak-Accuracy' ExtraSaveTerm cfg.LoopType];
-SaveName=['Peak-Accuracy' cfg.LoopType ExtraSaveTerm];
 
-SaveNameExt=[SaveName '.pdf'];
+% SaveName=['Peak-Accuracy' cfg.LoopType ExtraSaveTerm];
+SaveName="Peak-Accuracy" + string(cfg.LoopType) + string(ExtraSaveTerm);
 
-SavePathNameExt=[SavePath filesep SaveNameExt];
+% SaveNameExt=[SaveName '.pdf'];
+SaveNameExt=SaveName + ".pdf";
+
+% SavePathNameExt=[SavePath filesep SaveNameExt];
+SavePathNameExt=fullfile(SavePath, SaveNameExt);
 
 exportgraphics(fig_accuracy_bar,SavePathNameExt,'ContentType','vector');
 % saveas(fig_accuracy_bar,SavePathNameExt,'pdf');
