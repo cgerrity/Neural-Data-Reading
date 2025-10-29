@@ -1,4 +1,4 @@
-%% DATA_cggUpdateTargets
+%% DATA_cggUpdateEachTarget
 
 clc; clear; close all;
 
@@ -16,21 +16,18 @@ cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
     'Epoch',Epoch);
 cfg_Folders.ResultsDir=cfg_Results.TargetDir;
 
+AggregateTargetPath = cgg_getDirectory(cfg_Folders.ResultsDir,'Target');
+
 Identifiers_Table = cgg_getIdentifiersTable(cfg_Folders,false,'Epoch',Epoch);
 
 %%
-
 UpdateFunction=@(x) x;
 
 %%
 
+AggregateTargetsDir = dir(fullfile(AggregateTargetPath, 'Target_*.mat'));
 
-%%
-for sidx=1:length(cfg)
-    
-    inputfolder=cfg(sidx).inputfolder;
-    outdatadir=cfg(sidx).outdatadir;
-
-cgg_updateSessionTargetStructure(UpdateFunction,Epoch,inputfolder,outdatadir)
-
+for tidx = 1:length(AggregateTargetsDir)
+    TargetPathNameExt = fullfile(AggregateTargetsDir(tidx).folder,AggregateTargetsDir(tidx).name);
+    cgg_updateAggregateTargetFile(TargetPathNameExt,UpdateFunction)
 end
