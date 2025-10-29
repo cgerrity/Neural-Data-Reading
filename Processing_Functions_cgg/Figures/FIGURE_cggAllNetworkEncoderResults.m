@@ -14,18 +14,18 @@ cgg_getParallelPool('WantThreads',true);
 
 EpochName = 'Decision';
 WantResults = false;
-WantAnalysis = true;
+WantAnalysis = false;
 WantDelay = false;
 % MatchType='Scaled-MicroAccuracy';
 % % MatchType='Scaled-BalancedAccuracy';
 % MatchType_Attention=MatchType;
 %%
 FilterColumn_All = {}; ColumnCounter = 1;
-FilterColumn_All{ColumnCounter}={'All'};
+% FilterColumn_All{ColumnCounter}={'All'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Dimensionality'};
 % ColumnCounter = ColumnCounter + 1;
-% FilterColumn_All{ColumnCounter}={'Learned'};
+FilterColumn_All{ColumnCounter}={'Learned'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Trials From Learning Point Category'};
 % ColumnCounter = ColumnCounter + 1;
@@ -69,9 +69,10 @@ FilterColumn_All{ColumnCounter}={'All'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Gain','Loss','Multi Trials From Learning Point'};
 
-SignificanceValues = [1,0.1,0.05,0.025,0.01,0.001];
-% SignificanceValues = 0.001;
-TimeRanges = {[],[-1.5,0],[0,1.5]};
+% SignificanceValues = [1,0.1,0.05,0.025,0.01,0.001];
+SignificanceValues = 0.05;
+% TimeRanges = {[],[-1.5,0],[0,1.5]};
+TimeRanges = {[]};
 
 %%
 for fidx = 1:length(FilterColumn_All)
