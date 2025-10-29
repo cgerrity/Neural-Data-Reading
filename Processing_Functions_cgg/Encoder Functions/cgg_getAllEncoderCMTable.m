@@ -20,6 +20,26 @@ WantValidation=false;
 end
 end
 
+if isfunction
+FieldsToRemove = CheckVararginPairs('FieldsToRemove', strings(0), varargin{:});
+else
+if ~(exist('FieldsToRemove','var'))
+FieldsToRemove=strings(0);
+end
+end
+
+%% Hardcoded Fields to Remove
+FieldsToRemove = [FieldsToRemove,'WantSaveOptimalNet'];
+FieldsToRemove = [FieldsToRemove,'AccumulationInformation'];
+FieldsToRemove = [FieldsToRemove,'GradientClipType'];
+FieldsToRemove = [FieldsToRemove,'NumEpochsFull'];
+FieldsToRemove = [FieldsToRemove,'NumEpochsFull_Final'];
+FieldsToRemove = [FieldsToRemove,'NumEpochsSession'];
+FieldsToRemove = [FieldsToRemove,'WeightOffsetAndScale'];
+FieldsToRemove = [FieldsToRemove,'WantSeparateTimeShift'];
+FieldsToRemove = [FieldsToRemove,'STDTimeShift'];
+FieldsToRemove = [FieldsToRemove,'Freeze_cfg'];
+
 %%
     % Read the file into a table
     EncodingParameters = ReadYaml(filePath,0,true);
@@ -30,11 +50,12 @@ end
     end
     EncodingParameters = rmfield(EncodingParameters,'varargin');
     Fold = EncodingParameters.Fold;
+    NumEpochsFull = EncodingParameters.NumEpochsFull;
 
     EncodingParameters = rmfield(EncodingParameters,'Fold');
-    if isfield(EncodingParameters,'WantSaveOptimalNet')
-    EncodingParameters = rmfield(EncodingParameters,'WantSaveOptimalNet');
-    end
+
+    EncodingParameters = rmfield(EncodingParameters,FieldsToRemove(...
+        isfield(EncodingParameters,FieldsToRemove)));
     
     if iscell(EncodingParameters.HiddenSizes)
     EncodingParameters.FirstHiddenSize = EncodingParameters.HiddenSizes{1};
@@ -70,7 +91,7 @@ end
         return
     end
 
-    if EncodingParameters.NumEpochsFull >= Epoch && WantFinished
+    if NumEpochsFull >= Epoch && WantFinished
         return
     end
     

@@ -48,6 +48,22 @@ end
 end
 
 if isfunction
+STDTimeShift = CheckVararginPairs('STDTimeShift', NaN, varargin{:});
+else
+if ~(exist('STDTimeShift','var'))
+STDTimeShift=NaN; % In miliseconds
+end
+end
+
+if isfunction
+WantSeparateTimeShift = CheckVararginPairs('WantSeparateTimeShift', false, varargin{:});
+else
+if ~(exist('WantSeparateTimeShift','var'))
+WantSeparateTimeShift=false;
+end
+end
+
+if isfunction
 Normalization = CheckVararginPairs('Normalization', 'None', varargin{:});
 else
 if ~(exist('Normalization','var'))
@@ -68,6 +84,14 @@ NormalizationInformation = CheckVararginPairs('NormalizationInformation', '', va
 else
 if ~(exist('NormalizationInformation','var'))
 NormalizationInformation='';
+end
+end
+
+if isfunction
+SamplingFrequency = CheckVararginPairs('SamplingFrequency', NaN, varargin{:});
+else
+if ~(exist('SamplingFrequency','var'))
+SamplingFrequency=NaN;
 end
 end
 
@@ -171,14 +195,42 @@ DataAugmentationSignal = cgg_generateDataAugmentationSignal(NumChannels,...
 
 Data = Data + DataAugmentationSignal;
 
+% Time Shift Augmentation
+    TimeShiftIDX = NaN;
+if ~isnan(STDTimeShift)
+    if isnan(SamplingFrequency)
+        SamplingFrequency = cfg_param.SamplingFrequency;
+    end
+    if WantSeparateTimeShift
+        TimeShift = -STDTimeShift + (2*STDTimeShift).*rand(NumChannels,NumProbes,NumWindows);
+    else
+        TimeShift = -STDTimeShift + (2*STDTimeShift).*rand(1);
+        TimeShift = repmat(TimeShift,[1,1,NumWindows]);
+    end
+    TimeShiftIDX = round((1/SamplingFrequency)*(1000*TimeShift));
+    TimeShiftIDX = squeeze(num2cell(TimeShiftIDX,[1,2]));
+end
+
 %% What Data to get
 this_Data=NaN(NumChannels,this_DataWidth,NumProbes,NumWindows);
 if this_DataWidth<NumSamples
-parfor widx=1:NumWindows
-this_StartingIDX=StartPoint_IDX(widx);
-this_Order=Probe_Order_Random(:,widx);
-this_Data(:,:,:,widx)=Data(:,this_StartingIDX:this_StartingIDX+this_DataWidth-1,this_Order);
-end
+    if isnan(STDTimeShift)
+    parfor widx=1:NumWindows
+    this_StartingIDX=StartPoint_IDX(widx);
+    this_Order=Probe_Order_Random(:,widx);
+    this_Range = this_StartingIDX:this_StartingIDX+this_DataWidth-1;
+        this_Data(:,:,:,widx)=Data(:,this_Range,this_Order);
+% this_Data(:,:,:,widx)=Data(:,this_StartingIDX:this_StartingIDX+this_DataWidth-1,this_Order);
+% this_Data(:,:,:,widx)=Data(:,this_Range,this_Order);
+    end
+    else 
+        parfor widx=1:NumWindows
+        this_StartingIDX=StartPoint_IDX(widx);
+        % this_Order=Probe_Order_Random(:,widx);
+        this_Range = this_StartingIDX:this_StartingIDX+this_DataWidth-1;
+        this_Data(:,:,:,widx) = cgg_getDataFromRange(Data,this_Range,TimeShiftIDX{widx});
+        end
+    end
 else
 this_Data=NaN(NumChannels,this_DataWidth,NumProbes);
 this_Order=Probe_Order_Random(:);

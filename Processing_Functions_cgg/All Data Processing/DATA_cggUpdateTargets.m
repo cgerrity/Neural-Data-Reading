@@ -6,10 +6,26 @@ clc; clear; close all;
 
 Epoch='Decision';
 
-UpdateFunction=@cgg_procPreviousTrialSharedFeature;
+%%
+outdatadir=cfg(1).outdatadir;
+TargetDir=outdatadir;
+ResultsDir=cfg(1).temporarydir;
+cfg_Folders = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+    'Epoch',Epoch);
+cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+    'Epoch',Epoch);
+cfg_Folders.ResultsDir=cfg_Results.TargetDir;
+
+Identifiers_Table = cgg_getIdentifiersTable(cfg_Folders,false,'Epoch',Epoch);
 
 %%
 
+UpdateFunction=@(x) x;
+
+%%
+
+
+%%
 for sidx=1:length(cfg)
     
     inputfolder=cfg(sidx).inputfolder;

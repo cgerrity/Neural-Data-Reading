@@ -459,6 +459,26 @@ switch ArchitectureType
         needReshape = false;
         OutputFullyConnected = false;
         BottleNeckDepth = 2;
+    case 'Convolutional ~ Stride 2 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ GRU ~ Split Areas'
+        IsSimple = false;
+        FilterSizes = {[4,20]};
+        FilterSizePercent = {0.3};
+        WantSplitAreas = true;
+        Stride = 2;
+        DownSampleMethod = 'MaxPool';
+        UpSampleMethod = 'Transpose Convolution';
+        Dropout = 0;
+        WantNormalization = false;
+        Transform = 'GRU';
+        % Activation = 'ReLU';
+        Activation = 'Leaky ReLU';
+        % FinalActivation = 'Tanh';
+        FinalActivation = 'Convolutional';
+        WantResnet = false;
+        IsVariational = false;
+        needReshape = false;
+        OutputFullyConnected = false;
+        BottleNeckDepth = 1;
     case 'Convolutional ~ Stride 3 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2'
         IsSimple = false;
         FilterSizes = {[4,20]};

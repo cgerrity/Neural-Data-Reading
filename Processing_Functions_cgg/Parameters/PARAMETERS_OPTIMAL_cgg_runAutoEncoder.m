@@ -26,6 +26,7 @@ NumEpochsBase=0;
 NumEpochsAutoEncoder = NumEpochsBase;
 MiniBatchSize=100;
 GradientThreshold=100;
+GradientClipType = 'SubNetwork';
 NumEpochsSession=500;
 NumEpochsFull = NumEpochsSession;
 InitialLearningRate = 0.01;
@@ -47,12 +48,23 @@ maxworkerMiniBatchSize=10;
 
 NumEpochsFull_Final = 1000;
 
+%% Network Freezing Parameters
+
+Freeze_cfg = struct();
+Freeze_cfg.Encoder.DelayEpochs = 25;
+Freeze_cfg.Encoder.RampEpochs = 50;
+Freeze_cfg.Decoder.DelayEpochs = 25;
+Freeze_cfg.Decoder.RampEpochs = 50;
+Freeze_cfg.Classifier.DelayEpochs = 25;
+Freeze_cfg.Classifier.RampEpochs = 50;
 
 %% Data Augmentation Parameters
 
 STDChannelOffset = 0.3;
 STDWhiteNoise = 0.15;
 STDRandomWalk = 0.007;
+STDTimeShift = NaN;
+WantSeparateTimeShift = false;
 
 %%
 

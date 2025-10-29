@@ -10,6 +10,14 @@ if ~(exist('IsAttentional','var'))
 IsAttentional=false;
 end
 end
+
+if isfunction
+IsBlock = CheckVararginPairs('IsBlock', false, varargin{:});
+else
+if ~(exist('IsBlock','var'))
+IsBlock=false;
+end
+end
 %%
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
@@ -19,6 +27,7 @@ Line_Width = cfg_Plotting.Line_Width;
 X_Name_Size = cfg_Plotting.X_Name_Size;
 Y_Name_Size = cfg_Plotting.Y_Name_Size;
 Title_Size = cfg_Plotting.Title_Size;
+SubTitle_Size = cfg_Plotting.SubTitle_Size;
 
 Label_Size = cfg_Plotting.Label_Size;
 Legend_Size = cfg_Plotting.Legend_Size;
@@ -42,11 +51,17 @@ Y_Tick_Label_Size = 36;
 Y_Tick_Size = 0.05;
 %%
 WantCombined = ismember('Session Number', FullTable.Properties.VariableNames);
-
+PlotSubTitle = '';
+IsGrouped = false;
 if WantCombined
+    NumSessions = cellfun(@(x) length(x),FullTable.("Session Number"));
+    IsGrouped = all(diff(NumSessions) == 0);
+    if IsGrouped
+        PlotSubTitle = sprintf('[N = %d]',NumSessions(1));
+    end
     if IsAttentional
-    Y_Limit_Set = [0,0.4];
-    Y_Tick_Size = 0.1;
+    Y_Limit_Set = [0,0.5];
+    Y_Tick_Size = 0.25;
     else
     Y_Limit_Set = [0,0.2];
     Y_Tick_Size = 0.05;
@@ -66,6 +81,8 @@ BarWidth = max([NumLoops,BarWidth]);
 if NumLoops > 12
     X_Tick_Label_Size = 24;
     ErrorCapSize = ErrorCapSize*(12/NumLoops);
+elseif IsAttentional
+    X_Tick_Label_Size = 24;
 else
     X_Tick_Label_Size = Y_Tick_Label_Size;
 end
@@ -224,11 +241,19 @@ ResultsDir=cfg_Sessions(1).temporarydir;
 %     'Epoch',cfg.Epoch,'Accuracy',true);
 % cfg_tmp = cgg_generateDecodingFolders('TargetDir',cfg.ResultsDir,...
 %     'Epoch',cfg.Epoch,'Accuracy',true);
+if IsBlock
+cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+    'Epoch',cfg.Epoch,'PlotFolder','Block IA','PlotSubFolder',cfg.Subset);
+cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+    'Epoch',cfg.Epoch,'PlotFolder','Block IA','PlotSubFolder',cfg.Subset);
+cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
+else
 cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
     'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
 cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
     'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
 cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
+end
 
 % drawnow;
 % 
@@ -254,6 +279,7 @@ fig_accuracy_bar.PaperUnits="inches";
 PlotPaperSize=fig_accuracy_bar.Position;
 PlotPaperSize(1:2)=[];
 fig_accuracy_bar.PaperSize=PlotPaperSize;
+drawnow;
 
 LabelAngle = 30;
 ColorOrder = PlotColor;
@@ -262,7 +288,7 @@ ColorOrder = cfg_Plotting.Rainbow;
 end
 % disp(isempty(ColorOrder))
 [b_Plot] = cgg_plotBarGraphWithError(Values,ValueNames,'ColorOrder',ColorOrder,'X_TickFontSize',X_Tick_Label_Size,'ErrorLineWidth',Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',true,'LabelAngle',LabelAngle,'InFigure',fig_accuracy_bar,'X_Name','','BarWidth',BarWidth);
-
+drawnow;
 % p_MostCommon=yline(MostCommon,"-",'Most Common');
 % p_Random=yline(RandomChance,"-",'Random Chance');
 % p_MostCommon.LineWidth = Line_Width;
@@ -286,8 +312,14 @@ Y_Label = sprintf('{\\fontsize{%d}%s}',Y_Name_Size,Y_Name);
 ylabel(Y_Label);
 
 % Bar_Title=sprintf('Accuracy of %s over %d Folds',cfg.LoopTitle,NumFolds);
-% Bar_Title=sprintf('Accuracy of %s over %d Folds',cfg.LoopTitle,NumFolds);
-% title(Bar_Title,'FontSize',Title_Size);
+if isfield(cfg,'LoopTitle') && ~isempty(cfg.LoopTitle)
+Bar_Title=sprintf('%s',cfg.LoopTitle);
+title(Bar_Title,'FontSize',Title_Size);
+end
+
+if IsGrouped
+subtitle(PlotSubTitle,'FontSize',SubTitle_Size);
+end
 
 % ylim([0,Y_Upper*(1+RangeFactorUpper)]);
 % ylim([YLimLower,YLimUpper]);
@@ -306,18 +338,26 @@ end
 
 %%
 drawnow;
+% fprintf("Pausing For Bar\n");
+% pause(30);
 % SavePath=cfg_Plot.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Plots.Accuracy.path;
 % SaveName=['Accuracy_Overall' ExtraSaveTerm '_Type_' cfg.LoopType];
-SaveName=['Peak-Accuracy' ExtraSaveTerm cfg.LoopType];
+% SaveName=['Peak-Accuracy' ExtraSaveTerm cfg.LoopType];
 
-SaveNameExt=[SaveName '.pdf'];
+% SaveName=['Peak-Accuracy' cfg.LoopType ExtraSaveTerm];
+SaveName="Peak-Accuracy" + string(cfg.LoopType) + string(ExtraSaveTerm);
 
-SavePathNameExt=[SavePath filesep SaveNameExt];
+% SaveNameExt=[SaveName '.pdf'];
+SaveNameExt=SaveName + ".pdf";
+
+% SavePathNameExt=[SavePath filesep SaveNameExt];
+SavePathNameExt=fullfile(SavePath, SaveNameExt);
 
 exportgraphics(fig_accuracy_bar,SavePathNameExt,'ContentType','vector');
 % saveas(fig_accuracy_bar,SavePathNameExt,'pdf');
 
-close all
+close(fig_accuracy_bar);
+% close all
 
 end
 
