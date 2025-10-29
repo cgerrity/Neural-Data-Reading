@@ -6,7 +6,7 @@ cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
 cfg.LoopType = cgg_setNaming(cfg.LoopType);
 % cfg.LoopNames{1} = cgg_setNaming(cfg.LoopNames{1});
 cfg.ExtraSaveTerm = cgg_setNaming(cfg.ExtraSaveTerm);
-cfg.SplitExtraSaveTerm = cgg_setNaming(cfg.SplitExtraSaveTerm);
+cfg.SplitExtraSaveTerm = cgg_setNaming(cfg.SplitExtraSaveTerm,'SurroundDeliminator',{'[',']'});
 
 for seidx = 1:height(FullTable)
 
@@ -15,6 +15,7 @@ AttentionalTable=FullTable{seidx,"Attentional Table"}{1};
 this_cfg = cfg;
 this_cfg.MatchType=cfg.MatchType_Attention;
 this_cfg.Subset = FullTable.Properties.RowNames{seidx};
+this_cfg.LoopTitle = FullTable.Properties.RowNames{seidx};
 
 MatchType = '';
 % if strcmp(cfg.MatchType,'Scaled-BalancedAccuracy')
@@ -38,10 +39,14 @@ NumSplits = length(SplitNames);
 for sidx = 1:NumSplits
 this_SplitName = SplitNames{sidx};
 this_cfg.PlotTitle=this_SplitName;
+this_cfg.LoopTitle = this_SplitName;
 this_SplitName = replace(this_SplitName,' ','-');
 this_SplitName = replace(this_SplitName,'/','-');
-this_cfg.ExtraSaveTerm='Attentional';
-this_cfg.LoopType=sprintf('%s%s',this_SplitName,MatchType);
+this_SplitName = cgg_setNaming(this_SplitName,'SurroundDeliminator',{'(',')'});
+% this_cfg.ExtraSaveTerm='Attentional';
+this_cfg.ExtraSaveTerm=sprintf('Attentional%s',this_SplitName);
+% this_cfg.LoopType=sprintf('%s%s',this_SplitName,MatchType);
+this_cfg.LoopType=sprintf('%s',cfg.SplitExtraSaveTerm);
 this_AttentionalTable=Split_Table{sidx,"Attentional Table"}{1};
 
 [this_AttentionalTable] = cgg_getAttentionalPlotNames(this_AttentionalTable);
@@ -53,9 +58,9 @@ end
 
 for aidx = 1:length(AttentionalNames)
     this_tmpTable = this_AttentionalTable(AttentionalNames{aidx},:);
-    this_tmpTable.Properties.RowNames{1} = this_SplitName;
-        AttentionalTableSwapped{aidx} = [AttentionalTableSwapped{aidx};this_tmpTable];
-
+    % this_tmpTable.Properties.RowNames{1} = this_SplitName;
+    this_tmpTable.Properties.RowNames{1} = SplitNames{sidx};
+    AttentionalTableSwapped{aidx} = [AttentionalTableSwapped{aidx};this_tmpTable];
 end
 
 cgg_plotWindowedAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true);
@@ -65,11 +70,14 @@ for aidx = 1:length(AttentionalTableSwapped)
 
 this_SplitName = AttentionalNames{aidx};
 this_cfg.PlotTitle=this_SplitName;
+this_cfg.LoopTitle = this_SplitName;
 this_SplitName = replace(this_SplitName,' ','-');
 this_SplitName = replace(this_SplitName,'/','-');
-this_cfg.ExtraSaveTerm=sprintf('Attentional-%s',this_SplitName);
+this_SplitName = cgg_setNaming(this_SplitName,'SurroundDeliminator',{'{','}'});
+this_cfg.ExtraSaveTerm=sprintf('Attentional%s',this_SplitName);
 this_cfg.LoopType=sprintf('%s',cfg.SplitExtraSaveTerm);
-this_AttentionalTable=AttentionalTableSwapped{aidx};
+% this_AttentionalTable=AttentionalTableSwapped{aidx};
+this_AttentionalTable=AttentionalTable{aidx,"Split Table"}{1};
 
 cgg_plotWindowedAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true);
 end

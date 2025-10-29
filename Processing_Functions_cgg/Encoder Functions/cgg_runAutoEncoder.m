@@ -42,12 +42,16 @@ end
 
 if strcmp(SLURMChoice,'Base') && ~isnan(SLURMIDX)
 [TableSLURM, IsInccidentalBaseRepeat] = ...
-    SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX);
+    SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX, ...
+    'SessionRunIDX',SessionRunIDX);
 [Fold,cfg_Encoder] = cgg_assignSLURMEncoderParameters(cfg_Encoder,TableSLURM);
 elseif ~isnan(SLURMIDX) && ~isnan(SLURMChoice)
 [TableSLURM, IsInccidentalBaseRepeat] = ...
-    SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX);
+    SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX, ...
+    'SessionRunIDX',SessionRunIDX);
 [~,cfg_Encoder] = cgg_assignSLURMEncoderParameters(cfg_Encoder,TableSLURM);
+else
+IsInccidentalBaseRepeat = false;
 end
 
 if IsInccidentalBaseRepeat
@@ -57,13 +61,8 @@ end
 
 %%
 
-if ~isnan(SessionRunIDX)
-    Fold = mod(SessionRunIDX-1,10)+1;
-    SessionIDX = floor((SessionRunIDX-1)/10)+1;
-    cfg_Encoder.Subset = replace(cfg_Session(SessionIDX).SessionName,'-','_');
-    cfg_Encoder.NumEpochsFull = cfg_Encoder.NumEpochsFull_Final;
-    cfg_Encoder.NumEpochsSession = cfg_Encoder.NumEpochsFull;
-end
+[Fold,cfg_Encoder] = cgg_assignSLURMSession(...
+    Fold,SessionRunIDX,cfg_Session,cfg_Encoder);
 
 %%
 
@@ -129,8 +128,8 @@ HiddenSizes = cfg_Encoder.HiddenSizes;
 InitialLearningRate = cfg_Encoder.InitialLearningRate;
 
 MiniBatchSize = cfg_Encoder.MiniBatchSize;
-LossFactorReconstruction = cfg_Encoder.LossFactorReconstruction;
-LossFactorKL = cfg_Encoder.LossFactorKL;
+% LossFactorReconstruction = cfg_Encoder.LossFactorReconstruction;
+% LossFactorKL = cfg_Encoder.LossFactorKL;
 
 SubsetAmount = cfg_param_Decoder.SubsetAmount;
 WantSaveOptimalNet = cfg_Encoder.WantSaveOptimalNet;
@@ -162,7 +161,11 @@ if isfunction
 cfg_Encoder.maxworkerMiniBatchSize = CheckVararginPairs('maxworkerMiniBatchSize', cfg_Encoder.maxworkerMiniBatchSize, varargin{:});
 end
 if isfunction
-cfg_Encoder.LossFactorReconstruction = CheckVararginPairs('LossFactorReconstruction', LossFactorReconstruction, varargin{:});
+cfg_Encoder.WeightClassification = CheckVararginPairs('WeightClassification', cfg_Encoder.WeightClassification, varargin{:});
+end
+if isfunction
+cfg_Encoder.WeightReconstruction = CheckVararginPairs('WeightReconstruction', cfg_Encoder.WeightReconstruction, varargin{:});
+cfg_Encoder.LossFactorReconstruction = cfg_Encoder.WeightReconstruction;
 end
 if isfunction
 cfg_Encoder.WeightKL = CheckVararginPairs('WeightKL', cfg_Encoder.WeightKL, varargin{:});
@@ -170,6 +173,10 @@ cfg_Encoder.LossFactorKL = cfg_Encoder.WeightKL;
 end
 if isfunction
 cfg_Encoder.WantSaveOptimalNet = CheckVararginPairs('WantSaveOptimalNet', WantSaveOptimalNet, varargin{:});
+end
+if isfunction
+cfg_Encoder.NumEpochsFull = CheckVararginPairs('NumEpochsFull', cfg_Encoder.NumEpochsFull, varargin{:});
+cfg_Encoder.NumEpochsSession = cfg_Encoder.NumEpochsFull;
 end
 if isfunction
 cfg_Encoder.NumEpochsAutoEncoder = CheckVararginPairs('NumEpochsAutoEncoder', NumEpochsAutoEncoder, varargin{:});
@@ -188,6 +195,12 @@ if isfunction
 cfg_Encoder.STDRandomWalk = CheckVararginPairs('STDRandomWalk', cfg_Encoder.STDRandomWalk, varargin{:});
 end
 if isfunction
+cfg_Encoder.STDTimeShift = CheckVararginPairs('STDTimeShift', cfg_Encoder.STDTimeShift, varargin{:});
+end
+if isfunction
+cfg_Encoder.WantSeparateTimeShift = CheckVararginPairs('WantSeparateTimeShift', cfg_Encoder.WantSeparateTimeShift, varargin{:});
+end
+if isfunction
 cfg_Encoder.WantNormalization = CheckVararginPairs('WantNormalization', cfg_Encoder.WantNormalization, varargin{:});
 end
 if isfunction
@@ -198,6 +211,12 @@ cfg_Encoder.GradientThreshold = CheckVararginPairs('GradientThreshold', cfg_Enco
 end
 if isfunction
 cfg_Encoder.WeightOffsetAndScale = CheckVararginPairs('WeightOffsetAndScale', cfg_Encoder.WeightOffsetAndScale, varargin{:});
+end
+if isfunction
+cfg_Encoder.GradientClipType = CheckVararginPairs('GradientClipType', cfg_Encoder.GradientClipType, varargin{:});
+end
+if isfunction
+cfg_Encoder.Freeze_cfg = CheckVararginPairs('Freeze_cfg', cfg_Encoder.Freeze_cfg, varargin{:});
 end
 
 %%
@@ -210,27 +229,35 @@ cfg_Encoder.IsQuaddle = false;
 end
 
 %%
+cfg_Encoder.AccumulationInformation(...
+    strcmp([cfg_Encoder.AccumulationInformation(:).SystemName], ...
+    "CPU")).MaxBatchSize = cfg_Encoder.maxworkerMiniBatchSize;
+%%
 
 disp(cfg_Encoder);
 disp(datetime);
-gpuDeviceTable
+gpuDeviceTable(["Index","Name","ComputeCapability","DeviceAvailable", ...
+    "DeviceSelected","TotalMemory","MultiprocessorCount"])
 %%
-if canUseGPU
-    numberOfGPUs = gpuDeviceCount("available");
-    % numberOfGPUs = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
-    p=gcp("nocreate");
-    if isempty(p)
-    parpool(numberOfGPUs);
-    end
-elseif ~isempty(getenv('SLURM_JOB_CPUS_PER_NODE'))
-    cores = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
-    p=gcp("nocreate");
-    MinimumCores = cfg_Encoder.MiniBatchSize/cfg_Encoder.maxworkerMiniBatchSize;
-    UsedCores = min([cores,MinimumCores]);
-    if isempty(p)
-    parpool(UsedCores);
-    end
-end
+
+cgg_getParallelPool;
+% if canUseGPU
+%     numberOfGPUs = gpuDeviceCount("available");
+%     % numberOfGPUs = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
+%     p=gcp("nocreate");
+%     if isempty(p)
+%     parpool(numberOfGPUs);
+%     end
+% elseif ~isempty(getenv('SLURM_JOB_CPUS_PER_NODE'))
+%     cores = str2double(getenv('SLURM_JOB_CPUS_PER_NODE'));
+%     p=gcp("nocreate");
+%     % MinimumCores = cfg_Encoder.MiniBatchSize/cfg_Encoder.maxworkerMiniBatchSize;
+%     MinimumCores = Inf;
+%     UsedCores = min([cores,MinimumCores]);
+%     if isempty(p)
+%     parpool(UsedCores);
+%     end
+% end
 
 %%
 

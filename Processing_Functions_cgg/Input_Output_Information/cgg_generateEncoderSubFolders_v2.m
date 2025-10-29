@@ -212,7 +212,7 @@ cfg.EncodingDir.ModelName.ModelParameters.WidthStride=cfg_tmp;
 %% Hidden Size Folder
 
 % Make the Hidden Size folder name.
-if length(HiddenSize)==1
+if isscalar(HiddenSize)
     NameHiddenSize = sprintf('Hidden Size - %d',HiddenSize);
 else
     NameHiddenSize = ['Hidden Size - ' sprintf('%d',HiddenSize(1)) sprintf('-%d',HiddenSize(2:end))];
@@ -231,6 +231,11 @@ if ~isnan(GradientThreshold)
 else
     NameGradientThreshold = 'Gradient Threshold - None';
 end
+switch cfg_Encoder.GradientClipType
+    case 'Global'
+        NameGradientThreshold = [NameGradientThreshold ' - Global'];
+end
+
 NameOptimizer = sprintf('Optimizer - %s',Optimizer);
 NameL2Factor = sprintf('L2 Factor - %.2e',L2Factor);
 NameLearning = [NameInitialLearningRate ' ~ ' NameGradientThreshold ' ~ ' NameOptimizer ' ~ ' NameL2Factor];
@@ -267,9 +272,17 @@ if ~isnan(STDRandomWalk)
 else
     NameRandomWalk = 'Random Walk - None';
 end
+if isfield(cfg_Encoder,'STDTimeShift') && ~isnan(cfg_Encoder.STDTimeShift)
+    NameTimeSift = sprintf(' ~ TimeShift - %.2e',cfg_Encoder.STDTimeShift);
+    if isfield(cfg_Encoder,'WantSeparateTimeShift') && cfg_Encoder.WantSeparateTimeShift
+        NameTimeSift = sprintf(' ~ Separate TimeShift - %.2e',cfg_Encoder.STDTimeShift);
+    end
+else
+    NameTimeSift = '';
+end
 
 NameDataAugmentation = [NameChannelOffset ' ~ ' NameWhiteNoise ...
-    ' ~ ' NameRandomWalk];
+    ' ~ ' NameRandomWalk NameTimeSift];
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize;
 [cfg_tmp,~] = cgg_generateFolderAndPath(NameDataAugmentation,'DataAugmentation',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize=cfg_tmp;
@@ -338,7 +351,7 @@ cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.L
 NameClassifierModel = sprintf('Classifier - %s',ClassifierName);
 if length(ClassifierHiddenSize) < 1
     NameClassifierHiddenSizes = 'Hidden Size - None';
-elseif length(ClassifierHiddenSize) == 1
+elseif isscalar(ClassifierHiddenSize)
     NameClassifierHiddenSizes = ['Hidden Size - ' sprintf('%d',ClassifierHiddenSize(1))];
 else
     NameClassifierHiddenSizes = ['Hidden Size - ' sprintf('%d',ClassifierHiddenSize(1)) sprintf('-%d',ClassifierHiddenSize(2:end))];

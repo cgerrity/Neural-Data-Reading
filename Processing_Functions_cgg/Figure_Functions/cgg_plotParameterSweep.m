@@ -90,8 +90,9 @@ CurrentCases = {'Classifier Hidden Size','Classifier','Data Width', ...
     'Gradient Threshold','Decoder Loss Type','Layers','Initial Units',...
     'Classification Weight','KL Weight','Reconstruction Weight','Session'};
 % CurrentCases = {'Model','Classification Weight','KL Weight','Reconstruction Weight'};
-% CurrentCases = {'Session'};
-CurrentCases = {'Model'};
+CurrentCases = {'Session'};
+% CurrentCases = {'Model'};
+% CurrentCases = {'Gradient Accumulation Size'};
 
 
 
@@ -110,10 +111,11 @@ SweepNameIgnore(end+1) = "NumEpochsFull";
 end
 
 [SweepAccuracy,~,SweepAllNames,RunTable,BestRunTable] = ...
-    cgg_procParameterSweepTable(SweepName,SweepNameIgnore,...
-    cfg,'MatchType',MatchType,'IsQuaddle',IsQuaddle, ...
-    'RunTable',RunTable,'BestRunTable',BestRunTable, ...
-    'WantFinished',WantFinished,'WantValidation',WantValidation);
+    cgg_procParameterSweepTable(SweepName,SweepNameIgnore, ...
+    cfg,'MatchType',MatchType, ...
+    'IsQuaddle',IsQuaddle,'RunTable',RunTable, ...
+    'BestRunTable',BestRunTable,'WantFinished',WantFinished, ...
+    'WantValidation',WantValidation);
 
 
 %%
@@ -143,7 +145,7 @@ switch SweepType
         this_SweepAllNames(BestIDX) = this_SweepAllNames(BestIDX) + "*";
         end
         % IndicesSorted = cgg_sortModelNamesForParameterSweep(this_SweepAllNames);
-        [~,IndicesSorted] = sort(SweepAccuracy);
+        [~,IndicesSorted] = sort(cellfun(@(x) mean(x), SweepAccuracy));
         this_SweepAllNames = this_SweepAllNames(IndicesSorted);
         SweepAccuracy = SweepAccuracy(IndicesSorted);
     case 'Variational'
@@ -178,6 +180,7 @@ switch SweepType
         this_SweepAllNames = cgg_setSessionNamesForParameterSweep(this_SweepAllNames);
         this_SweepAllNames(BestIDX) = this_SweepAllNames(BestIDX) + "*";
         this_BarWidth = max([length(this_SweepAllNames),BarWidth]);
+        SweepType = sprintf('%s ~ %s',SweepType,datetime('today'));
         this_X_Tick_Label_Size = 12;
 end
 

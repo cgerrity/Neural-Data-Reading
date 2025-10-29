@@ -10,11 +10,31 @@ WindowNames=VariableNames(WindowIndices);
 
 NumWindows=numel(WindowNames);
 
-for widx=1:NumWindows
+%%
+
+Par_CM = cell(NumWindows,1);
+Par_Accuracy = cell(NumWindows,1);
+Par_MeanAccuracy = cell(NumWindows,1);
+
+this_varargin_Parallel = parallel.pool.Constant(varargin);
+parfor widx=1:NumWindows
+    this_varargin = this_varargin_Parallel.Value;
     this_WindowName=WindowNames{widx};
-    [this_CM,this_Accuracy,this_MeanAccuracy] = ...
+    [Par_CM{widx},Par_Accuracy{widx},Par_MeanAccuracy{widx}] = ...
         cgg_procConfusionMatrixFromTable(CM_Table,ClassNames,...
-        'PredictionColumn',this_WindowName,varargin{:});
+        'PredictionColumn',this_WindowName,this_varargin{:});
+end
+
+%%
+
+for widx=1:NumWindows
+    % this_WindowName=WindowNames{widx};
+    % [this_CM,this_Accuracy,this_MeanAccuracy] = ...
+    %     cgg_procConfusionMatrixFromTable(CM_Table,ClassNames,...
+    %     'PredictionColumn',this_WindowName,varargin{:});
+    this_CM = Par_CM{widx};
+    this_Accuracy = Par_Accuracy{widx};
+    this_MeanAccuracy = Par_MeanAccuracy{widx};
     if widx==1
         CM=zeros([size(this_CM),NumWindows]);
         Accuracy=zeros([length(this_Accuracy),NumWindows]);

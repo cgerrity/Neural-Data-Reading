@@ -31,7 +31,10 @@ end
 % E.G. Session -> 'Fr_Probe_02_22-05-09_009_01'
 % E.G. Experiment -> 'Frey_FLToken_Probe_02'
 [inputfolder_dir,SessionName,~]=fileparts(inputfolder);
-[~,ExperimentName,~]=fileparts(inputfolder_dir);
+MonkeyExperiment_Cell = ...
+    split(extractAfter(inputfolder_dir,['DATA_neural' filesep]),filesep);
+ExperimentName = char(join(string(MonkeyExperiment_Cell(2:end)),'-'));
+% [~,ExperimentName,~]=fileparts(inputfolder_dir);
 
 
 % This gets the ouput folder from varargin. Use the name value pair of

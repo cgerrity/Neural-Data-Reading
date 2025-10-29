@@ -30,9 +30,10 @@ switch VariableSet
         VariableInformation(9,:) = {9,"First","text"};
     case 'Previous Trial Effect'
         VariableInformation(1,:) = {1,"EE","text"};
-        VariableInformation(2,:) = {2,"EC","text"};
-        VariableInformation(3,:) = {3,"CE","text"};
+        VariableInformation(2,:) = {2,"CE","text"};
+        VariableInformation(3,:) = {3,"EC","text"};
         VariableInformation(4,:) = {4,"CC","text"};
+        VariableInformation(5,:) = {0,"First","text"};
     case 'Prediction Error'
         VariableInformation(1,:) = {1,"Prediction Error","text"};
     case 'Positive Prediction Error'
@@ -71,6 +72,9 @@ switch VariableSet
         VariableInformation(2,:) = {2,"Medium","text"};
         VariableInformation(3,:) = {3,"High","text"};
         VariableInformation(4,:) = {0,"Unlearned","text"};
+    case 'Monkey'
+        VariableInformation(1,:) = {1,"Fr","text"};
+        VariableInformation(2,:) = {2,"Wo","text"};
     case 'ZZZZZZZ'
         VariableInformation(1,:) = {1,"ZZZZZZZ","text"};
     otherwise

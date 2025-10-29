@@ -1,4 +1,4 @@
-function [IA_Table_Fold,IA_Table_Average] = cgg_procBestSequentialImportanceAnalysis(cfg_Encoder,EpochDir,varargin)
+function [IA_Table_Fold,IA_Table_Average] = cgg_procBestSequentialImportanceAnalysis(cfg_Encoder,cfg_Epoch,varargin)
 %CGG_PROCBESTSEQUENTIALIMPORTANCEANALYSIS Summary of this function goes here
 %   Detailed explanation goes here
 isfunction=exist('varargin','var');
@@ -176,6 +176,9 @@ PauseTime_Long = 1;
 PauseTime_Short = 1;
 end
 %%
+EpochDir_Main = cgg_getDirectory(cfg_Epoch.TargetDir,'Epoch');
+EpochDir_Results = cgg_getDirectory(cfg_Epoch.ResultsDir,'Epoch');
+%%
 
 CurrentSaveTerm = sprintf(SaveTerm,NumRemoved);
 if NumRemoved > 1
@@ -189,20 +192,24 @@ CurrentSaveTerm_Test = sprintf('%s_Test',CurrentSaveTerm);
 % IA_AccuracyBestNameExt = sprintf('IA_Table%s_%s.mat',SaveTerm,MatchType);
 % IA_AccuracyBestPathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IA_AccuracyBestNameExt);
 IA_AccuracyTestNameExt = sprintf('IA_Table%s_%s.mat',CurrentSaveTerm_Test,MatchType);
-IA_AccuracyTestPathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IA_AccuracyTestNameExt);
+% IA_AccuracyTestPathNameExt = fullfile(cfg_Epoch.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IA_AccuracyTestNameExt);
+IA_AccuracyTestPathNameExt = fullfile(EpochDir_Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IA_AccuracyTestNameExt);
 
 IABestNameExt = sprintf('IA_Table%s.mat',CurrentSaveTerm);
 % IABestPathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IABestNameExt);
 IATestNameExt = sprintf('IA_Table%s.mat',CurrentSaveTerm_Test);
-IATestPathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IATestNameExt);
+% IATestPathNameExt = fullfile(cfg_Epoch.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IATestNameExt);
+IATestPathNameExt = fullfile(EpochDir_Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IATestNameExt);
 
 % IAPriorNameExt = 'IA_Table_Sequential.mat';
 % IAPriorPathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IAPriorNameExt);
 
 IAPriorNameExt = sprintf('IA_Table%s.mat',PriorSaveTerm);
-IAPriorPathNameExt = fullfile(EpochDir.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IAPriorNameExt);
+% IAPriorPathNameExt = fullfile(cfg_Epoch.Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IAPriorNameExt);
+IAPriorPathNameExt = fullfile(EpochDir_Results,'Analysis','Importance Analysis',RemovalType,'Fold %d',SessionName,IAPriorNameExt);
 %% Check Removal Tables
-AnalysisDir = fullfile(EpochDir.Results,'Analysis');
+% AnalysisDir = fullfile(cfg_Epoch.Results,'Analysis');
+AnalysisDir = fullfile(EpochDir_Results,'Analysis');
 HasRemovalTableFunc =@(x,y) all([x,cgg_getOutputFromIndices(@cgg_checkImportanceAnalysis,y,2,2)]);
 HasBestRemovalTable = cgg_procDirectorySearchAndApply(AnalysisDir, IABestNameExt, HasRemovalTableFunc);
 if isempty(HasBestRemovalTable)
@@ -273,14 +280,15 @@ end
 
 %%
 
-cgg_saveRemovalTable(RemovalTable_Fold,Folds,EpochDir.Results,RemovalType,SessionName,CurrentSaveTerm_Test);
+% cgg_saveRemovalTable(RemovalTable_Fold,Folds,cfg_Epoch.Results,RemovalType,SessionName,CurrentSaveTerm_Test);
+cgg_saveRemovalTable(RemovalTable_Fold,Folds,EpochDir_Results,RemovalType,SessionName,CurrentSaveTerm_Test);
 end
 
 %% Get Test Importance Analysis
 
 if ~HasBestRemovalTable
 [IA_Table_Fold_Test,IA_Table_Average_Test] = cgg_procSingleImportanceAnalysis(...
-    cfg_Encoder,EpochDir,'MatchType',MatchType,'NumRemoved',NumRemoved, ...
+    cfg_Encoder,cfg_Epoch,'MatchType',MatchType,'NumRemoved',NumRemoved, ...
     'NumEntries',NumEntries, ...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize, ...
     'DataFormat',DataFormat,'IsQuaddle',IsQuaddle, ...
@@ -327,15 +335,15 @@ end
 
 pause(randi(PauseTime_Long)-1);
 
-cgg_saveRemovalTable(RemovalTable_Best,Folds,EpochDir.Results,RemovalType,SessionName,CurrentSaveTerm);
-
+% cgg_saveRemovalTable(RemovalTable_Best,Folds,cfg_Epoch.Results,RemovalType,SessionName,CurrentSaveTerm);
+cgg_saveRemovalTable(RemovalTable_Best,Folds,EpochDir_Results,RemovalType,SessionName,CurrentSaveTerm);
 end
 
 %%
 
 % end
 [IA_Table_Fold_Best,IA_Table_Average_Best] = cgg_procSingleImportanceAnalysis(...
-    cfg_Encoder,EpochDir,'MatchType',MatchType,'NumRemoved',NumRemoved, ...
+    cfg_Encoder,cfg_Epoch,'MatchType',MatchType,'NumRemoved',NumRemoved, ...
     'NumEntries',NumEntries, ...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize, ...
     'DataFormat',DataFormat,'IsQuaddle',IsQuaddle, ...

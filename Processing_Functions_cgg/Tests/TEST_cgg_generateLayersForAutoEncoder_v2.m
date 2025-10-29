@@ -4,16 +4,20 @@ clc; clear; close all;
 
 %%
 
-HiddenSize = [8,16,32];
+% HiddenSize = [8,16,32];
+HiddenSize = [1000,500];
 % HiddenSize = [8,16];
 LatentSize = [250];
-WantNormalization = 'Group';
+WantNormalization = false;
+Dropout = 0.5;
+IsVariational = true;
 
 NetworkToView = 'Encoder';
 Pause_Time = 0;
 
 wantGrouped = false;
 
+ModelName = 'GRU';
 % ModelName = 'Feedforward - ReLU';
 % ModelName = 'Feedforward - ReLU - Normalized';
 % ModelName = 'Feedforward - ReLU - Normalized - Dropout 0.5';
@@ -31,7 +35,7 @@ wantGrouped = false;
 % ModelName = 'Logistic Regression';o
 % ModelName = 'PCA';
 % ModelName = 'Multi-Filter Convolutional';
-ModelName = 'Convolutional ~ Stride 4 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Offset ~ Feedforward';
+% ModelName = 'Convolutional ~ Stride 4 ~ Crop After Convolution ~ Convolution Filter Size - Stridex2 ~ Offset ~ Feedforward';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Bottle Neck LSTM';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM';
 % ModelName = 'Variational Convolutional 3x3 - Split Area - ReLU - Max Pool, Transpose Point-Wise - Normalized - Bottle Neck LSTM - Final Tanh';
@@ -91,6 +95,8 @@ X_Input = dlarray(X_Input,DataFormat);
 %%
 cfg_Encoder = struct();
 cfg_Encoder.WantNormalization = WantNormalization;
+cfg_Encoder.IsVariational = IsVariational;
+cfg_Encoder.Dropout = Dropout;
 PCAInformation = struct();
 if strcmp(ModelName,'PCA')
 PCAInformation = cgg_getPCAForLayer(X_Input,'WantPerTime',WantPerTime);

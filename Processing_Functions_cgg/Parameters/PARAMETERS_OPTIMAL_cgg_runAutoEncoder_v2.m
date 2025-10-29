@@ -33,6 +33,7 @@ ClassifierHiddenSize=[250,100,50];
 NumEpochsAutoEncoder = 0;
 MiniBatchSize = 100;
 GradientThreshold = 100;
+GradientClipType = 'SubNetwork'; %['SubNetwork','Global']
 NumEpochsFull = 100;
 InitialLearningRate = 0.01;
 WeightReconstruction = 100;
@@ -47,15 +48,41 @@ LossType_Decoder = 'MSE';
 LossType_Classifier='CrossEntropy';
 L2Factor = 1e-4;
 
+NumEpochsFull_Final = 1000;
+
+%% Network Freezing Parameters
+
+Freeze_cfg = struct();
+Freeze_cfg.Encoder.DelayEpochs = 25;
+Freeze_cfg.Encoder.RampEpochs = 50;
+Freeze_cfg.Decoder.DelayEpochs = 25;
+Freeze_cfg.Decoder.RampEpochs = 50;
+Freeze_cfg.Classifier.DelayEpochs = 25;
+Freeze_cfg.Classifier.RampEpochs = 50;
+
+%% Set Gradient Accumulation size depending on the system
 maxworkerMiniBatchSize=100;
 
-NumEpochsFull_Final = 1000;
+% AccumulationInformation = struct('Name',[],'Value',[]);
+AccumulationInformation = {...
+    "CPU",maxworkerMiniBatchSize;...
+    "NVIDIA TITAN X (Pascal)",20;...
+    "NVIDIA TITAN Xp",20;...
+    "NVIDIA RTX A6000",20;...
+    };
+
+AccumulationInformation = struct(...
+    'SystemName', AccumulationInformation(:,1), ...
+    'MaxBatchSize', AccumulationInformation(:,2));
+
 
 %% Data Augmentation Parameters
 
 STDChannelOffset = 0.3;
 STDWhiteNoise = 0.15;
 STDRandomWalk = 0.007;
+STDTimeShift = NaN;
+WantSeparateTimeShift = false;
 
 %%
 

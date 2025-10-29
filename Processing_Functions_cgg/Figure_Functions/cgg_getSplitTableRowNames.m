@@ -2,8 +2,6 @@ function RowNames = cgg_getSplitTableRowNames(TrialFilter,TypeValues)
 %CGG_GETSPLITTABLEROWNAMES Summary of this function goes here
 %   Detailed explanation goes here
 
-
-
 if all(~strcmp(TrialFilter,'All') & ~strcmp(TrialFilter,'Target Feature'))
     [NumTypes,NumColumns]=size(TypeValues);
 else
@@ -63,6 +61,15 @@ this_TypeValues = TypeValues(:,cidx);
         case 'Correct Trial'
             TypeValues_String(this_TypeValues == 1,cidx) = 'Correct';
             TypeValues_String(this_TypeValues == 0,cidx) = 'Error';
+        case 'Previous Trial'
+            TypeValues_String(this_TypeValues == 1,cidx) = 'Correct';
+            TypeValues_String(this_TypeValues == 0,cidx) = 'Error';
+        case 'Previous Outcome Corrected'
+            TypeValues_String(this_TypeValues == 1,cidx) = 'Correct';
+            TypeValues_String(this_TypeValues == 0,cidx) = 'Error';
+        case 'Previous'
+            TypeValues_String(this_TypeValues == 1,cidx) = 'Correct';
+            TypeValues_String(this_TypeValues == 0,cidx) = 'Error';
         case 'Learned'
             TypeValues_String(this_TypeValues == 1,cidx) = 'Learned';
             TypeValues_String(this_TypeValues == 0,cidx) = 'Learning';
@@ -76,6 +83,18 @@ this_TypeValues = TypeValues(:,cidx);
             TypeValues_String(this_TypeValues == 4,cidx) = '0 to 9';
             TypeValues_String(this_TypeValues == 5,cidx) = '10 to 19';
             TypeValues_String(this_TypeValues == 6,cidx) = 'more than 20';
+        case 'Multi Trials From Learning Point'
+            [~,TrialBinName] = cgg_calcTrialsFromLPMultipleCategories([]);
+            for tidx = 1:length(TrialBinName)
+            TypeValues_String(this_TypeValues == tidx,cidx) = TrialBinName{tidx};
+            end
+        otherwise
+            VariableInformation = PARAMETERS_cgg_VariableInformation(this_TrialFilter);
+            for vidx = 1:height(VariableInformation)
+                TypeValues_String(this_TypeValues == ...
+                    VariableInformation.("Numeric Label")(vidx),cidx) = ...
+                    VariableInformation.("Label")(vidx);
+            end
     end
 end
 

@@ -1,6 +1,5 @@
-function [IsComplete,HasFlag,InProgress,IsReady,IsFinished] = ...
-    cgg_checkAnyImportanceAnalysis(Method,NumRemoved,RemovalType,Fold,...
-    EpochDir,varargin)
+function [IsComplete,HasFlag,InProgress,IsReady,IsFinished,HasTest] = ...
+    cgg_checkAnyImportanceAnalysis(PassTableEntry,cfg_Epoch,varargin)
 %CGG_CHECKANYIMPORTANCEANALYSIS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -14,52 +13,20 @@ LockAgeMinimum = 2;
 end
 end
 
-if isfunction
-SessionName = CheckVararginPairs('SessionName', 'Subset', varargin{:});
-else
-if ~(exist('SessionName','var'))
-SessionName='Subset';
-end
-end
-
-if isfunction
-MatchType = CheckVararginPairs('MatchType', 'Scaled-BalancedAccuracy', varargin{:});
-else
-if ~(exist('MatchType','var'))
-MatchType='Scaled-BalancedAccuracy';
-end
-end
-
-if isfunction
-TrialFilter = CheckVararginPairs('TrialFilter', 'All', varargin{:});
-else
-if ~(exist('TrialFilter','var'))
-TrialFilter='All';
-end
-end
-
-if isfunction
-TargetFilter = CheckVararginPairs('TargetFilter', 'Overall', varargin{:});
-else
-if ~(exist('TargetFilter','var'))
-TargetFilter='Overall';
-end
-end
-
 %%
 
-[IAPathName,RemovalTablePathName] = ...
-    cgg_generateImportanceAnalysisFileNames(Method,NumRemoved,...
-    RemovalType,Fold,EpochDir,SessionName,MatchType,TrialFilter, ...
-    TargetFilter);
+[IAPathName,RemovalTablePathName,IATestPathName] = ...
+    cgg_generateImportanceAnalysisFileNames(PassTableEntry,cfg_Epoch);
 
 IAPathName = char(IAPathName);
+IATestPathName = char(IATestPathName);
 RemovalTablePathName = char(RemovalTablePathName);
 
 IAPathNameExt = [IAPathName '.mat'];
 LockPathNameExt = [IAPathName '.lock'];
 FlagPathNameExt = [IAPathName '.flag'];
 FinishedPathNameExt = [IAPathName '.finished'];
+IATestPathNameExt = [IATestPathName '.mat'];
 RemovalTablePathNameExt = [RemovalTablePathName '.mat'];
 
 % Check if the IA Table exists to determine if the specified one is
@@ -70,6 +37,7 @@ IsComplete = isfile(IAPathNameExt);
 HasFlag = isfile(FlagPathNameExt);
 InProgress = isfile(LockPathNameExt);
 IsReady = isfile(RemovalTablePathNameExt);
+HasTest = isfile(IATestPathNameExt);
 IsFinished = isfile(FinishedPathNameExt);
 
 % If file has been locked for more than the minimum time set the InProgress
@@ -80,7 +48,10 @@ if InProgress
 LockAge = cgg_getFileAge(LockPathNameExt, 'hours');
 InProgress = LockAge < LockAgeMinimum;
     if ~InProgress
+        try
         delete(LockPathNameExt);
+        catch
+        end
     end
 end
 

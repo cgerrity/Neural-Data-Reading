@@ -1,4 +1,4 @@
-function CorrelationTable = cgg_procFullLatentCorrelationAnalysis(cfg_Encoder,EpochDir,varargin)
+function CorrelationTable = cgg_procFullLatentCorrelationAnalysis(cfg_Encoder,cfg_Epoch,varargin)
 %CGG_PROCFULLLATENTCORRELATIONANALYSIS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -62,7 +62,10 @@ wantSubset = cfg_Encoder.wantSubset;
 DataWidth = cfg_Encoder.DataWidth;
 WindowStride = cfg_Encoder.WindowStride;
 
-TargetDir = [EpochDir.Results filesep 'Encoding' filesep Target];
+% TargetDir = [cfg_Epoch.Results filesep 'Encoding' filesep Target];
+EpochDir_Main = cgg_getDirectory(cfg_Epoch.TargetDir,'Epoch');
+EpochDir_Results = cgg_getDirectory(cfg_Epoch.ResultsDir,'Epoch');
+TargetDir = [EpochDir_Results filesep 'Encoding' filesep Target];
 
 cfg_Network = cgg_generateEncoderSubFolders([TargetDir filesep 'Fold_1'],ModelName,DataWidth,WindowStride,HiddenSize,InitialLearningRate,WeightReconstruction,WeightKL,WeightClassification,MiniBatchSize,wantSubset,WeightedLoss,GradientThreshold,ClassifierName,ClassifierHiddenSize,STDChannelOffset,STDWhiteNoise,STDRandomWalk,Optimizer,NumEpochsAutoEncoder,Normalization,LossType_Decoder);
 EncodingParametersPath = cgg_getDirectory(cfg_Network,'Classifier');
@@ -93,7 +96,8 @@ for fidx = 1:NumFolds
     %%%% Iterate through folds
 Fold = Folds(fidx);
 
-CorrelationPathNameExt = fullfile(EpochDir.Results,'Analysis','Correlation',PlotSubFolder,sprintf('Fold %d',Fold),SessionName,'Correlation.mat');
+% CorrelationPathNameExt = fullfile(cfg.Results,'Analysis','Correlation',PlotSubFolder,sprintf('Fold %d',Fold),SessionName,'Correlation.mat');
+CorrelationPathNameExt = fullfile(EpochDir_Results,'Analysis','Correlation',PlotSubFolder,sprintf('Fold %d',Fold),SessionName,'Correlation.mat');
 
 if isfile(CorrelationPathNameExt)
 m_Correlation = matfile(CorrelationPathNameExt,"Writable",false);
@@ -102,10 +106,12 @@ P_Value = m_Correlation.P_Value;
 else
 
 cfg_Encoder.Target = LMVariable;
-[~,~,Testing,~] = cgg_getDatastore(EpochDir.Main,SessionName,Fold,cfg_Encoder,'ClassLowerCount',0);
+% [~,~,Testing,~] = cgg_getDatastore(cfg.Main,SessionName,Fold,cfg_Encoder,'ClassLowerCount',0);
+[~,~,Testing,~] = cgg_getDatastore(EpochDir_Main,SessionName,Fold,cfg_Encoder,'ClassLowerCount',0);
 %%
 
-FoldDir = [EpochDir.Results filesep 'Encoding' filesep Target filesep sprintf('Fold_%d',Fold)];
+% FoldDir = [cfg.Results filesep 'Encoding' filesep Target filesep sprintf('Fold_%d',Fold)];
+FoldDir = [EpochDir_Results filesep 'Encoding' filesep Target filesep sprintf('Fold_%d',Fold)];
 cfg_Network = cgg_generateEncoderSubFolders(FoldDir,ModelName,DataWidth,WindowStride,HiddenSize,InitialLearningRate,WeightReconstruction,WeightKL,WeightClassification,MiniBatchSize,wantSubset,WeightedLoss,GradientThreshold,ClassifierName,ClassifierHiddenSize,STDChannelOffset,STDWhiteNoise,STDRandomWalk,Optimizer,NumEpochsAutoEncoder,Normalization,LossType_Decoder);
 Encoding_Dir = cgg_getDirectory(cfg_Network,'Classifier');
 
@@ -124,7 +130,9 @@ end
     Encoder,'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
     'DataFormat',DataFormat);
 
-cgg_saveLatentCorrelationAnalysis(Correlation,P_Value,EpochDir.Results,...
+% cgg_saveLatentCorrelationAnalysis(Correlation,P_Value,cfg.Results,...
+%     PlotSubFolder,Fold,SessionName,'IsTable',false);
+cgg_saveLatentCorrelationAnalysis(Correlation,P_Value,EpochDir_Results,...
     PlotSubFolder,Fold,SessionName,'IsTable',false);
 
 end

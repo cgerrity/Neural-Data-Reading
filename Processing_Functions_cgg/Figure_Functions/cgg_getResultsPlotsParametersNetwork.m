@@ -107,6 +107,17 @@ if ~(exist('WantResults','var'))
 WantResults=true;
 end
 end
+%% Additional Target
+AdditionalTargetIDX = 0;
+AdditionalTarget = cell(AdditionalTargetIDX);
+AdditionalTargetIDX = AdditionalTargetIDX + 1;
+AdditionalTarget{AdditionalTargetIDX} = 'Prediction Error Category';
+AdditionalTargetIDX = AdditionalTargetIDX + 1;
+AdditionalTarget{AdditionalTargetIDX} = 'Absolute Prediction Error';
+AdditionalTargetIDX = AdditionalTargetIDX + 1;
+AdditionalTarget{AdditionalTargetIDX} = 'Prediction Error';
+AdditionalTargetIDX = AdditionalTargetIDX + 1;
+AdditionalTarget{AdditionalTargetIDX} = 'Choice Probability CMB';
 %%
 
 cfg_Encoder = PARAMETERS_OPTIMAL_cgg_runAutoEncoder_v2;
@@ -126,7 +137,10 @@ cfg_Plot = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
 'Epoch',EpochName,'PlotFolder','Plot Data','PlotSubFolder','Network Results');
 SavePath = cgg_getDirectory(cfg_Plot,'SubFolder_1');
 SaveNameExt=['FullTable' SplitExtraSaveTerm '.mat'];
-
+SavePathNameExt = [SavePath filesep SaveNameExt];
+% % TEST
+% SaveNameExt_Filtered=['FullTable_Filtered' SplitExtraSaveTerm '.mat'];
+% SavePathNameExt_Filtered = [SavePath filesep SaveNameExt_Filtered];
 %%
 if WantResults
 EncodingParametersPath = cgg_getDirectory(cfg.ResultsDir,'Fold');
@@ -143,12 +157,26 @@ EncoderParametersFunc = @(x,y) cgg_getAllEncoderCMTable(x,y,...
 EncoderParameters_CM_Table = cgg_procDirectorySearchAndApply(EncodingParametersPath, ...
     OptimalPathNameExt, EncoderParametersFunc,'IsSingleLevel',true);
 
+% EncoderParameters_CM_Table = EncoderParameters_CM_Table(randperm(height(EncoderParameters_CM_Table)),:);
+
 %% Overall Results
 % FullTable = [];
-FullTableFunc = @(x,y) cgg_getFullAccuracyTable(x,cfg,'Subset',y,'Epoch',EpochName,'TrialFilter',FilterColumn,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'MatchType_Attention',MatchType_Attention,'TimeRange',[],'cfg_Encoder',cfg_Encoder);
+FullTableTimer = tic;
+FullTableFunc = @(x,y) cgg_getFullAccuracyTable(x,cfg,'Subset',y,'Epoch',EpochName,'TrialFilter',FilterColumn,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'MatchType_Attention',MatchType_Attention,'TimeRange',[],'cfg_Encoder',cfg_Encoder,'AdditionalTarget',AdditionalTarget,'WantFilteredChance',true,'WantSpecificChance',true,'WantUseNullTable',true);
 FullTable = rowfun(FullTableFunc,EncoderParameters_CM_Table,"InputVariables",["CM_Table","Subset"],"SeparateInputs",true,"ExtractCellContents",false,"NumOutputs",1,"OutputFormat","cell");
 FullTable = vertcat(FullTable{:});
 FullTable.Properties.RowNames = EncoderParameters_CM_Table.Subset;
+
+
+FullTableTime = seconds(toc(FullTableTimer));
+FullTableTime.Format='hh:mm:ss';
+fprintf('### Complete Calculations of Full Table for %s! [Time: %s]\n',...
+    string(join(FilterColumn)),FullTableTime);
+% % TEST
+% FullTableFunc_Filtered = @(x,y) cgg_getFullAccuracyTable(x,cfg,'Subset',y,'Epoch',EpochName,'TrialFilter',FilterColumn,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'MatchType_Attention',MatchType_Attention,'TimeRange',[],'cfg_Encoder',cfg_Encoder,'AdditionalTarget',AdditionalTarget,'WantFilteredChance',true,'WantSpecificChance',false);
+% FullTable_Filtered = rowfun(FullTableFunc_Filtered,EncoderParameters_CM_Table,"InputVariables",["CM_Table","Subset"],"SeparateInputs",true,"ExtractCellContents",false,"NumOutputs",1,"OutputFormat","cell");
+% FullTable_Filtered = vertcat(FullTable_Filtered{:});
+% FullTable_Filtered.Properties.RowNames = EncoderParameters_CM_Table.Subset + ' Filtered';
 
 %% Old Results
 cfg_Encoder_Old = PARAMETERS_OPTIMAL_cgg_runAutoEncoder;
@@ -158,22 +186,38 @@ OptimalPathNameExt = fullfile(OptimalPath,'EncodingParameters.yaml');
 EncoderParametersOld_CM_Table = cgg_procDirectorySearchAndApply(EncodingParametersPath, ...
     OptimalPathNameExt, EncoderParametersFunc,'IsSingleLevel',true);
 
-FullTableFunc = @(x,y) cgg_getFullAccuracyTable(x,cfg,'Subset',y,'Epoch',EpochName,'TrialFilter',FilterColumn,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'MatchType_Attention',MatchType_Attention,'TimeRange',[],'cfg_Encoder',cfg_Encoder_Old);
+FullTableFunc = @(x,y) cgg_getFullAccuracyTable(x,cfg,'Subset',y,'Epoch',EpochName,'TrialFilter',FilterColumn,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'MatchType_Attention',MatchType_Attention,'TimeRange',[],'cfg_Encoder',cfg_Encoder_Old,'AdditionalTarget',AdditionalTarget,'WantFilteredChance',true,'WantSpecificChance',true,'WantUseNullTable',true);
 FullTableOld = rowfun(FullTableFunc,EncoderParametersOld_CM_Table,"InputVariables",["CM_Table","Subset"],"SeparateInputs",true,"ExtractCellContents",false,"NumOutputs",1,"OutputFormat","cell");
 FullTableOld = vertcat(FullTableOld{:});
 FullTableOld.Properties.RowNames = "Old Results";
 
+% % TEST
+% FullTableFunc_Filtered = @(x,y) cgg_getFullAccuracyTable(x,cfg,'Subset',y,'Epoch',EpochName,'TrialFilter',FilterColumn,'MatchType',MatchType,'IsQuaddle',IsQuaddle,'MatchType_Attention',MatchType_Attention,'TimeRange',[],'cfg_Encoder',cfg_Encoder_Old,'AdditionalTarget',AdditionalTarget,'WantFilteredChance',true,'WantSpecificChance',false);
+% FullTableOld_Filtered = rowfun(FullTableFunc_Filtered,EncoderParametersOld_CM_Table,"InputVariables",["CM_Table","Subset"],"SeparateInputs",true,"ExtractCellContents",false,"NumOutputs",1,"OutputFormat","cell");
+% FullTableOld_Filtered = vertcat(FullTableOld_Filtered{:});
+% FullTableOld_Filtered.Properties.RowNames = "Old Results Filtered";
 %%
 FullTable = vertcat(FullTable,FullTableOld);
+% FullTable_Filtered = vertcat(FullTable_Filtered,FullTableOld_Filtered);
 %%
 
-save([SavePath, SaveNameExt],'FullTable');
+fprintf('### Saving Full Table for %s!\n',string(join(FilterColumn)));
+save(SavePathNameExt,'FullTable');
+fprintf('### Saved Full Table for %s!\n',string(join(FilterColumn)));
+% save(SavePathNameExt_Filtered,'FullTable_Filtered');
 else
-    if exist(SaveNameExt,"file")
-        FullTable = load(SaveNameExt);
+    if exist(SavePathNameExt,"file")
+        FullTable = load(SavePathNameExt);
+        FullTable = FullTable.FullTable;
     else
     FullTable = [];
     end
+    % if exist(SavePathNameExt_Filtered,"file")
+    %     FullTable_Filtered = load(SavePathNameExt_Filtered);
+    %     FullTable_Filtered = FullTable_Filtered.FullTable_Filtered;
+    % else
+    % FullTable_Filtered = [];
+    % end
 end
 
 % %%
@@ -787,6 +831,7 @@ Outcfg.LoopNames=LoopNames;
 % Outcfg.LoopTitle=LoopTitle;
 Outcfg.LoopType=LoopType;
 Outcfg.SamplingFrequency=SamplingFrequency;
+Outcfg.SamplingRate=SamplingFrequency;
 % Outcfg.IADecoder=IADecoder;
 Outcfg.Time_Start=Time_Start;
 Outcfg.Time_End = Time_End;
@@ -827,43 +872,48 @@ Outcfg.Subset=Subset;
 Outcfg.cfg = cfg;
 
 %%
-EpochDir = struct();
-EpochDir.Main = cgg_getDirectory(cfg.TargetDir,'Epoch');
-EpochDir.Results = cgg_getDirectory(cfg.ResultsDir,'Epoch'); 
+cfg_Epoch = struct();
+cfg_Epoch.Main = cgg_getDirectory(cfg.TargetDir,'Epoch');
+cfg_Epoch.Results = cgg_getDirectory(cfg.ResultsDir,'Epoch');
+cfg_Epoch.TargetDir = cfg.TargetDir;
+cfg_Epoch.ResultsDir = cfg.ResultsDir;
 %% Importance Analysis
 if WantAnalysis
 
-NumEntries = 500;
 RemovalPlotTable = cgg_procFullImportanceAnalysis_v2(cfg_Encoder, ...
-    EpochDir,Outcfg,'NumEntries',NumEntries,'WantDelay',WantDelay);
+    cfg_Epoch,Outcfg,'TargetFilters','All','TrialFilter',FilterColumn);
 Outcfg.RemovalPlotTable = RemovalPlotTable;
 
+%% Block
+FullTable = cgg_addBlockImportanceAnalysisToFullAccuracyTable(...
+    FullTable,cfg_Encoder,cfg_Epoch,'TrialFilter',FilterColumn,...
+    'MatchType',MatchType,'MatchType_Attention',MatchType_Attention);
 %% Correlation Analysis
 
-Learning_Model_Variables = {'Absolute Prediction Error','Outcome',...
-    'Error Trace','Choice Probability WM','Choice Probability RL',...
-    'Choice Probability CMB','Value RL','Value WM','WM Weight'};
-
-% Run multiple instances working on different learning model variables
-Learning_Model_Variables = ...
-    Learning_Model_Variables(randperm(length(Learning_Model_Variables)));
-
-CorrelationTable = [];
-
-for vidx = 1:length(Learning_Model_Variables)
-LMVariable = Learning_Model_Variables{vidx};
-this_CorrelationTable = cgg_procFullLatentCorrelationAnalysis( ...
-    cfg_Encoder,EpochDir,'LMVariable',LMVariable);
-
-if isempty(CorrelationTable)
-    CorrelationTable = this_CorrelationTable;
-else
-    CorrelationTable = [CorrelationTable; this_CorrelationTable];
-end
-
-end
-
-Outcfg.CorrelationTable = CorrelationTable;
+% Learning_Model_Variables = {'Absolute Prediction Error','Outcome',...
+%     'Error Trace','Choice Probability WM','Choice Probability RL',...
+%     'Choice Probability CMB','Value RL','Value WM','WM Weight'};
+% 
+% % Run multiple instances working on different learning model variables
+% Learning_Model_Variables = ...
+%     Learning_Model_Variables(randperm(length(Learning_Model_Variables)));
+% 
+% CorrelationTable = [];
+% 
+% for vidx = 1:length(Learning_Model_Variables)
+% LMVariable = Learning_Model_Variables{vidx};
+% this_CorrelationTable = cgg_procFullLatentCorrelationAnalysis( ...
+%     cfg_Encoder,cfg_Epoch,'LMVariable',LMVariable);
+% 
+% if isempty(CorrelationTable)
+%     CorrelationTable = this_CorrelationTable;
+% else
+%     CorrelationTable = [CorrelationTable; this_CorrelationTable];
+% end
+% 
+% end
+% 
+% Outcfg.CorrelationTable = CorrelationTable;
 end
 
 end

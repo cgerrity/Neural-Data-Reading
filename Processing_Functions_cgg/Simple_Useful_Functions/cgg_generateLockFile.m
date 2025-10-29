@@ -54,7 +54,8 @@ function [success, lockFileName] = cgg_generateLockFile(FileName, FileContent)
         
         % Add process info and timestamp to the content
         content = sprintf('%s\nLocked by MATLAB process ID: %d\nTime: %s\n', ...
-            FileContent, feature('getpid'), datestr(now, 'yyyy-mm-dd HH:MM:SS'));
+            FileContent, feature('getpid'), ...
+            datetime('now','Format','yyyy-MM-dd hh:mm:ss a z','TimeZone','local'));
         
         % Write the content
         fprintf(lockFid, '%s', content);

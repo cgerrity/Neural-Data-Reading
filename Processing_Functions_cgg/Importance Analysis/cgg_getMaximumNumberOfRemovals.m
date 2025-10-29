@@ -1,4 +1,4 @@
-function [MaximumRemovals,NumChannels,NumAreas,LatentSize,BadChannelTable] = cgg_getMaximumNumberOfRemovals(cfg_Encoder,EpochDir,varargin)
+function [MaximumRemovals,NumChannels,NumAreas,LatentSize,BadChannelTable] = cgg_getMaximumNumberOfRemovals(cfg_Encoder,cfg_Epoch,varargin)
 %CGG_GETMAXIMUMNUMBEROFREMOVALS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -46,12 +46,15 @@ DataWidth = cfg_Encoder.DataWidth;
 WindowStride = cfg_Encoder.WindowStride;
 
 %%
+EpochDir_Main = cgg_getDirectory(cfg_Epoch.TargetDir,'Epoch');
+EpochDir_Results = cgg_getDirectory(cfg_Epoch.ResultsDir,'Epoch');
 Fold = 1;
-
-[~,~,Datastore,~] = cgg_getDatastore(EpochDir.Main,SessionName,Fold,cfg_Encoder);
+% [~,~,Datastore,~] = cgg_getDatastore(cfg_Epoch.Main,SessionName,Fold,cfg_Encoder);
+[~,~,Datastore,~] = cgg_getDatastore(EpochDir_Main,SessionName,Fold,cfg_Encoder);
 %%
 
-FoldDir = [EpochDir.Results filesep 'Encoding' filesep Target filesep sprintf('Fold_%d',Fold)];
+% FoldDir = [cfg_Epoch.Results filesep 'Encoding' filesep Target filesep sprintf('Fold_%d',Fold)];
+FoldDir = [EpochDir_Results filesep 'Encoding' filesep Target filesep sprintf('Fold_%d',Fold)];
 cfg_Network = cgg_generateEncoderSubFolders(FoldDir,ModelName,DataWidth,WindowStride,HiddenSize,InitialLearningRate,WeightReconstruction,WeightKL,WeightClassification,MiniBatchSize,wantSubset,WeightedLoss,GradientThreshold,ClassifierName,ClassifierHiddenSize,STDChannelOffset,STDWhiteNoise,STDRandomWalk,Optimizer,NumEpochsAutoEncoder,Normalization,LossType_Decoder);
 Encoding_Dir = cgg_getDirectory(cfg_Network,'Classifier');
 
