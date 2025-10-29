@@ -1,7 +1,7 @@
 clc; clear; close all;
 %%
 
-TrialFilters = "Learned";
+TrialFilters = "Prediction Error Category";
 StatusType = "Session";
 
 Target = 'Dimension';

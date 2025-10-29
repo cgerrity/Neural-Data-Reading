@@ -12,21 +12,21 @@ cgg_getParallelPool('WantThreads',true);
 %% Parameters
 
 EpochName = 'Decision';
-WantResults = true;
-WantAnalysis = true;
+WantResults = false;
+WantAnalysis = false;
 WantDelay = false;
 
 %%
 FilterColumn_All = {}; ColumnCounter = 1;
-FilterColumn_All{ColumnCounter}={'All'};
-ColumnCounter = ColumnCounter + 1;
-FilterColumn_All{ColumnCounter}={'Dimensionality'};
-ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'All'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Dimensionality'};
+% ColumnCounter = ColumnCounter + 1;
 FilterColumn_All{ColumnCounter}={'Learned'};
-ColumnCounter = ColumnCounter + 1;
-FilterColumn_All{ColumnCounter}={'Trials From Learning Point Category'};
-ColumnCounter = ColumnCounter + 1;
-FilterColumn_All{ColumnCounter}={'Prediction Error Category'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Trials From Learning Point Category'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Prediction Error Category'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Gain','Loss'};
 % ColumnCounter = ColumnCounter + 1;
@@ -59,8 +59,8 @@ FilterColumn_All{ColumnCounter}={'Prediction Error Category'};
 % FilterColumn_All{ColumnCounter}={'Previous','Dimensionality'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Previous','Learned'};
-ColumnCounter = ColumnCounter + 1;
-FilterColumn_All{ColumnCounter}={'Multi Trials From Learning Point'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Multi Trials From Learning Point'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Dimensionality','Multi Trials From Learning Point'};
 % ColumnCounter = ColumnCounter + 1;
