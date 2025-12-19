@@ -43,13 +43,15 @@ Tick_Size_Channels=16;
 Tick_Size_Time=0.5;
 Tick_Size_Z = 0.025;
 
-ErrorCapSize=40;
+% ErrorCapSize=40; 11/11/2025
+ErrorCapSize=10;
 
 X_Name_Size_Pie=12;
 
 %%
 
 Line_Width = 4;
+Error_Line_Width = 2;
 Line_Width_ProgressMonitor = 2;
 
 %% MATLAB Standard Colors
