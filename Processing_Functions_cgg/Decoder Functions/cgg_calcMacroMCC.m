@@ -1,7 +1,6 @@
-function [MacroBalancedAccuracy] = cgg_calcMacroBalancedAccuracy(TrueValue,Prediction,ClassNames,varargin)
-%CGG_CALCMACROF1 Summary of this function goes here
+function [MacroMCC] = cgg_calcMacroMCC(TrueValue,Prediction,ClassNames,varargin)
+%CGG_CALCMACROMCC Summary of this function goes here
 %   Detailed explanation goes here
-
 isfunction=exist('varargin','var');
 
 if isfunction
@@ -15,6 +14,6 @@ end
 [FullClassCM] = cgg_calcClassConfusionMatrix(TrueValue,Prediction,ClassNames,'Weights',Weights);
 LabelMetrics = cgg_calcAllLabelMetrics(FullClassCM);
 
-MacroBalancedAccuracy=LabelMetrics.MacroBalancedAccuracy;
+MacroMCC=LabelMetrics.MacroMCC;
 end
 
