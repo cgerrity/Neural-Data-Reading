@@ -2,7 +2,7 @@ function [IsComplete,CompleteNullTable] = cgg_isNullTableComplete(CM_Table,cfg_E
 %CGG_ISNULLTABLECOMPLETE Summary of this function goes here
 %   Detailed explanation goes here
 
-cfg_IA = PARAMETERS_cggImportanceAnalysis();
+cfg_IA = PARAMETERS_cggImportanceAnalysis(varargin{:});
 %%
 isfunction=exist('varargin','var');
 
@@ -46,6 +46,14 @@ TargetFilter='Overall';
 end
 end
 
+if isfunction
+LabelClassFilter = CheckVararginPairs('LabelClassFilter', '', varargin{:});
+else
+if ~(exist('LabelClassFilter','var'))
+LabelClassFilter='';
+end
+end
+
 % if isfunction
 % WantDisplay = CheckVararginPairs('WantDisplay', false, varargin{:});
 % else
@@ -83,7 +91,8 @@ CM_Table = CM_Table(:);
 
 %% Get the Null Table
 NullTable = cgg_loadNullTable(cfg_Epoch,Target,SessionName,TrialFilter,...
-    TrialFilter_Value,TargetFilter,MatchType);
+    TrialFilter_Value,TargetFilter,MatchType, ...
+    'LabelClassFilter',LabelClassFilter);
 
 %% Identify if the specified data exists in the Null Table
 DataNumber = NullTable.DataNumber;
@@ -105,14 +114,23 @@ for cidx = 1:length(CM_Table)
 end
 
 %% Check if the proper number of Iterations has happened
-NeedMoreIterations_Baseline = any(cellfun(@(x) length(x) ~= MaxNumIter,...
+NeedMoreIterations_Baseline = any(cellfun(@(x) length(x) < MaxNumIter,...
     NullTable.BaselineChanceDistribution,'UniformOutput',true));
-NeedMoreIterations_Chance = any(cellfun(@(x) length(x) ~= MaxNumIter,...
+NeedMoreIterations_Chance = any(cellfun(@(x) length(x) < MaxNumIter,...
     NullTable.ChanceDistribution,'UniformOutput',true));
 NeedMoreIterations = NeedMoreIterations_Baseline || ...
     NeedMoreIterations_Chance;
+HasExactIterations_Baseline = any(cellfun(@(x) length(x) == MaxNumIter,...
+    NullTable.BaselineChanceDistribution,'UniformOutput',true));
+HasExactIterations_Chance = any(cellfun(@(x) length(x) == MaxNumIter,...
+    NullTable.ChanceDistribution,'UniformOutput',true));
+HasExactIterations = HasExactIterations_Baseline || ...
+    HasExactIterations_Chance;
 if NeedMoreIterations
     return
+end
+if ~HasExactIterations
+    fprintf('!!! More iterations have been performed than are required.\n');
 end
 
 %%

@@ -2,7 +2,7 @@ function NullTable = cgg_getNullTable(CM_Table,cfg_Epoch,cfg_Encoder,varargin)
 %CGG_GETNULLTABLE Summary of this function goes here
 %   Detailed explanation goes here
 
-cfg_IA = PARAMETERS_cggImportanceAnalysis();
+cfg_IA = PARAMETERS_cggImportanceAnalysis(varargin{:});
 %%
 
 isfunction=exist('varargin','var');
@@ -20,6 +20,14 @@ MaxNumIter = CheckVararginPairs('MaxNumIter', cfg_IA.MaxNumIter, varargin{:});
 else
 if ~(exist('MaxNumIter','var'))
 MaxNumIter=cfg_IA.MaxNumIter;
+end
+end
+
+if isfunction
+MinimumParallelIter = CheckVararginPairs('MinimumParallelIter', cfg_IA.MinimumParallelIter, varargin{:});
+else
+if ~(exist('MinimumParallelIter','var'))
+MinimumParallelIter=cfg_IA.MinimumParallelIter;
 end
 end
 
@@ -56,6 +64,14 @@ end
 end
 
 if isfunction
+LabelClassFilter = CheckVararginPairs('LabelClassFilter', '', varargin{:});
+else
+if ~(exist('LabelClassFilter','var'))
+LabelClassFilter='';
+end
+end
+
+if isfunction
 WantMatchOverride = CheckVararginPairs('WantMatchOverride', false, varargin{:});
 else
 if ~(exist('WantMatchOverride','var'))
@@ -87,9 +103,20 @@ Identifiers_Table=[];
 end
 end
 
+if isfunction
+ObtainWithoutSaving = CheckVararginPairs('ObtainWithoutSaving', false, varargin{:});
+else
+if ~(exist('ObtainWithoutSaving','var'))
+ObtainWithoutSaving=false;
+end
+end
+
 %% Adjust minimum number of iterations for the number of workers
 NumIter = cgg_getValueBasedOnNumberOfWorkers(NumIter,MinimumWorkers);
 NumIter = round(NumIter);
+if ObtainWithoutSaving
+    NumIter = MaxNumIter;
+end
 %%
 DataNumber = CM_Table.DataNumber;
 Target = cfg_Encoder.Target;
@@ -113,7 +140,7 @@ this_NullTable = cgg_generateBlankNullTable('Target',Target,...
         'DataNumber',DataNumber);
 
 %% Get the Null Table
-NullTable = cgg_loadNullTable(cfg_Epoch,Target,SessionName,TrialFilter,TrialFilter_Value,TargetFilter,MatchType);
+NullTable = cgg_loadNullTable(cfg_Epoch,Target,SessionName,TrialFilter,TrialFilter_Value,TargetFilter,MatchType,'LabelClassFilter',LabelClassFilter);
 
 %% Issue with char/cell instead of string
 if ischar(NullTable.Target) || iscell(NullTable.Target)
@@ -129,7 +156,7 @@ if ischar(NullTable.SessionName) || iscell(NullTable.SessionName)
 NullTable.SessionName = string(NullTable.SessionName);
 end
 if ischar(NullTable.TargetFilter) || iscell(NullTable.TargetFilter)
-NullTable.TrialFilter = string(NullTable.TrialFilter);
+NullTable.TargetFilter = string(NullTable.TargetFilter);
 end
 %% Identify any issues with Null Tables with repeat DataNumbers
 DataNumber_Prior = NullTable.DataNumber;
@@ -140,7 +167,7 @@ if length(MatchingNullEntry_Indices) > 1
     NullTable(MatchingNullEntry_Indices(2:end),:) = [];
 
     IALockFileContent = 'Repeated Entries Detected';
-    [NullTablePath,NullTableName] = cgg_generateNullTableFileName(Target,SessionName,TrialFilter,TrialFilter_Value,TargetFilter,MatchType,'cfg',cfg_Epoch);
+    [NullTablePath,NullTableName] = cgg_generateNullTableFileName(Target,SessionName,TrialFilter,TrialFilter_Value,TargetFilter,MatchType,'cfg',cfg_Epoch,'LabelClassFilter',LabelClassFilter);
     NullTablePathName = fullfile(NullTablePath, NullTableName);
     [LockFileSuccess, LockPathNameExt] = cgg_generateLockFile(NullTablePathName, ...
         IALockFileContent);
@@ -187,7 +214,7 @@ IALockFileContent = ['This file locks processes from getting the ' ...
     'specified null distribution. If the lock file is older than a specified ' ...
     'time then lock file will be deleted and the process will get the distribution'];
 %%
-[NullTablePath,NullTableName] = cgg_generateNullTableFileName(Target,SessionName,TrialFilter,TrialFilter_Value,TargetFilter,MatchType,'cfg',cfg_Epoch);
+[NullTablePath,NullTableName] = cgg_generateNullTableFileName(Target,SessionName,TrialFilter,TrialFilter_Value,TargetFilter,MatchType,'cfg',cfg_Epoch,'LabelClassFilter',LabelClassFilter);
 NullTablePathName = fullfile(NullTablePath, NullTableName);
 [LockFileSuccess, LockPathNameExt] = cgg_generateLockFile(NullTablePathName, ...
         IALockFileContent);
@@ -209,9 +236,10 @@ InProgress = LockAge < LockAgeMinimum;
         IALockFileContent);
         % In case of just absolute mess at this point, just return the
         % current state of the Null Distribution
-        if ~LockFileSuccess
+        if ~LockFileSuccess && ~ObtainWithoutSaving
             return
         end
+    elseif ObtainWithoutSaving
     else
         return
     end
@@ -257,7 +285,21 @@ this_CM_Table = CM_Table(:,["DataNumber","TrueValue","Window_1"]);
 waitbar = parallel.pool.Constant(cgg_getWaitBar(...
     'All_Iterations',NumIter,'Process','Null Distribution',...
     'DisplayIndents', 3));
-
+if NumIter <= MinimumParallelIter
+for idx = 1:NumIter
+[BaselineChanceDistribution(idx),ChanceDistribution(idx)] = ...
+    cgg_procCompleteMetric(this_CM_Table,cfg_Epoch,'WantOutputChance',true,...
+    'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,...
+    'MatchType',MatchType,'IsQuaddle',IsQuaddle,...
+    'MatchType_Attention',MatchType_Attention,...
+    'AttentionalFilter',AttentionalFilter,'Subset',SessionName,...
+    'cfg_Encoder',cfg_Encoder,'WantFilteredChance',true,...
+    'WantSpecificChance',true,'WantUseNullTable',false,...
+    'Identifiers_Table',Identifiers_Table, ...
+    'LabelClassFilter',LabelClassFilter);
+waitbar.Value.update();
+end
+else
 parfor idx = 1:NumIter
 [BaselineChanceDistribution(idx),ChanceDistribution(idx)] = ...
     cgg_procCompleteMetric(this_CM_Table,cfg_Epoch,'WantOutputChance',true,...
@@ -267,8 +309,10 @@ parfor idx = 1:NumIter
     'AttentionalFilter',AttentionalFilter,'Subset',SessionName,...
     'cfg_Encoder',cfg_Encoder,'WantFilteredChance',true,...
     'WantSpecificChance',true,'WantUseNullTable',false,...
-    'Identifiers_Table',Identifiers_Table);
+    'Identifiers_Table',Identifiers_Table, ...
+    'LabelClassFilter',LabelClassFilter);
 waitbar.Value.update();
+end
 end
 
 %% Append the new distribution with the current distribution
@@ -293,6 +337,7 @@ else
     fprintf('   +++ Starting a new Null Table with %d Iterations!\n',NumIter);
 end
 
+if LockFileSuccess
 %% Save Null Table
 
 NullTablePathNameExt = string(NullTablePathName) + ".mat";
@@ -304,6 +349,7 @@ if isfile(LockPathNameExt)
 end
 fprintf('   +++ Removing Lock File!\n');
 % fprintf('*** Complete Null Table Pass on %s!\n',Split_TableRowNames(tidx));
+end
 end % End of NeedNullDistribution
 
 end % End of function
