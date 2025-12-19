@@ -1,4 +1,4 @@
-function [MacroRecall] = cgg_calcMacroBalancedAccuracy(TrueValue,Prediction,ClassNames,varargin)
+function [MacroBalancedAccuracy] = cgg_calcMacroBalancedAccuracy(TrueValue,Prediction,ClassNames,varargin)
 %CGG_CALCMACROF1 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -15,6 +15,6 @@ end
 [FullClassCM] = cgg_calcClassConfusionMatrix(TrueValue,Prediction,ClassNames,'Weights',Weights);
 LabelMetrics = cgg_calcAllLabelMetrics(FullClassCM);
 
-MacroRecall=LabelMetrics.MacroBalancedAccuracy;
+MacroBalancedAccuracy=LabelMetrics.MacroBalancedAccuracy;
 end
 

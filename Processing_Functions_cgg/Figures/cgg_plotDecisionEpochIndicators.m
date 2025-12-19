@@ -207,5 +207,45 @@ p_complete.Label = '';
 end
 end
 
+%% Alpha
+
+if ~wantIndicatorNames
+p_record.Alpha = 1;
+p_fixation.Alpha = 1;
+p_choice.Alpha = 1;
+if wantFeedbackIndicators
+p_halo.Alpha = 1;
+p_audio.Alpha = 1;
+% p_move.Alpha = 1;
+p_complete.Alpha = 1;
+end
+end
+
+%% Move all to back
+
+if ~wantIndicatorNames
+    if isMATLABReleaseOlderThan("R2024a")
+    cgg_setGraphicsLayer(p_record,'Back');
+    cgg_setGraphicsLayer(p_fixation,'Back');
+    cgg_setGraphicsLayer(p_choice,'Back');
+    if wantFeedbackIndicators
+    cgg_setGraphicsLayer(p_halo,'Back');
+    cgg_setGraphicsLayer(p_audio,'Back');
+    % cgg_setGraphicsLayer(p_move,'Back');
+    cgg_setGraphicsLayer(p_complete,'Back');
+    end
+    else
+    p_record.Layer = 'bottom';
+    p_fixation.Layer = 'bottom';
+    p_choice.Layer = 'bottom';
+    if wantFeedbackIndicators
+    p_halo.Layer = 'bottom';
+    p_audio.Layer = 'bottom';
+    % p_move.Layer = 'bottom';
+    p_complete.Layer = 'bottom';
+    end
+    end
+end
+
 end
 

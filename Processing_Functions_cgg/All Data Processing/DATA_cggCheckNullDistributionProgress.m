@@ -1,19 +1,22 @@
 clc; clear; close all;
 %%
 
-TrialFilters = "Learned";
+TrialFilters = {"Prediction Error Category","Learned"};
 StatusType = "Session";
+DeleteFilters = {};
 
 Target = 'Dimension';
 Epoch = 'Decision';
 TotalFolds = 10;
-MaxNumIter = 1000;
-
+MatchTypes = ["Scaled-BalancedAccuracy","Scaled-MicroAccuracy"];
+cfg_IA = PARAMETERS_cggImportanceAnalysis('TrialFilter',string(TrialFilters),'MatchType',MatchTypes(1));
+MaxNumIter = cfg_IA.MaxNumIter;
 %%
 
-MatchTypes = ["Scaled-BalancedAccuracy","Scaled-MicroAccuracy"];
-
-switch TrialFilters
+TrialFilter_Values_Cell = cell(1,length(TrialFilters));
+for tidx = 1:length(TrialFilters)
+    TrialFilter = TrialFilters{tidx};
+switch TrialFilter
     case 'All'
         TrialFilter_Values = NaN;
     case 'Learned'
@@ -26,10 +29,23 @@ switch TrialFilters
         TrialFilter_Values = [0,1,2,3];
     case 'Multi Trials From Learning Point'
         TrialFilter_Values = 1:50;
+    case 'Gain'
+        TrialFilter_Values = [2,3];
+    case 'Loss'
+        TrialFilter_Values = [-1,-3];
+    case 'Correct Trial'
+        TrialFilter_Values = [0,1];
+    case 'Previous Trial Effect'
+        TrialFilter_Values = [0,1,2,3,4];
+    case 'Previous'
+        TrialFilter_Values = [0,1];
+end
+TrialFilter_Values_Cell{tidx} = TrialFilter_Values;
 end
 
-TrialFilters = ["All",TrialFilters];
-TrialFilter_Values = {NaN,TrialFilter_Values};
+TrialFilters = {"All",TrialFilters};
+TrialFilter_Values_tmp = combinations(TrialFilter_Values_Cell{:});
+TrialFilter_Values = {NaN,TrialFilter_Values_tmp{:,:}};
 
 TargetFilters = ["Overall","TargetFeature","DistractorCorrect","DistractorError"];
 
@@ -72,7 +88,7 @@ cfg_Epoch.TargetDir = cfg.TargetDir;
 cfg_Epoch.ResultsDir = cfg.ResultsDir;
 %%
 
-for sidx = 1:length(SessionNames)
+parfor sidx = 1:length(SessionNames)
 SessionName = SessionNames{sidx};
 Overall_Completion = NaN;
 Overall_Progress = NaN;
@@ -85,10 +101,10 @@ Split_Progress = NaN;
 Split_Attention_Completion = NaN;
 Split_Attention_Progress = NaN;
 for tidx = 1:length(TrialFilters)
-    TrialFilter = TrialFilters(tidx);
+    TrialFilter = TrialFilters{tidx};
     this_TrialFilter_Values = TrialFilter_Values{tidx};
 for vidx = 1:length(this_TrialFilter_Values)
-TrialFilter_Value = this_TrialFilter_Values(vidx);
+TrialFilter_Value = this_TrialFilter_Values(vidx,:);
 for aidx = 1:length(TargetFilters)
     TargetFilter = TargetFilters(aidx);
     switch TargetFilter
@@ -96,6 +112,21 @@ for aidx = 1:length(TargetFilters)
             MatchType = MatchTypes(1);
         otherwise
             MatchType = MatchTypes(2);
+    end
+
+    
+    [NullTablePath,NullTableName] = cgg_generateNullTableFileName(Target,SessionName,TrialFilter,TrialFilter_Value,TargetFilter,MatchType,'cfg',cfg_Epoch);
+    NullTableNameExt = NullTableName + ".mat";
+    NullTablePathNameExt = fullfile(NullTablePath,NullTableNameExt);
+    % fprintf("!!! This Trial Filter -- %s\n",string(TrialFilter));
+    if ~isempty(DeleteFilters) && any(strcmp(string(TrialFilter),string(DeleteFilters)))
+        
+    if isfile(NullTablePathNameExt)
+        fprintf("!!! Deleting -- %s\n",NullTableName);
+        delete(NullTablePathNameExt);
+    else
+        fprintf("!!! File Does not Exist -- %s\n",NullTableName);
+    end
     end
 
 NullTable = cgg_loadNullTable(cfg_Epoch,Target,SessionName,TrialFilter,TrialFilter_Value,TargetFilter,MatchType);
@@ -112,19 +143,19 @@ end
 PercentComplete = NumFolds/TotalFolds;
 PercentFinished = sum(PerFoldStatus)/TotalFolds;
 
-if strcmp(TrialFilter,'All') && strcmp(TargetFilter,'Overall')
+if any(strcmp(TrialFilter,'All')) && strcmp(TargetFilter,'Overall')
     Overall_Completion = [Overall_Completion,PercentComplete];
     Overall_Progress = [Overall_Progress,PercentFinished];
     % Overall_Progress = mean([Overall_Progress,PercentFinished],"all","omitmissing");
-elseif ~strcmp(TrialFilter,'All') && strcmp(TargetFilter,'Overall')
+elseif ~any(strcmp(TrialFilter,'All')) && strcmp(TargetFilter,'Overall')
     Split_Completion = [Split_Completion,PercentComplete];
     Split_Progress = [Split_Progress,PercentFinished];
     % Split_Progress = mean([Split_Progress,PercentFinished],"all","omitmissing");
-elseif strcmp(TrialFilter,'All') && ~strcmp(TargetFilter,'Overall')
+elseif any(strcmp(TrialFilter,'All')) && ~strcmp(TargetFilter,'Overall')
     Attention_Completion = [Attention_Completion,PercentComplete];
     Attention_Progress = [Attention_Progress,PercentFinished];
     % Attention_Progress = mean([Attention_Progress,PercentFinished],"all","omitmissing");
-elseif ~strcmp(TrialFilter,'All') && ~strcmp(TargetFilter,'Overall')
+elseif ~any(strcmp(TrialFilter,'All')) && ~strcmp(TargetFilter,'Overall')
     Split_Attention_Completion = [Split_Attention_Completion,PercentComplete];
     Split_Attention_Progress = [Split_Attention_Progress,PercentFinished];
     % Split_Attention_Progress = mean([Split_Attention_Progress,PercentFinished],"all","omitmissing");

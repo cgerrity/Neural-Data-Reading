@@ -12,7 +12,7 @@ WantNormalization = false;
 Dropout = 0.5;
 IsVariational = true;
 
-NetworkToView = 'Encoder';
+NetworkToView = 'Classifier';
 Pause_Time = 0;
 
 wantGrouped = false;
@@ -49,11 +49,11 @@ ClassifierName = 'Deep LSTM - Dropout 0.5';
 LossType = 'Classification';
 ClassifierHiddenSize = [500,250];
 
-NumChannels = 58;
-DataWidth = 100;
-NumWindows = 59;
-NumAreas = 6;
-NumExamples = 4;
+NumChannels = 6;
+DataWidth = 20;
+NumWindows = 10;
+NumAreas = 3;
+NumExamples = 5;
 
 NumClasses = [1,4,4,4];
 

@@ -1,8 +1,16 @@
-function [AttentionalTable] = cgg_getAttentionalPlotNames(AttentionalTable)
+function [AttentionalInput] = cgg_getAttentionalPlotNames(AttentionalInput)
 %CGG_GETATTENTIONALPLOTNAMES Summary of this function goes here
 %   Detailed explanation goes here
 
-RowNames = AttentionalTable.Properties.RowNames;
+if istable(AttentionalInput)
+    RowNames = AttentionalInput.Properties.RowNames;
+elseif iscell(AttentionalInput)
+    RowNames = AttentionalInput;
+elseif ischar(AttentionalInput)
+    RowNames = string(AttentionalInput);
+elseif isstring(AttentionalInput)
+    RowNames = AttentionalInput;
+end
 
 %% Target Feature
 this_IDX = strcmp(RowNames,'TargetFeature');
@@ -42,7 +50,15 @@ if any(this_IDX)
 RowNames{this_IDX} = 'Distractor (Error)';
 end
 
-AttentionalTable.Properties.RowNames = RowNames;
+if istable(AttentionalInput)
+    AttentionalInput.Properties.RowNames = RowNames;
+elseif iscell(AttentionalInput)
+    AttentionalInput = RowNames;
+elseif ischar(AttentionalInput)
+    AttentionalInput = char(RowNames);
+elseif isstring(AttentionalInput)
+    AttentionalInput = RowNames;
+end
 
 end
 

@@ -63,7 +63,8 @@ CM_Table = CM_Table(:);
 %%
 AttentionalFilters = ["TargetFeature","DistractorCorrect","DistractorError"];
 
-NumFilters = length(AttentionalFilters);
+NumFilters = size(AttentionalFilters,2);
+% NumFilters = length(AttentionalFilters);
 %%
 TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"]];
@@ -90,7 +91,7 @@ for aidx = 1:length(AttentionalFilters)
     % end
     NullTable = [];
     if WantPreFetch
-    [~,NullTable] = cgg_isNullTableComplete(CM_Table,cfg,cfg_Encoder,'TargetFilter',AttentionalFilter,varargin{:});
+        [~,NullTable] = cgg_isNullTableComplete(CM_Table,cfg,cfg_Encoder,'TargetFilter',AttentionalFilter,varargin{:});
     end
     MetricFunc = @(x,y) cgg_procCompleteMetric(x,cfg,'AttentionalFilter',AttentionalFilter,varargin{:},'NullTable',NullTable);
     % MetricFunc = @(x,y) cgg_procCompleteMetric(x,cfg,'AttentionalFilter',AttentionalFilter,'MostCommon',MostCommon,'RandomChance',RandomChance,'Stratified',Stratified,varargin{:});
