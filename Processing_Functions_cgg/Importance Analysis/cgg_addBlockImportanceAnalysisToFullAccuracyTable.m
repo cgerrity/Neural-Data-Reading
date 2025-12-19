@@ -99,9 +99,12 @@ IA_PassTable = [IA_PassTable;IA_PassTable_Split];
 IA_PassTable.FullNames = IA_PassTable.SessionName;
 TrialFilter = IA_PassTable.TrialFilter;
 TrialFilter_Value = IA_PassTable.TrialFilter_Value;
+UnPackFunction = @(TF_var,TFV_var) cgg_getPackedTrialFilter(TF_var,TFV_var,'Unpack');
+% [TrialFilter,TrialFilter_Value] = cgg_getPackedTrialFilter(TrialFilter,TrialFilter_Value,'Unpack');
 IA_PassTable.SplitNames = arrayfun(@(x,y) cgg_getSplitTableRowNames(...
-    TrialFilter(x,:),y),(1:size(TrialFilter,1))',...
-    TrialFilter_Value);
+    cgg_getOutput({x,y},UnPackFunction,1,'MultiInput',true), ...
+    cgg_getOutput({x,y},UnPackFunction,2,'MultiInput',true)), ...
+    TrialFilter,TrialFilter_Value);
 IA_PassTable.AttentionNames = IA_PassTable.TargetFilter;
 
 %% Overall
@@ -110,6 +113,21 @@ this_PassTable = IA_PassTable(Indices_Overall,:);
 
 FullTable = cgg_addBlockImportanceAnalysisToAccuracyTable(...
 FullTable,this_PassTable,cfg_Epoch,'TableType','Full');
+
+NeedValues = 1; ValueCounter = 1;
+NumEntries = height(FullTable);
+while NeedValues
+    if istable(FullTable) && ~isempty(FullTable.Block{ValueCounter})
+    Areas = string(FullTable.Block{ValueCounter}.("Removal Counts").Properties.VariableNames);
+    ValueCounter = ValueCounter +1;
+    NeedValues = isempty(Areas);
+    end
+    ValueCounter = ValueCounter +1;
+    if ValueCounter > NumEntries
+        break
+    end
+
+end
 
 for sidx = 1:NumSessions
     SessionName = SessionNames{sidx};
@@ -123,7 +141,7 @@ this_PassTable = this_SessionPassTable(Indices_Split,:);
 FullTable.("Split Table"){sidx} = ...
     cgg_addBlockImportanceAnalysisToAccuracyTable( ...
 FullTable.("Split Table"){sidx}, ...
-this_PassTable,cfg_Epoch,'TableType','Split');
+this_PassTable,cfg_Epoch,'TableType','Split','Areas',Areas);
 %% Split Attention
 SplitNames = FullTable.("Split Table"){sidx}.Properties.RowNames;
 for spidx = 1:length(SplitNames)
@@ -134,7 +152,7 @@ this_PassTable = this_SessionPassTable(Indices_Split_Attention,:);
 FullTable.("Split Table"){sidx}.("Attentional Table"){spidx} = ...
     cgg_addBlockImportanceAnalysisToAccuracyTable( ...
 FullTable.("Split Table"){sidx}.("Attentional Table"){spidx}, ...
-this_PassTable,cfg_Epoch,'TableType','Attention');
+this_PassTable,cfg_Epoch,'TableType','Attention','Areas',Areas);
 end
 %% Attention
 Indices_Attention = strcmp(this_SessionPassTable.SplitNames,"Overall") & ~strcmp(this_SessionPassTable.AttentionNames,"Overall");
@@ -143,7 +161,7 @@ this_PassTable = this_SessionPassTable(Indices_Attention,:);
 FullTable.("Attentional Table"){sidx} = ...
     cgg_addBlockImportanceAnalysisToAccuracyTable( ...
 FullTable.("Attentional Table"){sidx}, ...
-this_PassTable,cfg_Epoch,'TableType','Attention');
+this_PassTable,cfg_Epoch,'TableType','Attention','Areas',Areas);
 %% Attention Split
 AttentionalNames = FullTable.("Attentional Table"){sidx}.Properties.RowNames;
 for aidx = 1:length(AttentionalNames)
@@ -154,7 +172,7 @@ this_PassTable = this_SessionPassTable(Indices_Attention_Split,:);
 FullTable.("Attentional Table"){sidx}.("Split Table"){aidx} = ...
     cgg_addBlockImportanceAnalysisToAccuracyTable( ...
 FullTable.("Attentional Table"){sidx}.("Split Table"){aidx}, ...
-this_PassTable,cfg_Epoch,'TableType','Split');
+this_PassTable,cfg_Epoch,'TableType','Split','Areas',Areas);
 end
 
 end
