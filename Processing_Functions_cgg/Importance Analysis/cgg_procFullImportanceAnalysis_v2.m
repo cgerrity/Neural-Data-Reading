@@ -67,6 +67,11 @@ if ~(exist('Methods','var'))
 Methods="Block";
 end
 end
+%%
+if any(strcmp(TrialFilter,'Multi Trials From Learning Point'))
+    RemovalPlotTable = [];
+    return
+end
 
 %%
 rng('shuffle');
@@ -117,9 +122,11 @@ IA_PassTable = IA_PassTable_Func();
 
 fprintf('*** Getting Null Threshold for Signigicance Level: %.3f\n',Alpha);
 ThresholdTable = cgg_getNullThreshold(IA_PassTable,cfg_Epoch,cfg_Encoder,'SetType','Testing','Alpha',Alpha,'EncoderParameters_CM_Table',EncoderParameters_CM_Table);
-IA_PassTable{:, "TrialFilter_Value"} = fillmissing(IA_PassTable{:, "TrialFilter_Value"}, 'constant', Inf);
+% IA_PassTable{:, "TrialFilter_Value"} = fillmissing(IA_PassTable{:, "TrialFilter_Value"}, 'constant', Inf);
+IA_PassTable = cgg_getUniqueAbleTableValues(IA_PassTable,"TrialFilter_Value",'Pack');
+ThresholdTable = cgg_getUniqueAbleTableValues(ThresholdTable,"TrialFilter_Value",'Pack');
 IA_PassTable = join(IA_PassTable,ThresholdTable);
-
+IA_PassTable = cgg_getUniqueAbleTableValues(IA_PassTable,"TrialFilter_Value",'Unpack');
 %%
 RepeatPass = true;
 
@@ -135,8 +142,10 @@ for pidx = 1:NumPasses
 end
 
 IA_PassTable = IA_PassTable_Func();
-IA_PassTable{:, "TrialFilter_Value"} = fillmissing(IA_PassTable{:, "TrialFilter_Value"}, 'constant', Inf);
+% IA_PassTable{:, "TrialFilter_Value"} = fillmissing(IA_PassTable{:, "TrialFilter_Value"}, 'constant', Inf);
+IA_PassTable = cgg_getUniqueAbleTableValues(IA_PassTable,"TrialFilter_Value",'Pack');
 IA_PassTable = join(IA_PassTable,ThresholdTable);
+IA_PassTable = cgg_getUniqueAbleTableValues(IA_PassTable,"TrialFilter_Value",'Unpack');
 
 RepeatPass = ~all(IA_PassTable.IsComplete & ~IA_PassTable.HasFlag);
 end
