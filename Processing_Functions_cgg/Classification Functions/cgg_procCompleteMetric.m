@@ -195,6 +195,14 @@ if ~(exist('NullTable','var'))
 NullTable=[];
 end
 end
+
+if isfunction
+LabelClassFilter = CheckVararginPairs('LabelClassFilter', '', varargin{:});
+else
+if ~(exist('LabelClassFilter','var'))
+LabelClassFilter='';
+end
+end
 %% Get CFG for any analysis
 % You can uncomment this section to generate the base cfg for further
 % testing
@@ -206,6 +214,11 @@ end
 % cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
 %     'Epoch',Epoch);
 % cfg.ResultsDir=cfg_Results.TargetDir;
+
+%% Ensure TrialFilter and TrialFilter_Value are unpacked
+% Only an issue with multi-trialfilter runs. Should not alter values if
+% already unpacked.
+[TrialFilter,TrialFilter_Value] = cgg_getPackedTrialFilter(TrialFilter,TrialFilter_Value,'Unpack');
 
 %% Ensure Subset and wantSubset Agree
 [Subset,wantSubset] = cgg_verifySubset(Subset,wantSubset);
@@ -235,7 +248,7 @@ Time = cgg_getTime(cfg_Encoder.Time_Start,cfg_Encoder.SamplingRate,...
 end
 %% Get MatchType for given analysis
 
-if ~isempty(AttentionalFilter)
+if ~isempty(char(AttentionalFilter))
     MatchType = MatchType_Attention;
 end
 
@@ -283,6 +296,10 @@ Identifiers_Table = cgg_getAttentionWeights(Identifiers_Table);
 % Weights = Identifiers_Table.(AttentionalFilter);
 % end
 
+%% Generate Label-Class Weights
+
+Identifiers_Table = cgg_getTargetFilters(Identifiers_Table,LabelClassFilter);
+
 %% Join CM_Table and Identifiers_Table
 
 CM_Table=join(CM_Table,Identifiers_Table);
@@ -293,11 +310,17 @@ CM_Table=join(CM_Table,Identifiers_Table);
 %% Filter Trials
 
 % Determine the attentional filter weights
-if ~isempty(AttentionalFilter)
+if ~isempty(char(AttentionalFilter))
     % Weights_Chance = Chance_Table.(AttentionalFilter);
     Weights_Chance = Identifiers_Table.(AttentionalFilter);
 else
     Weights_Chance = ones(size(Identifiers_Table.TrueValue));
+end
+
+% Determine the Label-Class filter Weights
+if ~isempty(char(LabelClassFilter))
+    Weights_LabelClass = double(Identifiers_Table.(LabelClassFilter));
+    Weights_Chance = Weights_Chance.*Weights_LabelClass;
 end
 
 % Select whether to calculate chance based on the full dataset or strictly
@@ -378,7 +401,7 @@ if WantUseNullTable
     cfg_Encoder.wantSubset = wantSubset;
     TargetFilter = AttentionalFilter;
     if isempty(NullTable)
-    NullTable = cgg_getNullTable(CM_Table,cfg,cfg_Encoder,'MatchType',MatchType,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'TargetFilter',TargetFilter,'Identifiers_Table',Identifiers_Table);
+    NullTable = cgg_getNullTable(CM_Table,cfg,cfg_Encoder,'MatchType',MatchType,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'TargetFilter',TargetFilter,'Identifiers_Table',Identifiers_Table,'LabelClassFilter',LabelClassFilter);
     end
     DataNumber_NullTable = NullTable.DataNumber;
     this_DataNumber = CM_Table.DataNumber;
@@ -414,8 +437,16 @@ end
 
 %% Calculation of Metric
 
-if ~isempty(AttentionalFilter)
-Weights = CM_Table.(AttentionalFilter);
+if ~isempty(char(AttentionalFilter))
+    Weights = CM_Table.(AttentionalFilter);
+end
+if ~isempty(char(LabelClassFilter))
+    Weights_LabelClass = double(CM_Table.(LabelClassFilter));
+    if ~isempty(Weights)
+    Weights = Weights.*Weights_LabelClass;
+    else
+    Weights = Weights_LabelClass;
+    end
 end
 
 [~,~,Window_Metric] = ...
