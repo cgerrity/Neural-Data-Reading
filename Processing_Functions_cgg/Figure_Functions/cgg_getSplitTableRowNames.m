@@ -13,8 +13,13 @@ else
         end
 end
 %%
-if ~iscell(TrialFilter)
+if iscell(TrialFilter)
+    
+
+elseif ischar(TrialFilter)
     TrialFilter = {TrialFilter};
+elseif isstring(TrialFilter)
+    
 end
 % 
 % RowNames = strings(NumTypes,1);
