@@ -16,6 +16,7 @@ EpochName = 'Decision';
 WantResults = false;
 WantAnalysis = false;
 WantDelay = false;
+WantLabelClassFilter = true;
 % MatchType='Scaled-MicroAccuracy';
 % % MatchType='Scaled-BalancedAccuracy';
 % MatchType_Attention=MatchType;
@@ -69,15 +70,14 @@ FilterColumn_All{ColumnCounter}={'Learned'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Gain','Loss','Multi Trials From Learning Point'};
 
-% SignificanceValues = [1,0.1,0.05,0.025,0.01,0.001];
-SignificanceValues = 0.05;
+SignificanceValues = [1,0.1,0.05,0.025,0.01,0.001,0.0001];
+% SignificanceValues = 0.001;
 % TimeRanges = {[],[-1.5,0],[0,1.5]};
 TimeRanges = {[]};
 
 %%
 for fidx = 1:length(FilterColumn_All)
     FilterColumn = FilterColumn_All{fidx};
-pause(randi(10));
 fprintf("%s\n",join(string(FilterColumn)));
 % pause(randi(10));
 % FilterColumn={'Gain','Loss'}; Split_TableRowNames = {'2/-3','2/-1','3/-3','3/-1'};
@@ -102,7 +102,7 @@ fprintf("%s\n",join(string(FilterColumn)));
 
 % FilterColumn={'Prediction Error Category','Dimensionality'}; Split_TableRowNames = [];
 %%
-[FullTable,cfg] = cgg_getResultsPlotsParametersNetwork(EpochName,'FilterColumn',FilterColumn,'WantAnalysis',WantAnalysis,'WantResults',WantResults);
+[FullTable,cfg] = cgg_getResultsPlotsParametersNetwork(EpochName,'FilterColumn',FilterColumn,'WantAnalysis',WantAnalysis,'WantResults',WantResults,'WantLabelClassFilter',WantLabelClassFilter);
 % [FullTable,cfg] = cgg_getResultsPlotsParameters(Epoch,'wantSubset',wantSubset,'wantZeroFeatureDetector',wantZeroFeatureDetector,'ARModelOrder',ARModelOrder);
 % [FullTable,cfg] = cgg_getResultsPlotsParametersNetwork(EpochName,'FilterColumn',FilterColumn,'WantAnalysis',WantAnalysis,'Split_TableRowNames',Split_TableRowNames,'WantDelay',WantDelay);
 % [FullTable,cfg] = cgg_getResultsPlotsParametersNetwork(EpochName,'FilterColumn',FilterColumn,'WantAnalysis',WantAnalysis,'Split_TableRowNames',Split_TableRowNames,'WantDelay',WantDelay,'MatchType',MatchType,'MatchType_Attention',MatchType_Attention);
@@ -128,6 +128,8 @@ FullTable = cgg_procRemoveTableRows(FullTable, "Unlearned");
 % plot(aaa{i});
 % end
 % hold off
+
+% sel_Block = 26;sel_Session = 19;this_Table = Identifiers_Table(Identifiers_Table.Block == sel_Block & Identifiers_Table.("Session Name") == sel_Session,:);aaa = this_Table.("Correct Trial");aaaa = [movemean(aaa,[0,9]),aaa];plot(aaaa); LP = find(aaaa(:,1) >= 0.8 & aaa == 1,1);
 
 %% Overall Accuracy
 
@@ -164,127 +166,46 @@ FullTable = cgg_procRemoveTableRows(FullTable, "Unlearned");
 % cgg_plotAttentionalSplitWindowedAccuracy(FullTable,cfg);
 % cgg_plotAttentionalSplitWindowedAccuracy(FullTable_Filtered,cfg);
 
+%% Label-Class
+
+% cgg_plotLabelClass(FullTable,cfg);
+
 %% Latent Correlation Analysis
 
 % cgg_plotLatentCorrelationAnalysis(cfg.CorrelationTable,cfg);
 
 %% Combined Sessions
-
+% NumDims = 3;
+% for didx = 1:NumDims
+%     this_Dimension = sprintf("%d-D",didx);
+    this_FullTable = FullTable;
+    % ExcludeDims = setdiff(1:NumDims,didx);
+    % for ddidx = 1:length(ExcludeDims)
+    % this_FullTable = cgg_procRemoveTableRows(this_FullTable, sprintf("%d-D",ExcludeDims(ddidx)));
+    % end
+    this_cfg = cfg;
+    % this_cfg.SplitExtraSaveTerm = replace(cfg.SplitExtraSaveTerm,"Dimensionality",this_Dimension);
 for tidx = 1:length(TimeRanges)
     TimeRange = TimeRanges{tidx};
 for idx = 1:length(SignificanceValues)
     SignificanceValue = SignificanceValues(idx);
-    CombinedFullTable = cgg_getSpecifiedFullTableSessions(FullTable,'SignificanceValue',SignificanceValue,'cfg_Encoder',cfg,'TimeRange',TimeRange);
-    cgg_plotSplitAccuracy(CombinedFullTable,cfg);
-    cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg);
-    cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg);
-    cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg);
-    CombinedFullTable = cgg_getSpecifiedFullTableSessions(FullTable,'SignificanceValue',SignificanceValue,'WantAllFromGroup',true,'cfg_Encoder',cfg,'TimeRange',TimeRange);
-    cgg_plotSplitAccuracy(CombinedFullTable,cfg);
-    cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg);
-    cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg);
-    cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg);
+    % CombinedFullTable = cgg_getSpecifiedFullTableSessions(FullTable,'SignificanceValue',SignificanceValue,'cfg_Encoder',cfg,'TimeRange',TimeRange);
+    % cgg_plotBlockImportanceAnalysis(CombinedFullTable,cfg);
+    % cgg_plotSplitAccuracy(CombinedFullTable,cfg);
+    % cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg);
+    % cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg);
+    % cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg);
+    CombinedFullTable = cgg_getSpecifiedFullTableSessions(this_FullTable,'SignificanceValue',SignificanceValue,'WantAllFromGroup',true,'cfg_Encoder',this_cfg,'TimeRange',TimeRange);
+    cgg_plotLabelClass(CombinedFullTable,this_cfg);
+    % cgg_plotBlockImportanceAnalysis(CombinedFullTable,cfg);
+    % cgg_plotSplitAccuracy(CombinedFullTable,this_cfg);
+    % cgg_plotSplitWindowedAccuracy(CombinedFullTable,this_cfg);
+    % cgg_plotAttentionalSplitAccuracy(CombinedFullTable,this_cfg);
+    % cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,this_cfg);
 end
-
-% for idx = 1:length(SignificanceValues)
-%     SignificanceValue = SignificanceValues(idx);
-%     CombinedFullTable = cgg_getSpecifiedFullTableSessions(FullTable_Filtered,'SignificanceValue',SignificanceValue,'cfg_Encoder',cfg,'TimeRange',TimeRange);
-%     cgg_plotSplitAccuracy(CombinedFullTable,cfg);
-%     cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg);
-%     cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg);
-%     cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg);
-%     CombinedFullTable = cgg_getSpecifiedFullTableSessions(FullTable_Filtered,'SignificanceValue',SignificanceValue,'WantAllFromGroup',true,'cfg_Encoder',cfg,'TimeRange',TimeRange);
-%     cgg_plotSplitAccuracy(CombinedFullTable,cfg);
-%     cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg);
-%     cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg);
-%     cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg);
-% end
 end
-% SignificanceValue = 1;
-% CombinedFullTable = cgg_getSpecifiedFullTableSessions(FullTable,'SignificanceValue',SignificanceValue);
-% cgg_plotSplitAccuracy(CombinedFullTable,cfg);
-% cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg);
-% cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg);
-% cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg);
-% 
-% SignificanceValue = 0.1;
-% CombinedFullTable = cgg_getSpecifiedFullTableSessions(FullTable,'SignificanceValue',SignificanceValue);
-% cgg_plotSplitAccuracy(CombinedFullTable,cfg);
-% cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg);
-% cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg);
-% cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg);
-% 
-% SignificanceValue = 0.05;
-% CombinedFullTable = cgg_getSpecifiedFullTableSessions(FullTable,'SignificanceValue',SignificanceValue);
-% cgg_plotSplitAccuracy(CombinedFullTable,cfg);
-% cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg);
-% cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg);
-% cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg);
-% 
-% SignificanceValue = 0.025;
-% CombinedFullTable = cgg_getSpecifiedFullTableSessions(FullTable,'SignificanceValue',SignificanceValue);
-% cgg_plotSplitAccuracy(CombinedFullTable,cfg);
-% cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg);
-% cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg);
-% cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg);
-% 
-% SignificanceValue = 0.01;
-% CombinedFullTable = cgg_getSpecifiedFullTableSessions(FullTable,'SignificanceValue',SignificanceValue);
-% cgg_plotSplitAccuracy(CombinedFullTable,cfg);
-% cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg);
-% cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg);
-% cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg);
-
 end
 %% Parameter Sweep
 % [~,cfg,~] = cgg_getResultsPlotsParametersNetwork(EpochName,'FilterColumn','All','WantAnalysis',false,'WantResults',false);
 % cgg_plotParameterSweep(cfg,'WantValidation',true);
 % cgg_plotParameterSweep(cfg,'WantValidation',false);
-
-%%
-%  Load file from downloads folder
-NullTablePath = '/Users/cgerrity/Downloads/';
-% switch case for example files. This uses the Example_Number variable to load different example files
-Example_Number = 4; % Change this value to load different example files
-switch Example_Number
-    case 1
-        NullTableNameExt = 'Target-Dimension_(Fr_Probe_02_22_05_02_004_01)_(TrialFilter-Trials-From-Learning-Point-Category-[-5-to--1])_(TargetFilter-DistractorError)_(MatchType-Scaled-MicroAccuracy).mat';
-        BaselineBinWidth = 0.0005;
-        MetricBinWidth = 0.05;
-    case 2
-        NullTableNameExt = 'Target-Dimension_(Fr_Probe_02_22_05_03_005_01)_(TrialFilter-Prediction-Error-Category-[Low])_(TargetFilter-DistractorError)_(MatchType-Scaled-MicroAccuracy).mat';
-        BaselineBinWidth = 0.0001;
-        MetricBinWidth = 0.01;
-    case 3
-        NullTableNameExt = 'Target-Dimension_(Fr_Probe_02_22_05_02_004_01)_(TrialFilter-Dimensionality-[3-D])_(TargetFilter-TargetFeature)_(MatchType-Scaled-MicroAccuracy).mat';
-        BaselineBinWidth = 0.00025;
-        MetricBinWidth = 0.05;
-    case 4
-        NullTableNameExt = 'Target-Dimension_(Fr_Probe_03_22_07_21_004_01)_(TrialFilter-All-[Overall])_(TargetFilter-Overall)_(MatchType-Scaled-BalancedAccuracy).mat';
-        BaselineBinWidth = 0.0001;
-        MetricBinWidth = 0.01;
-    case 5
-        NullTableNameExt = 'Target-Dimension_(Fr_Probe_02_22_05_02_004_01)_(TrialFilter-Trials-From-Learning-Point-Category-[-5-to--1])_(TargetFilter-DistractorError)_(MatchType-Scaled-BalancedAccuracy).mat';
-        BaselineBinWidth = 0.0005;
-        MetricBinWidth = 0.05;
-    otherwise
-        NullTableNameExt = 'Target-Dimension_(Fr_Probe_02_22_05_02_004_01)_(TrialFilter-Trials-From-Learning-Point-Category-[-5-to--1])_(TargetFilter-DistractorError)_(MatchType-Scaled-MicroAccuracy).mat';
-        BaselineBinWidth = 0.0005;
-        MetricBinWidth = 0.05;
-end   
-load([NullTablePath, NullTableNameExt],'NullTable');
-close all
-figure;
-PlotData = NullTable{:,"BaselineChanceDistribution"};
-for idx = 1:size(PlotData,1)
-hold on
-histogram(PlotData{idx},'BinWidth',BaselineBinWidth,'Normalization','pdf');
-end
-title("Null Distribution [Baseline Metric]")
-figure;
-PlotData = NullTable{:,"ChanceDistribution"};
-for idx = 1:size(PlotData,1)
-hold on
-histogram(PlotData{idx},'BinWidth',MetricBinWidth,'Normalization','pdf');
-end
-title("Null Distribution [Scaled Metric]")

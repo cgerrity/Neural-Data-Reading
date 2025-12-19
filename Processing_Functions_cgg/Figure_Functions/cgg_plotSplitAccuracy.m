@@ -1,6 +1,16 @@
-function cgg_plotSplitAccuracy(FullTable,cfg)
+function cgg_plotSplitAccuracy(FullTable,cfg,varargin)
 %CGG_PLOTSPLITACCURACY Summary of this function goes here
 %   Detailed explanation goes here
+
+isfunction=exist('varargin','var');
+
+if isfunction
+cfg_OverwritePlot = CheckVararginPairs('cfg_OverwritePlot', struct(), varargin{:});
+else
+if ~(exist('cfg_OverwritePlot','var'))
+cfg_OverwritePlot=struct();
+end
+end
 
 cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
 cfg.LoopType = cgg_setNaming(cfg.LoopType);
@@ -20,7 +30,7 @@ this_cfg.LoopType=cfg.SplitExtraSaveTerm;
 this_cfg.Subset = FullTable.Properties.RowNames{sidx};
 this_cfg.LoopTitle = FullTable.Properties.RowNames{sidx};
 
-cgg_plotOverallAccuracy(Split_Table,this_cfg);
+cgg_plotOverallAccuracy(Split_Table,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
 end
 
 %%
