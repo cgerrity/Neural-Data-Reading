@@ -24,8 +24,6 @@ UpdateFunction=@(x) x;
 
 %%
 
-
-%%
 for sidx=1:length(cfg)
     
     inputfolder=cfg(sidx).inputfolder;
