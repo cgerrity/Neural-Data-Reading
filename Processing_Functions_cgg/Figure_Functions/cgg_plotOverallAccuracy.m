@@ -18,11 +18,28 @@ if ~(exist('IsBlock','var'))
 IsBlock=false;
 end
 end
+
+if isfunction
+IsLabelClass = CheckVararginPairs('IsLabelClass', false, varargin{:});
+else
+if ~(exist('IsLabelClass','var'))
+IsLabelClass=false;
+end
+end
+
+if isfunction
+cfg_OverwritePlot = CheckVararginPairs('cfg_OverwritePlot', struct(), varargin{:});
+else
+if ~(exist('cfg_OverwritePlot','var'))
+cfg_OverwritePlot=struct();
+end
+end
 %%
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
 cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
 
 Line_Width = cfg_Plotting.Line_Width;
+Error_Line_Width = cfg_Plotting.Error_Line_Width;
 
 X_Name_Size = cfg_Plotting.X_Name_Size;
 Y_Name_Size = cfg_Plotting.Y_Name_Size;
@@ -49,10 +66,55 @@ Y_Lower=1;
 Y_Limit_Set = [0,0.35];
 Y_Tick_Label_Size = 36;
 Y_Tick_Size = 0.05;
+
+switch IsLabelClass
+    case 'Label'
+    Y_Limit_Set = [-0.05,0.4];
+    Y_Tick_Size = 0.2;
+    case 'Class'
+    Y_Limit_Set = [-0.5,1];
+    Y_Tick_Size = 0.25;
+end
+
 %%
-WantCombined = ismember('Session Number', FullTable.Properties.VariableNames);
+% TimeCut = [];
+OverwritePlotFolder = '';
+% Line_Width_Indicator = [];
+FigureSizeOverwrite = [];
+AccuracyCut = [];
+OverwriteYTickSize = [];
+WantSubTitle = [];
+wantCI = true;
+
+% if isfield(cfg_OverwritePlot,'TimeCut')
+% TimeCut = cfg_OverwritePlot.TimeCut;
+% end
+if isfield(cfg_OverwritePlot,'PlotFolder')
+OverwritePlotFolder = cfg_OverwritePlot.PlotFolder;
+end
+% if isfield(cfg_OverwritePlot,'Line_Width_Indicator')
+% Line_Width_Indicator = cfg_OverwritePlot.Line_Width_Indicator;
+% end
+if isfield(cfg_OverwritePlot,'BarFigureSizeOverwrite')
+FigureSizeOverwrite = cfg_OverwritePlot.BarFigureSizeOverwrite;
+end
+if isfield(cfg_OverwritePlot,'BarAccuracyCut')
+AccuracyCut = cfg_OverwritePlot.BarAccuracyCut;
+end
+if isfield(cfg_OverwritePlot,'BarYTickSize')
+OverwriteYTickSize = cfg_OverwritePlot.BarYTickSize;
+end
+if isfield(cfg_OverwritePlot,'WantSubTitle')
+WantSubTitle = cfg_OverwritePlot.WantSubTitle;
+end
+if isfield(cfg_OverwritePlot,'wantCI')
+wantCI = cfg_OverwritePlot.wantCI;
+end
+%%
+WantCombined = any(ismember('Session Number', FullTable.Properties.VariableNames));
 PlotSubTitle = '';
 IsGrouped = false;
+NumSessions = [];
 if WantCombined
     NumSessions = cellfun(@(x) length(x),FullTable.("Session Number"));
     IsGrouped = all(diff(NumSessions) == 0);
@@ -66,8 +128,35 @@ if WantCombined
     Y_Limit_Set = [0,0.2];
     Y_Tick_Size = 0.05;
     end
+    switch IsLabelClass
+    case 'Label'
+    Y_Limit_Set = [-0.05,0.4];
+    Y_Tick_Size = 0.2;
+    case 'Class'
+    Y_Limit_Set = [-0.5,1];
+    Y_Tick_Size = 0.25;
+    end
     % CountPerSample = FullTable.NumSessions;
 end
+if isfield(cfg,'IA_Type')
+    if isempty(PlotSubTitle)
+        PlotSubTitle = sprintf('%s',cfg.IA_Type);
+    else
+        PlotSubTitle = sprintf('%s %s',cfg.IA_Type,PlotSubTitle);
+    end
+end
+
+if ~isempty(WantSubTitle)
+    if ~WantSubTitle
+        PlotSubTitle = '';
+    end
+end
+
+if ~isempty(OverwriteYTickSize)
+Y_Tick_Size = OverwriteYTickSize;
+end
+
+
 %%
 
 % Decoders=FullTable.Properties.RowNames;
@@ -75,6 +164,12 @@ LoopNames=FullTable.Properties.RowNames;
 
 % [NumDecoders,~]=size(FullTable);
 [NumLoops,~]=size(FullTable);
+
+WantReducedX_Labels = false;
+if NumLoops > 30
+WantReducedX_Labels = true;
+Error_Line_Width = 1;
+end
 
 BarWidth = max([NumLoops,BarWidth]);
 
@@ -206,6 +301,8 @@ Values=FullTable.Accuracy;
 % 
 % % ValueNames=Decoders;
 ValueNames=LoopNames;
+
+
 % 
 % % Values{NumDecoders+1}=RandomChance;
 % % ValueNames{NumDecoders+1}='Random Chance';
@@ -241,19 +338,36 @@ ResultsDir=cfg_Sessions(1).temporarydir;
 %     'Epoch',cfg.Epoch,'Accuracy',true);
 % cfg_tmp = cgg_generateDecodingFolders('TargetDir',cfg.ResultsDir,...
 %     'Epoch',cfg.Epoch,'Accuracy',true);
+
+thisPlotFolder = 'Network Results';
+
 if IsBlock
-cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
-    'Epoch',cfg.Epoch,'PlotFolder','Block IA','PlotSubFolder',cfg.Subset);
-cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
-    'Epoch',cfg.Epoch,'PlotFolder','Block IA','PlotSubFolder',cfg.Subset);
-cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
-else
-cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
-    'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
-cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
-    'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
-cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
+    thisPlotFolder = 'Block IA';
+elseif IsLabelClass
+    thisPlotFolder = 'Label-Class';
+elseif ~isempty(OverwritePlotFolder)
+    thisPlotFolder = OverwritePlotFolder;
 end
+
+cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+    'Epoch',cfg.Epoch,'PlotFolder',thisPlotFolder,'PlotSubFolder',cfg.Subset);
+cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+    'Epoch',cfg.Epoch,'PlotFolder',thisPlotFolder,'PlotSubFolder',cfg.Subset);
+cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
+
+% if IsBlock
+% cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+%     'Epoch',cfg.Epoch,'PlotFolder','Block IA','PlotSubFolder',cfg.Subset);
+% cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+%     'Epoch',cfg.Epoch,'PlotFolder','Block IA','PlotSubFolder',cfg.Subset);
+% cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
+% else
+% cfg_Plot = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+%     'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
+% cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+%     'Epoch',cfg.Epoch,'PlotFolder','Network Results','PlotSubFolder',cfg.Subset);
+% cfg_Plot.ResultsDir=cfg_tmp.TargetDir;
+% end
 
 % drawnow;
 % 
@@ -272,8 +386,13 @@ SavePath = cgg_getDirectory(cfg_Plot.ResultsDir,'SubFolder_1');
 %% Bar Graph
 
 fig_accuracy_bar=figure;
+if isempty(FigureSizeOverwrite)
 fig_accuracy_bar.Units="normalized";
 fig_accuracy_bar.Position=[0,0,0.5,1];
+else
+fig_accuracy_bar.Units="inches";
+fig_accuracy_bar.Position=[0,0,FigureSizeOverwrite];
+end
 fig_accuracy_bar.Units="inches";
 fig_accuracy_bar.PaperUnits="inches";
 PlotPaperSize=fig_accuracy_bar.Position;
@@ -287,8 +406,21 @@ if length(ValueNames) == 6
 ColorOrder = cfg_Plotting.Rainbow;
 end
 % disp(isempty(ColorOrder))
-[b_Plot] = cgg_plotBarGraphWithError(Values,ValueNames,'ColorOrder',ColorOrder,'X_TickFontSize',X_Tick_Label_Size,'ErrorLineWidth',Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',true,'LabelAngle',LabelAngle,'InFigure',fig_accuracy_bar,'X_Name','','BarWidth',BarWidth);
+[b_Plot] = cgg_plotBarGraphWithError(Values,ValueNames,'ColorOrder',ColorOrder,'X_TickFontSize',X_Tick_Label_Size,'ErrorLineWidth',Error_Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',wantCI,'LabelAngle',LabelAngle,'InFigure',fig_accuracy_bar,'X_Name','','BarWidth',BarWidth,'WantReducedX_Labels',WantReducedX_Labels);
 drawnow;
+if ~IsGrouped && ~isempty(NumSessions)
+for pidx = 1:length(fig_accuracy_bar.Children.XTickLabel)
+    this_Label = fig_accuracy_bar.Children.XTickLabel{pidx};
+    this_LabelName = extractBefore(extractAfter(this_Label,'}'),'}');
+    this_CharLength = round(length(this_LabelName)/2);
+    this_Blank = repmat(' ',[1,this_CharLength]);
+    this_BlankLabel = replace(this_Label,this_LabelName,this_Blank);
+    this_SampleSizeName = sprintf('[N = %d]',NumSessions(pidx));
+    this_XTickLabel = sprintf('%s\\newline%s{%s}',this_Label,this_BlankLabel,this_SampleSizeName);
+    fig_accuracy_bar.Children.XTickLabel{pidx} = this_XTickLabel;
+end
+end
+
 % p_MostCommon=yline(MostCommon,"-",'Most Common');
 % p_Random=yline(RandomChance,"-",'Random Chance');
 % p_MostCommon.LineWidth = Line_Width;
@@ -303,19 +435,53 @@ drawnow;
 % p_Random.LabelHorizontalAlignment = 'left';
 % p_Random.FontSize = Label_Size;
 
-Y_Name = 'Accuracy';
+% Y_Name = 'Accuracy';
+% if contains(cfg.MatchType,'Scaled')
+% Y_Name = 'Scaled Balanced Accuracy';
+% end
 if contains(cfg.MatchType,'Scaled')
-Y_Name = 'Scaled Balanced Accuracy';
+Y_Name = {'Scaled', 'Balanced Accuracy'};
+if contains(cfg.MatchType,'MicroAccuracy')
+Y_Name{2} = 'Accuracy';
 end
-Y_Label = sprintf('{\\fontsize{%d}%s}',Y_Name_Size,Y_Name);
+end
+
+
+
+if iscell(Y_Name)
+    Y_Label = cell(length(Y_Name),1);
+for yidx = 1:length(Y_Name)
+    Y_Label{yidx} = sprintf('{\\fontsize{%d}%s}',Y_Name_Size,Y_Name{yidx});
+end
+else
+    Y_Label = sprintf('{\\fontsize{%d}%s}',Y_Name_Size,Y_Name);
+end
 % ylabel(Y_Name,'FontSize',Y_Name_Size);
 ylabel(Y_Label);
 
 % Bar_Title=sprintf('Accuracy of %s over %d Folds',cfg.LoopTitle,NumFolds);
+
 if isfield(cfg,'LoopTitle') && ~isempty(cfg.LoopTitle)
-Bar_Title=sprintf('%s',cfg.LoopTitle);
-title(Bar_Title,'FontSize',Title_Size);
+PlotTitle = cfg.LoopTitle;
 end
+
+if iscell(PlotTitle)
+    Title_Label = cell(1,length(PlotTitle));
+    for tidx = 1:length(PlotTitle)
+        Title_Label{tidx} = sprintf('{\\fontsize{%d}%s}',Title_Size,PlotTitle{tidx});
+    end
+else
+    Title_Label = sprintf('\\fontsize{%d}%s',Title_Size,PlotTitle);
+end
+
+if ~isempty(PlotTitle)
+title(Title_Label);
+end
+
+% if isfield(cfg,'LoopTitle') && ~isempty(cfg.LoopTitle)
+% Bar_Title=sprintf('%s',cfg.LoopTitle);
+% title(Bar_Title,'FontSize',Title_Size);
+% end
 
 if IsGrouped
 subtitle(PlotSubTitle,'FontSize',SubTitle_Size);
@@ -333,6 +499,10 @@ Y_Ticks = YLimits(1):Y_Tick_Size:YLimits(2);
 
 if ~(isempty(Y_Ticks) || any(isnan(Y_Ticks)))
 yticks(Y_Ticks);
+end
+
+if ~isempty(AccuracyCut)
+ylim(AccuracyCut);
 end
 
 
