@@ -39,9 +39,16 @@ switch MatchType
         [Accuracy] = cgg_calcMacroRecall(TrueValue,Prediction,ClassNames,'Weights',Weights);
     case 'BalancedAccuracy'
         [Accuracy] = cgg_calcMacroRecall(TrueValue,Prediction,ClassNames,'Weights',Weights);
-        % [Accuracy] = cgg_calcMacroBalancedAccuracy(TrueValue,Prediction,ClassNames,'Weights',Weights);
+    case 'MacroBalancedAccuracy'
+        [Accuracy] = cgg_calcMacroBalancedAccuracy(TrueValue,Prediction,ClassNames,'Weights',Weights);
+    case 'MicroBalancedAccuracy'
+        [Accuracy] = cgg_calcMicroBalancedAccuracy(TrueValue,Prediction,ClassNames,'Weights',Weights);
     case 'MicroAccuracy'
         [Accuracy] = cgg_calcMicroAccuracy(TrueValue,Prediction,ClassNames,'Weights',Weights);
+    case 'MacroMCC'
+        [Accuracy] = cgg_calcMacroMCC(TrueValue,Prediction,ClassNames,'Weights',Weights);
+    case 'MacroKappa'
+        [Accuracy] = cgg_calcMacroKappa(TrueValue,Prediction,ClassNames,'Weights',Weights);
     otherwise
 end
 
