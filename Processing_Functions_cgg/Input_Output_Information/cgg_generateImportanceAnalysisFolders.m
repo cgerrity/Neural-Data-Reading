@@ -50,7 +50,8 @@ if ismember("TimeRange", PassTableEntry.Properties.VariableNames)
 TimeRange = PassTableEntry.TimeRange;
 end
 
-
+%%
+[TrialFilter,TrialFilter_Value] = cgg_getPackedTrialFilter(TrialFilter,TrialFilter_Value,'Unpack');
 %%
 
 TrialFilterName = cgg_setNaming(string(join(TrialFilter,'~')),'SurroundDeliminator',{'[',']'},'WantUnderline',false);

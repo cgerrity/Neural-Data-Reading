@@ -28,6 +28,14 @@ WantPreFetch=true;
 end
 end
 
+if isfunction
+WantLabelClassFilter = CheckVararginPairs('WantLabelClassFilter', false, varargin{:});
+else
+if ~(exist('WantLabelClassFilter','var'))
+WantLabelClassFilter=false;
+end
+end
+
 %% Get CFG for any analysis
 % You can uncomment this section to generate the base cfg for further
 % testing
@@ -41,12 +49,9 @@ end
 % cfg.ResultsDir=cfg_Results.TargetDir;
 
 %%
-varargin{end + 1} = 'Target';
-varargin{end + 1} = Target;
-% varargin{end + 1} = 'WantDisplay';
-% varargin{end + 1} = WantDisplay;
-varargin{end + 1} = 'WantPreFetch';
-varargin{end + 1} = WantPreFetch;
+varargin = cgg_changeFieldFromVarargin(varargin,'Target',Target);
+varargin = cgg_changeFieldFromVarargin(varargin,'WantPreFetch',WantPreFetch);
+% varargin = cgg_changeFieldFromVarargin(varargin,'WantDisplay',WantDisplay);
 %%
 
 Epoch = CheckVararginPairs('Epoch', 'Decision', varargin{:});
@@ -86,8 +91,7 @@ FullTable_tmp = table('Size',[1,NumVariables],...
 if WantPreFetch
 Identifiers_Table = cgg_getIdentifiersTable(cfg,wantSubset,'Epoch',Epoch,'AdditionalTarget',AdditionalTarget,'Subset',Subset);
 fprintf('@@@ Loaded Identifiers Table for %s\n',Subset);
-varargin{end + 1} = 'Identifiers_Table';
-varargin{end + 1} = Identifiers_Table;
+varargin = cgg_changeFieldFromVarargin(varargin,'Identifiers_Table',Identifiers_Table);
 end
 
 this_varargin = varargin;
@@ -98,7 +102,7 @@ this_varargin = cgg_removeFieldFromVarargin(this_varargin,'AttentionalFilter');
 
 NullTable = [];
 if WantPreFetch
-[~,NullTable] = cgg_isNullTableComplete(CM_Table,cfg,cfg_Encoder,this_varargin{:});
+    [~,NullTable] = cgg_isNullTableComplete(CM_Table,cfg,cfg_Encoder,this_varargin{:});
 end
 %% Overall Accuracy
 OverallTimer = tic;
@@ -150,5 +154,16 @@ FullTable_tmp(:,"Split Table") = {SplitTable};
 SplitTime = seconds(toc(SplitTimer));
 SplitTime.Format='hh:mm:ss';
 fprintf('   *** Complete Split Pass on %s! [Time: %s]\n',Subset,SplitTime);
+
+%% Label-Class Table
+
+if WantLabelClassFilter
+    this_varargin = varargin;
+    this_varargin = cgg_changeFieldFromVarargin(this_varargin,'WantLabelClassFilter',false);
+    LabelClassTables = cgg_getFullLabelClassTable(CM_Table,cfg,this_varargin{:});
+    FullTable_tmp = cgg_addLabelClassTableToFullTable(FullTable_tmp,LabelClassTables);
+end
+
+
 end
 

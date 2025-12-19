@@ -146,7 +146,7 @@ for tidx = 1:NumTypes
     % end
     NullTable = [];
     if WantPreFetch
-    [~,NullTable] = cgg_isNullTableComplete(CM_Table,cfg,cfg_Encoder,'TrialFilter_Value',TrialFilter_Value,varargin{:});
+        [~,NullTable] = cgg_isNullTableComplete(CM_Table,cfg,cfg_Encoder,'TrialFilter_Value',TrialFilter_Value,varargin{:});
     end
     MetricFunc = @(x,y) cgg_procCompleteMetric(x,cfg,'TrialFilter_Value',TrialFilter_Value,varargin{:},'NullTable',NullTable);
     % MetricFunc = @(x,y) cgg_procCompleteMetric(x,cfg,'TrialFilter_Value',TrialFilter_Value,'MostCommon',MostCommon,'RandomChance',RandomChance,'Stratified',Stratified,varargin{:});

@@ -98,6 +98,8 @@ NullTable = table('Size',[TableHeight,NumVariables],...
 	    'VariableNames', TableVariables(:,1),...
 	    'VariableTypes', TableVariables(:,2));
 
+[TrialFilter,TrialFilter_Value] = cgg_getPackedTrialFilter(TrialFilter,TrialFilter_Value,'Pack');
+
 %%
 if ~isempty(DataNumber)
 NullTable.DataNumber = {DataNumber};

@@ -1,25 +1,83 @@
-function InTable = cgg_addSignificantAccuracyTableValues(InTable,AccuracyTable,SessionIDX,IsSignificant)
+function OutTable = cgg_addSignificantAccuracyTableValues(InTable,AccuracyTable,SessionIDX,IsSignificant)
 %CGG_ADDSIGNIFICANTACCURACYTABLEVALUES Summary of this function goes here
 %   Detailed explanation goes here
 
+OutTable = InTable;
 
 Window_Accuracy = AccuracyTable.('Window Accuracy'){1};
 Accuracy = AccuracyTable.('Accuracy'){1};
-HasBlock = ismember("Block", AccuracyTable.Properties.VariableNames);
+HasBlock = any(ismember("Block", AccuracyTable.Properties.VariableNames));
+HasLabel = any(ismember("Label Table", AccuracyTable.Properties.VariableNames));
+HasClass = any(ismember("Class Table", AccuracyTable.Properties.VariableNames));
 
 if IsSignificant
-InTable.('Window Accuracy') = {[InTable.('Window Accuracy'){1};Window_Accuracy]};
-InTable.('Accuracy') = {[InTable.('Accuracy'){1};Accuracy]};
-InTable.('Session Number') = {[InTable.('Session Number'){1}; SessionIDX]};
+OutTable.('Window Accuracy') = {[OutTable.('Window Accuracy'){1};Window_Accuracy]};
+OutTable.('Accuracy') = {[OutTable.('Accuracy'){1};Accuracy]};
+OutTable.('Session Number') = {[OutTable.('Session Number'){1}; SessionIDX]};
+
+if HasLabel
+    OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Label Table","Accuracy",'IncludeNaNValues',true);
+    OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Label Table","Window Accuracy",'IncludeNaNValues',true);
+    OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Label Table","Session Number",'NonTableTerm',SessionIDX,'IncludeNaNValues',false);
+end
+if HasClass
+    OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Class Table","Accuracy",'IncludeNaNValues',true);
+    OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Class Table","Window Accuracy",'IncludeNaNValues',true);
+    OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Class Table","Session Number",'NonTableTerm',SessionIDX,'IncludeNaNValues',false);
+end
 
 if HasBlock
     WantAllAreas = true;
+    %%
+    NumFolds = length(Accuracy);
     Block = AccuracyTable.('Block'){1};
+    % NumberRemovedTable = Block.("Removal Counts");
+    % ChannelCountPerArea = max(NumberRemovedTable,[],1);
+    % NumberPresentTable = ChannelCountPerArea-NumberRemovedTable;
+    % Weighting = ChannelCountPerArea./sum(ChannelCountPerArea{:,:},2);
+    % Weighting = repmat(Weighting,[NumFolds,1]);
+    % this_WeightingNames = Weighting.Properties.VariableNames;
+    % Weighting = splitvars(table(num2cell(Weighting{:,:},1)));
+    % Weighting.Properties.VariableNames = this_WeightingNames;
+    [Weighting,~] = cgg_getChannelWeightingForIA(Block,NumFolds,0);
 %%
-    EachArea = InTable.("Not Present Areas"){1}.Properties.RowNames;
+    EachArea = OutTable.("Not Present Areas"){1}.Properties.RowNames;
+    WantBlockSingleArea = ~any(contains(EachArea,"None"));
+    AreaNames = Block.("Area Names");
+    if WantBlockSingleArea
+        [Weighting,FullWeighting] = cgg_getChannelWeightingForIA(Block,NumFolds,0);
+
+        for aaidx = 1:length(EachArea)
+            this_Area = EachArea{aaidx};
+            this_AreaAccuracy = Accuracy.*FullWeighting.(this_Area);
+            this_AreaWindow_Accuracy = Window_Accuracy.*FullWeighting.(this_Area);
+            AreaIsNaN = isnan(FullWeighting.(this_Area));
+        for aidx = 1:length(AreaNames)
+            this_BlockEntry = Block(aidx,:);
+        
+            [~,this_FullWeighting] = cgg_getChannelWeightingForIA(Block,NumFolds,aidx);
+            this_Accuracy = this_BlockEntry.('Accuracy'){1};
+            this_Window_Accuracy = this_BlockEntry.('Window Accuracy'){1};
+            this_Accuracy = this_Accuracy.*this_FullWeighting.(this_Area);
+            this_Window_Accuracy = this_Window_Accuracy.*this_FullWeighting.(this_Area);
+
+            if ~AreaIsNaN && isnan(this_FullWeighting.(this_Area))
+                this_Accuracy = zeros(size(this_Accuracy));
+                this_Window_Accuracy = zeros(size(this_Window_Accuracy));
+            end
+            this_AreaAccuracy = this_AreaAccuracy + this_Accuracy;
+            this_AreaWindow_Accuracy = this_AreaWindow_Accuracy + this_Window_Accuracy;
+        end
+
+        OutTable = cgg_getBlockAccuracyAdditionSimplified(OutTable,...
+            this_Area,this_Area,this_Area,...
+            this_AreaAccuracy,this_AreaWindow_Accuracy,SessionIDX,Weighting);
+
+
+        end
+    else
     [~,idx] = max(arrayfun(@(x) count(x, "-"),EachArea));
     EachArea = split(EachArea{idx},"-");
-    AreaNames = Block.("Area Names");
     [~,idx] = max(cellfun(@numel, AreaNames));
     AllAreas = AreaNames{idx};
     RemovedNames = string(cellfun(@(x) join(x,"-"),AreaNames,"UniformOutput",false));
@@ -31,25 +89,13 @@ if HasBlock
     AllAreasName = string(join(AllAreas,"-"));
     AllNotPresentEachArea = string(join(setdiff(EachArea,AllAreas),"-"));
     AllNotPresentEachArea(AllNotPresentEachArea == "") = "None";
+    
 %% Including All the areas regardless of how many probes per session
 if WantAllAreas
-NoneRemovedIDX = strcmp(InTable.("Removed Areas"){1}{:,"Area Names"},"None");
-InTable.("Removed Areas"){1}{NoneRemovedIDX,"Accuracy"}{1} = ...
-    [InTable.("Removed Areas"){1}{NoneRemovedIDX,"Accuracy"}{1};Accuracy];
-InTable.("Removed Areas"){1}{NoneRemovedIDX,"Window Accuracy"}{1} = ...
-    [InTable.("Removed Areas"){1}{NoneRemovedIDX,"Window Accuracy"}{1};Window_Accuracy];
 
-AllPresentIDX = strcmp(InTable.("Removed Areas"){1}{:,"Area Names"},AllAreasName);
-InTable.("Present Areas"){1}{AllPresentIDX,"Accuracy"}{1} = ...
-    [InTable.("Present Areas"){1}{AllPresentIDX,"Accuracy"}{1};Accuracy];
-InTable.("Present Areas"){1}{AllPresentIDX,"Window Accuracy"}{1} = ...
-    [InTable.("Present Areas"){1}{AllPresentIDX,"Window Accuracy"}{1};Window_Accuracy];
-
-NoneNotPresentIDX = strcmp(InTable.("Removed Areas"){1}{:,"Area Names"},AllNotPresentEachArea);
-InTable.("Not Present Areas"){1}{NoneNotPresentIDX,"Accuracy"}{1} = ...
-    [InTable.("Not Present Areas"){1}{NoneNotPresentIDX,"Accuracy"}{1};Accuracy];
-InTable.("Not Present Areas"){1}{NoneNotPresentIDX,"Window Accuracy"}{1} = ...
-    [InTable.("Not Present Areas"){1}{NoneNotPresentIDX,"Window Accuracy"}{1};Window_Accuracy];
+OutTable = cgg_getBlockAccuracyAdditionSimplified(OutTable,...
+    "None",AllAreasName,AllNotPresentEachArea,Accuracy,Window_Accuracy,...
+    SessionIDX,Weighting);
 end
 %%
 for aidx = 1:length(AreaNames)
@@ -60,26 +106,15 @@ for aidx = 1:length(AreaNames)
 
     this_Accuracy = this_BlockEntry.('Accuracy'){1};
     this_Window_Accuracy = this_BlockEntry.('Window Accuracy'){1};
-
+    Weighting = cgg_getChannelWeightingForIA(Block,NumFolds,aidx);
     %%
-    RemovedIDX = strcmp(InTable.("Removed Areas"){1}{:,"Area Names"},this_RemovedName);
-InTable.("Removed Areas"){1}{RemovedIDX,"Accuracy"}{1} = ...
-    [InTable.("Removed Areas"){1}{RemovedIDX,"Accuracy"}{1};this_Accuracy];
-InTable.("Removed Areas"){1}{RemovedIDX,"Window Accuracy"}{1} = ...
-    [InTable.("Removed Areas"){1}{RemovedIDX,"Window Accuracy"}{1};this_Window_Accuracy];
 
-    PresentIDX = strcmp(InTable.("Removed Areas"){1}{:,"Area Names"},this_PresentName);
-InTable.("Present Areas"){1}{PresentIDX,"Accuracy"}{1} = ...
-    [InTable.("Present Areas"){1}{PresentIDX,"Accuracy"}{1};this_Accuracy];
-InTable.("Present Areas"){1}{PresentIDX,"Window Accuracy"}{1} = ...
-    [InTable.("Present Areas"){1}{PresentIDX,"Window Accuracy"}{1};this_Window_Accuracy];
+    OutTable = cgg_getBlockAccuracyAdditionSimplified(OutTable,...
+    this_RemovedName,this_PresentName,this_NotPresentName,...
+    this_Accuracy,this_Window_Accuracy,SessionIDX,Weighting);
 
-    NotPresentIDX = strcmp(InTable.("Removed Areas"){1}{:,"Area Names"},this_NotPresentName);
-InTable.("Not Present Areas"){1}{NotPresentIDX,"Accuracy"}{1} = ...
-    [InTable.("Not Present Areas"){1}{NotPresentIDX,"Accuracy"}{1};this_Accuracy];
-InTable.("Not Present Areas"){1}{NotPresentIDX,"Window Accuracy"}{1} = ...
-    [InTable.("Not Present Areas"){1}{NotPresentIDX,"Window Accuracy"}{1};this_Window_Accuracy];
 end
+    end
 %%
 
 end

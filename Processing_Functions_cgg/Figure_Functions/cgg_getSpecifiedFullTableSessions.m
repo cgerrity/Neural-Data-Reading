@@ -44,18 +44,44 @@ cfg_Encoder=struct();
 end
 end
 
+if isfunction
+WantAllFromBest = CheckVararginPairs('WantAllFromBest', false, varargin{:});
+else
+if ~(exist('WantAllFromBest','var'))
+WantAllFromBest=false;
+end
+end
+
+if isfunction
+WantBlockSingleArea = CheckVararginPairs('WantBlockSingleArea', false, varargin{:});
+else
+if ~(exist('WantBlockSingleArea','var'))
+WantBlockSingleArea=false;
+end
+end
+
 %% One tailed significance
 if WantAllFromGroup
     AllGroupString = "Group ";
 else
     AllGroupString = "";
 end
+if WantAllFromBest
+    OverallBestString = "Overall-Significant ";
+else
+    OverallBestString = "";
+end
 if isempty(TimeRange)
     TimeRangeString = "";
 else
-    TimeRangeString = sprintf(" Time [%.2f to %.2f]",TimeRange);
+    TimeRangeString = sprintf("Time [%.2f to %.2f] ",TimeRange);
 end
-CombinedName = sprintf('Combined %s%s~ alpha %.3f ~ %s',AllGroupString,TimeRangeString,SignificanceValue,datetime('today'));
+% CombinedName = sprintf('Combined %s%s~ alpha %.3f ~ %s',AllGroupString,TimeRangeString,SignificanceValue,datetime('today'));
+if SignificanceValue >= 0.001
+CombinedName = sprintf('Combined %s%s%s~ alpha %.3f',AllGroupString,OverallBestString,TimeRangeString,SignificanceValue);
+elseif SignificanceValue >= 0.0001
+CombinedName = sprintf('Combined %s%s%s~ alpha %.4f',AllGroupString,OverallBestString,TimeRangeString,SignificanceValue);
+end
 SignificanceValue = SignificanceValue*2;
 
 %% Remove Non-Session Entries
@@ -82,29 +108,71 @@ NumSessions = height(SessionFullTable);
 % SessionNamesSimplified = cgg_setSessionNamesForParameterSweep(SessionNames);
 
 %%
+SignificanceOverwrite = false;
+if WantAllFromBest
+BestFunc = @(x) cgg_testAccuracyTableSignificance(x,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
+
+BestSessionIDX = NaN(NumSessions,1);
+for sidx = 1:NumSessions
+BestSessionIDX(sidx) = BestFunc(SessionFullTable(sidx,:));
+end
+% BestSessionTable = SessionFullTable;
+% BestSessionTable(BestSessionIDX==1,:) = [];
+SessionFullTable(BestSessionIDX~=1,:) = [];
+NumSessions = height(SessionFullTable);
+SignificanceValue = 2;
+SignificanceOverwrite = true;
+end
+
+%%
 AttentionalFilters = SessionFullTable.("Attentional Table"){1}.Properties.RowNames;
 NumFilters = length(AttentionalFilters);
 
 SplitNames = SessionFullTable.("Split Table"){1}.Properties.RowNames;
 NumSplits = length(SplitNames);
 
-HasBlock = ismember("Block", SessionFullTable.Properties.VariableNames);
+HasBlock = any(ismember("Block", SessionFullTable.Properties.VariableNames));
 
 if HasBlock
     RemovedAreas = unique(string(cellfun(@(x) join(x,"-"),...
         vertcat(SessionFullTable.('Block'){:}).("Area Names"),...
         "UniformOutput",false)));
+    if WantBlockSingleArea
+        ReIndexAreas = count(RemovedAreas,"-")==0;
+    else
     RemovedAreas = ["None";RemovedAreas];
+    [~,ReIndexAreas] = sort(count(RemovedAreas,"-"));
+    end
+    RemovedAreas = RemovedAreas(ReIndexAreas);
     NumAreas = length(RemovedAreas);
+end
+
+HasLabel = any(ismember("Label Table", SessionFullTable.Properties.VariableNames));
+HasClass = any(ismember("Class Table", SessionFullTable.Properties.VariableNames));
+NumLabels = [];
+NumClasses = [];
+
+if HasLabel
+    LabelNames = cellfun(@(x) string(x.Properties.RowNames), FullTable.("Label Table"),"UniformOutput",false);
+    LabelNames = unique(vertcat(LabelNames{:}));
+    NumLabels = length(LabelNames);
+end
+if HasClass
+    ClassNames = cellfun(@(x) string(x.Properties.RowNames), FullTable.("Class Table"),"UniformOutput",false);
+    ClassNames = unique(vertcat(ClassNames{:}));
+    NumClasses = length(ClassNames);
 end
 
 %%
 if HasBlock
     BlockTableVariables = [["Removed Areas", "cell"];...
-        ["Present Areas", "cell"]];
+        ["Present Areas", "cell"];...
+        ["Not Present Areas", "cell"]];
     TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"]; ...
-    ["Area Names", "cell"]];
+    ["Area Names", "cell"]; ...
+    ["Session Number", "cell"]; ...
+    ["Weight Table", "cell"]];
     NumVariables = size(TableVariables,1);
     BlockTable_Template = table('Size',[NumAreas,NumVariables],... 
 	    'VariableNames', TableVariables(:,1),...
@@ -116,12 +184,42 @@ else
     BlockTableVariables = [];
 end
 
+if HasLabel
+    LabelTableVariables = ["Label Table", "cell"];
+    TableVariables = [["Accuracy", "cell"]; ...
+    ["Window Accuracy", "cell"]; ...
+    ["Session Number", "cell"]];
+    NumVariables = size(TableVariables,1);
+    LabelTable_Template = table('Size',[NumLabels,NumVariables],... 
+	    'VariableNames', TableVariables(:,1),...
+	    'VariableTypes', TableVariables(:,2));
+    LabelTable_Template.Properties.RowNames = LabelNames;
+else
+    LabelTableVariables = [];
+end
+
+if HasClass
+    ClassTableVariables = ["Class Table", "cell"];
+    TableVariables = [["Accuracy", "cell"]; ...
+    ["Window Accuracy", "cell"]; ...
+    ["Session Number", "cell"]];
+    NumVariables = size(TableVariables,1);
+    ClassTable_Template = table('Size',[NumClasses,NumVariables],... 
+	    'VariableNames', TableVariables(:,1),...
+	    'VariableTypes', TableVariables(:,2));
+    ClassTable_Template.Properties.RowNames = ClassNames;
+else
+    ClassTableVariables = [];
+end
+
 TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"]; ...
     ["Split Table", "cell"]; ...
     ["Attentional Table", "cell"]; ...
     ["Session Number", "cell"]];
 TableVariables = [TableVariables;BlockTableVariables];
+TableVariables = [TableVariables;LabelTableVariables];
+TableVariables = [TableVariables;ClassTableVariables];
 
 NumVariables = size(TableVariables,1);
 OutFullTable = table('Size',[1,NumVariables],... 
@@ -132,12 +230,20 @@ if HasBlock
     OutFullTable{:,"Not Present Areas"} = {BlockTable_Template};
     OutFullTable{:,"Present Areas"} = {BlockTable_Template};
 end
+if HasLabel
+    OutFullTable{:,"Label Table"} = {LabelTable_Template};
+end
+if HasClass
+    OutFullTable{:,"Class Table"} = {ClassTable_Template};
+end
 
 TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"]; ...
     % ["Split Table", "cell"]; ...
     ["Session Number", "cell"]];
 TableVariables = [TableVariables;BlockTableVariables];
+TableVariables = [TableVariables;LabelTableVariables];
+TableVariables = [TableVariables;ClassTableVariables];
 
 NumVariables = size(TableVariables,1);
 AttentionalTable_Template = table('Size',[NumFilters,NumVariables],... 
@@ -149,12 +255,20 @@ if HasBlock
     AttentionalTable_Template{:,"Not Present Areas"} = {BlockTable_Template};
     AttentionalTable_Template{:,"Present Areas"} = {BlockTable_Template};
 end
+if HasLabel
+    AttentionalTable_Template{:,"Label Table"} = {LabelTable_Template};
+end
+if HasClass
+    AttentionalTable_Template{:,"Class Table"} = {ClassTable_Template};
+end
 
 TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"];...
     % ["Attentional Table", "cell"]; ...
     ["Session Number", "cell"]];
 TableVariables = [TableVariables;BlockTableVariables];
+TableVariables = [TableVariables;LabelTableVariables];
+TableVariables = [TableVariables;ClassTableVariables];
 
 NumVariables = size(TableVariables,1);
 SplitTable_Template = table('Size',[NumSplits,NumVariables],... 
@@ -165,6 +279,12 @@ if HasBlock
     SplitTable_Template{:,"Removed Areas"} = {BlockTable_Template};
     SplitTable_Template{:,"Not Present Areas"} = {BlockTable_Template};
     SplitTable_Template{:,"Present Areas"} = {BlockTable_Template};
+end
+if HasLabel
+    SplitTable_Template{:,"Label Table"} = {LabelTable_Template};
+end
+if HasClass
+    SplitTable_Template{:,"Class Table"} = {ClassTable_Template};
 end
 
 AttentionalTable = AttentionalTable_Template;
@@ -200,6 +320,7 @@ for sidx = 1:NumSessions
 % IsSignificant = any(this_TestSignal > ChanceLevel);
 
 IsSignificant = cgg_testAccuracyTableSignificance(this_FullTable,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
+IsSignificant = IsSignificant || SignificanceOverwrite;
 OutFullTable = cgg_addSignificantAccuracyTableValues(OutFullTable,this_FullTable,sidx,IsSignificant);
 % if IsSignificant
 % OutFullTable.('Window Accuracy') = {[OutFullTable.('Window Accuracy'){1};this_Window_Accuracy]};
@@ -235,6 +356,7 @@ for aidx = 1:length(this_AttentionalNames)
     % this_TestSignal = Series_Mean - Series_CI;
     % IsSignificant = any(this_TestSignal > ChanceLevel);
     IsSignificant = cgg_testAccuracyTableSignificance(this_AttentionalRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
+    IsSignificant = IsSignificant || SignificanceOverwrite;
     Significance_OverallAttentional(aidx) = IsSignificant;
 
     % if IsSignificant
@@ -261,6 +383,7 @@ for aidx = 1:length(this_AttentionalNames)
         % this_TestSignal = Series_Mean - Series_CI;
         % IsSignificant = any(this_TestSignal > ChanceLevel);
         IsSignificant = cgg_testAccuracyTableSignificance(this_SplitRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
+        IsSignificant = IsSignificant || SignificanceOverwrite;
         Significance_Attentional_Split{aidx}(spidx) = IsSignificant;
     
         % if IsSignificant
@@ -347,6 +470,7 @@ for spidx = 1:length(this_SplitNames)
     % this_TestSignal = Series_Mean - Series_CI;
     % IsSignificant = any(this_TestSignal > ChanceLevel);
     IsSignificant = cgg_testAccuracyTableSignificance(this_SplitRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
+    IsSignificant = IsSignificant || SignificanceOverwrite;
     Significance_OverallSplit(spidx) = IsSignificant;
 
     % if IsSignificant
@@ -373,6 +497,7 @@ for aidx = 1:length(this_AttentionalNames)
     % this_TestSignal = Series_Mean - Series_CI;
     % IsSignificant = any(this_TestSignal > ChanceLevel);
     IsSignificant = cgg_testAccuracyTableSignificance(this_AttentionalRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
+    IsSignificant = IsSignificant || SignificanceOverwrite;
     Significance_Split_Attentional{spidx}(aidx) = IsSignificant;
 
     % if IsSignificant

@@ -247,6 +247,14 @@ if ~(exist('MarkerSize','var'))
 MarkerSize=12;
 end
 end
+
+if isfunction
+WantReducedX_Labels = CheckVararginPairs('WantReducedX_Labels', false, varargin{:});
+else
+if ~(exist('WantReducedX_Labels','var'))
+WantReducedX_Labels=false;
+end
+end
 %%
 ValueNames_Cat = categorical(ValueNames);
 ValueNames_Cat = reordercats(ValueNames_Cat,ValueNames);
@@ -346,6 +354,18 @@ for vidx=1:length(Values)
     ValueNames_Resized{vidx}=['{\' sprintf(['fontsize{%d}' ValueNames{vidx} '}'],X_TickFontSize)];
 
 end
+
+%%
+if WantReducedX_Labels
+NumValues = length(ValueNames_Resized);
+    for vidx = 1:NumValues
+        if vidx ~=1 && vidx ~=round(NumValues/2) && vidx ~= NumValues
+            ValueNames_Resized{vidx} = '';
+        end
+    end
+end
+
+%%
 
 Bar_STE=Bar_STD./sqrt(Bar_Count);
 Bar_STE(Bar_Count==1) = NaN;

@@ -103,6 +103,8 @@ TrialFilter = string(TrialFilter);
 TargetFilter = string(TargetFilter);
 
 %%
+[TrialFilter,TrialFilter_Value] = cgg_getPackedTrialFilter(TrialFilter,TrialFilter_Value,'Pack');
+%%
 
 % TODO: Add TimeRange
 % TODO: Maybe add in Epoch???

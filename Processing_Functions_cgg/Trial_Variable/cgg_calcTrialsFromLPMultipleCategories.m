@@ -4,7 +4,7 @@ function [TrialBinCell,TrialBinName] = cgg_calcTrialsFromLPMultipleCategories(Id
 %%
 Start_Trial = -20;
 End_Trial = 30;
-Trial_Window = 5;
+Trial_Window = 10;
 
 if isempty(Identifiers_Table)
     TrialsFromLP = [];

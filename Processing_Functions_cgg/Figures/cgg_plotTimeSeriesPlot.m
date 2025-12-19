@@ -153,10 +153,10 @@ end
 end
 
 if isfunction
-DecisionIndicatorColors = CheckVararginPairs('DecisionIndicatorColors', {'k','k','k'}, varargin{:});
+DecisionIndicatorColors = CheckVararginPairs('DecisionIndicatorColors', {[0.3,0.3,0.3],[0.3,0.3,0.3],[0.3,0.3,0.3]}, varargin{:});
 else
 if ~(exist('DecisionIndicatorColors','var'))
-DecisionIndicatorColors={'k','k','k'};
+DecisionIndicatorColors={[0.3,0.3,0.3],[0.3,0.3,0.3],[0.3,0.3,0.3]};
 end
 end
 
@@ -165,6 +165,22 @@ wantDecisionIndicators = CheckVararginPairs('wantDecisionIndicators', true, vara
 else
 if ~(exist('wantDecisionIndicators','var'))
 wantDecisionIndicators=true;
+end
+end
+
+if isfunction
+wantSignificanceBars = CheckVararginPairs('wantSignificanceBars', true, varargin{:});
+else
+if ~(exist('wantSignificanceBars','var'))
+wantSignificanceBars=true;
+end
+end
+
+if isfunction
+SignificanceType = CheckVararginPairs('SignificanceType', 'different', varargin{:});
+else
+if ~(exist('SignificanceType','var'))
+SignificanceType='different';
 end
 end
 
@@ -289,6 +305,22 @@ end
 end
 
 if isfunction
+Line_Width_Significance = CheckVararginPairs('Line_Width_Significance', cfg_Plotting.Line_Width, varargin{:});
+else
+if ~(exist('Line_Width_Significance','var'))
+Line_Width_Significance=cfg_Plotting.Line_Width;
+end
+end
+
+if isfunction
+Line_Width_Indicator = CheckVararginPairs('Line_Width_Indicator', cfg_Plotting.Line_Width, varargin{:});
+else
+if ~(exist('Line_Width_Indicator','var'))
+Line_Width_Indicator=cfg_Plotting.Line_Width;
+end
+end
+
+if isfunction
 Title_Size = CheckVararginPairs('Title_Size', cfg_Plotting.Title_Size, varargin{:});
 else
 if ~(exist('Title_Size','var'))
@@ -357,6 +389,14 @@ Indicator_Size = CheckVararginPairs('Indicator_Size', cfg_Plotting.Indicator_Siz
 else
 if ~(exist('Indicator_Size','var'))
 Indicator_Size=cfg_Plotting.Indicator_Size;
+end
+end
+
+if isfunction
+YLimits = CheckVararginPairs('YLimits', [], varargin{:});
+else
+if ~(exist('YLimits','var'))
+YLimits=[];
 end
 end
 %%
@@ -501,9 +541,18 @@ YMin=Inf;
     % p_Error(pidx) = this_p_Error;
     p_Plots = [p_Plots,this_p_Plot];
     p_Error = [p_Error,this_p_Error];
+
+    if wantSignificanceBars
+        if isempty(YLimits)
+            cgg_plotSignificancePeriods(this_Time, this_Data, SignificanceValue, 'level', pidx, 'lineColor', PlotColors{pidx}, 'lineWidth', Line_Width_Significance,'testType', SignificanceType);
+        else
+            cgg_plotSignificancePeriods(this_Time, this_Data, SignificanceValue, 'level', pidx, 'lineColor', PlotColors{pidx}, 'lineWidth', Line_Width_Significance,'testType', SignificanceType,'YLim',YLimits);
+        end
+    end
     end
     hold off
 
+    if isempty(YLimits)
     if YMax == -Inf || YMin == Inf
         YMax = 1;
         YMin = 0;
@@ -519,6 +568,10 @@ YMin=Inf;
     if YUpper == YLower
         YUpper = YUpper + 0.00001;
     end
+    else
+        YUpper = YLimits(2);
+        YLower = YLimits(1);
+    end
 
     if wantDecisionIndicators
     cgg_plotDecisionEpochIndicators(DecisionIndicatorColors,...
@@ -527,7 +580,7 @@ YMin=Inf;
         'wantFeedbackIndicators',wantFeedbackIndicators,...
         'TimeOffset',TimeOffset,...
         'wantIndicatorNames',wantIndicatorNames,...
-        'Line_Width',Line_Width,'Indicator_Size',Indicator_Size);
+        'Line_Width',Line_Width_Indicator,'Indicator_Size',Indicator_Size);
     end
 
     if WantLegend

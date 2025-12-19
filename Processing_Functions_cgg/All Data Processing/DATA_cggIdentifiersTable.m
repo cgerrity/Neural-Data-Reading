@@ -42,7 +42,7 @@ cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
 cfg.ResultsDir=cfg_Results.TargetDir;
 %%
 
-cgg_getIdentifiersTable(cfg,false,'Epoch',Epoch,'AdditionalTarget',AdditionalTarget);
+Identifiers_Table = cgg_getIdentifiersTable(cfg,false,'Epoch',Epoch,'AdditionalTarget',AdditionalTarget);
 
 %%
 

@@ -15,6 +15,8 @@ MacroDimensionRecall=NaN(NumDimension,1);
 MacroDimensionSpecificity=NaN(NumDimension,1);
 MacroDimensionF1=NaN(NumDimension,1);
 MacroDimensionBalancedAccuracy=NaN(NumDimension,1);
+MacroDimensionKappa=NaN(NumDimension,1);
+MacroDimensionMCC=NaN(NumDimension,1);
 
 MacroDimensionTotalAccuracy=NaN(NumDimension,1);
 
@@ -31,6 +33,8 @@ for didx=1:NumDimension
     MacroClassSpecificity=NaN(NumClasses,1);
     MacroClassF1=NaN(NumClasses,1);
     MacroClassBalancedAccuracy=NaN(NumClasses,1);
+    MacroClassKappa=NaN(NumClasses,1);
+    MacroClassMCC=NaN(NumClasses,1);
 
     MacroClassTP=NaN(NumClasses,1);
     MacroClassTN=NaN(NumClasses,1);
@@ -77,11 +81,21 @@ for didx=1:NumDimension
         % ClassBalancedAccuracy=ClassRecall;
         ClassBalancedAccuracy=0.5*(ClassRecall+ClassSpecificity);
 
+        ClassKappa_Numerator = 2 .* (TP * TN - FN * FP);
+        ClassKappa_Denominator = (TP + FP) * (FP + TN) + (TP + FN) * (FN + TN);
+        ClassKappa = ClassKappa_Numerator / (ClassKappa_Denominator);
+
+        ClassMCC_Numerator = (TP * TN) - (FP * FN);
+        ClassMCC_Denominator = sqrt((TP + FP) * (TP + FN) * (TN + FP) * (TN + FN));
+        ClassMCC = ClassMCC_Numerator ./ (ClassMCC_Denominator);
+
         if ~IsPresent
             ClassPrecision = NaN;
             ClassRecall = NaN;
             ClassF1 = NaN;
             ClassBalancedAccuracy=NaN;
+            ClassKappa = NaN;
+            ClassMCC = NaN;
         end
 
         % if IsPresent
@@ -126,6 +140,8 @@ for didx=1:NumDimension
             ClassRecall = NaN;
             ClassF1 = NaN;
             ClassBalancedAccuracy = NaN;
+            ClassKappa = NaN;
+            ClassMCC = NaN;
         end
         
 
@@ -150,6 +166,8 @@ for didx=1:NumDimension
         MacroClassSpecificity(cidx)=ClassSpecificity;
         MacroClassF1(cidx)=ClassF1;
         MacroClassBalancedAccuracy(cidx)=ClassBalancedAccuracy;
+        MacroClassKappa(cidx)=ClassKappa;
+        MacroClassMCC(cidx)=ClassMCC;
 
         MacroClassTP(cidx)=TP;
         MacroClassTN(cidx)=TN;
@@ -175,13 +193,17 @@ for didx=1:NumDimension
     % MacroDimensionSpecificity(didx)=mean(MacroClassSpecificity);
     MacroDimensionF1(didx)=mean(MacroClassF1,"omitnan");
     MacroDimensionBalancedAccuracy(didx)=mean(MacroClassBalancedAccuracy,"omitnan");
+    MacroDimensionKappa(didx)=mean(MacroClassKappa,"omitnan");
+    MacroDimensionMCC(didx)=mean(MacroClassMCC,"omitnan");
 
 end
 
 MicroAccuracy=(Global_TP+Global_TN)/(Global_TP+Global_TN+Global_FP+Global_FN);
 MicroPrecision=(Global_TP)/(Global_TP+Global_FP);
 MicroRecall=(Global_TP)/(Global_TP+Global_FN);
+MicroSpecificity=(Global_TN)/(Global_TN+Global_FP);
 MicroF1=2*(MicroPrecision*MicroRecall)/(MicroPrecision+MicroRecall);
+MicroBalancedAccuracy=0.5*(MicroRecall+MicroSpecificity);
 
 MacroTotalAccuracy=mean(MacroDimensionTotalAccuracy);
 
@@ -191,6 +213,8 @@ MacroRecall=mean(MacroDimensionRecall);
 MacroSpecificity=mean(MacroDimensionSpecificity);
 MacroF1=mean(MacroDimensionF1);
 MacroBalancedAccuracy=mean(MacroDimensionBalancedAccuracy);
+MacroKappa=mean(MacroDimensionKappa);
+MacroMCC=mean(MacroDimensionMCC);
 
 %% Fix catastrophic predictions
 
@@ -236,6 +260,18 @@ else
     MacroBalancedAccuracy=mean(MacroDimensionBalancedAccuracy,"all","omitmissing");
 end
 
+if isnan(MacroKappa) && IsValidCM
+    MacroKappa = 0;
+else
+    MacroKappa=mean(MacroDimensionKappa,"all","omitmissing");
+end
+
+if isnan(MacroMCC) && IsValidCM
+    MacroMCC = 0;
+else
+    MacroMCC=mean(MacroDimensionMCC,"all","omitmissing");
+end
+
 %%
 
 LabelMetrics=struct();
@@ -244,6 +280,7 @@ LabelMetrics.MicroAccuracy=MicroAccuracy;
 LabelMetrics.MicroPrecision=MicroPrecision;
 LabelMetrics.MicroRecall=MicroRecall;
 LabelMetrics.MicroF1=MicroF1;
+LabelMetrics.MicroBalancedAccuracy=MicroBalancedAccuracy;
 
 LabelMetrics.MacroAccuracy=MacroAccuracy;
 LabelMetrics.MacroPrecision=MacroPrecision;
@@ -251,6 +288,8 @@ LabelMetrics.MacroRecall=MacroRecall;
 LabelMetrics.MacroSpecificity=MacroSpecificity;
 LabelMetrics.MacroF1=MacroF1;
 LabelMetrics.MacroBalancedAccuracy=MacroBalancedAccuracy;
+LabelMetrics.MacroKappa=MacroKappa;
+LabelMetrics.MacroMCC=MacroMCC;
 
 LabelMetrics.MacroTotalAccuracy=MacroTotalAccuracy;
 

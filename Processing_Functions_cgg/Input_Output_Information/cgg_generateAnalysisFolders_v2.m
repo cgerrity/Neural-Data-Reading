@@ -59,6 +59,13 @@ cfg.Epoch.Analysis.AnalysisType.AnalysisTypeSubField.Session.AnalysisTypeSubSubF
 
 end % End for whether to make the Fold Folder
 end % End for whether to make the Analysis Type Sub Sub Field Folder
+else
+if ~isempty(AnalysisTypeSubSubField)
+% Make the Analysis Type Sub Field folder name
+cfg_tmp=cfg.Epoch.Analysis.AnalysisType.AnalysisTypeSubField;
+[cfg_tmp,~] = cgg_generateFolderAndPath(AnalysisTypeSubSubField,'AnalysisTypeSubSubField',cfg_tmp,'WantDirectory',WantDirectory);
+cfg.Epoch.Analysis.AnalysisType.AnalysisTypeSubField=cfg_tmp;
+end % End for whether to make the Analysis Type Sub Sub Field Folder
 end % End for whether to make the Session Folder
 end % End for whether to make the Analysis Type Sub Field Folder
 
