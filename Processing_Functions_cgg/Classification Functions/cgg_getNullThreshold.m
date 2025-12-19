@@ -83,7 +83,15 @@ for i = 1:width(ThresholdTable)
         ThresholdTable{:, i} = fillmissing(ThresholdTable{:, i}, 'constant', Inf);
     end
 end
+
+TrialFilter_Value = ThresholdTable.TrialFilter_Value;
+TrialFilter_Value_String = cellfun(@(x) join(string(x),'/'),TrialFilter_Value);
+ThresholdTable.TrialFilter_Value = TrialFilter_Value_String;
 ThresholdTable = unique(ThresholdTable);
+TrialFilter_Value_String = ThresholdTable.TrialFilter_Value;
+TrialFilter_Value = arrayfun(@(x) str2double(split(x,'/'))',TrialFilter_Value_String,"UniformOutput",false);
+ThresholdTable.TrialFilter_Value = TrialFilter_Value;
+
 for i = 1:width(ThresholdTable)
     if isnumeric(ThresholdTable{:, i})
         ThresholdTable{isinf(ThresholdTable{:, i}), i} = NaN;
@@ -161,18 +169,25 @@ TargetFilter = ThresholdTable{tidx,"TargetFilter"};
     'MatchType',MatchType,'TargetFilter',TargetFilter);
 
 % this_Counter = 0;
-while ~IsComplete
-    % this_Counter = this_Counter + 1;
-    % fprintf("??? ~IsComplete %d; Counter: %d\n",~IsComplete,this_Counter);
-    cgg_getNullTable(CM_Table,cfg_Epoch,this_cfg_Encoder,...
+
+if ~IsComplete
+    NullTable = cgg_getNullTable(CM_Table,cfg_Epoch,this_cfg_Encoder,...
         'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,...
-        'MatchType',MatchType,'TargetFilter',TargetFilter);
-    pause(60);
-    [IsComplete,NullTable] = cgg_isNullTableComplete(CM_Table,cfg_Epoch,...
-        this_cfg_Encoder,'TrialFilter',TrialFilter,...
-        'TrialFilter_Value',TrialFilter_Value,...
-        'MatchType',MatchType,'TargetFilter',TargetFilter);
+        'MatchType',MatchType,'TargetFilter',TargetFilter,...
+        'ObtainWithoutSaving',true);
 end
+% while ~IsComplete
+%     % this_Counter = this_Counter + 1;
+%     % fprintf("??? ~IsComplete %d; Counter: %d\n",~IsComplete,this_Counter);
+%     cgg_getNullTable(CM_Table,cfg_Epoch,this_cfg_Encoder,...
+%         'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,...
+%         'MatchType',MatchType,'TargetFilter',TargetFilter);
+%     pause(60);
+%     [IsComplete,NullTable] = cgg_isNullTableComplete(CM_Table,cfg_Epoch,...
+%         this_cfg_Encoder,'TrialFilter',TrialFilter,...
+%         'TrialFilter_Value',TrialFilter_Value,...
+%         'MatchType',MatchType,'TargetFilter',TargetFilter);
+% end
 
 DataNumber_Null = NullTable.DataNumber;
 this_DataNumber = CM_Table.DataNumber;
@@ -187,8 +202,15 @@ waitbar.Value.update();
 end
 
 %%
-
-ThresholdTable{:, "TrialFilter_Value"} = fillmissing(ThresholdTable{:, "TrialFilter_Value"}, 'constant', Inf);
+% TrialFilter_Value = ThresholdTable.TrialFilter_Value;
+% TrialFilter_Value_String = cellfun(@(x) join(string(x),'/'),TrialFilter_Value);
+% ThresholdTable.TrialFilter_Value = TrialFilter_Value_String;
+% ThresholdTable = unique(ThresholdTable);
+% TrialFilter_Value_String = ThresholdTable.TrialFilter_Value;
+% TrialFilter_Value = arrayfun(@(x) str2double(split(x,'/'))',TrialFilter_Value_String,"UniformOutput",false);
+% ThresholdTable.TrialFilter_Value = TrialFilter_Value;
+%%
+% ThresholdTable{:, "TrialFilter_Value"} = fillmissing(ThresholdTable{:, "TrialFilter_Value"}, 'constant', Inf);
 % IA_PassTable{:, "TrialFilter_Value"} = fillmissing(IA_PassTable{:, "TrialFilter_Value"}, 'constant', Inf);
 % aaa = join(IA_PassTable,ThresholdTable);
 
