@@ -2,15 +2,55 @@ function cfg = PARAMETERS_cggImportanceAnalysis(varargin)
 %PARAMETERS_CGGIMPORTANCEANALYSIS Summary of this function goes here
 %   Detailed explanation goes here
 
+isfunction=exist('varargin','var');
+
+if isfunction
+TrialFilter = CheckVararginPairs('TrialFilter', [], varargin{:});
+else
+if ~(exist('TrialFilter','var'))
+TrialFilter=[];
+end
+end
+
+if isfunction
+LabelClassFilter = CheckVararginPairs('LabelClassFilter', '', varargin{:});
+else
+if ~(exist('LabelClassFilter','var'))
+LabelClassFilter='';
+end
+end
+
+if isfunction
+MatchType = CheckVararginPairs('MatchType', 'Scaled-BalancedAccuracy', varargin{:});
+else
+if ~(exist('MatchType','var'))
+MatchType='Scaled-BalancedAccuracy';
+end
+end
+
 % ZZZ = CheckVararginPairs('ZZZ', NaN, varargin{:});
 %% Null Table Variables
 
 % The maximum number of iterations to get for the Null Distributions
 MaxNumIter = 1000;
 
+if any(strcmp(TrialFilter,'Multi Trials From Learning Point'))
+    MaxNumIter = 4;
+elseif ~isempty(char(LabelClassFilter))
+    MaxNumIter = 4;
+elseif ~(strcmp(MatchType,'Scaled-BalancedAccuracy') ...
+        || strcmp(MatchType,'Scaled-MicroAccuracy'))
+    MaxNumIter = 4;
+end
+
 % The minimum number of iterations to get for each pass through of the null
 % table
 NumIter=100;
+
+% Minimum number of iterations that should be done in parallel. If the
+% number of iterations is less than this value each iteration is done in
+% sequence.
+MinimumParallelIter = 5;
 
 % The minimum age of a lock file before it is removed and a new worker
 % begins
