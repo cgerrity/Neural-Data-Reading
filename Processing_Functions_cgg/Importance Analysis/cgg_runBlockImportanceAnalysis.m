@@ -58,6 +58,7 @@ if strcmp(Target,"Dimension")
     IsQuaddle = true;
 end
 
+[TrialFilter,TrialFilter_Value] = cgg_getPackedTrialFilter(TrialFilter,TrialFilter_Value,'Unpack');
 %%
 
 % EpochDir_Main = cgg_getDirectory(cfg_Epoch.TargetDir,'Epoch');
