@@ -411,7 +411,15 @@ end
 % Selecting Other Value
 
 if ~isempty(OtherValue)
-this_OtherValue=Target.(OtherValue);
+    if iscell(OtherValue)
+        this_OtherValue = cell(1,length(OtherValue));
+        for oidx = 1:length(OtherValue)
+            this_OtherValueName = OtherValue{oidx};
+            this_OtherValue{oidx} = Target.(this_OtherValueName);
+        end
+    else
+        this_OtherValue=Target.(OtherValue);
+    end
 end
 
 %% Assigning the Target

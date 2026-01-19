@@ -21,6 +21,8 @@ switch VariableSet
         PlotSubFolder='Correct';
     case 'Prediction Error'
         PlotSubFolder='Prediction Error';
+    case 'Prediction Error Target'
+        PlotSubFolder='Prediction Error - Target';
     case 'Positive Prediction Error'
         PlotSubFolder = 'Positive Prediction Error';
     case 'Negative Prediction Error'
@@ -39,6 +41,10 @@ switch VariableSet
         PlotSubFolder = 'Choice Probability CMB';
     case 'Value RL'
         PlotSubFolder = 'Value RL';
+    case 'Value RL Difference'
+        PlotSubFolder = 'Value RL - Difference';
+    case 'Value RL Target'
+        PlotSubFolder = 'Value RL - Target';
     case 'Value WM'
         PlotSubFolder = 'Value WM';
     case 'WM Weight'
@@ -81,6 +87,8 @@ switch VariableSet
         Target_Fun=@(x) cgg_loadTargetArray(x,'CorrectTrial',true);
     case 'Prediction Error'
         Target_Fun=@(x) mean(cgg_loadTargetArray(x,'PredictionError',true));
+    case 'Prediction Error Target'
+        Target_Fun=@(x) cgg_loadTargetArray(x,'OtherValue','TargetPE');
     case 'Positive Prediction Error'
         Target_Fun_PE=@(x) mean(cgg_loadTargetArray(x,'PredictionError',true));
         Target_Fun = @(x) cgg_setRangeToNaN(Target_Fun_PE(x),'Positive');
@@ -104,6 +112,12 @@ switch VariableSet
         Target_Fun = @(x) max(cgg_getDataFromIndices(Target_Fun_ChoiceProbability(x),7:9));
     case 'Value RL'
         Target_Fun=@(x) mean(cgg_loadTargetArray(x,'OtherValue','Value_ObjectChosen_RL'));
+    case 'Value RL Difference'
+        TargetValue_Fun=@(x) cgg_loadTargetArray(x,'OtherValue','TargetValue');
+        DistractorValuesMean_Fun=@(x) cgg_loadTargetArray(x,'OtherValue','DistractorValuesMean');
+        Target_Fun = @(x) TargetValue_Fun(x) - DistractorValuesMean_Fun(x);
+    case 'Value RL Target'
+        Target_Fun=@(x) cgg_loadTargetArray(x,'OtherValue','TargetValue');
     case 'Value WM'
         Target_Fun=@(x) mean(cgg_loadTargetArray(x,'OtherValue','Value_ObjectChosen_WM'));
     case 'WM Weight'

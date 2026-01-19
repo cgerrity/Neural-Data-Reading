@@ -16,12 +16,15 @@ cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
     'Epoch',Epoch);
 cfg_Folders.ResultsDir=cfg_Results.TargetDir;
 
-AggregateTargetPath = cgg_getDirectory(cfg_Folders.ResultsDir,'Target');
+AggregateTargetPath = cgg_getDirectory(cfg_Folders.TargetDir,'Target');
 
 Identifiers_Table = cgg_getIdentifiersTable(cfg_Folders,false,'Epoch',Epoch);
 
 %%
-UpdateFunction=@(x) x;
+
+LearningModelTable = cgg_getNewLearningModelVariablesFromTargetPath(AggregateTargetPath);
+%%
+UpdateFunction=@(x) cgg_augmentTargetWithLearningModel(x, LearningModelTable);
 
 %%
 

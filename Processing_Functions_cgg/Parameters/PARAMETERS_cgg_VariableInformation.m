@@ -36,6 +36,8 @@ switch VariableSet
         VariableInformation(5,:) = {0,"First","text"};
     case 'Prediction Error'
         VariableInformation(1,:) = {1,"Prediction Error","text"};
+    case 'Prediction Error Target'
+        VariableInformation(1,:) = {1,"Prediction Error","text"};
     case 'Positive Prediction Error'
         VariableInformation(1,:) = {1,"Positive Prediction Error","text"};
     case 'Negative Prediction Error'
@@ -55,6 +57,10 @@ switch VariableSet
         VariableInformation(1,:) = {1,"Choice Probability CMB","text"};
     case 'Value RL'
         VariableInformation(1,:) = {1,"Value RL","text"};
+    case 'Value RL Difference'
+        VariableInformation(1,:) = {1,"Value RL - Difference","text"};
+    case 'Value RL Target'
+        VariableInformation(1,:) = {1,"Value RL - Target","text"};
     case 'Value WM'
         VariableInformation(1,:) = {1,"High","text"};
         VariableInformation(2,:) = {0.333333,"Low","text"};
