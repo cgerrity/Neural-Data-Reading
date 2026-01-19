@@ -117,7 +117,9 @@ Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun);
 
 %% Data Distributions to Analyze
 
-UniqueDataIdentifiers=gather(tall(Target_ds));
+% UniqueDataIdentifiers=gather(tall(Target_ds));
+UniqueDataIdentifiers = readall(Target_ds, 'UseParallel', true);
+UniqueDataIdentifiers_Test = vertcat(UniqueDataIdentifiers{:});
 
 Identifiers=cellfun(@(x) x{1},UniqueDataIdentifiers,'UniformOutput',false);
 

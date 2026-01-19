@@ -12,6 +12,12 @@ AdditionalTargetIDX = AdditionalTargetIDX + 1;
 AdditionalTarget{AdditionalTargetIDX} = 'Prediction Error';
 AdditionalTargetIDX = AdditionalTargetIDX + 1;
 AdditionalTarget{AdditionalTargetIDX} = 'Choice Probability CMB';
+AdditionalTargetIDX = AdditionalTargetIDX + 1;
+AdditionalTarget{AdditionalTargetIDX} = 'Prediction Error Target';
+AdditionalTargetIDX = AdditionalTargetIDX + 1;
+AdditionalTarget{AdditionalTargetIDX} = 'Value RL Difference';
+AdditionalTargetIDX = AdditionalTargetIDX + 1;
+AdditionalTarget{AdditionalTargetIDX} = 'Value RL Target';
 %% Augment Identifiers Table
 AugmentIDX = 0;
 AugmentFunctions = cell(AugmentIDX,2);
