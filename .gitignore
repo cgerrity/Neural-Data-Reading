@@ -1,1 +1,8 @@
 *.asv
+*.fig
+*.pdf
+*.mat
+**.asv
+**.fig
+**.pdf
+**.mat
