@@ -1,13 +1,14 @@
 clc; clear; close all;
 %%
 
-TrialFilters = {"Prediction Error Category","Learned"};
+TrialFilters = {"Value Difference Category"};
 StatusType = "Session";
 DeleteFilters = {};
 
 Target = 'Dimension';
 Epoch = 'Decision';
 TotalFolds = 10;
+MatchTypes = ["Scaled-BalancedAccuracy","Scaled-MicroAccuracy"];
 MatchTypes = ["Scaled-BalancedAccuracy","Scaled-MicroAccuracy"];
 cfg_IA = PARAMETERS_cggImportanceAnalysis('TrialFilter',string(TrialFilters),'MatchType',MatchTypes(1));
 MaxNumIter = cfg_IA.MaxNumIter;
@@ -39,6 +40,12 @@ switch TrialFilter
         TrialFilter_Values = [0,1,2,3,4];
     case 'Previous'
         TrialFilter_Values = [0,1];
+    case 'Value Difference Category'
+        TrialFilter_Values = [0,1,2,3];
+    case 'Target Value Category'
+        TrialFilter_Values = [0,1,2,3];
+    case 'Target Prediction Error Category'
+        TrialFilter_Values = [0,1,2,3];
 end
 TrialFilter_Values_Cell{tidx} = TrialFilter_Values;
 end

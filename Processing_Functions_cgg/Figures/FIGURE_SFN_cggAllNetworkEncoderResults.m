@@ -16,16 +16,18 @@ EpochName = 'Decision';
 WantResults = false;
 WantAnalysis = false;
 WantDelay = false;
-WantLabelClassFilter = true;
+WantLabelClassFilter = false;
 % MatchType='Scaled-MicroAccuracy';
 % % MatchType='Scaled-BalancedAccuracy';
 % MatchType_Attention=MatchType;
 %%
 
 cfg_OverwritePlot = struct();
-cfg_OverwritePlot.TimeCut = [-1.25,1];
-cfg_OverwritePlot.AccuracyCut = [-0.05,0.2];
-cfg_OverwritePlot.PlotFolder = 'SFN Panels';
+cfg_OverwritePlot.TimeCut = [-1.25,0.5];
+cfg_OverwritePlot.TimeAdjustment = 0.7;
+% cfg_OverwritePlot.AccuracyCut = [-0.05,0.15];
+cfg_OverwritePlot.AccuracyCut = [-0.025,0.1];
+cfg_OverwritePlot.PlotFolder = 'Attetional Panels';
 cfg_OverwritePlot.Line_Width_Indicator = 2;
 cfg_OverwritePlot.WindowFigureSizeOverwrite = [5,5];
 cfg_OverwritePlot.BarFigureSizeOverwrite = [7,9];
@@ -36,7 +38,7 @@ cfg_OverwritePlot.wantSignificanceBars = true;
 cfg_OverwritePlot.wantCI = false;
 cfg_OverwritePlot.AreaColors = {'#b4d996','#c7add3','#57caee'};
 cfg_OverwritePlot.WantSubTitle = false;
-cfg_OverwritePlot.WantTitle = "Stand In";
+cfg_OverwritePlot.WantTitle = '';
 %%
 FilterColumn_All = {}; ColumnCounter = 1;
 % FilterColumn_All{ColumnCounter}={'All'};
@@ -46,8 +48,8 @@ FilterColumn_All = {}; ColumnCounter = 1;
 FilterColumn_All{ColumnCounter}={'Learned'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Trials From Learning Point Category'};
-ColumnCounter = ColumnCounter + 1;
-FilterColumn_All{ColumnCounter}={'Prediction Error Category'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Prediction Error Category'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Gain','Loss'};
 % ColumnCounter = ColumnCounter + 1;
@@ -86,6 +88,12 @@ FilterColumn_All{ColumnCounter}={'Prediction Error Category'};
 % FilterColumn_All{ColumnCounter}={'Dimensionality','Multi Trials From Learning Point'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Gain','Loss','Multi Trials From Learning Point'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Value Difference Category'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Target Value Category'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Target Prediction Error Category'};
 
 % SignificanceValues = [1,0.1,0.05,0.025,0.01,0.001,0.0005,0.0001];
 SignificanceValues = 0.001;
@@ -218,11 +226,11 @@ for idx = 1:length(SignificanceValues)
     %     TimeRangeString = sprintf(", Time [%.2f to %.2f]",TimeRange);
     % end
     % fprintf("??? Number of Sessions %d For Significance %.4f, Trial Filter %s%s\n",length(CombinedFullTable.("Session Number"){1}),SignificanceValue,join(string(FilterColumn)),TimeRangeString);
-    cgg_plotBlockImportanceAnalysis(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
-    % cgg_plotSplitAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
-    % cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
-    % cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
-    % cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    % cgg_plotBlockImportanceAnalysis(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    cgg_plotSplitAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
 end
 
 % for idx = 1:length(SignificanceValues)

@@ -72,6 +72,7 @@ end
 
 %% Plotting Overwrites from Standard
 TimeCut = [];
+TimeAdjustment = 0;
 AccuracyCut = [];
 OverwritePlotFolder = '';
 Line_Width_Indicator = [];
@@ -84,8 +85,11 @@ WantSubTitle = [];
 WantTitle = [];
 LineStyle = [];
 
+if isfield(cfg_OverwritePlot,'TimeAdjustment')
+TimeAdjustment = cfg_OverwritePlot.TimeAdjustment;
+end
 if isfield(cfg_OverwritePlot,'TimeCut')
-TimeCut = cfg_OverwritePlot.TimeCut;
+TimeCut = cfg_OverwritePlot.TimeCut + TimeAdjustment;
 end
 if isfield(cfg_OverwritePlot,'AccuracyCut')
 AccuracyCut = cfg_OverwritePlot.AccuracyCut;
@@ -151,7 +155,7 @@ ExtraSaveTerm = cgg_setNaming(cfg.ExtraSaveTerm);
 % MostCommon=cfg.MostCommon;
 Stratified=cfg.Stratified;
 
-Time_Start=cfg.Time_Start;
+Time_Start=cfg.Time_Start + TimeAdjustment;
 SamplingFrequency=cfg.SamplingFrequency;
 DataWidth=cfg.DataWidth/SamplingFrequency;
 WindowStride=cfg.WindowStride/SamplingFrequency;

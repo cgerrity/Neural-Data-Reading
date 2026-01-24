@@ -29,8 +29,8 @@ FilterColumn_All = {}; ColumnCounter = 1;
 FilterColumn_All{ColumnCounter}={'Learned'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Trials From Learning Point Category'};
-% ColumnCounter = ColumnCounter + 1;
-% FilterColumn_All{ColumnCounter}={'Prediction Error Category'};
+ColumnCounter = ColumnCounter + 1;
+FilterColumn_All{ColumnCounter}={'Prediction Error Category'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Gain','Loss'};
 % ColumnCounter = ColumnCounter + 1;
@@ -69,9 +69,15 @@ FilterColumn_All{ColumnCounter}={'Learned'};
 % FilterColumn_All{ColumnCounter}={'Dimensionality','Multi Trials From Learning Point'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Gain','Loss','Multi Trials From Learning Point'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Value Difference Category'};
+ColumnCounter = ColumnCounter + 1;
+FilterColumn_All{ColumnCounter}={'Target Value Category'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Target Prediction Error Category'};
 
-SignificanceValues = [1,0.1,0.05,0.025,0.01,0.001,0.0001];
-% SignificanceValues = 0.001;
+% SignificanceValues = [1,0.1,0.05,0.025,0.01,0.001,0.0001];
+SignificanceValues = 0.0001;
 % TimeRanges = {[],[-1.5,0],[0,1.5]};
 TimeRanges = {[]};
 
@@ -195,13 +201,13 @@ for idx = 1:length(SignificanceValues)
     % cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg);
     % cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg);
     % cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg);
-    CombinedFullTable = cgg_getSpecifiedFullTableSessions(this_FullTable,'SignificanceValue',SignificanceValue,'WantAllFromGroup',true,'cfg_Encoder',this_cfg,'TimeRange',TimeRange);
-    cgg_plotLabelClass(CombinedFullTable,this_cfg);
+    CombinedFullTable = cgg_getSpecifiedFullTableSessions(this_FullTable,'SignificanceValue',SignificanceValue,'WantAllFromGroup',true,'cfg_Encoder',this_cfg,'TimeRange',TimeRange,'WantAllFromBest',true);
+    % cgg_plotLabelClass(CombinedFullTable,this_cfg);
     % cgg_plotBlockImportanceAnalysis(CombinedFullTable,cfg);
-    % cgg_plotSplitAccuracy(CombinedFullTable,this_cfg);
-    % cgg_plotSplitWindowedAccuracy(CombinedFullTable,this_cfg);
-    % cgg_plotAttentionalSplitAccuracy(CombinedFullTable,this_cfg);
-    % cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,this_cfg);
+    cgg_plotSplitAccuracy(CombinedFullTable,this_cfg);
+    cgg_plotSplitWindowedAccuracy(CombinedFullTable,this_cfg);
+    cgg_plotAttentionalSplitAccuracy(CombinedFullTable,this_cfg);
+    cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,this_cfg);
 end
 end
 end
