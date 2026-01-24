@@ -18,11 +18,13 @@ AdditionalTargetIDX = AdditionalTargetIDX + 1;
 AdditionalTarget{AdditionalTargetIDX} = 'Value RL Difference';
 AdditionalTargetIDX = AdditionalTargetIDX + 1;
 AdditionalTarget{AdditionalTargetIDX} = 'Value RL Target';
+AdditionalTargetIDX = AdditionalTargetIDX + 1;
+AdditionalTarget{AdditionalTargetIDX} = 'Monkey';
 %% Augment Identifiers Table
 AugmentIDX = 0;
 AugmentFunctions = cell(AugmentIDX,2);
 AugmentIDX = AugmentIDX + 1;
-AugmentFunctions{AugmentIDX,1} = @cgg_getCorrectedPreviousOutcome;
+AugmentFunctions{AugmentIDX,1} = @(x) cgg_getCorrectedPreviousOutcome(x,false);
 AugmentFunctions{AugmentIDX,2} = "Previous Outcome Corrected";
 AugmentIDX = AugmentIDX + 1;
 AugmentFunctions{AugmentIDX,1} = @(x) cgg_getCorrectedPreviousOutcome(x,true);
@@ -33,6 +35,15 @@ AugmentFunctions{AugmentIDX,2} = "Previous Trial Effect";
 AugmentIDX = AugmentIDX + 1;
 AugmentFunctions{AugmentIDX,1} = @cgg_calcTrialsFromLPMultipleCategories;
 AugmentFunctions{AugmentIDX,2} = "Multi Trials From Learning Point";
+AugmentIDX = AugmentIDX + 1;
+AugmentFunctions{AugmentIDX,1} = @cgg_calcTargetValueCategories;
+AugmentFunctions{AugmentIDX,2} = "Target Value Category";
+AugmentIDX = AugmentIDX + 1;
+AugmentFunctions{AugmentIDX,1} = @cgg_calcTargetPredictionErrorCategory;
+AugmentFunctions{AugmentIDX,2} = "Target Prediction Error Category";
+AugmentIDX = AugmentIDX + 1;
+AugmentFunctions{AugmentIDX,1} = @cgg_calcValueDifferenceCategory;
+AugmentFunctions{AugmentIDX,2} = "Value Difference Category";
 
 %%
 cfg_Sessions = DATA_cggAllSessionInformationConfiguration;

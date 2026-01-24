@@ -34,7 +34,10 @@ end
 % The maximum number of iterations to get for the Null Distributions
 MaxNumIter = 1000;
 
-if any(strcmp(TrialFilter,'Multi Trials From Learning Point'))
+if any(strcmp(TrialFilter,'Multi Trials From Learning Point')) || ...
+    any(strcmp(TrialFilter,'Value Difference Category')) || ...
+    any(strcmp(TrialFilter,'Target Value Category')) || ...
+    any(strcmp(TrialFilter,'Target Prediction Error Category'))
     MaxNumIter = 4;
 elseif ~isempty(char(LabelClassFilter))
     MaxNumIter = 4;

@@ -91,25 +91,41 @@ if isempty(Identifiers)||isempty(IdentifierName)
 TargetAggregateDir=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Target.path;
 Target_Fun=@(x) cgg_loadTargetArray(x);
 
-if ~isempty(AdditionalTarget)
+Target_Fun_Values = @(x) cgg_getOutputFromCell(cgg_getDataFromIndices(Target_Fun(x),1));
+Target_Fun_Names = @(x) cgg_getOutputFromCell(cgg_getDataFromIndices(Target_Fun(x),2));
 
+Target_Fun_Table = @(x) array2table(Target_Fun_Values(x),'VariableNames',Target_Fun_Names(x));
+
+if ~isempty(AdditionalTarget)
+    AdditionalTargetFun_Table = @(x) [];
     for tidx = 1:length(AdditionalTarget)
         this_Target = AdditionalTarget{tidx};
         this_cfg_VariableSet = PARAMETERS_cggVariableToData(this_Target);
         this_Target_Fun = this_cfg_VariableSet.Target_Fun;
-Target_Fun = @(x) {[cell2mat(cgg_getDataFromIndices(Target_Fun(x),1)),...
-    this_Target_Fun(x)], ...
-    [cgg_getOutputFromCell(cgg_getDataFromIndices(Target_Fun(x),2)), ...
-    string(this_Target)]};
+        this_Target_Fun_Table = @(x) array2table(this_Target_Fun(x),'VariableNames',string(this_Target));
+
+        AdditionalTargetFun_Table = @(x) [AdditionalTargetFun_Table(x), this_Target_Fun_Table(x)];
+        
+% Target_Fun = @(x) {[cell2mat(cgg_getDataFromIndices(Target_Fun(x),1)),...
+%     this_Target_Fun(x)], ...
+%     [cgg_getOutputFromCell(cgg_getDataFromIndices(Target_Fun(x),2)), ...
+%     string(this_Target)]};
 % Target_Fun = @(x) {[num2cell(cell2mat(cgg_getDataFromIndices(Target_Fun(x),1))),...
 %     this_Target_Fun(x)], ...
 %     [cgg_getOutputFromCell(cgg_getDataFromIndices(Target_Fun(x),2)), ...
 %     string(this_Target)]};
     end
 
+    Target_Fun_Table = @(x) [Target_Fun_Table(x),AdditionalTargetFun_Table(x)];
+    
+    % Target_Fun = @(x) {[cell2mat(cgg_getDataFromIndices(Target_Fun(x),1)),...
+    % AdditionalTargetFun_Value(x)], ...
+    % [cgg_getOutputFromCell(cgg_getDataFromIndices(Target_Fun(x),2)), ...
+    % AdditionalTargetFun_Name(x)]};
+
 end
 
-Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun);
+Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun_Table);
 
 % if wantSubset
 % Target_ds=subset(Target_ds,IndicesPartition);
@@ -119,23 +135,27 @@ Target_ds = fileDatastore(TargetAggregateDir,"ReadFcn",Target_Fun);
 
 % UniqueDataIdentifiers=gather(tall(Target_ds));
 UniqueDataIdentifiers = readall(Target_ds, 'UseParallel', true);
-UniqueDataIdentifiers_Test = vertcat(UniqueDataIdentifiers{:});
+Identifiers_Table = vertcat(UniqueDataIdentifiers{:});
+Identifiers_Table = renamevars(Identifiers_Table, "Data Number", "DataNumber");
 
-Identifiers=cellfun(@(x) x{1},UniqueDataIdentifiers,'UniformOutput',false);
-
-IdentifierName=UniqueDataIdentifiers{1}{2};
-end
-
-%%
+% Identifiers=cellfun(@(x) x{1},UniqueDataIdentifiers,'UniformOutput',false);
+% 
+% IdentifierName=UniqueDataIdentifiers{1}{2};
+else
 
 InputIdentifiers=cell2mat(Identifiers);
-% InputIdentifiers=vertcat(Identifiers{:});
 InputNames=cellstr(IdentifierName);
 InputNames{strcmp(InputNames,'Data Number')}='DataNumber';
 
 Identifiers_Table=array2table(InputIdentifiers,'VariableNames',InputNames);
+end
 
 save(Identifiers_TablePathNameExt,"Identifiers_Table","-v7.3");
+
+end % End has all targets
+
+if any(strcmp(Identifiers_Table.Properties.VariableNames,"Data Number"))
+    Identifiers_Table = renamevars(Identifiers_Table, "Data Number", "DataNumber");
 end
 
 if wantSubset

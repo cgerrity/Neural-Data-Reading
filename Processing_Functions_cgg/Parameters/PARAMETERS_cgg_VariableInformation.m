@@ -78,6 +78,21 @@ switch VariableSet
         VariableInformation(2,:) = {2,"Medium","text"};
         VariableInformation(3,:) = {3,"High","text"};
         VariableInformation(4,:) = {0,"Unlearned","text"};
+    case 'Target Prediction Error Category'
+        VariableInformation(1,:) = {1,"Low","text"};
+        VariableInformation(2,:) = {2,"Medium","text"};
+        VariableInformation(3,:) = {3,"High","text"};
+        VariableInformation(4,:) = {0,"Unlearned","text"};
+    case 'Target Value Category'
+        VariableInformation(1,:) = {1,"Low","text"};
+        VariableInformation(2,:) = {2,"Medium","text"};
+        VariableInformation(3,:) = {3,"High","text"};
+        VariableInformation(4,:) = {0,"Unlearned","text"};
+    case 'Value Difference Category'
+        VariableInformation(1,:) = {1,"Low","text"};
+        VariableInformation(2,:) = {2,"Medium","text"};
+        VariableInformation(3,:) = {3,"High","text"};
+        VariableInformation(4,:) = {0,"Unlearned","text"};
     case 'Monkey'
         VariableInformation(1,:) = {1,"Fr","text"};
         VariableInformation(2,:) = {2,"Wo","text"};

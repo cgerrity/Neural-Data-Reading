@@ -191,3 +191,209 @@ end
 hold off;
 legend;
 title('Prediction Error');
+
+%%
+close all;
+sel_Correct = false;
+sel_Dim = 3;
+wantAllVariables = false;
+wantVariableSubset = false;
+sel_VariableSubset = "Prediction Error Target";
+wantAllDims = true;
+wantAllOutcomes = true;
+wantNotLearned = false;
+wantUnLearned = false;
+
+sel_Var1 = "VT_cat";
+sel_Var2 = "L";
+
+CorrectIDX = Identifiers_Table.("Correct Trial") == sel_Correct;
+DimensionIDX = Identifiers_Table.("Dimensionality") == sel_Dim;
+NotLearnedIDX = ~(Identifiers_Table.("Learned") == -1);
+UnLearnedIDX = ~(Identifiers_Table.("Target Value Category") == 0);
+
+if wantAllDims
+    DimensionIDX = true(size(DimensionIDX));
+end
+if wantAllOutcomes
+    CorrectIDX = true(size(CorrectIDX));
+end
+if wantNotLearned
+    NotLearnedIDX = true(size(NotLearnedIDX));
+end
+if wantUnLearned
+    UnLearnedIDX = true(size(UnLearnedIDX));
+end
+
+SelectionIDX = CorrectIDX & DimensionIDX & NotLearnedIDX & UnLearnedIDX;
+
+if wantVariableSubset
+T = Identifiers_Table(SelectionIDX,["Prediction Error Target","Target Prediction Error Category"]);
+T.Properties.VariableNames(1) = "PET";
+T.Properties.VariableNames(2) = "PET_cat";
+elseif wantAllVariables
+T = Identifiers_Table(SelectionIDX,["Learned","Absolute Prediction Error","Prediction Error","Prediction Error Category","Prediction Error Target","Value RL Target","Value RL Difference","Target Prediction Error Category","Target Value Category","Value Difference Category"]);
+T.Properties.VariableNames(1) = "L";
+T.Properties.VariableNames(2) = "PE_Abs";
+T.Properties.VariableNames(3) = "PE";
+T.Properties.VariableNames(4) = "PE_cat";
+T.Properties.VariableNames(5) = "PET";
+T.Properties.VariableNames(6) = "VT";
+T.Properties.VariableNames(7) = "VTD";
+T.Properties.VariableNames(8) = "PET_cat";
+T.Properties.VariableNames(9) = "VT_cat";
+T.Properties.VariableNames(10) = "VTD_cat";
+else
+T = Identifiers_Table(SelectionIDX,["Learned","Prediction Error Target","Value RL Target","Value RL Difference","Target Prediction Error Category","Target Value Category","Value Difference Category"]);
+T.Properties.VariableNames(1) = "L";
+T.Properties.VariableNames(2) = "PET";
+T.Properties.VariableNames(3) = "VT";
+T.Properties.VariableNames(4) = "VTD";
+T.Properties.VariableNames(5) = "PET_cat";
+T.Properties.VariableNames(6) = "VT_cat";
+T.Properties.VariableNames(7) = "VTD_cat";
+end
+Z = Identifiers_Table(SelectionIDX,["Dimensionality","Correct Trial"]);
+
+figure;
+corrplot(T, 'Type', 'Spearman', 'TestR', 'on');
+figure;
+corrplot(T, 'Type', 'Kendall', 'TestR', 'on');
+
+R_partial = partialcorr(T{:,:},Z{:,:}, 'Type', 'Spearman', 'Rows', 'pairwise');
+
+figure;
+h = heatmap(R_partial, 'Colormap', parula, 'ColorLimits', [-1 1]);
+h.XDisplayLabels = T.Properties.VariableNames;
+h.YDisplayLabels = T.Properties.VariableNames;
+title('Spearman Partial Correlation (Controlled for Others)');
+
+% 1. Regress Var1 and Var2 against the control variable (Group)
+mdl1 = fitlm(Z, T.(sel_Var1));
+mdl2 = fitlm(Z, T.(sel_Var2));
+
+% 2. Plot the residuals against each other
+figure;
+scatter(mdl1.Residuals.Raw, mdl2.Residuals.Raw, 'filled', 'MarkerFaceAlpha', 0.5);
+grid on;
+xlabel(sprintf('Residuals of %s (controlled for Group)',sel_Var1));
+ylabel(sprintf('Residuals of %s (controlled for Group)',sel_Var2));
+title('Partial Correlation Visualization');
+
+T.Dimensionality = Z.Dimensionality;
+T.Outcome = Z.("Correct Trial");
+lme = fitlme(T, sprintf('%s ~ 1 + %s + (1 + %s | Dimensionality) + (1 + %s | Outcome)',sel_Var1,sel_Var2,sel_Var2,sel_Var2));
+% lme = fitlme(T, sprintf('%s ~ 1 + %s + (1 + %s | Dimensionality)',sel_Var1,sel_Var2,sel_Var2));
+
+% 1. Extract the Global Fixed Effect for your predictor
+% Instead of fixedEffects(sel_Var2), we find the row in the Coefficients table
+idxFixed = strcmp(lme.CoefficientNames, sel_Var2);
+fixedEffect_Slope = lme.Coefficients.Estimate(idxFixed);
+
+% 2. Get random effects and their identification table
+[random_effects, ~, stats] = randomEffects(lme);
+
+% 3. Filter for the slope term and the specific grouping variable
+% Note: In 'stats', the 'Name' column contains the variable name (e.g., sel_Var2)
+% and 'Group' contains the name of the grouping variable (e.g., 'Dimensionality')
+isSlopeForDim = strcmp(stats.Name, sel_Var2) & strcmp(stats.Group, 'Dimensionality');
+relevant_stats = stats(isSlopeForDim, :);
+
+% 4. Calculate Adjusted Slopes for each group in 'Dimensionality'
+% Formula: Global Slope + Group-Specific Offset
+group_levels = relevant_stats.Level; 
+group_offsets = random_effects(isSlopeForDim);
+adjusted_slopes = fixedEffect_Slope + group_offsets;
+
+% 5. Create final summary table
+group_summary = table(group_levels, adjusted_slopes, ...
+    'VariableNames', {'Dimensionality_Level', 'Group_Specific_Slope'});
+
+disp(group_summary);
+
+% 1. Setup figure and basic scatter plot
+figure('Color', 'w', 'Name', 'Mixed-Effects Slope Analysis');
+% We color the points by Dimensionality since that is our primary group of interest
+h = gscatter(T.(sel_Var2), T.(sel_Var1), T.Dimensionality);
+hold on;
+
+% 2. Generate Prediction Lines
+% We create a range of X values (from min to max of your predictor)
+x_range = linspace(min(T.(sel_Var2)), max(T.(sel_Var2)), 100)';
+unique_dims = unique(T.Dimensionality);
+
+% For each group in Dimensionality, we plot the model's predicted line
+for i = 1:length(unique_dims)
+    % Create a temporary table for prediction
+    % Note: We must also provide a value for 'Outcome' since it's in the model.
+    % We'll use the most frequent category or '1' to keep the line consistent.
+    target_dim = repmat(unique_dims(i), 100, 1);
+    const_Outcome = repmat(T.Outcome(1), 100, 1); % Holding 'Outcome' constant
+    
+    tbl_pred = table(target_dim, const_Outcome, x_range, ...
+        'VariableNames', {'Dimensionality', 'Outcome', char(sel_Var2)});
+    
+    % Calculate predictions (y_hat)
+    y_pred = predict(lme, tbl_pred);
+    
+    % Match line color to the scatter points
+    plot(x_range, y_pred, 'LineWidth', 2.5, 'Color', h(i).Color);
+end
+
+% 3. Formatting
+grid on;
+xlabel(sprintf('Predictor: %s', sel_Var2), 'Interpreter', 'none');
+ylabel(sprintf('Response: %s', sel_Var1), 'Interpreter', 'none');
+title({['Mixed-Effects Slopes by Dimensionality'], ...
+       ['Controlled for: ' char(sel_Var2) ' | Grouped by: Dimensionality & Outcome']}, ...
+       'Interpreter', 'none');
+
+% Add a legend entry for the lines if desired
+legend(h, 'Location', 'bestoutside');
+hold off;
+
+% 1. Setup figure and basic scatter plot
+figure('Color', 'w', 'Name', 'Mixed-Effects Slope Analysis');
+% We color the points by Outcome since that is our primary group of interest
+h = gscatter(T.(sel_Var2), T.(sel_Var1), T.Outcome);
+hold on;
+
+% 2. Generate Prediction Lines
+% We create a range of X values (from min to max of your predictor)
+x_range = linspace(min(T.(sel_Var2)), max(T.(sel_Var2)), 100)';
+unique_outcome = unique(T.Outcome);
+
+% For each group in Outcome, we plot the model's predicted line
+for i = 1:length(unique_outcome)
+    % Create a temporary table for prediction
+    % Note: We must also provide a value for 'Correct' since it's in the model.
+    % We'll use the most frequent category or '1' to keep the line consistent.
+    target_dim = repmat(unique_outcome(i), 100, 1);
+    const_dimensionality = repmat(T.Dimensionality(1), 100, 1); % Holding 'Dimensionality' constant
+    
+    tbl_pred = table(target_dim, const_dimensionality, x_range, ...
+        'VariableNames', {'Outcome', 'Dimensionality', char(sel_Var2)});
+    
+    % Calculate predictions (y_hat)
+    y_pred = predict(lme, tbl_pred);
+    
+    % Match line color to the scatter points
+    plot(x_range, y_pred, 'LineWidth', 2.5, 'Color', h(i).Color);
+end
+
+% 3. Formatting
+grid on;
+xlabel(sprintf('Predictor: %s', sel_Var2), 'Interpreter', 'none');
+ylabel(sprintf('Response: %s', sel_Var1), 'Interpreter', 'none');
+title({['Mixed-Effects Slopes by Outcome'], ...
+       ['Controlled for: ' char(sel_Var2) ' | Grouped by: Outcome & Dimensionality']}, ...
+       'Interpreter', 'none');
+
+% Add a legend entry for the lines if desired
+legend(h, 'Location', 'bestoutside');
+hold off;
+
+
+
+% BubbleTable = groupcounts(T,["L","VT-cat"]);
+% bubblechart(BubbleTable,'L','VT-cat','GroupCount');

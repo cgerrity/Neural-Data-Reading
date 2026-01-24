@@ -251,6 +251,7 @@ elseif ~isempty(OtherValue)
 TargetType='OtherValue';
 else
 TargetType='AllTargets'; AllTargets=true;
+fprintf("%s\n",cgg_getOutput(FileName,@fileparts,2));
 end
 
 %% Target Value Selection
