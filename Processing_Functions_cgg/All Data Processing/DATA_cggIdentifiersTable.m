@@ -36,13 +36,13 @@ AugmentIDX = AugmentIDX + 1;
 AugmentFunctions{AugmentIDX,1} = @cgg_calcTrialsFromLPMultipleCategories;
 AugmentFunctions{AugmentIDX,2} = "Multi Trials From Learning Point";
 AugmentIDX = AugmentIDX + 1;
-AugmentFunctions{AugmentIDX,1} = @cgg_calcTargetValueCategories;
+AugmentFunctions{AugmentIDX,1} = @(x) cgg_calcTargetValueCategories(x,'RangeType','EqualCount');
 AugmentFunctions{AugmentIDX,2} = "Target Value Category";
 AugmentIDX = AugmentIDX + 1;
-AugmentFunctions{AugmentIDX,1} = @cgg_calcTargetPredictionErrorCategory;
+AugmentFunctions{AugmentIDX,1} = @(x) cgg_calcTargetPredictionErrorCategory(x,'RangeType','EqualCount');
 AugmentFunctions{AugmentIDX,2} = "Target Prediction Error Category";
 AugmentIDX = AugmentIDX + 1;
-AugmentFunctions{AugmentIDX,1} = @cgg_calcValueDifferenceCategory;
+AugmentFunctions{AugmentIDX,1} = @(x) cgg_calcValueDifferenceCategory(x,'RangeType','EqualCount');
 AugmentFunctions{AugmentIDX,2} = "Value Difference Category";
 
 %%

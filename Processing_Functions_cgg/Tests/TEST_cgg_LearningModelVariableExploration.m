@@ -180,6 +180,8 @@ end
 hold off;
 legend;
 title('Value');
+xlabel('Trial in Block');
+ylabel('Value');
 
 figure;
 plot(1:NumRows,this_PEs{1}, "DisplayName",num2str(AllIDs(1)),"LineWidth",2,"LineStyle",":");
@@ -191,6 +193,8 @@ end
 hold off;
 legend;
 title('Prediction Error');
+xlabel('Trial in Block');
+ylabel('Prediction Error');
 
 %%
 close all;
@@ -329,13 +333,13 @@ for i = 1:length(unique_dims)
     % We'll use the most frequent category or '1' to keep the line consistent.
     target_dim = repmat(unique_dims(i), 100, 1);
     const_Outcome = repmat(T.Outcome(1), 100, 1); % Holding 'Outcome' constant
-    
+
     tbl_pred = table(target_dim, const_Outcome, x_range, ...
         'VariableNames', {'Dimensionality', 'Outcome', char(sel_Var2)});
-    
+
     % Calculate predictions (y_hat)
     y_pred = predict(lme, tbl_pred);
-    
+
     % Match line color to the scatter points
     plot(x_range, y_pred, 'LineWidth', 2.5, 'Color', h(i).Color);
 end
@@ -370,13 +374,13 @@ for i = 1:length(unique_outcome)
     % We'll use the most frequent category or '1' to keep the line consistent.
     target_dim = repmat(unique_outcome(i), 100, 1);
     const_dimensionality = repmat(T.Dimensionality(1), 100, 1); % Holding 'Dimensionality' constant
-    
+
     tbl_pred = table(target_dim, const_dimensionality, x_range, ...
         'VariableNames', {'Outcome', 'Dimensionality', char(sel_Var2)});
-    
+
     % Calculate predictions (y_hat)
     y_pred = predict(lme, tbl_pred);
-    
+
     % Match line color to the scatter points
     plot(x_range, y_pred, 'LineWidth', 2.5, 'Color', h(i).Color);
 end
