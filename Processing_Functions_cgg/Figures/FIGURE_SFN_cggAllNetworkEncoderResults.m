@@ -27,7 +27,7 @@ cfg_OverwritePlot.TimeCut = [-1.25,0.5];
 cfg_OverwritePlot.TimeAdjustment = 0.7;
 % cfg_OverwritePlot.AccuracyCut = [-0.05,0.15];
 cfg_OverwritePlot.AccuracyCut = [-0.025,0.1];
-cfg_OverwritePlot.PlotFolder = 'Attetional Panels';
+cfg_OverwritePlot.PlotFolder = 'Attentional Panels';
 cfg_OverwritePlot.Line_Width_Indicator = 2;
 cfg_OverwritePlot.WindowFigureSizeOverwrite = [5,5];
 cfg_OverwritePlot.BarFigureSizeOverwrite = [7,9];
@@ -39,13 +39,14 @@ cfg_OverwritePlot.wantCI = false;
 cfg_OverwritePlot.AreaColors = {'#b4d996','#c7add3','#57caee'};
 cfg_OverwritePlot.WantSubTitle = false;
 cfg_OverwritePlot.WantTitle = '';
+SetSignificance = false;
 %%
 FilterColumn_All = {}; ColumnCounter = 1;
 % FilterColumn_All{ColumnCounter}={'All'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Dimensionality'};
 % ColumnCounter = ColumnCounter + 1;
-FilterColumn_All{ColumnCounter}={'Learned'};
+% FilterColumn_All{ColumnCounter}={'Learned'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Trials From Learning Point Category'};
 % ColumnCounter = ColumnCounter + 1;
@@ -88,18 +89,18 @@ FilterColumn_All{ColumnCounter}={'Learned'};
 % FilterColumn_All{ColumnCounter}={'Dimensionality','Multi Trials From Learning Point'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Gain','Loss','Multi Trials From Learning Point'};
-% ColumnCounter = ColumnCounter + 1;
-% FilterColumn_All{ColumnCounter}={'Value Difference Category'};
+ColumnCounter = ColumnCounter + 1;
+FilterColumn_All{ColumnCounter}={'Value Difference Category'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Target Value Category'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Target Prediction Error Category'};
 
 % SignificanceValues = [1,0.1,0.05,0.025,0.01,0.001,0.0005,0.0001];
-SignificanceValues = 0.001;
+SignificanceValues = 0.01;
 % TimeRanges = {[],[-1.5,0],[0,1.5]};
 TimeRanges = {[]};
-
+TimeRanges = {[-1.5,0]};
 %%
 for fidx = 1:length(FilterColumn_All)
     FilterColumn = FilterColumn_All{fidx};
@@ -219,6 +220,11 @@ for tidx = 1:length(TimeRanges)
     this_FullTable = cgg_updateFullAccuracyTablePeak(FullTable,'TimeRange',TimeRange,'cfg_Encoder',cfg);
 for idx = 1:length(SignificanceValues)
     SignificanceValue = SignificanceValues(idx);
+    if ~isnumeric(SetSignificance)
+    cfg_OverwritePlot.SignificanceValue = SignificanceValue;
+    else
+    cfg_OverwritePlot.SignificanceValue = SetSignificance;
+    end
     CombinedFullTable = cgg_getSpecifiedFullTableSessions(this_FullTable,'SignificanceValue',SignificanceValue,'WantAllFromGroup',false,'cfg_Encoder', cfg,'TimeRange',TimeRange,'WantAllFromBest',true,'WantBlockSingleArea',true);
     % if isempty(TimeRange)
     %     TimeRangeString = "";
