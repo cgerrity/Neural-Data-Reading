@@ -16,10 +16,11 @@ EpochName = 'Decision';
 WantResults = false;
 WantAnalysis = false;
 WantDelay = false;
-WantLabelClassFilter = true;
+WantLabelClassFilter = false;
 % MatchType='Scaled-MicroAccuracy';
 % % MatchType='Scaled-BalancedAccuracy';
 % MatchType_Attention=MatchType;
+
 %%
 FilterColumn_All = {}; ColumnCounter = 1;
 % FilterColumn_All{ColumnCounter}={'All'};
@@ -77,9 +78,10 @@ FilterColumn_All{ColumnCounter}={'Target Value Category'};
 % FilterColumn_All{ColumnCounter}={'Target Prediction Error Category'};
 
 % SignificanceValues = [1,0.1,0.05,0.025,0.01,0.001,0.0001];
-SignificanceValues = 0.0001;
+SignificanceValues = 0.01;
 % TimeRanges = {[],[-1.5,0],[0,1.5]};
-TimeRanges = {[]};
+TimeRanges = {[-1.5,0]};
+SetSignificance = false;
 
 %%
 for fidx = 1:length(FilterColumn_All)
@@ -193,21 +195,28 @@ FullTable = cgg_procRemoveTableRows(FullTable, "Unlearned");
     % this_cfg.SplitExtraSaveTerm = replace(cfg.SplitExtraSaveTerm,"Dimensionality",this_Dimension);
 for tidx = 1:length(TimeRanges)
     TimeRange = TimeRanges{tidx};
+    this_FullTable = cgg_updateFullAccuracyTablePeak(FullTable,'TimeRange',TimeRange,'cfg_Encoder',cfg);
 for idx = 1:length(SignificanceValues)
     SignificanceValue = SignificanceValues(idx);
+    if ~isnumeric(SetSignificance)
+    cfg_OverwritePlot.SignificanceValue = SignificanceValue;
+    else
+    cfg_OverwritePlot.SignificanceValue = SetSignificance;
+    end
     % CombinedFullTable = cgg_getSpecifiedFullTableSessions(FullTable,'SignificanceValue',SignificanceValue,'cfg_Encoder',cfg,'TimeRange',TimeRange);
-    % cgg_plotBlockImportanceAnalysis(CombinedFullTable,cfg);
-    % cgg_plotSplitAccuracy(CombinedFullTable,cfg);
-    % cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg);
-    % cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg);
-    % cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg);
+    % cgg_plotBlockImportanceAnalysis(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    % cgg_plotSplitAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    % cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    % cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    % cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
     CombinedFullTable = cgg_getSpecifiedFullTableSessions(this_FullTable,'SignificanceValue',SignificanceValue,'WantAllFromGroup',true,'cfg_Encoder',this_cfg,'TimeRange',TimeRange,'WantAllFromBest',true);
-    % cgg_plotLabelClass(CombinedFullTable,this_cfg);
-    % cgg_plotBlockImportanceAnalysis(CombinedFullTable,cfg);
-    cgg_plotSplitAccuracy(CombinedFullTable,this_cfg);
-    cgg_plotSplitWindowedAccuracy(CombinedFullTable,this_cfg);
-    cgg_plotAttentionalSplitAccuracy(CombinedFullTable,this_cfg);
-    cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,this_cfg);
+    cgg_plotWindowedAccuracy(CombinedFullTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    % cgg_plotLabelClass(CombinedFullTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    % cgg_plotBlockImportanceAnalysis(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    cgg_plotSplitAccuracy(CombinedFullTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    cgg_plotSplitWindowedAccuracy(CombinedFullTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    cgg_plotAttentionalSplitAccuracy(CombinedFullTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
 end
 end
 end
