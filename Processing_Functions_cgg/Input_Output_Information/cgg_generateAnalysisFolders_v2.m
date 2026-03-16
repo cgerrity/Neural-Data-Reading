@@ -12,6 +12,7 @@ AnalysisTypeSubField = CheckVararginPairs('AnalysisTypeSubField', '', varargin{:
 Fold = CheckVararginPairs('Fold', '', varargin{:});
 Session = CheckVararginPairs('Session', '', varargin{:});
 AnalysisTypeSubSubField = CheckVararginPairs('AnalysisTypeSubSubField', '', varargin{:});
+AnalysisTypeSubSubSubField = CheckVararginPairs('AnalysisTypeSubSubSubField', '', varargin{:});
 WantDirectory = CheckVararginPairs('WantDirectory', true, varargin{:});
 
 %%
@@ -65,6 +66,13 @@ if ~isempty(AnalysisTypeSubSubField)
 cfg_tmp=cfg.Epoch.Analysis.AnalysisType.AnalysisTypeSubField;
 [cfg_tmp,~] = cgg_generateFolderAndPath(AnalysisTypeSubSubField,'AnalysisTypeSubSubField',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.Epoch.Analysis.AnalysisType.AnalysisTypeSubField=cfg_tmp;
+
+if ~isempty(AnalysisTypeSubSubSubField)
+% Make the Analysis Type Sub Field folder name
+cfg_tmp=cfg.Epoch.Analysis.AnalysisType.AnalysisTypeSubField.AnalysisTypeSubSubField;
+[cfg_tmp,~] = cgg_generateFolderAndPath(AnalysisTypeSubSubSubField,'AnalysisTypeSubSubSubField',cfg_tmp,'WantDirectory',WantDirectory);
+cfg.Epoch.Analysis.AnalysisType.AnalysisTypeSubField.AnalysisTypeSubSubField=cfg_tmp;
+end % End for whether to make the Analysis Type Sub Sub Sub Field Folder
 end % End for whether to make the Analysis Type Sub Sub Field Folder
 end % End for whether to make the Session Folder
 end % End for whether to make the Analysis Type Sub Field Folder
