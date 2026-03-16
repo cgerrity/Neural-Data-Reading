@@ -1,4 +1,4 @@
-function OutTable = cgg_addSignificantAccuracyTableValues(InTable,AccuracyTable,SessionIDX,IsSignificant)
+function OutTable = cgg_addSignificantAccuracyTableValues(InTable,AccuracyTable,SessionIDX,SessionName,IsSignificant)
 %CGG_ADDSIGNIFICANTACCURACYTABLEVALUES Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -6,6 +6,8 @@ OutTable = InTable;
 
 Window_Accuracy = AccuracyTable.('Window Accuracy'){1};
 Accuracy = AccuracyTable.('Accuracy'){1};
+DataNumber = AccuracyTable.('DataNumber'){1};
+SessionName = string(SessionName);
 HasBlock = any(ismember("Block", AccuracyTable.Properties.VariableNames));
 HasLabel = any(ismember("Label Table", AccuracyTable.Properties.VariableNames));
 HasClass = any(ismember("Class Table", AccuracyTable.Properties.VariableNames));
@@ -13,17 +15,23 @@ HasClass = any(ismember("Class Table", AccuracyTable.Properties.VariableNames));
 if IsSignificant
 OutTable.('Window Accuracy') = {[OutTable.('Window Accuracy'){1};Window_Accuracy]};
 OutTable.('Accuracy') = {[OutTable.('Accuracy'){1};Accuracy]};
+OutTable.('DataNumber') = {[OutTable.('DataNumber'){1}; DataNumber]};
+OutTable.('Session Name') = {[OutTable.('Session Name'){1}; SessionName]};
 OutTable.('Session Number') = {[OutTable.('Session Number'){1}; SessionIDX]};
 
 if HasLabel
     OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Label Table","Accuracy",'IncludeNaNValues',true);
     OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Label Table","Window Accuracy",'IncludeNaNValues',true);
+    OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Label Table","DataNumber",'NonTableTerm',DataNumber,'IncludeNaNValues',false);
     OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Label Table","Session Number",'NonTableTerm',SessionIDX,'IncludeNaNValues',false);
+    OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Label Table","Session Name",'NonTableTerm',SessionName,'IncludeNaNValues',false);
 end
 if HasClass
     OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Class Table","Accuracy",'IncludeNaNValues',true);
     OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Class Table","Window Accuracy",'IncludeNaNValues',true);
+    OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Class Table","DataNumber",'NonTableTerm',DataNumber,'IncludeNaNValues',false);
     OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Class Table","Session Number",'NonTableTerm',SessionIDX,'IncludeNaNValues',false);
+    OutTable = cgg_addCorrespondingVariablesToTable(OutTable,AccuracyTable,"Class Table","Session Name",'NonTableTerm',SessionName,'IncludeNaNValues',false);
 end
 
 if HasBlock
@@ -71,7 +79,8 @@ if HasBlock
 
         OutTable = cgg_getBlockAccuracyAdditionSimplified(OutTable,...
             this_Area,this_Area,this_Area,...
-            this_AreaAccuracy,this_AreaWindow_Accuracy,SessionIDX,Weighting);
+            this_AreaAccuracy,this_AreaWindow_Accuracy,DataNumber,...
+            SessionIDX,SessionName,Weighting);
 
 
         end
@@ -95,7 +104,7 @@ if WantAllAreas
 
 OutTable = cgg_getBlockAccuracyAdditionSimplified(OutTable,...
     "None",AllAreasName,AllNotPresentEachArea,Accuracy,Window_Accuracy,...
-    SessionIDX,Weighting);
+    DataNumber,SessionIDX,SessionName,Weighting);
 end
 %%
 for aidx = 1:length(AreaNames)
@@ -111,7 +120,8 @@ for aidx = 1:length(AreaNames)
 
     OutTable = cgg_getBlockAccuracyAdditionSimplified(OutTable,...
     this_RemovedName,this_PresentName,this_NotPresentName,...
-    this_Accuracy,this_Window_Accuracy,SessionIDX,Weighting);
+    this_Accuracy,this_Window_Accuracy,DataNumber,SessionIDX,...
+    SessionName,Weighting);
 
 end
     end

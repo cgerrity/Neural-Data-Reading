@@ -49,7 +49,7 @@ MatchType = '';
 this_cfg.ExtraSaveTerm='Attentional';
 this_cfg.LoopType = sprintf('%s',MatchType);
 
-cgg_plotWindowedAccuracy(AttentionalTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+cgg_plotWindowedAccuracy(AttentionalTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot,'IsAttentional',true);
 
 Split_Table=FullTable{seidx,cfg_Names.TableNameSplit_Table}{1};
 SplitNames = Split_Table.Properties.RowNames;
@@ -83,7 +83,7 @@ for aidx = 1:length(AttentionalNames)
 end
 
 if NumSplits < MaxSplits
-cgg_plotWindowedAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true,'cfg_OverwritePlot',cfg_OverwritePlot);
+cgg_plotWindowedAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true,'cfg_OverwritePlot',cfg_OverwritePlot,'IsSplit',true);
 end
 end
 
@@ -100,7 +100,7 @@ this_cfg.LoopType=sprintf('%s',cfg.SplitExtraSaveTerm);
 % this_AttentionalTable=AttentionalTableSwapped{aidx};
 this_AttentionalTable=AttentionalTable{aidx,"Split Table"}{1};
 
-cgg_plotWindowedAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true,'cfg_OverwritePlot',cfg_OverwritePlot);
+cgg_plotWindowedAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true,'cfg_OverwritePlot',cfg_OverwritePlot,'IsSplit',true);
 end
 
 end

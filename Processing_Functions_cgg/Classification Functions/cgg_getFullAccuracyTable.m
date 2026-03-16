@@ -79,6 +79,7 @@ CM_Table = CM_Table(:);
 %%
 TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"]; ...
+    ["DataNumber", "cell"]; ...
     ["Split Table", "cell"]; ...
     ["Attentional Table", "cell"]];
 
@@ -113,9 +114,11 @@ MetricFunc = @(x,y) cgg_procCompleteMetric(x,cfg,'NullTable',NullTable,this_vara
 [Accuracy,Window_Accuracy] = cellfun(MetricFunc,CM_Table,"UniformOutput",false);
 Accuracy = cell2mat(Accuracy);
 Window_Accuracy = cell2mat(Window_Accuracy);
+DataNumber = cellfun(@(x) x.DataNumber,CM_Table,"UniformOutput",false);
 
 FullTable_tmp(:,"Accuracy") = {Accuracy};
 FullTable_tmp(:,"Window Accuracy") = {Window_Accuracy};
+FullTable_tmp(:,"DataNumber") = {DataNumber};
 
 % if ~exist('OverallTimer','var')
 % OverallTimer = tic;

@@ -82,7 +82,7 @@ CombinedName = sprintf('Combined %s%s%s~ alpha %.3f',AllGroupString,OverallBestS
 elseif SignificanceValue >= 0.0001
 CombinedName = sprintf('Combined %s%s%s~ alpha %.4f',AllGroupString,OverallBestString,TimeRangeString,SignificanceValue);
 end
-SignificanceValue = SignificanceValue*2;
+% SignificanceValue = SignificanceValue*2;
 
 %% Remove Non-Session Entries
 
@@ -107,20 +107,39 @@ NumSessions = height(SessionFullTable);
 % 
 % SessionNamesSimplified = cgg_setSessionNamesForParameterSweep(SessionNames);
 
+%% Generate complete cfg_Encoder and cfg_Epoch structures
+
+if isfield(cfg_Encoder,'cfg_Encoder')
+cfg_Encoder = cgg_mergeStructs(cfg_Encoder, cfg_Encoder.cfg_Encoder);
+end
+if isfield(cfg_Encoder,'cfg') && isfield(cfg_Encoder.cfg,'ResultsDir')
+cfg_Epoch = cfg_Encoder.cfg;
+end
+
+FilterColumn = cfg_Encoder.FilterColumn;
+[SplitTrialFilter,~] = cgg_getPackedTrialFilter(FilterColumn,[],'Pack');
 %%
 SignificanceOverwrite = false;
 if WantAllFromBest
-BestFunc = @(x) cgg_testAccuracyTableSignificance(x,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
+TrialFilter = "All";
+TrialFilter_Value = NaN;
+MatchType = cfg_Encoder.MatchType;
+TargetFilter = "Overall";
+LabelClassFilter = '';
+% BestFunc = @(x) cgg_testAccuracyTableSignificance(x,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch);
+BestFunc = @(x,y) cgg_testAccuracyTableSignificance(x,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',y,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
 
 BestSessionIDX = NaN(NumSessions,1);
 for sidx = 1:NumSessions
-BestSessionIDX(sidx) = BestFunc(SessionFullTable(sidx,:));
+    SessionName = SessionFullTable(sidx,:).Properties.RowNames{1};
+% BestSessionIDX(sidx) = BestFunc(SessionFullTable(sidx,:));
+BestSessionIDX(sidx) = BestFunc(SessionFullTable(sidx,:),SessionName);
 end
 % BestSessionTable = SessionFullTable;
 % BestSessionTable(BestSessionIDX==1,:) = [];
 SessionFullTable(BestSessionIDX~=1,:) = [];
 NumSessions = height(SessionFullTable);
-SignificanceValue = 2;
+SignificanceValue = 1;
 SignificanceOverwrite = true;
 end
 
@@ -170,8 +189,10 @@ if HasBlock
         ["Not Present Areas", "cell"]];
     TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"]; ...
+    ["DataNumber", "cell"]; ...
     ["Area Names", "cell"]; ...
     ["Session Number", "cell"]; ...
+    ["Session Name", "cell"]; ...
     ["Weight Table", "cell"]];
     NumVariables = size(TableVariables,1);
     BlockTable_Template = table('Size',[NumAreas,NumVariables],... 
@@ -188,7 +209,9 @@ if HasLabel
     LabelTableVariables = ["Label Table", "cell"];
     TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"]; ...
-    ["Session Number", "cell"]];
+    ["DataNumber", "cell"]; ...
+    ["Session Number", "cell"]; ...
+    ["Session Name", "cell"]];
     NumVariables = size(TableVariables,1);
     LabelTable_Template = table('Size',[NumLabels,NumVariables],... 
 	    'VariableNames', TableVariables(:,1),...
@@ -202,7 +225,9 @@ if HasClass
     ClassTableVariables = ["Class Table", "cell"];
     TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"]; ...
-    ["Session Number", "cell"]];
+    ["DataNumber", "cell"]; ...
+    ["Session Number", "cell"]; ...
+    ["Session Name", "cell"]];
     NumVariables = size(TableVariables,1);
     ClassTable_Template = table('Size',[NumClasses,NumVariables],... 
 	    'VariableNames', TableVariables(:,1),...
@@ -214,9 +239,11 @@ end
 
 TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"]; ...
+    ["DataNumber", "cell"]; ...
     ["Split Table", "cell"]; ...
     ["Attentional Table", "cell"]; ...
-    ["Session Number", "cell"]];
+    ["Session Number", "cell"]; ...
+    ["Session Name", "cell"]];
 TableVariables = [TableVariables;BlockTableVariables];
 TableVariables = [TableVariables;LabelTableVariables];
 TableVariables = [TableVariables;ClassTableVariables];
@@ -239,8 +266,10 @@ end
 
 TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"]; ...
+    ["DataNumber", "cell"]; ...
     % ["Split Table", "cell"]; ...
-    ["Session Number", "cell"]];
+    ["Session Number", "cell"]; ...
+    ["Session Name", "cell"]];
 TableVariables = [TableVariables;BlockTableVariables];
 TableVariables = [TableVariables;LabelTableVariables];
 TableVariables = [TableVariables;ClassTableVariables];
@@ -264,8 +293,10 @@ end
 
 TableVariables = [["Accuracy", "cell"]; ...
     ["Window Accuracy", "cell"];...
+    ["DataNumber", "cell"]; ...
     % ["Attentional Table", "cell"]; ...
-    ["Session Number", "cell"]];
+    ["Session Number", "cell"]; ...
+    ["Session Name", "cell"]];
 TableVariables = [TableVariables;BlockTableVariables];
 TableVariables = [TableVariables;LabelTableVariables];
 TableVariables = [TableVariables;ClassTableVariables];
@@ -319,9 +350,18 @@ for sidx = 1:NumSessions
 % this_TestSignal = Series_Mean - Series_CI;
 % IsSignificant = any(this_TestSignal > ChanceLevel);
 
-IsSignificant = cgg_testAccuracyTableSignificance(this_FullTable,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
+SessionName = this_FullTable.Properties.RowNames{1};
+TrialFilter = "All";
+TrialFilter_Value = NaN;
+MatchType = cfg_Encoder.MatchType;
+TargetFilter = "Overall";
+LabelClassFilter = '';
+
+% fprintf('SessionIDX: %d\n',sidx);
+% IsSignificant = cgg_testAccuracyTableSignificance(this_FullTable,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch);
+IsSignificant = cgg_testAccuracyTableSignificance(this_FullTable,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
 IsSignificant = IsSignificant || SignificanceOverwrite;
-OutFullTable = cgg_addSignificantAccuracyTableValues(OutFullTable,this_FullTable,sidx,IsSignificant);
+OutFullTable = cgg_addSignificantAccuracyTableValues(OutFullTable,this_FullTable,sidx,SessionName,IsSignificant);
 % if IsSignificant
 % OutFullTable.('Window Accuracy') = {[OutFullTable.('Window Accuracy'){1};this_Window_Accuracy]};
 % OutFullTable.('Accuracy') = {[OutFullTable.('Accuracy'){1};this_Accuracy]};
@@ -346,6 +386,7 @@ Significance_Attentional_Split = cell(length(this_AttentionalNames),1);
 for aidx = 1:length(this_AttentionalNames)
     this_AttentionalType = this_AttentionalNames{aidx};
     this_AttentionalRow = this_AttentionalTable(this_AttentionalType,:);
+    this_AttentionalRow.DataNumber = this_FullTable{:,"DataNumber"};
     % this_Window_Accuracy = this_AttentionalRow.('Window Accuracy'){1};
     % % this_Accuracy = this_AttentionalRow.('Accuracy'){1};
     % [~,NumWindows] = size(this_Window_Accuracy);
@@ -355,7 +396,14 @@ for aidx = 1:length(this_AttentionalNames)
     %     'SignificanceValue',SignificanceValue,'NumSamples',NumWindows);
     % this_TestSignal = Series_Mean - Series_CI;
     % IsSignificant = any(this_TestSignal > ChanceLevel);
-    IsSignificant = cgg_testAccuracyTableSignificance(this_AttentionalRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
+
+    TrialFilter = "All";
+    TrialFilter_Value = NaN;
+    MatchType = cfg_Encoder.MatchType_Attention;
+    TargetFilter = this_AttentionalType;
+    LabelClassFilter = '';
+
+    IsSignificant = cgg_testAccuracyTableSignificance(this_AttentionalRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
     IsSignificant = IsSignificant || SignificanceOverwrite;
     Significance_OverallAttentional(aidx) = IsSignificant;
 
@@ -373,6 +421,7 @@ for aidx = 1:length(this_AttentionalNames)
     for spidx = 1:length(this_SplitNames)
         this_SplitType = this_SplitNames{spidx};
         this_SplitRow = this_SplitTable(this_SplitType,:);
+        this_SplitRow.DataNumber = this_FullTable{:,"DataNumber"};
         % this_Window_Accuracy = this_SplitRow.('Window Accuracy'){1};
         % % this_Accuracy = this_SplitRow.('Accuracy'){1};
         % [~,NumWindows] = size(this_Window_Accuracy);
@@ -382,7 +431,14 @@ for aidx = 1:length(this_AttentionalNames)
         %     'SignificanceValue',SignificanceValue,'NumSamples',NumWindows);
         % this_TestSignal = Series_Mean - Series_CI;
         % IsSignificant = any(this_TestSignal > ChanceLevel);
-        IsSignificant = cgg_testAccuracyTableSignificance(this_SplitRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
+        TypeValues = cgg_getSplitTableRowValues(this_SplitType, FilterColumn);
+        [TrialFilter,TrialFilter_Value] = ...
+            cgg_getPackedTrialFilter(FilterColumn,TypeValues,'Pack');
+        MatchType = cfg_Encoder.MatchType_Attention;
+        TargetFilter = this_AttentionalType;
+        LabelClassFilter = '';
+
+        IsSignificant = cgg_testAccuracyTableSignificance(this_SplitRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
         IsSignificant = IsSignificant || SignificanceOverwrite;
         Significance_Attentional_Split{aidx}(spidx) = IsSignificant;
     
@@ -405,10 +461,11 @@ end
 for aidx = 1:length(this_AttentionalNames)
     this_AttentionalType = this_AttentionalNames{aidx};
     this_AttentionalRow = this_AttentionalTable(this_AttentionalType,:);
+    this_AttentionalRow.DataNumber = this_FullTable{:,"DataNumber"};
 
     AttentionalTable(this_AttentionalType,:) = cgg_addSignificantAccuracyTableValues( ...
         AttentionalTable(this_AttentionalType,:),this_AttentionalRow,sidx, ...
-        Significance_OverallAttentional(aidx));
+        SessionName,Significance_OverallAttentional(aidx));
 
     % this_Window_Accuracy = this_AttentionalRow.('Window Accuracy'){1};
     % this_Accuracy = this_AttentionalRow.('Accuracy'){1};
@@ -428,11 +485,12 @@ for aidx = 1:length(this_AttentionalNames)
     for spidx = 1:length(this_SplitNames)
         this_SplitType = this_SplitNames{spidx};
         this_SplitRow = this_SplitTable(this_SplitType,:);
+        this_SplitRow.DataNumber = this_FullTable{:,"DataNumber"};
 
         Attentional_SplitTable(this_SplitType,:) = ...
             cgg_addSignificantAccuracyTableValues( ...
             Attentional_SplitTable(this_SplitType,:), ...
-            this_SplitRow,sidx, ...
+            this_SplitRow,sidx, SessionName,...
             Significance_Attentional_Split{aidx}(spidx));
 
         % this_Window_Accuracy = this_SplitRow.('Window Accuracy'){1};
@@ -460,6 +518,7 @@ Significance_Split_Attentional = cell(length(this_SplitNames),1);
 for spidx = 1:length(this_SplitNames)
     this_SplitType = this_SplitNames{spidx};
     this_SplitRow = this_SplitTable(this_SplitType,:);
+    this_SplitRow.DataNumber = this_FullTable{:,"DataNumber"};
     % this_Window_Accuracy = this_SplitRow.('Window Accuracy'){1};
     % this_Accuracy = this_SplitRow.('Accuracy'){1};
     % [~,NumWindows] = size(this_Window_Accuracy);
@@ -469,7 +528,15 @@ for spidx = 1:length(this_SplitNames)
     %     'SignificanceValue',SignificanceValue,'NumSamples',NumWindows);
     % this_TestSignal = Series_Mean - Series_CI;
     % IsSignificant = any(this_TestSignal > ChanceLevel);
-    IsSignificant = cgg_testAccuracyTableSignificance(this_SplitRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
+
+    TypeValues = cgg_getSplitTableRowValues(this_SplitType, FilterColumn);
+    [TrialFilter,TrialFilter_Value] = ...
+        cgg_getPackedTrialFilter(FilterColumn,TypeValues,'Pack');
+    MatchType = cfg_Encoder.MatchType;
+    TargetFilter = "Overall";
+    LabelClassFilter = '';
+
+    IsSignificant = cgg_testAccuracyTableSignificance(this_SplitRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
     IsSignificant = IsSignificant || SignificanceOverwrite;
     Significance_OverallSplit(spidx) = IsSignificant;
 
@@ -487,6 +554,7 @@ Significance_Split_Attentional{spidx} = false(length(this_SplitNames),1);
 for aidx = 1:length(this_AttentionalNames)
     this_AttentionalType = this_AttentionalNames{aidx};
     this_AttentionalRow = this_AttentionalTable(this_AttentionalType,:);
+    this_AttentionalRow.DataNumber = this_FullTable{:,"DataNumber"};
     % this_Window_Accuracy = this_AttentionalRow.('Window Accuracy'){1};
     % this_Accuracy = this_AttentionalRow.('Accuracy'){1};
     % [~,NumWindows] = size(this_Window_Accuracy);
@@ -496,7 +564,15 @@ for aidx = 1:length(this_AttentionalNames)
     %     'SignificanceValue',SignificanceValue,'NumSamples',NumWindows);
     % this_TestSignal = Series_Mean - Series_CI;
     % IsSignificant = any(this_TestSignal > ChanceLevel);
-    IsSignificant = cgg_testAccuracyTableSignificance(this_AttentionalRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder);
+
+    TypeValues = cgg_getSplitTableRowValues(this_SplitType, FilterColumn);
+    [TrialFilter,TrialFilter_Value] = ...
+        cgg_getPackedTrialFilter(FilterColumn,TypeValues,'Pack');
+    MatchType = cfg_Encoder.MatchType_Attention;
+    TargetFilter = this_AttentionalType;
+    LabelClassFilter = '';
+
+    IsSignificant = cgg_testAccuracyTableSignificance(this_AttentionalRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
     IsSignificant = IsSignificant || SignificanceOverwrite;
     Significance_Split_Attentional{spidx}(aidx) = IsSignificant;
 
@@ -518,9 +594,10 @@ end
 for spidx = 1:length(this_SplitNames)
     this_SplitType = this_SplitNames{spidx};
     this_SplitRow = this_SplitTable(this_SplitType,:);
+    this_SplitRow.DataNumber = this_FullTable{:,"DataNumber"};
 
     SplitTable(this_SplitType,:) = cgg_addSignificantAccuracyTableValues( ...
-        SplitTable(this_SplitType,:),this_SplitRow,sidx, ...
+        SplitTable(this_SplitType,:),this_SplitRow,sidx, SessionName, ...
         Significance_OverallSplit(spidx));
 
     % Split-Attentional Table
@@ -531,11 +608,12 @@ for spidx = 1:length(this_SplitNames)
     for aidx = 1:length(this_AttentionalNames)
         this_AttentionalType = this_AttentionalNames{aidx};
         this_AttentionalRow = this_AttentionalTable(this_AttentionalType,:);
+        this_AttentionalRow.DataNumber = this_FullTable{:,"DataNumber"};
 
         Split_AttentionalTable(this_AttentionalType,:) = ...
             cgg_addSignificantAccuracyTableValues( ...
             Split_AttentionalTable(this_AttentionalType,:), ...
-            this_AttentionalRow,sidx, ...
+            this_AttentionalRow,sidx, SessionName, ...
             Significance_Split_Attentional{spidx}(aidx));
     end
 

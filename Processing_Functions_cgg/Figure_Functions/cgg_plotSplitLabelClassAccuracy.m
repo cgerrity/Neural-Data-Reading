@@ -55,7 +55,7 @@ this_cfg.ExtraSaveTerm=string(this_SplitName);
 this_cfg.LoopType=sprintf('%s',cfg.SplitExtraSaveTerm);
 
 cgg_plotLabelClassAccuracy(this_Split_Table,this_cfg,'SubsetName',SubsetName,'WantSameSessionNumbers',WantSameSessionNumbers,'cfg_OverwritePlot',cfg_OverwritePlot);
-cgg_plotLabelClassWindowedAccuracy(this_Split_Table,this_cfg,'SubsetName',SubsetName,'WantSameSessionNumbers',WantSameSessionNumbers,'cfg_OverwritePlot',cfg_OverwritePlot);
+cgg_plotLabelClassWindowedAccuracy(this_Split_Table,this_cfg,'SubsetName',SubsetName,'WantSameSessionNumbers',WantSameSessionNumbers,'cfg_OverwritePlot',cfg_OverwritePlot,'IsSplit',true);
 
 AttentionalTable =this_Split_Table{:,"Attentional Table"}{1};
 AttentionalNames = AttentionalTable.Properties.RowNames;
@@ -81,7 +81,7 @@ for aidx = 1:NumAttention
     this_cfg.LoopType=sprintf('%s',cfg.SplitExtraSaveTerm);
     this_cfg.PlotTitle=string(this_SplitTitleName) + " " + string(this_AttentionalTitleName);
     cgg_plotLabelClassAccuracy(this_Attentional_Table,this_cfg,'IsAttentional',true,'SubsetName',SubsetName,'WantSameSessionNumbers',WantSameSessionNumbers,'cfg_OverwritePlot',cfg_OverwritePlot);
-    cgg_plotLabelClassWindowedAccuracy(this_Attentional_Table,this_cfg,'IsAttentional',true,'SubsetName',SubsetName,'WantSameSessionNumbers',WantSameSessionNumbers,'cfg_OverwritePlot',cfg_OverwritePlot);
+    cgg_plotLabelClassWindowedAccuracy(this_Attentional_Table,this_cfg,'IsAttentional',true,'SubsetName',SubsetName,'WantSameSessionNumbers',WantSameSessionNumbers,'cfg_OverwritePlot',cfg_OverwritePlot,'IsSplit',IsSplit);
 end
 
 

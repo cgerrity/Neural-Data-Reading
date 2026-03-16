@@ -185,6 +185,14 @@ end
 end
 
 if isfunction
+OverwriteSignificance = CheckVararginPairs('OverwriteSignificance', [], varargin{:});
+else
+if ~(exist('OverwriteSignificance','var'))
+OverwriteSignificance=[];
+end
+end
+
+if isfunction
 PlotNames = CheckVararginPairs('PlotNames', {'Plot'}, varargin{:});
 else
 if ~(exist('PlotNames','var'))
@@ -529,6 +537,13 @@ YMin=Inf;
         else
             this_CountPerSample = '';
         end
+        if isnumeric(OverwriteSignificance)
+            this_OverwriteSignificance=OverwriteSignificance(:,:,pidx);
+        elseif iscell(OverwriteSignificance)
+            this_OverwriteSignificance=OverwriteSignificance{pidx};
+        else
+            this_OverwriteSignificance = OverwriteSignificance;
+        end
 
     [this_p_Plot,this_p_Error] = cgg_plotLinePlotWithShadedError(this_Time,this_Data,PlotColors{pidx},'wantCI',wantCI,'SignificanceValue',SignificanceValue,'YValues_STD',YValues_STD,'CountPerSample',this_CountPerSample,'DataTransform',DataTransform,'ErrorMetric',this_ErrorMetric,'Error_FaceAlpha',Error_FaceAlpha,'Error_EdgeAlpha',Error_EdgeAlpha);
 
@@ -544,9 +559,9 @@ YMin=Inf;
 
     if wantSignificanceBars
         if isempty(YLimits)
-            cgg_plotSignificancePeriods(this_Time, this_Data, SignificanceValue, 'level', pidx, 'lineColor', PlotColors{pidx}, 'lineWidth', Line_Width_Significance,'testType', SignificanceType);
+            cgg_plotSignificancePeriods(this_Time, this_Data, SignificanceValue, 'level', pidx, 'lineColor', PlotColors{pidx}, 'lineWidth', Line_Width_Significance,'testType', SignificanceType,'OverwriteSignificance',this_OverwriteSignificance);
         else
-            cgg_plotSignificancePeriods(this_Time, this_Data, SignificanceValue, 'level', pidx, 'lineColor', PlotColors{pidx}, 'lineWidth', Line_Width_Significance,'testType', SignificanceType,'YLim',YLimits);
+            cgg_plotSignificancePeriods(this_Time, this_Data, SignificanceValue, 'level', pidx, 'lineColor', PlotColors{pidx}, 'lineWidth', Line_Width_Significance,'testType', SignificanceType,'YLim',YLimits,'OverwriteSignificance',this_OverwriteSignificance);
         end
     end
     end

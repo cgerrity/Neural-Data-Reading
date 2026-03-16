@@ -21,6 +21,7 @@ addParameter(p, 'barStyle', 'continuous', @(x) ismember(x, {'continuous', 'indiv
 addParameter(p, 'level', 1, @(x) isnumeric(x) && x >= 1 && mod(x,1) == 0);
 addParameter(p, 'testType', 'different', @(x) ismember(x, {'different', 'greater', 'less'}));
 addParameter(p, 'YLim', ylim, @(x)isnumeric(x) && ~isscalar(x));
+addParameter(p, 'OverwriteSignificance', [], @(x) length(timeVec) == length(x) || isempty(x));
 parse(p, varargin{:});
 
 baseline = p.Results.baseline;
@@ -30,6 +31,7 @@ barStyle = p.Results.barStyle;
 level = p.Results.level;
 testType = p.Results.testType;
 YLim = p.Results.YLim;
+OverwriteSignificance = p.Results.OverwriteSignificance;
 
 % Convert testType to MATLAB ttest tail parameter
 switch testType
@@ -63,7 +65,11 @@ for i = 1:N
 end
 
 % Determine significant time points
+if isempty(OverwriteSignificance)
 significant = pValues < alpha;
+else
+significant = OverwriteSignificance;
+end
 
 % Check if we need to hold the current plot
 wasHolding = ishold;

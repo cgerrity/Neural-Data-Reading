@@ -203,6 +203,14 @@ if ~(exist('LabelClassFilter','var'))
 LabelClassFilter='';
 end
 end
+
+if isfunction
+WantDebugDisplay = CheckVararginPairs('WantDebugDisplay', false, varargin{:});
+else
+if ~(exist('WantDebugDisplay','var'))
+WantDebugDisplay=false;
+end
+end
 %% Get CFG for any analysis
 % You can uncomment this section to generate the base cfg for further
 % testing
@@ -218,9 +226,11 @@ end
 %% Ensure TrialFilter and TrialFilter_Value are unpacked
 % Only an issue with multi-trialfilter runs. Should not alter values if
 % already unpacked.
+cgg_displayDebugMessage(WantDebugDisplay,1);
 [TrialFilter,TrialFilter_Value] = cgg_getPackedTrialFilter(TrialFilter,TrialFilter_Value,'Unpack');
 
 %% Ensure Subset and wantSubset Agree
+cgg_displayDebugMessage(WantDebugDisplay,2);
 [Subset,wantSubset] = cgg_verifySubset(Subset,wantSubset);
 
 %% Ensure Target is used in cfg_Encoder
@@ -234,7 +244,7 @@ if strcmp(AttentionalFilter,"Overall")
 AttentionalFilter = [];
 end
 %% Get Timeline for Time Range specification
-
+cgg_displayDebugMessage(WantDebugDisplay,3);
 if ~isempty(TimeRange)
     if isfield(cfg_Encoder,'Time_Start') && ...
         isfield(cfg_Encoder,'SamplingRate') && ...
@@ -247,7 +257,7 @@ Time = cgg_getTime(cfg_Encoder.Time_Start,cfg_Encoder.SamplingRate,...
     end
 end
 %% Get MatchType for given analysis
-
+cgg_displayDebugMessage(WantDebugDisplay,4);
 if ~isempty(char(AttentionalFilter))
     MatchType = MatchType_Attention;
 end
@@ -264,7 +274,7 @@ if IsScaled
 end
 
 %% Get Identifiers Table
-
+cgg_displayDebugMessage(WantDebugDisplay,5);
 if isempty(Identifiers_Table)
 Identifiers_Table = cgg_getIdentifiersTable(cfg,wantSubset,'Epoch',Epoch,'AdditionalTarget',AdditionalTarget,'Subset',Subset);
 fprintf('@@@ Loaded Identifiers Table for %s\n',Subset);
@@ -276,7 +286,7 @@ fprintf('@@@ Loaded Identifiers Table for %s\n',Subset);
 end
 
 %% Generate ClassNames
-
+cgg_displayDebugMessage(WantDebugDisplay,6);
 if isfield(cfg_Encoder,'Target')
     Target = cfg_Encoder.Target;
     if strcmp(Target, 'Dimension')
@@ -290,25 +300,25 @@ if isfield(cfg_Encoder,'Target')
 end
 
 %% Generate Attention Weights
-
+cgg_displayDebugMessage(WantDebugDisplay,7);
 Identifiers_Table = cgg_getAttentionWeights(Identifiers_Table);
 % if ~isempty(AttentionalFilter)
 % Weights = Identifiers_Table.(AttentionalFilter);
 % end
 
 %% Generate Label-Class Weights
-
+cgg_displayDebugMessage(WantDebugDisplay,8);
 Identifiers_Table = cgg_getTargetFilters(Identifiers_Table,LabelClassFilter);
 
 %% Join CM_Table and Identifiers_Table
-
+cgg_displayDebugMessage(WantDebugDisplay,9);
 CM_Table=join(CM_Table,Identifiers_Table);
 % if ~isempty(AttentionalFilter)
 % Weights = CM_Table.(AttentionalFilter);
 % end
 
 %% Filter Trials
-
+cgg_displayDebugMessage(WantDebugDisplay,10);
 % Determine the attentional filter weights
 if ~isempty(char(AttentionalFilter))
     % Weights_Chance = Chance_Table.(AttentionalFilter);
@@ -359,7 +369,7 @@ end
 % e.g. 3-D would have TrueValues that do not have any neutral features, but
 % the model is able to assign neutral to these features regardless, making
 % any comparison to the model unfair.
-
+cgg_displayDebugMessage(WantDebugDisplay,11);
 if all(~strcmp(TrialFilter,'All')) && WantFilteredChance
 
     FilterFunc.Default = @(x,y) all((x{:,:}==y),2);
@@ -396,6 +406,7 @@ if all(~strcmp(TrialFilter,'All')) && WantFilteredChance
 end
 
 %% Compare data numbers to ensure the proper trials have been selected
+cgg_displayDebugMessage(WantDebugDisplay,12);
 if WantUseNullTable
     cfg_Encoder.Subset = Subset;
     cfg_Encoder.wantSubset = wantSubset;
@@ -417,7 +428,7 @@ if WantUseNullTable
 end
 
 %% Generate Chance Levels
-
+cgg_displayDebugMessage(WantDebugDisplay,13);
 if (isempty(MostCommon) || isempty(RandomChance) || isempty(Stratified)) && IsScaled
 [MostCommon,RandomChance,Stratified] = cgg_getBaselineAccuracyMeasures(...
     Identifiers_Table.TrueValue,ClassNames,MatchType_Calc,IsQuaddle,...
@@ -428,7 +439,7 @@ end
 end
 
 %% Output Chance Level if wanted
-
+cgg_displayDebugMessage(WantDebugDisplay,14);
 if WantOutputChance
     ChancePrediction = cgg_generateStratifiedPredictions(ClassNames,ClassPercent,size(CM_Table.TrueValue, 1),'IsQuaddle',IsQuaddle);
     CM_Table = removevars(CM_Table,contains(CM_Table.Properties.VariableNames,'Window'));
@@ -436,7 +447,7 @@ if WantOutputChance
 end
 
 %% Calculation of Metric
-
+cgg_displayDebugMessage(WantDebugDisplay,15);
 if ~isempty(char(AttentionalFilter))
     Weights = CM_Table.(AttentionalFilter);
 end
@@ -459,6 +470,7 @@ end
         'Weights',Weights);
 
 %%
+cgg_displayDebugMessage(WantDebugDisplay,16);
 if exist("Time","var") && ~isempty(TimeRange)
 TimeRangeIndices = Time > min(TimeRange) & Time < max(TimeRange);
 Window_Metric(~TimeRangeIndices) = [];

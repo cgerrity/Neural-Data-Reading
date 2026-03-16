@@ -39,16 +39,21 @@ if isstruct(cfg)
         EpochDir = cgg_getDirectory(cfg,'Epoch');
     end
 
+    OldNullTablePath = cell(2,1);
 AnalysisType = 'Analysis Data';
 if ~isempty(char(LabelClassFilter))
-    cfg_Analysis = cgg_generateAnalysisFolders_v2(EpochDir,'AnalysisType',AnalysisType,'AnalysisTypeSubField',SessionName,'AnalysisTypeSubSubField',LabelClassFilter);
-    NullTablePath = cgg_getDirectory(cfg_Analysis,'AnalysisTypeSubSubField');
+    cfg_Analysis = cgg_generateAnalysisFolders_v2(EpochDir,'AnalysisType',AnalysisType,'AnalysisTypeSubField',TrialFilter_Name,'AnalysisTypeSubSubField',SessionName,'AnalysisTypeSubSubSubField',LabelClassFilter);
+    NullTablePath = cgg_getDirectory(cfg_Analysis,'AnalysisTypeSubSubSubField');
+    cfg_Analysis = cgg_generateAnalysisFolders_v2(EpochDir,'AnalysisType',AnalysisType,'AnalysisTypeSubField',SessionName,'AnalysisTypeSubSubField',LabelClassFilter,'WantDirectory',false);
+    OldNullTablePath{1} = cgg_getDirectory(cfg_Analysis,'AnalysisTypeSubSubField');
     cfg_Analysis = cgg_generateAnalysisFolders_v2(EpochDir,'AnalysisType',AnalysisType,'AnalysisTypeSubField',LabelClassFilter,'WantDirectory',false);
-    OldNullTablePath = cgg_getDirectory(cfg_Analysis,'AnalysisTypeSubField');
+    OldNullTablePath{2} = cgg_getDirectory(cfg_Analysis,'AnalysisTypeSubField');
 else
-    cfg_Analysis = cgg_generateAnalysisFolders_v2(EpochDir,'AnalysisType',AnalysisType,'AnalysisTypeSubField',SessionName);
-    NullTablePath = cgg_getDirectory(cfg_Analysis,'AnalysisTypeSubField');
-    OldNullTablePath = cgg_getDirectory(cfg_Analysis,'AnalysisType');
+    cfg_Analysis = cgg_generateAnalysisFolders_v2(EpochDir,'AnalysisType',AnalysisType,'AnalysisTypeSubField',TrialFilter_Name,'AnalysisTypeSubSubField',SessionName);
+    NullTablePath = cgg_getDirectory(cfg_Analysis,'AnalysisTypeSubSubField');
+    cfg_Analysis = cgg_generateAnalysisFolders_v2(EpochDir,'AnalysisType',AnalysisType,'AnalysisTypeSubField',SessionName,'WantDirectory',false);
+    OldNullTablePath{1} = cgg_getDirectory(cfg_Analysis,'AnalysisTypeSubField');
+    OldNullTablePath{2} = cgg_getDirectory(cfg_Analysis,'AnalysisType');
 end
 
 % if ~isempty(char(LabelClassFilter)) && IsBaseline

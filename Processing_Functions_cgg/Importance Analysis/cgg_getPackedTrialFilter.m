@@ -23,7 +23,7 @@ switch PackState
         if contains(TrialFilter,SplitPattern)
             TrialFilter = string(TrialFilter);
         else
-            TrialFilter = join(TrialFilter,SplitPattern);
+            TrialFilter = join(TrialFilter,SplitPattern,2);
         end
         if ~iscell(TrialFilter_Value)
             TrialFilter_Value = num2cell(TrialFilter_Value,2);

@@ -98,7 +98,7 @@ NullTable = table('Size',[TableHeight,NumVariables],...
 	    'VariableNames', TableVariables(:,1),...
 	    'VariableTypes', TableVariables(:,2));
 
-[TrialFilter,TrialFilter_Value] = cgg_getPackedTrialFilter(TrialFilter,TrialFilter_Value,'Pack');
+[TrialFilter_Packed,TrialFilter_Value_Packed] = cgg_getPackedTrialFilter(TrialFilter,TrialFilter_Value,'Pack');
 
 %%
 if ~isempty(DataNumber)
@@ -113,11 +113,11 @@ SessionName = string(SessionName);
 NullTable.SessionName = SessionName;
 end
 if ~isempty(TrialFilter)
-TrialFilter = string(TrialFilter);
-NullTable.TrialFilter = TrialFilter;
+TrialFilter_Packed = string(TrialFilter_Packed);
+NullTable.TrialFilter = TrialFilter_Packed;
 end
 if ~isempty(TrialFilter_Value)
-NullTable.TrialFilter_Value = TrialFilter_Value;
+NullTable.TrialFilter_Value = TrialFilter_Value_Packed;
 end
 if ~isempty(TargetFilter)
 TargetFilter = string(TargetFilter);

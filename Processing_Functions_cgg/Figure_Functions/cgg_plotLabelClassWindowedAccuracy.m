@@ -5,6 +5,14 @@ function cgg_plotLabelClassWindowedAccuracy(FullTable,cfg,varargin)
 isfunction=exist('varargin','var');
 
 if isfunction
+IsSplit = CheckVararginPairs('IsSplit', false, varargin{:});
+else
+if ~(exist('IsSplit','var'))
+IsSplit=false;
+end
+end
+
+if isfunction
 IsAttentional = CheckVararginPairs('IsAttentional', false, varargin{:});
 else
 if ~(exist('IsAttentional','var'))
@@ -62,7 +70,7 @@ this_cfg.Subset = SubsetName;
 end
 this_cfg.LoopTitle = FullTable.Properties.RowNames{sidx};
 
-cgg_plotWindowedAccuracy(LabelTable,this_cfg,'IsLabelClass','Label','IsAttentional',IsAttentional,'cfg_OverwritePlot',cfg_OverwritePlot);
+cgg_plotWindowedAccuracy(LabelTable,this_cfg,'IsLabelClass','Label','IsAttentional',IsAttentional,'cfg_OverwritePlot',cfg_OverwritePlot,'IsSplit',IsSplit);
 
 ClassTable=FullTable{sidx,"Class Table"}{1};
 LineStyleIDX = contains(ClassTable.Properties.RowNames,"Class 0");
@@ -89,7 +97,7 @@ this_cfg.Subset = SubsetName;
 end
 this_cfg.LoopTitle = FullTable.Properties.RowNames{sidx};
 
-cgg_plotWindowedAccuracy(ClassTable,this_cfg,'IsLabelClass','Class','IsAttentional',IsAttentional,'cfg_OverwritePlot',this_cfg_OverwritePlot);
+cgg_plotWindowedAccuracy(ClassTable,this_cfg,'IsLabelClass','Class','IsAttentional',IsAttentional,'cfg_OverwritePlot',this_cfg_OverwritePlot,'IsSplit',IsSplit);
 
     %% Class Per Label
     LabelNames = LabelTable.Properties.RowNames;
@@ -125,7 +133,7 @@ this_cfg.Subset = SubsetName;
 end
 this_cfg.LoopTitle = FullTable.Properties.RowNames{sidx};
 
-cgg_plotWindowedAccuracy(this_ClassTable,this_cfg,'IsLabelClass','Class','IsAttentional',IsAttentional,'cfg_OverwritePlot',this_cfg_OverwritePlot);
+cgg_plotWindowedAccuracy(this_ClassTable,this_cfg,'IsLabelClass','Class','IsAttentional',IsAttentional,'cfg_OverwritePlot',this_cfg_OverwritePlot,'IsSplit',IsSplit);
     end
 end
 

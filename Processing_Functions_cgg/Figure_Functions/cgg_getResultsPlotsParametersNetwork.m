@@ -45,6 +45,14 @@ end
 end
 
 if isfunction
+MatchType_LabelClass = CheckVararginPairs('MatchType_LabelClass', 'Scaled-MacroBalancedAccuracy', varargin{:});
+else
+if ~(exist('MatchType_LabelClass','var'))
+MatchType_LabelClass='Scaled-MacroBalancedAccuracy';
+end
+end
+
+if isfunction
 MatchType_Attention = CheckVararginPairs('MatchType_Attention', 'Scaled-MicroAccuracy', varargin{:});
 else
 if ~(exist('MatchType_Attention','var'))
@@ -57,6 +65,14 @@ MatchType_Attention_Alternative = CheckVararginPairs('MatchType_Attention_Altern
 else
 if ~(exist('MatchType_Attention_Alternative','var'))
 MatchType_Attention_Alternative={'Scaled-MicroBalancedAccuracy'};
+end
+end
+
+if isfunction
+MatchType_Attention_LabelClass = CheckVararginPairs('MatchType_Attention_LabelClass', 'Scaled-MicroBalancedAccuracy', varargin{:});
+else
+if ~(exist('MatchType_Attention_LabelClass','var'))
+MatchType_Attention_LabelClass='Scaled-MicroBalancedAccuracy';
 end
 end
 
@@ -171,11 +187,11 @@ SavePath = cgg_getDirectory(cfg_Plot,'SubFolder_1');
 SaveNameExt=['FullTable' SplitExtraSaveTerm '.mat'];
 SavePathNameExt = [SavePath filesep SaveNameExt];
 
-SaveNameExt_AlternativeMetric=['FullTable_%s' SplitExtraSaveTerm '.mat'];
-SavePathNameExt_AlternativeMetric = [SavePath filesep SaveNameExt_AlternativeMetric];
+% SaveNameExt_AlternativeMetric=['FullTable_%s' SplitExtraSaveTerm '.mat'];
+% SavePathNameExt_AlternativeMetric = [SavePath filesep SaveNameExt_AlternativeMetric];
 %%
 if WantResults
-FullTable = cgg_procFullAccuracyTable(EpochName,FilterColumn,MatchType,MatchType_Attention,IsQuaddle,AdditionalTarget,WantUseNullTable,WantLabelClassFilter,SavePathNameExt,cfg,cfg_Encoder);
+FullTable = cgg_procFullAccuracyTable(EpochName,FilterColumn,MatchType,MatchType_Attention,IsQuaddle,AdditionalTarget,WantUseNullTable,WantLabelClassFilter,SavePathNameExt,cfg,cfg_Encoder,'MatchType_LabelClass',MatchType_LabelClass,'MatchType_Attention_LabelClass',MatchType_Attention_LabelClass);
 % fprintf('*** Obtaining All Sessions and their associated parameters\n');
 % EncodingParametersPath = cgg_getDirectory(cfg.ResultsDir,'Fold');
 % [EncodingParametersPath,~,~] = fileparts(EncodingParametersPath);
@@ -227,13 +243,13 @@ FullTable = cgg_procFullAccuracyTable(EpochName,FilterColumn,MatchType,MatchType
 % save(SavePathNameExt,'FullTable');
 % fprintf('### Saved Full Table for %s!\n',string(join(FilterColumn)));
 
-%% Alternative Metric
-for midx = 1:length(MatchType_Alternative)
-    this_MatchType = MatchType_Alternative{midx};
-    this_MatchType_Attention = MatchType_Attention_Alternative{midx};
-    this_SavePathNameExt = sprintf(SavePathNameExt_AlternativeMetric,this_MatchType);
-FullTable_AlternativeMetric = cgg_procFullAccuracyTable(EpochName,FilterColumn,this_MatchType,this_MatchType_Attention,IsQuaddle,AdditionalTarget,WantUseNullTable,WantLabelClassFilter,this_SavePathNameExt,cfg,cfg_Encoder);
-end
+% %% Alternative Metric
+% for midx = 1:length(MatchType_Alternative)
+%     this_MatchType = MatchType_Alternative{midx};
+%     this_MatchType_Attention = MatchType_Attention_Alternative{midx};
+%     this_SavePathNameExt = sprintf(SavePathNameExt_AlternativeMetric,this_MatchType);
+% FullTable_AlternativeMetric = cgg_procFullAccuracyTable(EpochName,FilterColumn,this_MatchType,this_MatchType_Attention,IsQuaddle,AdditionalTarget,WantUseNullTable,WantLabelClassFilter,this_SavePathNameExt,cfg,cfg_Encoder);
+% end
 else
     if exist(SavePathNameExt,"file")
         FullTable = load(SavePathNameExt);
@@ -878,6 +894,7 @@ Outcfg.MatchType_Attention=MatchType_Attention;
 Outcfg.IsQuaddle = IsQuaddle;
 % Outcfg.AttentionalTable = AttentionalTable;
 Outcfg.Subset=Subset;
+Outcfg.cfg_Encoder=cfg_Encoder;
 % 
 % %%
 % 

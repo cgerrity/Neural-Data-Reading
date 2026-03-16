@@ -5,6 +5,14 @@ function cgg_plotWindowedAccuracy(FullTable,cfg,varargin)
 isfunction=exist('varargin','var');
 
 if isfunction
+IsSplit = CheckVararginPairs('IsSplit', false, varargin{:});
+else
+if ~(exist('IsSplit','var'))
+IsSplit=false;
+end
+end
+
+if isfunction
 IsAttentional = CheckVararginPairs('IsAttentional', false, varargin{:});
 else
 if ~(exist('IsAttentional','var'))
@@ -33,6 +41,14 @@ cfg_OverwritePlot = CheckVararginPairs('cfg_OverwritePlot', struct(), varargin{:
 else
 if ~(exist('cfg_OverwritePlot','var'))
 cfg_OverwritePlot=struct();
+end
+end
+
+if isfunction
+SignificanceValue = CheckVararginPairs('SignificanceValue', 0.05, varargin{:});
+else
+if ~(exist('SignificanceValue','var'))
+SignificanceValue=0.05;
 end
 end
 
@@ -123,6 +139,9 @@ WantTitle = cfg_OverwritePlot.WantTitle;
 end
 if isfield(cfg_OverwritePlot,'LineStyle')
 LineStyle = cfg_OverwritePlot.LineStyle;
+end
+if isfield(cfg_OverwritePlot,'SignificanceValue')
+SignificanceValue = cfg_OverwritePlot.SignificanceValue;
 end
 
 %
@@ -325,7 +344,51 @@ YLimits = [YLimLower,YLimUpper];
 
 %%
 
-[fig_plot,p_Plots,p_Error] = cgg_plotTimeSeriesPlot(Window_Accuracy_All,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'SamplingRate',SamplingFrequency,'X_Name',X_Name,'Y_Name',Y_Name,'PlotTitle',PlotTitle,'PlotNames',PlotNames,'wantIndicatorNames',wantIndicatorNames,'Y_Tick_Label_Size',Y_Tick_Label_Size,'X_Tick_Label_Size',Y_Tick_Label_Size,'PlotColors',PlotColors,'InFigure',fig_plot,'Y_Name_Size',Y_Name_Size,'X_Name_Size',X_Name_Size,'Y_Ticks',Y_Ticks,'X_Ticks',X_Ticks,'CountPerSample',CountPerSample,'PlotSubTitle',PlotSubTitle,'SignificanceType',SignificanceType,'YLimits',YLimits,ExtraInputs{:});
+OverwriteSignificance = cell(1,length(Window_Accuracy_All));
+
+for pidx = 1:length(Window_Accuracy_All)
+
+this_FullTable = FullTable(pidx,:);
+
+FilterColumn = cfg.FilterColumn;
+cfg_Encoder = cfg.cfg_Encoder;
+cfg_Epoch = cfg.cfg;
+Subset=FullTable.("Session Name"){1};
+TrialFilter="All";
+TrialFilter_Value=NaN;
+MatchType=cfg.MatchType;
+TargetFilter='Overall';
+LabelClassFilter='';
+
+if IsSplit
+this_ExtraTerm = cfg.ExtraSaveTerm;
+this_ExtraTerm = erase(this_ExtraTerm,...
+    {'Distractor (','Distractor-(','Distractor_('});
+SplitType = extractBetween(this_ExtraTerm,'(',')');
+if isempty(SplitType)
+SplitType = FullTable(pidx,:).Properties.RowNames;
+end
+TypeValues = cgg_getSplitTableRowValues(SplitType, FilterColumn);
+[TrialFilter,TrialFilter_Value] = ...
+            cgg_getPackedTrialFilter(FilterColumn,TypeValues,'Pack');
+end
+
+if IsAttentional
+MatchType=cfg.MatchType_Attention;
+TargetFilter = extractBetween(cfg.ExtraSaveTerm,'{','}');
+if isempty(TargetFilter)
+TargetFilter = FullTable(pidx,:).Properties.RowNames;
+end
+TargetFilter = erase(TargetFilter, {'-',' ','(',')'});
+% TargetFilter = 'Overall';
+end
+
+    [~,OverwriteSignificance{pidx}] = cgg_testAccuracyTableSignificance(this_FullTable,'SignificanceValue',SignificanceValue,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',Subset,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
+end
+
+%%
+
+[fig_plot,p_Plots,p_Error] = cgg_plotTimeSeriesPlot(Window_Accuracy_All,'Time_Start',Time_Start,'DataWidth',DataWidth,'WindowStride',WindowStride,'SamplingRate',SamplingFrequency,'X_Name',X_Name,'Y_Name',Y_Name,'PlotTitle',PlotTitle,'PlotNames',PlotNames,'wantIndicatorNames',wantIndicatorNames,'Y_Tick_Label_Size',Y_Tick_Label_Size,'X_Tick_Label_Size',Y_Tick_Label_Size,'PlotColors',PlotColors,'InFigure',fig_plot,'Y_Name_Size',Y_Name_Size,'X_Name_Size',X_Name_Size,'Y_Ticks',Y_Ticks,'X_Ticks',X_Ticks,'CountPerSample',CountPerSample,'PlotSubTitle',PlotSubTitle,'SignificanceType',SignificanceType,'YLimits',YLimits,'OverwriteSignificance',OverwriteSignificance,'SignificanceValue',SignificanceValue,ExtraInputs{:});
 
 hold on
 % p_Random=yline(RandomChance);
@@ -453,6 +516,5 @@ exportgraphics(fig_plot,SavePathNameExt,'ContentType','vector');
 
 close(fig_plot);
 % close all
-
 end
 

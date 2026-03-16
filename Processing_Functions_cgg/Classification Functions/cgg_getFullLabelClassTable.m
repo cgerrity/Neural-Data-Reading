@@ -18,7 +18,27 @@ if ~(exist('Identifiers_Table','var'))
 Identifiers_Table=[];
 end
 end
+
+if isfunction
+MatchType_LabelClass = CheckVararginPairs('MatchType_LabelClass', 'Scaled-MacroBalancedAccuracy', varargin{:});
+else
+if ~(exist('MatchType_LabelClass','var'))
+MatchType_LabelClass='Scaled-MacroBalancedAccuracy';
+end
+end
+
+if isfunction
+MatchType_Attention_LabelClass = CheckVararginPairs('MatchType_Attention_LabelClass', 'Scaled-MicroBalancedAccuracy', varargin{:});
+else
+if ~(exist('MatchType_Attention_LabelClass','var'))
+MatchType_Attention_LabelClass='Scaled-MicroBalancedAccuracy';
+end
+end
 %%
+
+varargin = cgg_changeFieldFromVarargin(varargin,'WantLabelClassFilter',false);
+varargin = cgg_changeFieldFromVarargin(varargin,'MatchType',MatchType_LabelClass);
+varargin = cgg_changeFieldFromVarargin(varargin,'MatchType_Attention',MatchType_Attention_LabelClass);
 
 Subset = CheckVararginPairs('Subset', '', varargin{:});
 wantSubset = CheckVararginPairs('wantSubset', true, varargin{:});

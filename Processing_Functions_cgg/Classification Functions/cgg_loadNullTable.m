@@ -27,17 +27,32 @@ NullTableNameExt = NullTableName + ".mat";
 
 NullTablePathNameExt = fullfile(NullTablePath, ...
     NullTableNameExt);
-OldNullTablePathNameExt = fullfile(OldNullTablePath, ...
-    NullTableNameExt);
+NumOldPaths = 1;
+if iscell(OldNullTablePath)
+    NumOldPaths = length(OldNullTablePath);
+end
+OldNullTablePathNameExt = cell(NumOldPaths,1);
+
+for oidx = NumOldPaths:-1:1 % Most recent Old Path is listed first so switch the order
+    if iscell(OldNullTablePath)
+    this_OldPath = OldNullTablePath{oidx};
+    else
+    this_OldPath = OldNullTablePath;
+    end
+OldNullTablePathNameExt{oidx} = fullfile(this_OldPath, ...
+NullTableNameExt);
+end
 
 %%
 
-if isfile(OldNullTablePathNameExt)
+for oidx = 1:NumOldPaths
+if isfile(OldNullTablePathNameExt{oidx})
     fprintf('   !!! Moving Null Table from old location to new\n');
     fprintf('   !!! (%s)\n',NullTableName);
-    fprintf('   !!! Old: %s\n',OldNullTablePathNameExt);
+    fprintf('   !!! Old: %s\n',OldNullTablePathNameExt{oidx});
     fprintf('   !!! New: %s\n',NullTablePathNameExt);
-    [~, ~] = movefile(OldNullTablePathNameExt, NullTablePathNameExt);
+    [~, ~] = movefile(OldNullTablePathNameExt{oidx}, NullTablePathNameExt);
+end
 end
 
 %%

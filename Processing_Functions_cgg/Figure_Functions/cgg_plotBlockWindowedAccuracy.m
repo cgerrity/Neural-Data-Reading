@@ -5,6 +5,14 @@ function cgg_plotBlockWindowedAccuracy(FullTable,cfg,varargin)
 isfunction=exist('varargin','var');
 
 if isfunction
+IsSplit = CheckVararginPairs('IsSplit', false, varargin{:});
+else
+if ~(exist('IsSplit','var'))
+IsSplit=false;
+end
+end
+
+if isfunction
 IsAttentional = CheckVararginPairs('IsAttentional', false, varargin{:});
 else
 if ~(exist('IsAttentional','var'))
@@ -70,7 +78,7 @@ end
 this_cfg.LoopTitle = FullTable.Properties.RowNames{sidx};
 
 % cgg_plotOverallAccuracy(Split_Table,this_cfg);
-cgg_plotWindowedAccuracy(Present_Table,this_cfg,'IsBlock',true,'IsAttentional',IsAttentional,'cfg_OverwritePlot',cfg_OverwritePlot);
+cgg_plotWindowedAccuracy(Present_Table,this_cfg,'IsBlock',true,'IsAttentional',IsAttentional,'cfg_OverwritePlot',cfg_OverwritePlot,'IsSplit',IsSplit);
 
 % Removed_Table=FullTable{sidx,"Removed Areas"}{1};
 % if ~isempty(SessionNumbers)

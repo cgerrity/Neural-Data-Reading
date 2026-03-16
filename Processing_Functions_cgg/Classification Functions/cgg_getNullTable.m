@@ -158,6 +158,13 @@ end
 if ischar(NullTable.TargetFilter) || iscell(NullTable.TargetFilter)
 NullTable.TargetFilter = string(NullTable.TargetFilter);
 end
+%% Issue with single column for variables
+
+if size(NullTable.TrialFilter,2) > 1 || isnumeric(NullTable.TrialFilter_Value)
+[NullTable.TrialFilter,NullTable.TrialFilter_Value] = ...
+    cgg_getPackedTrialFilter(NullTable.TrialFilter,...
+    NullTable.TrialFilter_Value,'Pack');
+end
 %% Identify any issues with Null Tables with repeat DataNumbers
 DataNumber_Prior = NullTable.DataNumber;
 MatchingNullEntry = cellfun(@(x) isequal(sort(x),sort(DataNumber)),DataNumber_Prior,'UniformOutput',true);
