@@ -39,6 +39,7 @@ FieldsToRemove = [FieldsToRemove,'WeightOffsetAndScale'];
 FieldsToRemove = [FieldsToRemove,'WantSeparateTimeShift'];
 FieldsToRemove = [FieldsToRemove,'STDTimeShift'];
 FieldsToRemove = [FieldsToRemove,'Freeze_cfg'];
+FieldsToRemove = [FieldsToRemove,'EncoderOutputType'];
 
 %%
     % Read the file into a table

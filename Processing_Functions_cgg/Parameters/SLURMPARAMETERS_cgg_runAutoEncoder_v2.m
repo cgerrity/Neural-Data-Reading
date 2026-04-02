@@ -53,6 +53,7 @@ Activation = cfg.Activation;
 IsVariational = cfg.IsVariational;
 BottleNeckDepth = cfg.BottleNeckDepth;
 WantSaveOptimalNet = cfg.WantSaveOptimalNet;
+EncoderOutputType = cfg.WeightClassification;
 
 %%
 
@@ -539,6 +540,7 @@ ClassifierHiddenSize = repmat({ClassifierHiddenSize},[SLURMIDX_Count,1]);
 WeightReconstruction = repmat({WeightReconstruction},[SLURMIDX_Count,1]);
 WeightKL = repmat({WeightKL},[SLURMIDX_Count,1]);
 WeightClassification = repmat({WeightClassification},[SLURMIDX_Count,1]);
+EncoderOutputType = repmat({EncoderOutputType},[SLURMIDX_Count,1]);
 
 CurrentIDX = 1;
     Description{CurrentIDX} = 'Logistic Regression'; % <<<<<<<<
@@ -556,6 +558,9 @@ CurrentIDX = CurrentIDX +1;
 CurrentIDX = CurrentIDX +1;
     Description{CurrentIDX} = 'PCA'; % <<<<<<<<
     ModelName{CurrentIDX} = 'PCA';
+CurrentIDX = CurrentIDX +1;
+    Description{CurrentIDX} = 'Stochastic Encoder'; % <<<<<<<<
+    EncoderOutputType{CurrentIDX} = 'Stochastic';
 
 %% SLURM Choice 12
     case 12
@@ -653,7 +658,7 @@ VariableNames = {'Fold','ModelName','DataWidth','WindowStride',...
     'NumEpochsFull','Optimizer','Normalization','LossType_Decoder',...
     'LossType_Classifier','maxworkerMiniBatchSize','L2Factor',...
     'Dropout','WantNormalization','Activation','IsVariational',...
-    'BottleNeckDepth','WantSaveOptimalNet'};
+    'BottleNeckDepth','WantSaveOptimalNet','EncoderOutputType'};
 
 %%
 

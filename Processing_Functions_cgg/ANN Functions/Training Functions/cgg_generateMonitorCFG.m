@@ -52,7 +52,8 @@ end
 
 HasDecoder = ~isempty(Decoder);
 HasClassifier = ~isempty(Classifier);
-IsVariational = false;
+IsVariational = any(contains(Encoder.OutputNames,'/mean')) && ...
+    any(contains(Encoder.OutputNames,'/log-variance'));
 LossType = 'Classification';
 
 NumDimensions = [];
@@ -61,8 +62,9 @@ WantEncoderGradient = ~isempty(Encoder.Learnables);
 WantDecoderGradient = false;
 
 if HasDecoder
-IsVariational = any(contains(Decoder.OutputNames,'/mean')) && ...
-    any(contains(Decoder.OutputNames,'/log-variance'));
+IsVariational = (any(contains(Decoder.OutputNames,'/mean')) && ...
+    any(contains(Decoder.OutputNames,'/log-variance'))) || ...
+    IsVariational;
 LossType = 'Regression';
 WantDecoderGradient = ~isempty(Decoder.Learnables);
 WantReconstructionLoss = ~isempty(Decoder.Learnables);

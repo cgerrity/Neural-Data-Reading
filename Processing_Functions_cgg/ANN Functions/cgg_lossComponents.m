@@ -159,6 +159,8 @@ IsDecoderLearnable = true;
 IsClassifierLearnable = true;
 
 %%
+OutputNames_Encoder = Encoder.OutputNames;
+NumOutputs_Encoder = length(OutputNames_Encoder);
 State = struct();
 State.Encoder = Encoder.State;
 
@@ -240,10 +242,21 @@ T_Reconstruction = X;
 %% Encoder
 Encoder=resetState(Encoder);
 Encoder = cgg_updateState(Encoder,State.Encoder);
+Y_Encoded=cell(NumOutputs_Encoder,1);
 if wantPredict
-    [Y_Encoded,~] = predict(Encoder,X);
+    [Y_Encoded{:},~] = predict(Encoder,X,Outputs=OutputNames_Encoder);
 else
-    [Y_Encoded,State.Encoder] = forward(Encoder,X);
+    [Y_Encoded{:},State.Encoder] = forward(Encoder,X,Outputs=OutputNames_Encoder);
+end
+
+if any(contains(OutputNames_Encoder,'mean')) && any(contains(OutputNames_Encoder,'log-variance'))
+    Y_Mean = Y_Encoded{contains(OutputNames_Encoder,'mean')};
+    Y_logSigmaSq = Y_Encoded{contains(OutputNames_Encoder,'log-variance')};
+    Y_Encoded = Y_Encoded{contains(OutputNames_Encoder,'out')};
+else
+    Y_Mean = [];
+    Y_logSigmaSq = [];
+    Y_Encoded = Y_Encoded{1};
 end
 
 %% Decoder
@@ -259,9 +272,9 @@ end
 if any(contains(OutputNames_Decoder,'mean')) && any(contains(OutputNames_Decoder,'log-variance'))
 Y_Mean = Y_Decoded{contains(OutputNames_Decoder,'mean')};
 Y_logSigmaSq = Y_Decoded{contains(OutputNames_Decoder,'log-variance')};
-else
-    Y_Mean = [];
-    Y_logSigmaSq = [];
+% else
+%     Y_Mean = [];
+%     Y_logSigmaSq = [];
 end
 if (any(contains({Decoder.Layers(:).Name},"reshape_offset_Augment")) || ...
         any(contains({Decoder.Layers(:).Name},"reshape_scale_Augment"))) ...

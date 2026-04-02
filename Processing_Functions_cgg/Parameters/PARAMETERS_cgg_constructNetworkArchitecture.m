@@ -11,6 +11,8 @@ WantLearnableScale = false;
 
 BottleNeckNormalization = 'Layer';
 
+EncoderOutputType = 'Deterministic'; %'Stochastic', 'Deterministic'
+
 %%
 
 switch ArchitectureType

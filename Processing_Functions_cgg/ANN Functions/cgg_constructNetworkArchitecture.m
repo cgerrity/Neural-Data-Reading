@@ -79,6 +79,10 @@ if isfield(cfg_Encoder,'BottleNeckDepth')
 cfg.BottleNeckDepth = cfg_Encoder.BottleNeckDepth;
 end
 
+if isfield(cfg_Encoder,'EncoderOutputType')
+cfg.EncoderOutputType = cfg_Encoder.EncoderOutputType;
+end
+
 % if isfield(cfg_Encoder,'WantLearnableScale')
 % cfg.WantLearnableScale = cfg_Encoder.WantLearnableScale;
 % end
@@ -97,9 +101,13 @@ end
 HiddenSizeAutoEncoder = HiddenSize(1:end-1);
 if ~isempty(HiddenSize)
 HiddenSizeBottleNeck = HiddenSize(end);
+DecoderInputSize = HiddenSizeBottleNeck;
 else
 HiddenSizeBottleNeck = [];
+DecoderInputSize = [];
 end
+
+PostBottleNeckBlock = [];
 
 cfg.HiddenSizeBottleNeck = HiddenSizeBottleNeck;
 
@@ -116,18 +124,35 @@ InputEncoderBlock = layerGraph(InputEncoderBlock);
 
 if cfg.IsVariational && ~(strcmp(ArchitectureType,'Logistic Regression')...
         || strcmp(ArchitectureType,'PCA'))
-    
-    PreDecoderBlock = [ cgg_samplingLayer("Name",'SamplingLayer')
-        PreDecoderBlock];
+    HiddenSize_PreSampling = HiddenSizeBottleNeck*2;
+    HiddenSize_PostSampling = HiddenSizeBottleNeck;
+    switch cfg.EncoderOutputType
+        case 'Deterministic'
+            PreDecoderBlock = [ cgg_samplingLayer("Name",'SamplingLayer')
+                PreDecoderBlock];
+            DecoderInputSize = HiddenSize_PreSampling;
+        case 'Stochastic'
+            PostBottleNeckBlock = [PostBottleNeckBlock
+                cgg_samplingLayer("Name",'SamplingLayer')];
+            DecoderInputSize = HiddenSize_PostSampling;
+        otherwise
+            PreDecoderBlock = [ cgg_samplingLayer("Name",'SamplingLayer')
+                PreDecoderBlock];
+            DecoderInputSize = HiddenSize_PreSampling;
+    end
     HiddenSizeBottleNeck = HiddenSizeBottleNeck*2;
 end
 
 if strcmp(ArchitectureType,'PCA')
     HiddenSizeBottleNeck = cfg.PCAInformation.OutputDimension;
+    DecoderInputSize = HiddenSizeBottleNeck;
 end
 
 if ~(isempty(PreDecoderBlock))
 PreDecoderBlock = layerGraph(PreDecoderBlock);
+end
+if ~(isempty(PostBottleNeckBlock))
+PostBottleNeckBlock = layerGraph(PostBottleNeckBlock);
 end
 
 if cfg.OutputFullyConnected
@@ -151,8 +176,8 @@ end
 
 BottleNeck = cgg_selectBottleNeck(HiddenSizeBottleNeck,cfg);
 
-if ~isempty(HiddenSizeBottleNeck)
-InputDecoderBlock = sequenceInputLayer(HiddenSizeBottleNeck,"Name","Input_Decoder");
+if ~isempty(DecoderInputSize)
+InputDecoderBlock = sequenceInputLayer(DecoderInputSize,"Name","Input_Decoder");
 else
 InputDecoderBlock = sequenceInputLayer(prod(InputSize),"Name","Input_Decoder");
 end
@@ -180,6 +205,9 @@ Encoder = cgg_connectLayerGraphs(Encoder,PostEncoderBlock);
 end
 if ~isempty(BottleNeck)
 Encoder = cgg_connectLayerGraphs(Encoder,BottleNeck);
+end
+if ~isempty(PostBottleNeckBlock)
+Encoder = cgg_connectLayerGraphs(Encoder,PostBottleNeckBlock);
 end
 %%
 

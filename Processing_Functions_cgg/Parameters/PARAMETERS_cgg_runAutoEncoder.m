@@ -42,6 +42,7 @@ WantNormalization = false;
 Activation = '';
 IsVariational = true;
 BottleNeckDepth = 1;
+EncoderOutputType = 'Deterministic'; %'Stochastic', 'Deterministic'
 %%
 
 % HiddenSizes=[1500,750,300,150];

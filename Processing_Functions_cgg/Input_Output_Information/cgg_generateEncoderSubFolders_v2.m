@@ -132,6 +132,11 @@ end
 if isfield(cfg_Encoder,'maxworkerMiniBatchSize')
 maxworkerMiniBatchSize = cfg_Encoder.maxworkerMiniBatchSize;
 end
+
+EncoderOutputType = [];
+if isfield(cfg_Encoder,'EncoderOutputType')
+EncoderOutputType = cfg_Encoder.EncoderOutputType;
+end
 %% Model Name Folder
 
 % Make the Model Name folder name.
@@ -145,6 +150,10 @@ cfg.EncodingDir=cfg_tmp;
 NameModelParameters = '';
 if IsVariational
     NameVariational = 'Variational';
+    switch EncoderOutputType
+        case 'Stochastic'
+            NameVariational = sprintf('%s - Stochastic Encoder',NameVariational);
+    end
     NameModelParameters = NameVariational;
 % else
 %     NameVariational = '';

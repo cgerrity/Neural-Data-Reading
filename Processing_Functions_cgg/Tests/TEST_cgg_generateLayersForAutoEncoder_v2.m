@@ -11,6 +11,7 @@ LatentSize = [250];
 WantNormalization = false;
 Dropout = 0.5;
 IsVariational = true;
+EncoderOutputType = 'Stochastic'; % 'Deterministic', 'Stochastic'
 
 NetworkToView = 'Classifier';
 Pause_Time = 0;
@@ -57,7 +58,7 @@ NumExamples = 5;
 
 NumClasses = [1,4,4,4];
 
-WantPerTime = true;
+WantPerTime = false;
 %%
 
 InputSize = [NumChannels,DataWidth,NumAreas];
@@ -97,6 +98,7 @@ cfg_Encoder = struct();
 cfg_Encoder.WantNormalization = WantNormalization;
 cfg_Encoder.IsVariational = IsVariational;
 cfg_Encoder.Dropout = Dropout;
+cfg_Encoder.EncoderOutputType = EncoderOutputType;
 PCAInformation = struct();
 if strcmp(ModelName,'PCA')
 PCAInformation = cgg_getPCAForLayer(X_Input,'WantPerTime',WantPerTime);

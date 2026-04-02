@@ -25,6 +25,7 @@ WantNormalization = false;
 Activation = '';
 IsVariational = true;
 BottleNeckDepth = 1;
+EncoderOutputType = 'Deterministic'; %'Stochastic', 'Deterministic'
 
 %%
 

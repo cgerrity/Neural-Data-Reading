@@ -19,6 +19,7 @@ WindowStride = 50;
 
 ModelName = 'Variational GRU - Dropout 0.5';
 ClassifierName = 'Deep LSTM - Dropout 0.5';
+EncoderOutputType = 'Deterministic'; %'Stochastic', 'Deterministic'
 
 HiddenSizes=[1000,500,250];
 ClassifierHiddenSize=[250,100,50];

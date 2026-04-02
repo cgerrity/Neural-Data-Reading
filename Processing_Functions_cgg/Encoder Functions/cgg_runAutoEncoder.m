@@ -218,6 +218,9 @@ end
 if isfunction
 cfg_Encoder.Freeze_cfg = CheckVararginPairs('Freeze_cfg', cfg_Encoder.Freeze_cfg, varargin{:});
 end
+if isfunction
+cfg_Encoder.EncoderOutputType = CheckVararginPairs('EncoderOutputType', cfg_Encoder.EncoderOutputType, varargin{:});
+end
 
 %%
 cfg_Encoder.IsQuaddle = true;
