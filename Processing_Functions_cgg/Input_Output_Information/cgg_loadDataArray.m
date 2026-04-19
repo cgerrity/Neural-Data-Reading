@@ -95,6 +95,23 @@ SamplingFrequency=NaN;
 end
 end
 
+if isfunction
+DataArrayParameters = CheckVararginPairs('DataArrayParameters', [], varargin{:});
+else
+if ~(exist('DataArrayParameters','var'))
+DataArrayParameters=[];
+end
+end
+
+%%
+if ~isempty(DataArrayParameters)
+    STDChannelOffset = DataArrayParameters.CurrentSTDChannelOffset;
+    STDWhiteNoise = DataArrayParameters.CurrentSTDWhiteNoise;
+    STDRandomWalk = DataArrayParameters.CurrentSTDRandomWalk;
+    STDTimeShift = DataArrayParameters.CurrentSTDTimeShift;
+    WantSeparateTimeShift = DataArrayParameters.WantSeparateTimeShift;
+end
+
 %% Normalize Data
 if ~strcmp(Normalization,'None')
     if isempty(NormalizationTable)
