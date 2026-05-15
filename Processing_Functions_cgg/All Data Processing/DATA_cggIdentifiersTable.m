@@ -47,7 +47,7 @@ AugmentFunctions{AugmentIDX,2} = "Value Difference Category";
 
 %%
 cfg_Sessions = DATA_cggAllSessionInformationConfiguration;
-cfg_Encoder = PARAMETERS_OPTIMAL_cgg_runAutoEncoder_v2;
+cfg_Encoder = PARAMETERS_cgg_runAutoEncoder('ParameterSetName','Prior Optimal');
 Epoch = cfg_Encoder.Epoch;
 outdatadir=cfg_Sessions(1).outdatadir;
 TargetDir=outdatadir;

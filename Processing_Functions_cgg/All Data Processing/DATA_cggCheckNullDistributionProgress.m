@@ -5,12 +5,12 @@ clc; clear; close all;
 % TrialFilters = {"Dimensionality"};
 % TrialFilters = {"Trials From Learning Point Category"};
 TrialFilters = {"Learned","Dimensionality"};
-TrialFilters = {"Prediction Error Category"};
-TrialFilters = {"Gain","Loss"};
-TrialFilters = {"Gain"};
-TrialFilters = {"Loss"};
-TrialFilters = {"Correct Trial"};
-TrialFilters = {"Previous"};
+% TrialFilters = {"Prediction Error Category"};
+% TrialFilters = {"Gain","Loss"};
+% TrialFilters = {"Gain"};
+% TrialFilters = {"Loss"};
+% TrialFilters = {"Correct Trial"};
+% TrialFilters = {"Previous"};
 % TrialFilters = {"Target Value Category"};
 % TrialFilters = {"Target Prediction Error Category"};
 % TrialFilters = {"Value Difference Category"};
@@ -62,6 +62,7 @@ cfg_Epoch.Results = cgg_getDirectory(cfg.ResultsDir,'Epoch');
 cfg_Epoch.TargetDir = cfg.TargetDir;
 cfg_Epoch.ResultsDir = cfg.ResultsDir;
 %%
+cgg_getParallelPool('WantThreads',false,'RequireChange',true);
 Identifiers_Table = cgg_getIdentifiersTable(cfg,false,'Epoch',Epoch);
 %%
 
