@@ -27,17 +27,17 @@ FilterColumn_All = {}; ColumnCounter = 1;
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Dimensionality'};
 % ColumnCounter = ColumnCounter + 1;
-FilterColumn_All{ColumnCounter}={'Learned'};
+% FilterColumn_All{ColumnCounter}={'Learned'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Trials From Learning Point Category'};
-ColumnCounter = ColumnCounter + 1;
-FilterColumn_All{ColumnCounter}={'Prediction Error Category'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Prediction Error Category'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Gain','Loss'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Gain'};
 % ColumnCounter = ColumnCounter + 1;
-% FilterColumn_All{ColumnCounter}={'Loss'};
+FilterColumn_All{ColumnCounter}={'Loss'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Correct Trial'};
 % ColumnCounter = ColumnCounter + 1;
@@ -72,16 +72,26 @@ FilterColumn_All{ColumnCounter}={'Prediction Error Category'};
 % FilterColumn_All{ColumnCounter}={'Gain','Loss','Multi Trials From Learning Point'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Value Difference Category'};
-ColumnCounter = ColumnCounter + 1;
-FilterColumn_All{ColumnCounter}={'Target Value Category'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Target Value Category'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Target Prediction Error Category'};
 
 % SignificanceValues = [1,0.1,0.05,0.025,0.01,0.001,0.0001];
-SignificanceValues = 0.01;
+SignificanceValues = [0.01];
 % TimeRanges = {[],[-1.5,0],[0,1.5]};
-TimeRanges = {[-1.5,0]};
+TimeRanges = {[-0.4,0]};
 SetSignificance = false;
+
+%%
+WantAllFromBest = true;
+WantAllFromGroup = true;
+
+
+%%
+if WantAllFromBest
+    WantAllFromGroup = false;
+end
 
 %%
 for fidx = 1:length(FilterColumn_All)
@@ -117,6 +127,7 @@ fprintf("%s\n",join(string(FilterColumn)));
 
 FullTable = cgg_procRemoveTableRows(FullTable, "Not Learned");
 FullTable = cgg_procRemoveTableRows(FullTable, "Unlearned");
+% FullTable = cgg_procRemoveTableRows(FullTable, "Learned");
 %%
 % G = findgroups(Identifiers_Table.Block);
 %  aaa = splitapply(@(x1){movmean(x1,[0,11])},Identifiers_Table.("Correct Trial"),G);
@@ -141,7 +152,8 @@ FullTable = cgg_procRemoveTableRows(FullTable, "Unlearned");
 
 %% Overall Accuracy
 
-% cgg_plotOverallAccuracy(FullTable,cfg);
+% cgg_plotOverallAccuracy(FullTable,cfg,'MetricType','Peak');
+% cgg_plotOverallAccuracy(FullTable,cfg,'MetricType','Average');
 % cgg_plotOverallAccuracy(FullTable_Filtered,cfg);
 
 %% Split Accuracy
@@ -209,8 +221,8 @@ for idx = 1:length(SignificanceValues)
     % cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
     % cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
     % cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
-    CombinedFullTable = cgg_getSpecifiedFullTableSessions(this_FullTable,'SignificanceValue',SignificanceValue,'WantAllFromGroup',true,'cfg_Encoder',this_cfg,'TimeRange',TimeRange,'WantAllFromBest',true);
-    cgg_plotWindowedAccuracy(CombinedFullTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    CombinedFullTable = cgg_getSpecifiedFullTableSessions(this_FullTable,'SignificanceValue',SignificanceValue,'WantAllFromGroup',WantAllFromGroup,'cfg_Encoder',this_cfg,'TimeRange',TimeRange,'WantAllFromBest',WantAllFromBest,'WantBlockSingleArea',true);
+    % cgg_plotWindowedAccuracy(CombinedFullTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
     % cgg_plotLabelClass(CombinedFullTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
     % cgg_plotBlockImportanceAnalysis(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
     cgg_plotSplitAccuracy(CombinedFullTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
@@ -221,6 +233,10 @@ end
 end
 end
 %% Parameter Sweep
-% [~,cfg,~] = cgg_getResultsPlotsParametersNetwork(EpochName,'FilterColumn','All','WantAnalysis',false,'WantResults',false);
+[~,cfg] = cgg_getResultsPlotsParametersNetwork('Decision','FilterColumn','All','WantAnalysis',false,'WantResults',false);
+for pidx = 1:100
+cgg_plotParameterSweep(cfg);
+pause(5*60);
+end
 % cgg_plotParameterSweep(cfg,'WantValidation',true);
 % cgg_plotParameterSweep(cfg,'WantValidation',false);

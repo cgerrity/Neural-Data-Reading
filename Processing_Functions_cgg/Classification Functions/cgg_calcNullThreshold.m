@@ -1,4 +1,4 @@
-function Threshold = cgg_calcNullThreshold(Information_Table,MetricFunc,varargin)
+function [Threshold,P_Value] = cgg_calcNullThreshold(Information_Table,MetricFunc,varargin)
 %CGG_CALCNULLTHRESHOLD Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -33,6 +33,14 @@ NumIterations = CheckVararginPairs('NumIterations', 10000, varargin{:});
 else
 if ~(exist('NumIterations','var'))
 NumIterations=10000;
+end
+end
+
+if isfunction
+ComparisonValue = CheckVararginPairs('ComparisonValue', [], varargin{:});
+else
+if ~(exist('ComparisonValue','var'))
+ComparisonValue=[];
 end
 end
 
@@ -111,19 +119,40 @@ NullDistributions{didx} = ChanceDistribution;
 end
 %% Obtain Composite Distribution
 
-CompositeNullDistribution = NaN(1,NumIterations);
-parfor nidx = 1:NumIterations
-    this_MetricList = cellfun(@(x) ...
-        cgg_getDataFromIndices(x,randi(length(x))),NullDistributions);
-CompositeNullDistribution(nidx) = MetricFunc(this_MetricList);
+if iscell(MetricFunc)
+    NumMetric = length(MetricFunc);
+else
+    NumMetric = 1; % Initialize for single metric function
 end
 
+CompositeNullDistribution = cell(NumIterations,1);
+parfor nidx = 1:NumIterations
+
+    this_CompositeNullDistribution = NaN(1,NumMetric);
+    for midx = 1:NumMetric
+    this_CompositeNullDistribution(1,midx) = MetricFunc{midx}(NullDistributions);
+    end
+    CompositeNullDistribution{nidx} = this_CompositeNullDistribution;
+%     this_MetricList = cellfun(@(x) ...
+%         cgg_getDataFromIndices(x,randi(length(x))),NullDistributions);
+% CompositeNullDistribution(nidx) = MetricFunc(this_MetricList);
+end
+
+CompositeNullDistribution = cell2mat(CompositeNullDistribution);
 %% Get Specified Threshold value
 this_Percentile = (1-Alpha)*100;
 % fprintf('??? Significance Level: %f\n',Alpha);
 Threshold = prctile(CompositeNullDistribution,this_Percentile);
 if WantDebug
-fprintf('??? Threshold: %f; NumIterations: %d\n',Threshold,NumIterations);
+    for midx = 1:NumMetric
+fprintf('??? Threshold: %f; NumIterations: %d\n',Threshold(midx),NumIterations);
+    end
+end
+%% Get P-Value
+
+P_Value = cell(1,NumMetric);
+for midx = 1:NumMetric
+P_Value{midx} = (sum(CompositeNullDistribution(:,midx) > ComparisonValue{midx})) / length(CompositeNullDistribution(:,midx));
 end
 end
 

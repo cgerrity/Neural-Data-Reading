@@ -81,7 +81,7 @@ for aidx = 1:NumAttention
     this_cfg.LoopType=sprintf('%s',cfg.SplitExtraSaveTerm);
     this_cfg.PlotTitle=string(this_SplitTitleName) + " " + string(this_AttentionalTitleName);
     cgg_plotLabelClassAccuracy(this_Attentional_Table,this_cfg,'IsAttentional',true,'SubsetName',SubsetName,'WantSameSessionNumbers',WantSameSessionNumbers,'cfg_OverwritePlot',cfg_OverwritePlot);
-    cgg_plotLabelClassWindowedAccuracy(this_Attentional_Table,this_cfg,'IsAttentional',true,'SubsetName',SubsetName,'WantSameSessionNumbers',WantSameSessionNumbers,'cfg_OverwritePlot',cfg_OverwritePlot,'IsSplit',IsSplit);
+    cgg_plotLabelClassWindowedAccuracy(this_Attentional_Table,this_cfg,'IsAttentional',true,'SubsetName',SubsetName,'WantSameSessionNumbers',WantSameSessionNumbers,'cfg_OverwritePlot',cfg_OverwritePlot,'IsSplit',true);
 end
 
 

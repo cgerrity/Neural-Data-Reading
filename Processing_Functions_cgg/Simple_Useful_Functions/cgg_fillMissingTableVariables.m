@@ -1,4 +1,4 @@
-function [Table1,Table2] = cgg_fillMissingTableVariables(Table1,Table2,MissingValue)
+function [Table1,Table2,MissingFromTable1,MissingFromTable2] = cgg_fillMissingTableVariables(Table1,Table2,MissingValue)
 %CGG_FILLMISSINGTABLEVARIABLES Summary of this function goes here
 %   Detailed explanation goes here
 

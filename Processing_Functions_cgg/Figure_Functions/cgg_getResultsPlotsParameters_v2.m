@@ -111,8 +111,15 @@ else
     Time_Start = 0;
 end
 
-outdatadir=cfg_Sessions(1).outdatadir;
-TargetDir=outdatadir;
+% outdatadir=cfg_Sessions(1).outdatadir;
+% TargetDir=outdatadir;
+if contains(Epoch,'Synthetic_Easy')
+    temporarydir=cfg_Session(1).temporarydir;
+    TargetDir=temporarydir;
+else
+    outdatadir=cfg_Session(1).outdatadir;
+    TargetDir=outdatadir;
+end
 ResultsDir=cfg_Sessions(1).temporarydir;
 
 %% Loop Values

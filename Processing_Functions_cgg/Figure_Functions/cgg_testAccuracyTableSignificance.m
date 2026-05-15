@@ -1,4 +1,4 @@
-function [IsSignificant,Significance] = cgg_testAccuracyTableSignificance(AccuracyTable,varargin)
+function [IsSignificant,Significance,Significance_Bar,P_Value] = cgg_testAccuracyTableSignificance(AccuracyTable,varargin)
 %CGG_TESTACCURACYTABLESIGNIFICANCE Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -100,11 +100,19 @@ WantDebug=false;
 end
 end
 
+if isfunction
+MetricType = CheckVararginPairs('MetricType', 'Peak', varargin{:});
+else
+if ~(exist('MetricType','var'))
+MetricType='Peak';
+end
+end
+
 %%
 SessionName = Subset;
 %% Get Timeline for Time Range specification
 
-if ~isempty(TimeRange)
+% if ~isempty(TimeRange)
     if isfield(cfg_Encoder,'Time_Start') && ...
         isfield(cfg_Encoder,'SamplingRate') && ...
         isfield(cfg_Encoder,'DataWidth') && ...
@@ -113,9 +121,30 @@ if ~isempty(TimeRange)
 Time = cgg_getTime(cfg_Encoder.Time_Start,cfg_Encoder.SamplingRate,...
     cfg_Encoder.DataWidth,cfg_Encoder.WindowStride,NaN,0,...
     'Time_End',cfg_Encoder.Time_End);
+        NumTimePoints = length(Time);
     end
+% end
+
+if exist("Time","var") && ~isempty(TimeRange)
+TimeRangeIndices = Time > min(TimeRange) & Time < max(TimeRange);
+NumTimePoints = sum(TimeRangeIndices);
 end
 
+%%
+
+this_Window_Accuracy = AccuracyTable.('Window Accuracy'){1};
+[~,NumWindows] = size(this_Window_Accuracy);
+Bar_Accuracy = AccuracyTable.('Accuracy'){1};
+
+% [Series_Mean,~,~,Series_CI] = ...
+%     cgg_getMeanSTDSeries(this_Window_Accuracy,...
+%     'SignificanceValue',SignificanceValue,'NumSamples',NumWindows);
+[Series_Mean,~,~,~] = ...
+    cgg_getMeanSTDSeries(this_Window_Accuracy,...
+    'SignificanceValue',SignificanceValue,'NumSamples',NumWindows);
+[Bar_Accuracy,~,~,~] = ...
+    cgg_getMeanSTDSeries(Bar_Accuracy,...
+    'SignificanceValue',SignificanceValue,'NumSamples',1);
 %%
 
 Information_Table = cgg_generateBlankInformationTable(...
@@ -124,31 +153,65 @@ Information_Table = cgg_generateBlankInformationTable(...
     'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,...
     'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
 
-MetricFunc = @(x) mean(x, "all", "omitnan");
+% this_MetricList = cellfun(@(x) max(cgg_getDataFromIndices(x,randi(length(x),1,NumTimePoints))),NullDistributions);
+% CompositeNullDistribution(nidx) = MetricFunc(this_MetricList);
+% PeakMetricFunc = @(x) mean(x, "all", "omitnan");
+% MetricFunc = @(x) mean(x, "all", "omitnan");
 
-Threshold = cgg_calcNullThreshold(Information_Table,MetricFunc,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Alpha',SignificanceValue);
+% y = NullDistributions
+MetricListFunc = @(NumPoints,y) cellfun(@(x) cgg_getDataFromIndices(x,randi(length(x),1,NumPoints)),y,'UniformOutput',false);
+PeakMetricListFunc = @(y) cellfun(@(x) max(x),MetricListFunc(NumTimePoints,y));
+PeakMetricFunc = @(y) mean(PeakMetricListFunc(y), "all", "omitnan");
+
+AverageMetricListFunc = @(y) cellfun(@(x) mean(x),MetricListFunc(NumTimePoints,y));
+AverageMetricFunc = @(y) mean(AverageMetricListFunc(y), "all", "omitnan");
+
+WindowMetricListFunc = @(y) cellfun(@(x) max(x),MetricListFunc(1,y));
+WindowMetricFunc = @(y) mean(WindowMetricListFunc(y), "all", "omitnan");
+
+switch MetricType
+    case 'Peak'
+        BarFunc = PeakMetricFunc;
+    case 'Average'
+        BarFunc = AverageMetricFunc;
+    otherwise
+        BarFunc = PeakMetricFunc;
+end
+
+MetricFunc = {WindowMetricFunc,BarFunc};
+ComparisonValue{1} = Series_Mean;
+ComparisonValue{2} = Bar_Accuracy;
+
+[Threshold,P_Value] = cgg_calcNullThreshold(Information_Table,MetricFunc,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Alpha',SignificanceValue,'ComparisonValue',ComparisonValue);
+Threshold_Bar = Threshold(2);
+Threshold_Window = Threshold(1);
 %%
-this_Window_Accuracy = AccuracyTable.('Window Accuracy'){1};
-[~,NumWindows] = size(this_Window_Accuracy);
-
-% [Series_Mean,~,~,Series_CI] = ...
+% this_Window_Accuracy = AccuracyTable.('Window Accuracy'){1};
+% [~,NumWindows] = size(this_Window_Accuracy);
+% Peak_Accuracy = AccuracyTable.('Accuracy'){1};
+% 
+% % [Series_Mean,~,~,Series_CI] = ...
+% %     cgg_getMeanSTDSeries(this_Window_Accuracy,...
+% %     'SignificanceValue',SignificanceValue,'NumSamples',NumWindows);
+% [Series_Mean,~,~,~] = ...
 %     cgg_getMeanSTDSeries(this_Window_Accuracy,...
 %     'SignificanceValue',SignificanceValue,'NumSamples',NumWindows);
-[Series_Mean,~,~,~] = ...
-    cgg_getMeanSTDSeries(this_Window_Accuracy,...
-    'SignificanceValue',SignificanceValue,'NumSamples',NumWindows);
+% [Peak_Accuracy,~,~,~] = ...
+%     cgg_getMeanSTDSeries(Peak_Accuracy,...
+%     'SignificanceValue',SignificanceValue,'NumSamples',1);
 
 % this_TestSignal = Series_Mean - Series_CI;
 this_TestSignal_Permutation = Series_Mean;
 
 if exist("Time","var") && ~isempty(TimeRange)
-TimeRangeIndices = Time > min(TimeRange) & Time < max(TimeRange);
+% TimeRangeIndices = Time > min(TimeRange) & Time < max(TimeRange);
 % this_TestSignal(~TimeRangeIndices) = [];
 this_TestSignal_Permutation(~TimeRangeIndices) = [];
 end
 
 % Significance_TTest = this_TestSignal > ChanceLevel;
-Significance = this_TestSignal_Permutation > Threshold;
+Significance = this_TestSignal_Permutation > Threshold_Window;
+Significance_Bar = Bar_Accuracy > Threshold_Bar;
 
 if WantDebug
 if iscell(TrialFilter_Value)

@@ -56,15 +56,29 @@ end
 end
 
 %%
-
-if isfile(NullTablePathNameExt)
-    NullTable = load(NullTablePathNameExt);
-    NullTable = NullTable.NullTable;
-else
-    NullTable = cgg_generateBlankNullTable('Target',Target,...
+NullTable = cgg_generateBlankNullTable('Target',Target,...
         'SessionName',SessionName,'TrialFilter',TrialFilter,...
         'TrialFilter_Value',TrialFilter_Value,...
         'TargetFilter',TargetFilter,'MatchType',MatchType);
+
+if isfile(NullTablePathNameExt)
+    try
+        NullTable = load(NullTablePathNameExt);
+        NullTable = NullTable.NullTable;
+    catch ME
+        if strcmp(ME.identifier,"MATLAB:load:notBinaryFile")
+            fprintf("!!! Unable to read NullTable file due to file corruption. Deleting file to restart analysis\n   >>>%s<<<",NullTablePathNameExt);
+            delete(NullTablePathNameExt);
+        else
+            rethrow(ME);
+        end
+    end
+    % NullTable = NullTable.NullTable;
+% else
+%     NullTable = cgg_generateBlankNullTable('Target',Target,...
+%         'SessionName',SessionName,'TrialFilter',TrialFilter,...
+%         'TrialFilter_Value',TrialFilter_Value,...
+%         'TargetFilter',TargetFilter,'MatchType',MatchType);
 end
 
 end

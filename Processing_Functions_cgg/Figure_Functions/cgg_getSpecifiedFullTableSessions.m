@@ -359,7 +359,7 @@ LabelClassFilter = '';
 
 % fprintf('SessionIDX: %d\n',sidx);
 % IsSignificant = cgg_testAccuracyTableSignificance(this_FullTable,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch);
-IsSignificant = cgg_testAccuracyTableSignificance(this_FullTable,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
+[IsSignificant,~,~] = cgg_testAccuracyTableSignificance(this_FullTable,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
 IsSignificant = IsSignificant || SignificanceOverwrite;
 OutFullTable = cgg_addSignificantAccuracyTableValues(OutFullTable,this_FullTable,sidx,SessionName,IsSignificant);
 % if IsSignificant
@@ -403,7 +403,7 @@ for aidx = 1:length(this_AttentionalNames)
     TargetFilter = this_AttentionalType;
     LabelClassFilter = '';
 
-    IsSignificant = cgg_testAccuracyTableSignificance(this_AttentionalRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
+    [IsSignificant,~,~] = cgg_testAccuracyTableSignificance(this_AttentionalRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
     IsSignificant = IsSignificant || SignificanceOverwrite;
     Significance_OverallAttentional(aidx) = IsSignificant;
 
@@ -438,7 +438,7 @@ for aidx = 1:length(this_AttentionalNames)
         TargetFilter = this_AttentionalType;
         LabelClassFilter = '';
 
-        IsSignificant = cgg_testAccuracyTableSignificance(this_SplitRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
+        [IsSignificant,~,~] = cgg_testAccuracyTableSignificance(this_SplitRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
         IsSignificant = IsSignificant || SignificanceOverwrite;
         Significance_Attentional_Split{aidx}(spidx) = IsSignificant;
     
@@ -536,7 +536,7 @@ for spidx = 1:length(this_SplitNames)
     TargetFilter = "Overall";
     LabelClassFilter = '';
 
-    IsSignificant = cgg_testAccuracyTableSignificance(this_SplitRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
+    [IsSignificant,~,~] = cgg_testAccuracyTableSignificance(this_SplitRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
     IsSignificant = IsSignificant || SignificanceOverwrite;
     Significance_OverallSplit(spidx) = IsSignificant;
 
@@ -572,7 +572,7 @@ for aidx = 1:length(this_AttentionalNames)
     TargetFilter = this_AttentionalType;
     LabelClassFilter = '';
 
-    IsSignificant = cgg_testAccuracyTableSignificance(this_AttentionalRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
+    [IsSignificant,~,~] = cgg_testAccuracyTableSignificance(this_AttentionalRow,'SignificanceValue',SignificanceValue,'ChanceLevel',ChanceLevel,'TimeRange',TimeRange,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',SessionName,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
     IsSignificant = IsSignificant || SignificanceOverwrite;
     Significance_Split_Attentional{spidx}(aidx) = IsSignificant;
 
@@ -637,6 +637,12 @@ OutFullTable.("Attentional Table") = {AttentionalTable};
 OutFullTable.("Split Table") = {SplitTable};
 
 %%
+
+MetricName='Average Accuracy';
+MetricFunc=@(x) mean(x,2);
+OutFullTable = cgg_addFullAccuracyTableMetric(OutFullTable,...
+    'cfg_Encoder',cfg_Encoder,'TimeRange',TimeRange,...
+    'MetricName',MetricName,'MetricFunc',MetricFunc);
 
 % LearningSet = CombinedFullTable.('Split Table'){1}.('Attentional Table'){'Learning',:}.('Session Number'){'DistractorError',:};
 % LearnedSet = CombinedFullTable.('Split Table'){1}.('Attentional Table'){'Learned',:}.('Session Number'){'DistractorError',:};

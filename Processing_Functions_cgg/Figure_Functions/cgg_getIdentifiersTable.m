@@ -50,7 +50,7 @@ Identifiers_TablePath = cgg_getDirectory(cfg.ResultsDir,'Processing');
 Identifiers_TableNameExt = 'Identifiers_Table.mat';
 Identifiers_TablePathNameExt = [Identifiers_TablePath filesep ...
     Identifiers_TableNameExt];
-
+HasAllTargets = false;
 if isfile(Identifiers_TablePathNameExt)
     Identifiers_Table = load(Identifiers_TablePathNameExt);
     Identifiers_Table = Identifiers_Table.Identifiers_Table;

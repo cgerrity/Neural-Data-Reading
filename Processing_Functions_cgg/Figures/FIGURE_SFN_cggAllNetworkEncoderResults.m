@@ -25,12 +25,15 @@ WantLabelClassFilter = false;
 cfg_OverwritePlot = struct();
 cfg_OverwritePlot.TimeCut = [-1.25,0.5];
 cfg_OverwritePlot.TimeAdjustment = 0.7;
-% cfg_OverwritePlot.AccuracyCut = [-0.05,0.15];
-cfg_OverwritePlot.AccuracyCut = [-0.025,0.1];
+cfg_OverwritePlot.AccuracyCut = [-0.05,0.15];
+% cfg_OverwritePlot.AccuracyCut = [-0.025,0.1];
 cfg_OverwritePlot.PlotFolder = 'Attentional Panels';
+cfg_OverwritePlot.BlockFolder = 'Attentional Panels - IA - Block';
+cfg_OverwritePlot.LabelClassFolder = 'Attentional Panels - Label-Class';
 cfg_OverwritePlot.Line_Width_Indicator = 2;
 cfg_OverwritePlot.WindowFigureSizeOverwrite = [5,5];
 cfg_OverwritePlot.BarFigureSizeOverwrite = [7,9];
+% cfg_OverwritePlot.BarAccuracyCut = [0,0.3];
 cfg_OverwritePlot.BarAccuracyCut = [0,0.5];
 cfg_OverwritePlot.BarYTickSize = 0.1;
 cfg_OverwritePlot.Line_Width_Significance = 2;
@@ -48,7 +51,7 @@ FilterColumn_All = {}; ColumnCounter = 1;
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Learned'};
 % ColumnCounter = ColumnCounter + 1;
-% FilterColumn_All{ColumnCounter}={'Trials From Learning Point Category'};
+FilterColumn_All{ColumnCounter}={'Trials From Learning Point Category'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Prediction Error Category'};
 % ColumnCounter = ColumnCounter + 1;
@@ -89,8 +92,8 @@ FilterColumn_All = {}; ColumnCounter = 1;
 % FilterColumn_All{ColumnCounter}={'Dimensionality','Multi Trials From Learning Point'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Gain','Loss','Multi Trials From Learning Point'};
-ColumnCounter = ColumnCounter + 1;
-FilterColumn_All{ColumnCounter}={'Value Difference Category'};
+% ColumnCounter = ColumnCounter + 1;
+% FilterColumn_All{ColumnCounter}={'Value Difference Category'};
 % ColumnCounter = ColumnCounter + 1;
 % FilterColumn_All{ColumnCounter}={'Target Value Category'};
 % ColumnCounter = ColumnCounter + 1;
@@ -135,6 +138,7 @@ fprintf("%s\n",join(string(FilterColumn)));
 
 FullTable = cgg_procRemoveTableRows(FullTable, "Not Learned");
 FullTable = cgg_procRemoveTableRows(FullTable, "Unlearned");
+% FullTable = cgg_procRemoveTableRows(FullTable, "Learned");
 %%
 % G = findgroups(Identifiers_Table.Block,Identifiers_Table.("Session Name"));
 %  aaa = splitapply(@(x1){movmean(x1,[0,9])},Identifiers_Table.("Correct Trial"),G);
@@ -177,7 +181,8 @@ FullTable = cgg_procRemoveTableRows(FullTable, "Unlearned");
 
 %% Overall Accuracy
 
-% cgg_plotOverallAccuracy(FullTable,cfg);
+% cgg_plotOverallAccuracy(FullTable,cfg,'MetricType','Peak');
+% cgg_plotOverallAccuracy(FullTable,cfg,'MetricType','Average');
 % cgg_plotOverallAccuracy(FullTable_Filtered,cfg);
 
 %% Split Accuracy
@@ -237,6 +242,7 @@ for idx = 1:length(SignificanceValues)
     cgg_plotSplitWindowedAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
     cgg_plotAttentionalSplitAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
     cgg_plotAttentionalSplitWindowedAccuracy(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+    % cgg_plotLabelClass(CombinedFullTable,cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
 end
 
 % for idx = 1:length(SignificanceValues)

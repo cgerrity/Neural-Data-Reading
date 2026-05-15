@@ -5,7 +5,7 @@ function [FullTable,Outcfg] = cgg_getResultsPlotsParametersNetwork(EpochName,var
 %% Parameters
 cfg_Sessions = DATA_cggAllSessionInformationConfiguration;
 cfg_Decoder = PARAMETERS_cgg_procSimpleDecoders_v2;
-cfg_Encoder = PARAMETERS_OPTIMAL_cgg_runAutoEncoder_v2;
+cfg_Encoder = PARAMETERS_cgg_runAutoEncoder('ParameterSetName','Prior Optimal','Epoch',EpochName);
 cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
 
 %%
@@ -168,14 +168,27 @@ AdditionalTargetIDX = AdditionalTargetIDX + 1;
 AdditionalTarget{AdditionalTargetIDX} = 'Choice Probability CMB';
 %%
 
-cfg_Encoder = PARAMETERS_OPTIMAL_cgg_runAutoEncoder_v2;
-outdatadir=cfg_Sessions(1).outdatadir;
-TargetDir=outdatadir;
+cfg_Encoder = PARAMETERS_cgg_runAutoEncoder('ParameterSetName','Prior Optimal','Epoch',EpochName);
+if strcmp(EpochName,'Synthetic_Easy')
+    temporarydir=cfg_Sessions(1).temporarydir;
+    TargetDir=temporarydir;
+    IsQuaddle = false;
+else
+    outdatadir=cfg_Sessions(1).outdatadir;
+    TargetDir=outdatadir;
+end
 ResultsDir=cfg_Sessions(1).temporarydir;
+if strcmp(EpochName,'Synthetic_Easy')
+cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+    'Epoch',EpochName,'Encoding',true,'Target',cfg_Encoder.Target,'WantDirectory',false);
+cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+    'Epoch',EpochName,'Encoding',true,'Target',cfg_Encoder.Target,'WantDirectory',false);
+else
 cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
     'Epoch',EpochName,'Encoding',true,'Target',cfg_Encoder.Target,'Fold',1,'WantDirectory',false);
 cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
     'Epoch',EpochName,'Encoding',true,'Target',cfg_Encoder.Target,'Fold',1,'WantDirectory',false);
+end
 cfg.ResultsDir=cfg_Results.TargetDir;
 
 %%
@@ -553,7 +566,12 @@ if IsScaled
 MatchTypeBaseline = extractAfter(MatchType,'Scaled-');
 end
 
+if strcmp(EpochName,'Synthetic_Easy')
+    Identifiers_Table = cgg_getIdentifiersTable(cfg,cfg_Encoder.wantSubset,'Epoch',cfg_Encoder.Epoch);
+else
 Identifiers_Table = cgg_getIdentifiersTable(cfg,false,'Epoch',cfg_Encoder.Epoch);
+end
+
 TrueValueIDX=contains(Identifiers_Table.Properties.VariableNames,'Dimension ');
 TrueValue=Identifiers_Table{:,TrueValueIDX};
 Identifiers_Table.TrueValue = TrueValue;

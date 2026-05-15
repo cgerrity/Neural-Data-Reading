@@ -31,19 +31,25 @@ end
 % ZZZ = CheckVararginPairs('ZZZ', NaN, varargin{:});
 %% Null Table Variables
 
+[TrialFilter,~] = cgg_getPackedTrialFilter(TrialFilter,NaN,'Unpack');
+
 % The maximum number of iterations to get for the Null Distributions
 MaxNumIter = 1000;
 
 if any(strcmp(TrialFilter,'Multi Trials From Learning Point')) || ...
-    any(strcmp(TrialFilter,'Value Difference Category')) || ...
-    any(strcmp(TrialFilter,'Target Value Category')) || ...
-    any(strcmp(TrialFilter,'Target Prediction Error Category'))
+    any(strcmp(TrialFilter,'Trials From Learning Point Category'))
+% if any(strcmp(TrialFilter,'Multi Trials From Learning Point')) || ...
+    % any(strcmp(TrialFilter,'Value Difference Category')) || ...
+    % any(strcmp(TrialFilter,'Target Value Category')) || ...
+    % any(strcmp(TrialFilter,'Target Prediction Error Category'))
     MaxNumIter = 4;
 elseif ~isempty(char(LabelClassFilter))
     MaxNumIter = 4;
 elseif ~(strcmp(MatchType,'Scaled-BalancedAccuracy') ...
         || strcmp(MatchType,'Scaled-MicroAccuracy'))
     MaxNumIter = 4;
+% elseif any(strcmp(TrialFilter,'Learned')) && any(strcmp(TrialFilter,'Dimensionality'))
+%     MaxNumIter = 4;
 end
 
 % The minimum number of iterations to get for each pass through of the null

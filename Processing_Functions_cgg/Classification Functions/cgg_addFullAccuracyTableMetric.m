@@ -1,5 +1,5 @@
-function fixedTable = cgg_updateFullAccuracyTablePeak(FullTable,varargin)
-%CGG_UPDATEFULLACCURACYTABLEPEAK Summary of this function goes here
+function fixedTable = cgg_addFullAccuracyTableMetric(FullTable,varargin)
+%CGG_addFULLACCURACYTABLEMETRIC Summary of this function goes here
 %   Detailed explanation goes here
 
 isfunction=exist('varargin','var');
@@ -18,10 +18,26 @@ if ~(exist('cfg_Encoder','var'))
 cfg_Encoder=struct();
 end
 end
+
+if isfunction
+MetricName = CheckVararginPairs('MetricName', 'Average Accuracy', varargin{:});
+else
+if ~(exist('MetricName','var'))
+MetricName='Average Accuracy';
+end
+end
+
+if isfunction
+MetricFunc = CheckVararginPairs('MetricFunc', @(x) mean(x,2), varargin{:});
+else
+if ~(exist('MetricFunc','var'))
+MetricFunc=@(x) mean(x,2);
+end
+end
 %%
 
 fixedTable = FullTable;
-% fixedTable.('Average Accuracy'){1} = [];
+fixedTable.(MetricName){1} = [];
 %%
 
 if ~isempty(TimeRange)
@@ -34,8 +50,8 @@ Time = cgg_getTime(cfg_Encoder.Time_Start,cfg_Encoder.SamplingRate,...
     cfg_Encoder.DataWidth,cfg_Encoder.WindowStride,NaN,0,...
     'Time_End',cfg_Encoder.Time_End);
     end
-else
-    return
+% else
+%     return
 end
 
 
@@ -52,14 +68,10 @@ this_Window_Accuracy = AccuracyTable.('Window Accuracy'){1};
 if exist("Time","var") && ~isempty(TimeRange)
 TimeRangeIndices = Time > min(TimeRange) & Time < max(TimeRange);
 this_Window_Accuracy(:,~TimeRangeIndices) = [];
-Peak_Accuracy_New = max(this_Window_Accuracy,[],2);
-% Average_Accuracy = mean(this_Window_Accuracy,[],2);
-AccuracyTable.('Accuracy'){1} = Peak_Accuracy_New;
-% AccuracyTable.('Average Accuracy'){1} = Average_Accuracy;
 end
 
-% Average_Accuracy = mean(this_Window_Accuracy,2);
-% AccuracyTable.('Average Accuracy'){1} = Average_Accuracy;
+NewMetric = MetricFunc(this_Window_Accuracy);
+AccuracyTable.(MetricName){1} = NewMetric;
 
 fixedTable(hidx,:) = AccuracyTable;
 
@@ -72,14 +84,14 @@ varNames = fixedTable.Properties.VariableNames;
         if iscell(currentVar)
             for j = 1:numel(currentVar)
                 if istable(currentVar{j})
-                    currentVar{j} = cgg_updateFullAccuracyTablePeak(currentVar{j}, varargin{:});
+                    currentVar{j} = cgg_addFullAccuracyTableMetric(currentVar{j}, varargin{:});
                 end
             end
             fixedTable.(varNames{i}) = currentVar;
             
         % If the variable is directly a table, process it recursively
         elseif istable(currentVar)
-            fixedTable.(varNames{i}) = cgg_updateFullAccuracyTablePeak(currentVar, varargin{:});
+            fixedTable.(varNames{i}) = cgg_addFullAccuracyTableMetric(currentVar, varargin{:});
         end
     end
 

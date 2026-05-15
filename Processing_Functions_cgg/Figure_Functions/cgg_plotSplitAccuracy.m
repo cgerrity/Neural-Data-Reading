@@ -30,7 +30,8 @@ this_cfg.LoopType=cfg.SplitExtraSaveTerm;
 this_cfg.Subset = FullTable.Properties.RowNames{sidx};
 this_cfg.LoopTitle = FullTable.Properties.RowNames{sidx};
 
-cgg_plotOverallAccuracy(Split_Table,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+cgg_plotOverallAccuracy(Split_Table,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot,'MetricType','Peak');
+cgg_plotOverallAccuracy(Split_Table,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot,'MetricType','Average');
 end
 
 %%

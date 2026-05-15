@@ -4,6 +4,14 @@ function cgg_plotOverallAccuracy(FullTable,cfg,varargin)
 isfunction=exist('varargin','var');
 
 if isfunction
+IsSplit = CheckVararginPairs('IsSplit', false, varargin{:});
+else
+if ~(exist('IsSplit','var'))
+IsSplit=false;
+end
+end
+
+if isfunction
 IsAttentional = CheckVararginPairs('IsAttentional', false, varargin{:});
 else
 if ~(exist('IsAttentional','var'))
@@ -34,9 +42,25 @@ if ~(exist('cfg_OverwritePlot','var'))
 cfg_OverwritePlot=struct();
 end
 end
+
+if isfunction
+SignificanceValue = CheckVararginPairs('SignificanceValue', 0.05, varargin{:});
+else
+if ~(exist('SignificanceValue','var'))
+SignificanceValue=0.05;
+end
+end
+
+if isfunction
+MetricType = CheckVararginPairs('MetricType', 'Peak', varargin{:});
+else
+if ~(exist('MetricType','var'))
+MetricType='Peak';
+end
+end
 %%
 cfg_Plotting = PLOTPARAMETERS_cgg_plotPlotStyle;
-cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
+% cfg_Names = NAMEPARAMETERS_cgg_nameVariables;
 
 Line_Width = cfg_Plotting.Line_Width;
 Error_Line_Width = cfg_Plotting.Error_Line_Width;
@@ -67,6 +91,8 @@ Y_Limit_Set = [0,0.35];
 Y_Tick_Label_Size = 36;
 Y_Tick_Size = 0.05;
 
+SignificanceFontSize = 18;
+
 switch IsLabelClass
     case 'Label'
     Y_Limit_Set = [-0.05,0.4];
@@ -76,6 +102,18 @@ switch IsLabelClass
     Y_Tick_Size = 0.25;
 end
 
+switch MetricType
+    case 'Peak'
+        MetricNameInFullTable = 'Accuracy';
+        MetricSaveName = "Peak-Accuracy";
+    case 'Average'
+        MetricNameInFullTable = 'Average Accuracy';
+        MetricSaveName = "Average-Accuracy";
+    otherwise
+        MetricNameInFullTable = 'Accuracy';
+        MetricSaveName = "Peak-Accuracy";
+end
+FullTable.Accuracy = FullTable.(MetricNameInFullTable);
 %%
 % TimeCut = [];
 OverwritePlotFolder = '';
@@ -84,7 +122,9 @@ FigureSizeOverwrite = [];
 AccuracyCut = [];
 OverwriteYTickSize = [];
 WantSubTitle = [];
-wantCI = true;
+wantCI = false;
+PlotColorsOverwrite = [];
+wantSignificanceBars = [];
 
 % if isfield(cfg_OverwritePlot,'TimeCut')
 % TimeCut = cfg_OverwritePlot.TimeCut;
@@ -110,6 +150,12 @@ end
 if isfield(cfg_OverwritePlot,'wantCI')
 wantCI = cfg_OverwritePlot.wantCI;
 end
+if isfield(cfg_OverwritePlot,'PlotColorsOverwrite')
+PlotColorsOverwrite = cfg_OverwritePlot.PlotColorsOverwrite;
+end
+if isfield(cfg_OverwritePlot,'wantSignificanceBars')
+wantSignificanceBars = cfg_OverwritePlot.wantSignificanceBars;
+end
 %%
 WantCombined = any(ismember('Session Number', FullTable.Properties.VariableNames));
 PlotSubTitle = '';
@@ -122,10 +168,10 @@ if WantCombined
         PlotSubTitle = sprintf('[N = %d]',NumSessions(1));
     end
     if IsAttentional
-    Y_Limit_Set = [0,0.5];
-    Y_Tick_Size = 0.25;
-    else
     Y_Limit_Set = [0,0.2];
+    Y_Tick_Size = 0.05;
+    else
+    Y_Limit_Set = [0,0.15];
     Y_Tick_Size = 0.05;
     end
     switch IsLabelClass
@@ -190,7 +236,7 @@ ExtraSaveTerm = cgg_setNaming(cfg.ExtraSaveTerm);
 % MostCommon=cfg.MostCommon;
 % Stratified=cfg.Stratified;
 
-Accuracy_All=FullTable.(cfg_Names.TableNameAccuracy);
+% Accuracy_All=FullTable.(cfg_Names.TableNameAccuracy);
 
 % Decoders_Cat = categorical(Decoders);
 % Decoders_Cat = reordercats(Decoders_Cat,Decoders);
@@ -245,7 +291,7 @@ ColorOrder=cell(NumLoops,1);
 % 
 % Y_Value_Final=this_Accuracy(:,NumIterations);
 % 
-Values=FullTable.Accuracy;
+% Values=FullTable.Accuracy;
 % 
 % XValues=1:NumIterations;
 % YValues=this_Accuracy;
@@ -343,8 +389,14 @@ thisPlotFolder = 'Network Results';
 
 if IsBlock
     thisPlotFolder = 'Block IA';
+    if isfield(cfg_OverwritePlot,'BlockFolder')
+        thisPlotFolder = cfg_OverwritePlot.BlockFolder;
+    end
 elseif IsLabelClass
     thisPlotFolder = 'Label-Class';
+    if isfield(cfg_OverwritePlot,'LabelClassFolder')
+        thisPlotFolder = cfg_OverwritePlot.LabelClassFolder;
+    end
 elseif ~isempty(OverwritePlotFolder)
     thisPlotFolder = OverwritePlotFolder;
 end
@@ -383,6 +435,62 @@ SavePath = cgg_getDirectory(cfg_Plot.ResultsDir,'SubFolder_1');
 % 
 % close all
 
+Values=FullTable.Accuracy;
+% Values=FullTable.(MetricNameInFullTable);
+
+[~,~,SignificanceTable] = cgg_getSignificanceFromFullTable(FullTable,cfg,'SignificanceValue',SignificanceValue,'IsSplit',IsSplit,'IsAttentional',IsAttentional,'MetricType',MetricType);
+
+% AllComparisons = nchoosek(1:height(FullTable),2);
+% NumIterations = 1000;
+% for fidx = 1:size(AllComparisons,1)
+% 
+% this_Comparison = AllComparisons(fidx,:);
+% 
+% Row_1 = FullTable(this_Comparison(1),:);
+% Row_2 = FullTable(this_Comparison(2),:);
+% 
+% Name_1 = Row_1.Properties.RowNames{1};
+% Name_2 = Row_2.Properties.RowNames{1};
+% 
+% PeakAccuracy_1 = Row_1.Accuracy{1};
+% PeakAccuracy_2 = Row_2.Accuracy{1};
+% 
+% SessionNumber_1 = Row_1.("Session Number"){1};
+% SessionNumber_2 = Row_2.("Session Number"){1};
+% 
+% IsPaired = (length(PeakAccuracy_1) == length(PeakAccuracy_2)) && ...
+%     all(SessionNumber_1 == SessionNumber_2);
+% 
+% if IsPaired
+%     PeakAccuracyDifference = PeakAccuracy_1 - PeakAccuracy_2;
+% end
+% 
+% MeanPeakAccuracyDifference = mean(PeakAccuracyDifference);
+% 
+% CompositeNullDistribution = NaN(NumIterations,1);
+% parfor nidx = 1:NumIterations
+% 
+%     if ~IsPaired
+%         PermutationIndices_1 = randi(length(PeakAccuracy_1),1,length(PeakAccuracy_1));
+%         PermutationIndices_2 = randi(length(PeakAccuracy_2),1,length(PeakAccuracy_2));
+% 
+%         this_PeakAccuracy_1 = PeakAccuracy_1(PermutationIndices_1);
+%         this_PeakAccuracy_2 = PeakAccuracy_2(PermutationIndices_2);
+% 
+%         CompositeNullDistribution(nidx) = mean(this_PeakAccuracy_1) - mean(this_PeakAccuracy_2);
+%     else
+%         PermutationSigns = sign(randn(length(PeakAccuracy_1),1));
+%         this_PeakAccuracyDifference = PeakAccuracyDifference.*PermutationSigns;
+%         CompositeNullDistribution(nidx) = mean(this_PeakAccuracyDifference);
+%     end
+% end
+% 
+% P_Value = (sum(abs(CompositeNullDistribution) > abs(MeanPeakAccuracyDifference))) / length(CompositeNullDistribution);
+% 
+% if P_Value < 0.05
+% SignificanceTable(height(SignificanceTable)+1,:) = {P_Value,"",Name_1,"",Name_2};
+% end
+% end
 %% Bar Graph
 
 fig_accuracy_bar=figure;
@@ -400,13 +508,19 @@ PlotPaperSize(1:2)=[];
 fig_accuracy_bar.PaperSize=PlotPaperSize;
 drawnow;
 
+YLimits = Y_Limit_Set;
+
 LabelAngle = 30;
 ColorOrder = PlotColor;
 if length(ValueNames) == 6
 ColorOrder = cfg_Plotting.Rainbow;
 end
+
+if ~isempty(PlotColorsOverwrite)
+ColorOrder = PlotColorsOverwrite;
+end
 % disp(isempty(ColorOrder))
-[b_Plot] = cgg_plotBarGraphWithError(Values,ValueNames,'ColorOrder',ColorOrder,'X_TickFontSize',X_Tick_Label_Size,'ErrorLineWidth',Error_Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',wantCI,'LabelAngle',LabelAngle,'InFigure',fig_accuracy_bar,'X_Name','','BarWidth',BarWidth,'WantReducedX_Labels',WantReducedX_Labels);
+[b_Plot] = cgg_plotBarGraphWithError(Values,ValueNames,'ColorOrder',ColorOrder,'X_TickFontSize',X_Tick_Label_Size,'ErrorLineWidth',Error_Line_Width,'ErrorCapSize',ErrorCapSize,'wantCI',wantCI,'LabelAngle',LabelAngle,'InFigure',fig_accuracy_bar,'X_Name','','BarWidth',BarWidth,'WantReducedX_Labels',WantReducedX_Labels,'SignificanceTable',SignificanceTable,'YRange',YLimits,'SignificanceFontSize',SignificanceFontSize);
 drawnow;
 if ~IsGrouped && ~isempty(NumSessions)
 for pidx = 1:length(fig_accuracy_bar.Children.XTickLabel)
@@ -490,7 +604,7 @@ end
 % ylim([0,Y_Upper*(1+RangeFactorUpper)]);
 % ylim([YLimLower,YLimUpper]);
 % ylim([0,1]);
-YLimits = Y_Limit_Set;
+% YLimits = Y_Limit_Set;
 ylim(YLimits);
 
 Current_Axis = gca;
@@ -515,7 +629,8 @@ drawnow;
 % SaveName=['Peak-Accuracy' ExtraSaveTerm cfg.LoopType];
 
 % SaveName=['Peak-Accuracy' cfg.LoopType ExtraSaveTerm];
-SaveName="Peak-Accuracy" + string(cfg.LoopType) + string(ExtraSaveTerm);
+% SaveName="Peak-Accuracy" + string(cfg.LoopType) + string(ExtraSaveTerm);
+SaveName=MetricSaveName + string(cfg.LoopType) + string(ExtraSaveTerm);
 
 % SaveNameExt=[SaveName '.pdf'];
 SaveNameExt=SaveName + ".pdf";

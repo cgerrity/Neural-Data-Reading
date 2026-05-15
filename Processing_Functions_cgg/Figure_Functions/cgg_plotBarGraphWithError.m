@@ -208,6 +208,48 @@ WantScatter=false;
 end
 end
 
+% --- New Customizations for NeurIPS Scatter ---
+if isfunction
+WantNeurIPSScatter = CheckVararginPairs('WantNeurIPSScatter', false, varargin{:});
+else
+if ~(exist('WantNeurIPSScatter','var'))
+WantNeurIPSScatter=false;
+end
+end
+
+if isfunction
+ScatterJitter = CheckVararginPairs('ScatterJitter', 0.15, varargin{:});
+else
+if ~(exist('ScatterJitter','var'))
+ScatterJitter=0.15;
+end
+end
+
+if isfunction
+ScatterAlpha = CheckVararginPairs('ScatterAlpha', 0.6, varargin{:});
+else
+if ~(exist('ScatterAlpha','var'))
+ScatterAlpha=0.6;
+end
+end
+
+if isfunction
+MeanLineWidth = CheckVararginPairs('MeanLineWidth', 2, varargin{:});
+else
+if ~(exist('MeanLineWidth','var'))
+MeanLineWidth=2;
+end
+end
+
+if isfunction
+WantErrorBars = CheckVararginPairs('WantErrorBars', true, varargin{:});
+else
+if ~(exist('WantErrorBars','var'))
+WantErrorBars=true;
+end
+end
+% ----------------------------------------------
+
 if isfunction
 ConfidenceRange = CheckVararginPairs('ConfidenceRange', '', varargin{:});
 else
@@ -255,6 +297,23 @@ if ~(exist('WantReducedX_Labels','var'))
 WantReducedX_Labels=false;
 end
 end
+
+% --- Default NeurIPS Color Palette (Okabe-Ito) ---
+if WantNeurIPSScatter && isempty(ColorOrder)
+    % Accessible, professional colorblind-friendly palette
+    ColorOrder = [
+        0.000, 0.447, 0.698; % Blue
+        0.835, 0.369, 0.000; % Vermillion
+        0.000, 0.620, 0.451; % Bluish Green
+        0.902, 0.624, 0.000; % Orange
+        0.337, 0.706, 0.914; % Sky Blue
+        0.800, 0.475, 0.655; % Reddish Purple
+        0.941, 0.894, 0.259; % Yellow
+        0.300, 0.300, 0.300  % Dark Gray
+    ];
+end
+% -------------------------------------------------
+
 %%
 ValueNames_Cat = categorical(ValueNames);
 ValueNames_Cat = reordercats(ValueNames_Cat,ValueNames);
@@ -387,22 +446,27 @@ Num_b_Plot = length(b_Plot);
 % end
 for bidx = 1:Num_b_Plot
 b_Plot(bidx).FaceColor="flat";
-if WantScatter
+if WantScatter || WantNeurIPSScatter
 b_Plot(bidx).FaceColor="none";
 b_Plot(bidx).LineStyle="none";
+end
+if WantNeurIPSScatter
+b_Plot(bidx).EdgeColor="none"; % Ensure no bar outlines are drawn
 end
 b_Plot(bidx).Horizontal=WantHorizontal;
 end
 
 if ~isempty(ColorOrder)
-
+    numColors = size(ColorOrder, 1);
     if IsGrouped
         for bidx = 1:Num_b_Plot
-        b_Plot(bidx).CData=repmat(ColorOrder(bidx,:),[NumGroups,1]);
+        cIdx = mod(bidx-1, numColors) + 1;
+        b_Plot(bidx).CData=repmat(ColorOrder(cIdx,:),[NumGroups,1]);
         end
     else
         for bidx = 1:NumBars
-        b_Plot.CData(bidx,:)=repmat(ColorOrder(bidx,:),[NumGroups,1]);
+        cIdx = mod(bidx-1, numColors) + 1;
+        b_Plot.CData(bidx,:)=repmat(ColorOrder(cIdx,:),[NumGroups,1]);
         end
     end
 end
@@ -460,6 +524,51 @@ end
 % else
 % Bar_Difference = abs(mean(Bar_Top(1)-Bar_Top(2)));
 % end
+
+% --- SCATTER PLOTTING LOGIC (NeurIPS Style) ---
+if WantNeurIPSScatter && ~IsGrouped
+    % Generate fallback colormap if none provided
+    fallbackColors = lines(length(Values));
+    
+    for vidx = 1:length(Values)
+        this_Values = Values{vidx};
+        
+        % Remove NaNs for plotting
+        this_Values(isnan(this_Values)) = [];
+        
+        % Grab position of the current bar
+        X_center = Bar_Top(vidx);
+        
+        % Determine color
+        if ~isempty(ColorOrder)
+            pColor = ColorOrder(mod(vidx-1, size(ColorOrder,1))+1, :);
+        else
+            pColor = fallbackColors(vidx, :); 
+        end
+        
+        % Jitter values horizontally (or vertically if WantHorizontal)
+        X_jittered = X_center + (rand(size(this_Values)) - 0.5) * ScatterJitter;
+        
+        if WantHorizontal
+            % Scatter Data points
+            scatter(this_Values, X_jittered, MarkerSize*2, pColor, 'filled', ...
+                'MarkerFaceAlpha', ScatterAlpha, 'MarkerEdgeColor', 'none', 'HandleVisibility', 'off');
+            % Mean Line (solid black bar representing the mean over the jitter width)
+            plot([Bar_Mean(vidx) Bar_Mean(vidx)], [X_center - ScatterJitter, X_center + ScatterJitter], ...
+                'Color', [0.15 0.15 0.15], 'LineWidth', MeanLineWidth, 'HandleVisibility', 'off');
+        else
+            % Scatter Data points
+            scatter(X_jittered, this_Values, MarkerSize*2, pColor, 'filled', ...
+                'MarkerFaceAlpha', ScatterAlpha, 'MarkerEdgeColor', 'none', 'HandleVisibility', 'off');
+            % Mean Line (solid black bar representing the mean over the jitter width)
+            plot([X_center - ScatterJitter, X_center + ScatterJitter], [Bar_Mean(vidx) Bar_Mean(vidx)], ...
+                'Color', [0.15 0.15 0.15], 'LineWidth', MeanLineWidth, 'HandleVisibility', 'off');
+        end
+    end
+end
+% ----------------------------------------------
+
+
 Bar_Difference = 1;
 
 aaa = gca;
@@ -493,19 +602,28 @@ Patch_X=[LowerValue_Confidence;Bar_Top(:);UpperValue_Confidence;UpperValue_Confi
 end
 end
 
-b_Error = errorbar(ErrorBar_X,ErrorBar_Y,this_ErrorMetric,this_ErrorMetric,ErrorBar_Orientation,'LineWidth',ErrorLineWidth,'CapSize',ErrorCapSize);
-
-for bidx = 1:Num_b_Plot
-b_Error(bidx).Color=[0 0 0];
-b_Error(bidx).LineStyle='none';
-if WantScatter
-b_Error(bidx).Marker='.';
-b_Error(bidx).MarkerSize=MarkerSize;
-if ~isempty(ColorOrder)
-b_Error(bidx).MarkerEdgeColor=ColorOrder(bidx,:);
-b_Error(bidx).MarkerFaceColor=ColorOrder(bidx,:);
-end
-end
+b_Error = [];
+if WantErrorBars
+    b_Error = errorbar(ErrorBar_X,ErrorBar_Y,this_ErrorMetric,this_ErrorMetric,ErrorBar_Orientation,'LineWidth',ErrorLineWidth,'CapSize',ErrorCapSize);
+    
+    for bidx = 1:Num_b_Plot
+    b_Error(bidx).Color=[0 0 0];
+    b_Error(bidx).LineStyle='none';
+    
+    if WantNeurIPSScatter
+        % Clean NeurIPS look: Don't put a marker point on the error bar 
+        % since we already plotted a beautiful mean line and scatter.
+        b_Error(bidx).Marker='none';
+    elseif WantScatter
+        b_Error(bidx).Marker='.';
+        b_Error(bidx).MarkerSize=MarkerSize;
+        if ~isempty(ColorOrder)
+            cIdx = mod(bidx-1, size(ColorOrder, 1)) + 1;
+            b_Error(bidx).MarkerEdgeColor=ColorOrder(cIdx,:);
+            b_Error(bidx).MarkerFaceColor=ColorOrder(cIdx,:);
+        end
+    end
+    end
 end
 
 if ~isempty(ConfidenceRange)
@@ -521,7 +639,7 @@ end
 
 hold off
 
-if ~isempty(GroupNames) && WantScatter
+if ~isempty(GroupNames) && WantScatter && WantErrorBars
 for bidx = 1:Num_b_Plot
 b_Error(bidx).DisplayName=GroupNames{bidx};
 end
@@ -544,7 +662,6 @@ title(PlotTitle);
 end
 
 if ~isempty(YRange)
-
 if WantHorizontal
     xlim(YRange);
 else
@@ -553,26 +670,40 @@ end
 end
 
 if ~isempty(GroupNames) && WantLegend
-
-    if WantScatter
-    if isempty(Legend_Size)
-        legend(b_Error,'Location','best');
+    if (WantScatter || WantNeurIPSScatter) && WantErrorBars
+        legend_target = b_Error;
     else
-        legend(b_Error,'Location','best','FontSize',Legend_Size);
+        legend_target = b_Plot;
     end
-    else
+    
     if isempty(Legend_Size)
-        legend(b_Plot,'Location','best');
+        legend(legend_target,'Location','best');
     else
-        legend(b_Plot,'Location','best','FontSize',Legend_Size);
-    end
+        legend(legend_target,'Location','best','FontSize',Legend_Size);
     end
 end
 
 % xlabel(InVariableName,'FontSize',X_Name_Size);
 % ylabel('Number of Trials','FontSize',Y_Name_Size);
-
 % title('Count of Each Type','FontSize',Title_Size);
+
+% --- NEURIPS PUBLICATION AESTHETICS ---
+% This block ensures the plot has the clean, academic look favored by ML venues
+if WantNeurIPSScatter
+    set(gca, 'Box', 'off', ...                 % Remove outer box
+             'TickDir', 'out', ...             % Ticks point outward
+             'TickLength', [.015 .015], ...    % Slightly smaller ticks
+             'LineWidth', 1.2, ...             % Thicker, clearer axes
+             'XMinorTick', 'off', ...
+             'YMinorTick', 'off', ...
+             'YGrid', 'on', ...                % Turn on horizontal grid lines for readability
+             'GridColor', [0.85 0.85 0.85], ...% Subtle, light grey grid lines
+             'GridAlpha', 0.6);
+    if WantHorizontal
+        set(gca, 'YGrid', 'off', 'XGrid', 'on');
+    end
+end
+% --------------------------------------
 
 end
 

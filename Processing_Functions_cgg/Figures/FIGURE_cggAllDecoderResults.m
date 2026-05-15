@@ -19,7 +19,8 @@ FilterColumn={'Gain','Loss'};
 
 %% Overall Accuracy
 
-cgg_plotOverallAccuracy(FullTable,cfg);
+cgg_plotOverallAccuracy(FullTable,cfg,'MetricType','Peak');
+cgg_plotOverallAccuracy(FullTable,cfg,'MetricType','Average');
 
 %% Split Accuracy
 

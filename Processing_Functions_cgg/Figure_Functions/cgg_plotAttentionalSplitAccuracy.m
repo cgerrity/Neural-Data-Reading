@@ -49,7 +49,8 @@ MatchType = '';
 this_cfg.ExtraSaveTerm='Attentional';
 this_cfg.LoopType = sprintf('%s',MatchType);
 
-cgg_plotOverallAccuracy(AttentionalTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot);
+cgg_plotOverallAccuracy(AttentionalTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot,'IsAttentional',true,'MetricType','Peak');
+cgg_plotOverallAccuracy(AttentionalTable,this_cfg,'cfg_OverwritePlot',cfg_OverwritePlot,'IsAttentional',true,'MetricType','Average');
 
 Split_Table=FullTable{seidx,cfg_Names.TableNameSplit_Table}{1};
 SplitNames = Split_Table.Properties.RowNames;
@@ -83,7 +84,8 @@ for aidx = 1:length(AttentionalNames)
     AttentionalTableSwapped{aidx} = [AttentionalTableSwapped{aidx};this_tmpTable];
 end
 if NumSplits<MaxSplits
-cgg_plotOverallAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true,'cfg_OverwritePlot',cfg_OverwritePlot);
+cgg_plotOverallAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true,'IsSplit',true,'cfg_OverwritePlot',cfg_OverwritePlot,'MetricType','Peak');
+cgg_plotOverallAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true,'IsSplit',true,'cfg_OverwritePlot',cfg_OverwritePlot,'MetricType','Average');
 end
 end
 
@@ -100,7 +102,8 @@ this_cfg.LoopType=sprintf('%s',cfg.SplitExtraSaveTerm);
 % this_AttentionalTable=AttentionalTableSwapped{aidx};
 this_AttentionalTable=AttentionalTable{aidx,"Split Table"}{1};
 
-cgg_plotOverallAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true,'cfg_OverwritePlot',cfg_OverwritePlot);
+cgg_plotOverallAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true,'IsSplit',true,'cfg_OverwritePlot',cfg_OverwritePlot,'MetricType','Peak');
+cgg_plotOverallAccuracy(this_AttentionalTable,this_cfg,'IsAttentional',true,'IsSplit',true,'cfg_OverwritePlot',cfg_OverwritePlot,'MetricType','Average');
 end
 
 end

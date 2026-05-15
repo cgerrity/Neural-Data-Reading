@@ -70,7 +70,8 @@ else
 this_cfg.Subset = SubsetName;
 end
 
-cgg_plotOverallAccuracy(LabelTable,this_cfg,'IsLabelClass','Label','IsAttentional',IsAttentional,'cfg_OverwritePlot',cfg_OverwritePlot);
+cgg_plotOverallAccuracy(LabelTable,this_cfg,'IsLabelClass','Label','IsAttentional',IsAttentional,'cfg_OverwritePlot',cfg_OverwritePlot,'MetricType','Peak');
+cgg_plotOverallAccuracy(LabelTable,this_cfg,'IsLabelClass','Label','IsAttentional',IsAttentional,'cfg_OverwritePlot',cfg_OverwritePlot,'MetricType','Average');
 
     %% Class
 ClassTable=FullTable{sidx,"Class Table"}{1};
@@ -95,7 +96,8 @@ else
 this_cfg.Subset = SubsetName;
 end
 
-cgg_plotOverallAccuracy(ClassTable,this_cfg,'IsLabelClass','Class','IsAttentional',IsAttentional,'cfg_OverwritePlot',this_cfg_OverwritePlot);
+cgg_plotOverallAccuracy(ClassTable,this_cfg,'IsLabelClass','Class','IsAttentional',IsAttentional,'cfg_OverwritePlot',this_cfg_OverwritePlot,'MetricType','Peak');
+cgg_plotOverallAccuracy(ClassTable,this_cfg,'IsLabelClass','Class','IsAttentional',IsAttentional,'cfg_OverwritePlot',this_cfg_OverwritePlot,'MetricType','Average');
 
     %% Class Per Label
     LabelNames = LabelTable.Properties.RowNames;
@@ -127,7 +129,8 @@ else
 this_cfg.Subset = SubsetName;
 end
 
-cgg_plotOverallAccuracy(this_ClassTable,this_cfg,'IsLabelClass','Class','IsAttentional',IsAttentional,'cfg_OverwritePlot',this_cfg_OverwritePlot);
+cgg_plotOverallAccuracy(this_ClassTable,this_cfg,'IsLabelClass','Class','IsAttentional',IsAttentional,'cfg_OverwritePlot',this_cfg_OverwritePlot,'MetricType','Peak');
+cgg_plotOverallAccuracy(this_ClassTable,this_cfg,'IsLabelClass','Class','IsAttentional',IsAttentional,'cfg_OverwritePlot',this_cfg_OverwritePlot,'MetricType','Average');
     end
 end
 

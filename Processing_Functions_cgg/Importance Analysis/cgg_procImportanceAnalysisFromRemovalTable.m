@@ -64,7 +64,10 @@ if isempty(ClassNames)
 end
 
 NumDimensions = length(ClassNames);
-OutputNames_Classifier = Classifier.OutputNames;
+% OutputNames_Classifier = Classifier.OutputNames;
+% OutputNames_Classifier = OutputNames_Classifier(~contains(OutputNames_Classifier,'TrialConfidence'));
+[OutputInformation,~] = cgg_getNetworkOutputInformation(Classifier);
+OutputNames_Classifier = OutputInformation.Classifier;
 LossType_Classifier = repmat({'CrossEntropy'},1,NumDimensions);
 LossType_Classifier(contains(OutputNames_Classifier,'CTC')) = {'CTC'};
 

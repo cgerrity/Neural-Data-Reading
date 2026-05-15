@@ -51,7 +51,7 @@ this_cfg.LoopTitle = this_SplitName;
 this_SplitTitleName = this_SplitName;
 this_SplitName = replace(this_SplitName,' ','-');
 this_SplitName = replace(this_SplitName,'/','-');
-this_SplitName = cgg_setNaming(this_SplitName,'SurroundDeliminator',{'{','}'});
+this_SplitName = cgg_setNaming(this_SplitName,'SurroundDeliminator',{'(',')'});
 this_cfg.ExtraSaveTerm=string(this_SplitName);
 this_cfg.LoopType=sprintf('%s',cfg.SplitExtraSaveTerm);
 

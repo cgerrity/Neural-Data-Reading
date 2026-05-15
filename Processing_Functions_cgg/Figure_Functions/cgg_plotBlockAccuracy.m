@@ -72,7 +72,8 @@ else
 this_cfg.Subset = SubsetName;
 end
 
-cgg_plotOverallAccuracy(Present_Table,this_cfg,'IsBlock',true,'IsAttentional',IsAttentional,'cfg_OverwritePlot',cfg_OverwritePlot);
+cgg_plotOverallAccuracy(Present_Table,this_cfg,'IsBlock',true,'IsAttentional',IsAttentional,'cfg_OverwritePlot',cfg_OverwritePlot,'MetricType','Peak');
+cgg_plotOverallAccuracy(Present_Table,this_cfg,'IsBlock',true,'IsAttentional',IsAttentional,'cfg_OverwritePlot',cfg_OverwritePlot,'MetricType','Average');
 
 % Removed_Table=FullTable{sidx,"Removed Areas"}{1};
 % if ~isempty(SessionNumbers)

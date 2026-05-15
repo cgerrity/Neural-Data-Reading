@@ -12,6 +12,18 @@ Time_End=NaN;
 end
 end
 
+if isfunction
+Total_Points = CheckVararginPairs('Total_Points', NaN, varargin{:});
+else
+if ~(exist('Total_Points','var'))
+Total_Points=NaN;
+end
+end
+
+if ~isnan(Total_Points)
+    Time_End = (Total_Points-1)/SamplingRate + Time_Start;
+end
+
 % if ~isnan(Time_End) && ~isnan(NumWindows)
 if ~isnan(Time_End)
 Total_Points = (Time_End-Time_Start)*SamplingRate+1;

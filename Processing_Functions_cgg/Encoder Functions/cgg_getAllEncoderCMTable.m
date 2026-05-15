@@ -12,13 +12,13 @@ WantFinished=false;
 end
 end
 
-if isfunction
-WantValidation = CheckVararginPairs('WantValidation', false, varargin{:});
-else
-if ~(exist('WantValidation','var'))
-WantValidation=false;
-end
-end
+% if isfunction
+% WantValidation = CheckVararginPairs('WantValidation', false, varargin{:});
+% else
+% if ~(exist('WantValidation','var'))
+% WantValidation=false;
+% end
+% end
 
 if isfunction
 FieldsToRemove = CheckVararginPairs('FieldsToRemove', strings(0), varargin{:});
@@ -28,18 +28,37 @@ FieldsToRemove=strings(0);
 end
 end
 
+if isfunction
+KeepAllFields = CheckVararginPairs('KeepAllFields', false, varargin{:});
+else
+if ~(exist('KeepAllFields','var'))
+KeepAllFields=false;
+end
+end
+
 %% Hardcoded Fields to Remove
+
 FieldsToRemove = [FieldsToRemove,'WantSaveOptimalNet'];
 FieldsToRemove = [FieldsToRemove,'AccumulationInformation'];
-FieldsToRemove = [FieldsToRemove,'GradientClipType'];
 FieldsToRemove = [FieldsToRemove,'NumEpochsFull'];
 FieldsToRemove = [FieldsToRemove,'NumEpochsFull_Final'];
 FieldsToRemove = [FieldsToRemove,'NumEpochsSession'];
+FieldsToRemove = [FieldsToRemove,'Freeze_cfg'];
+if ~KeepAllFields
+FieldsToRemove = [FieldsToRemove,'GradientClipType'];
 FieldsToRemove = [FieldsToRemove,'WeightOffsetAndScale'];
 FieldsToRemove = [FieldsToRemove,'WantSeparateTimeShift'];
 FieldsToRemove = [FieldsToRemove,'STDTimeShift'];
-FieldsToRemove = [FieldsToRemove,'Freeze_cfg'];
 FieldsToRemove = [FieldsToRemove,'EncoderOutputType'];
+FieldsToRemove = [FieldsToRemove,'MultipleInstanceLearningType'];
+FieldsToRemove = [FieldsToRemove,'DynamicWeighting'];
+FieldsToRemove = [FieldsToRemove,'DynamicFreezing'];
+FieldsToRemove = [FieldsToRemove,'DynamicAugmentation'];
+FieldsToRemove = [FieldsToRemove,'DynamicParameterSet'];
+FieldsToRemove = [FieldsToRemove,'DynamicSetDescription'];
+FieldsToRemove = [FieldsToRemove,'ParameterSetName'];
+FieldsToRemove = [FieldsToRemove,'StitchingAndFusionLayer'];
+end
 
 %%
     % Read the file into a table
@@ -49,7 +68,9 @@ FieldsToRemove = [FieldsToRemove,'EncoderOutputType'];
         fprintf('!!! Encoding Parameters File is Empty\n');
         return
     end
-    EncodingParameters = rmfield(EncodingParameters,'varargin');
+    if isfield(EncodingParameters,'varargin')
+        EncodingParameters = rmfield(EncodingParameters,'varargin');
+    end
     Fold = EncodingParameters.Fold;
     NumEpochsFull = EncodingParameters.NumEpochsFull;
 
@@ -64,20 +85,67 @@ FieldsToRemove = [FieldsToRemove,'EncoderOutputType'];
     EncodingParameters.FirstHiddenSize = EncodingParameters.HiddenSizes(1);
     end
     EncodingParameters.NumberOfLayers = length(EncodingParameters.HiddenSizes);
+    %% Is Augmented
+    % Determine if the encoding parameters contain data augmentation
+    IsAugmented = false;
+    DataAugmentationFields = ["STDChannelOffset","STDRandomWalk", ...
+        "STDWhiteNoise","STDTimeShift","WantSeparateTimeShift"];
+    for didx = 1:length(DataAugmentationFields)
+        DataAugmentationField = DataAugmentationFields(didx);
+        if ~IsAugmented && isfield(EncodingParameters,DataAugmentationField)
+            DataAugmentation = EncodingParameters.(DataAugmentationField);
+            if islogical(DataAugmentation)
+            IsAugmented = DataAugmentation;
+            else
+            IsAugmented = ~isnan(DataAugmentation);
+            end
+        end
+    end
+EncodingParameters.IsAugmented = IsAugmented;
+
+%% Has Loss Weighting
+    % Determine if the encoding parameters contain loss weighting
+    HasLossWeighting = false;
+    LossWeightingFields = ["WeightReconstruction","WeightClassification","WeightKL","WeightOffsetAndScale"];
+    for widx = 1:length(LossWeightingFields)
+        LossWeightingField = LossWeightingFields(widx);
+        if ~HasLossWeighting && isfield(EncodingParameters,LossWeightingField)
+            LossWeighting = EncodingParameters.(LossWeightingField);
+            if islogical(LossWeighting)
+            HasLossWeighting = LossWeighting;
+            else
+            HasLossWeighting = ~isnan(LossWeighting) && LossWeighting ~= 0;
+            end
+        end
+    end
+
+EncodingParameters.HasLossWeighting = HasLossWeighting;
+
+    %%
 
     [FolderPath,~,~] = fileparts(filePath);
-    if WantValidation
-    CM_TablePathNameExt = fullfile(FolderPath,'CM_Table_Validation.mat');
-    else
-        CM_TablePathNameExt = fullfile(FolderPath,'CM_Table.mat');
-    end
+    % if WantValidation
+    %     CM_TablePathNameExt = fullfile(FolderPath,'CM_Table_Validation.mat');
+    % else
+    %     CM_TablePathNameExt = fullfile(FolderPath,'CM_Table.mat');
+    % end
 
     % disp(CM_TablePathNameExt);
 
+    CM_TablePathNameExt = fullfile(FolderPath,'CM_Table.mat');
     if isfile(CM_TablePathNameExt)
         % m_CM_Table = matfile(CM_TablePathNameExt,"Writable",false);
         m_CM_Table = load(CM_TablePathNameExt);
         CM_Table = m_CM_Table.CM_Table;
+    else
+        return
+    end
+
+    CM_TableValidationPathNameExt = fullfile(FolderPath,'CM_Table_Validation.mat');
+    if isfile(CM_TableValidationPathNameExt)
+        % m_CM_Table = matfile(CM_TablePathNameExt,"Writable",false);
+        m_CM_Table_Validation = load(CM_TableValidationPathNameExt);
+        CM_Table_Validation = m_CM_Table_Validation.CM_Table;
     else
         return
     end
@@ -114,10 +182,12 @@ FieldsToRemove = [FieldsToRemove,'EncoderOutputType'];
         aggregatedResult = newTable;
         aggregatedResult.Fold = {Fold};
         aggregatedResult.CM_Table = {{CM_Table}};
+        aggregatedResult.CM_Table_Validation = {{CM_Table_Validation}};
     else
         % Otherwise, append the new table to the existing one
         Current_Rows = height(aggregatedResult);
-        aggregatedResult_NoFold = removevars(aggregatedResult,["Fold","CM_Table"]);
+        % aggregatedResult_NoFold = removevars(aggregatedResult,["Fold","CM_Table"]);
+        aggregatedResult_NoFold = removevars(aggregatedResult,["Fold","CM_Table","CM_Table_Validation"]);
         [aggregatedResult_tmp,~,idx] = outerjoin(aggregatedResult_NoFold, newTable,"MergeKeys",true);
         idx = idx==1;
         newTable = aggregatedResult_tmp(idx,:); % newtable with same variables as aggregate
@@ -136,6 +206,7 @@ FieldsToRemove = [FieldsToRemove,'EncoderOutputType'];
         end
         aggregatedResult{idx,"Fold"} = {[aggregatedResult{idx,"Fold"}{1}, Fold]};
         aggregatedResult{idx,"CM_Table"} = {[aggregatedResult{idx,"CM_Table"}{1}, {CM_Table}]};
+        aggregatedResult{idx,"CM_Table_Validation"} = {[aggregatedResult{idx,"CM_Table_Validation"}{1}, {CM_Table_Validation}]};
     end
 end
 

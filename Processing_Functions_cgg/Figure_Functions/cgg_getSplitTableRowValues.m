@@ -93,7 +93,9 @@ function TypeValues = cgg_getSplitTableRowValues(RowNames, TrialFilter)
             for k = 1:length(MapKeys)
                 % Regex: optional leading spaces/slashes, followed by the exact literal
                 escapedKey = regexptranslate('escape', MapKeys{k});
-                pattern = ['^\s*/?\s*', escapedKey];
+                escapedKey = strrep(escapedKey, ' ', '[^a-zA-Z0-9]*');
+                % pattern = ['^\s*/?\s*', escapedKey];
+                pattern = ['^[\s/_\-]*', escapedKey];
                 
                 [startIdx, endIdx] = regexp(remString, pattern, 'once');
                 
@@ -109,7 +111,8 @@ function TypeValues = cgg_getSplitTableRowValues(RowNames, TrialFilter)
             if ~matchFound
                 escapedFilter = regexptranslate('escape', this_TrialFilter);
                 % Regex: matches "FilterName:NumericValue" formats optionally preceded by /
-                pattern = ['^\s*/?\s*', escapedFilter, ':(-?\d+)'];
+                % pattern = ['^\s*/?\s*', escapedFilter, ':(-?\d+)'];
+                pattern = ['^[\s/_\-]*', escapedFilter, ':(-?\d+)'];
                 
                 [startIdx, endIdx, tokens] = regexp(remString, pattern, 'start', 'end', 'tokens', 'once');
                 

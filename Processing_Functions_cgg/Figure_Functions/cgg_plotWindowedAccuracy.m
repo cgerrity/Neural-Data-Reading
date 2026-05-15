@@ -93,7 +93,7 @@ AccuracyCut = [];
 OverwritePlotFolder = '';
 Line_Width_Indicator = [];
 FigureSizeOverwrite = [];
-wantCI = [];
+wantCI = false;
 wantSignificanceBars = [];
 Line_Width_Significance = [];
 PlotColorsOverwrite = [];
@@ -344,47 +344,48 @@ YLimits = [YLimLower,YLimUpper];
 
 %%
 
-OverwriteSignificance = cell(1,length(Window_Accuracy_All));
-
-for pidx = 1:length(Window_Accuracy_All)
-
-this_FullTable = FullTable(pidx,:);
-
-FilterColumn = cfg.FilterColumn;
-cfg_Encoder = cfg.cfg_Encoder;
-cfg_Epoch = cfg.cfg;
-Subset=FullTable.("Session Name"){1};
-TrialFilter="All";
-TrialFilter_Value=NaN;
-MatchType=cfg.MatchType;
-TargetFilter='Overall';
-LabelClassFilter='';
-
-if IsSplit
-this_ExtraTerm = cfg.ExtraSaveTerm;
-this_ExtraTerm = erase(this_ExtraTerm,...
-    {'Distractor (','Distractor-(','Distractor_('});
-SplitType = extractBetween(this_ExtraTerm,'(',')');
-if isempty(SplitType)
-SplitType = FullTable(pidx,:).Properties.RowNames;
-end
-TypeValues = cgg_getSplitTableRowValues(SplitType, FilterColumn);
-[TrialFilter,TrialFilter_Value] = ...
-            cgg_getPackedTrialFilter(FilterColumn,TypeValues,'Pack');
-end
-
-if IsAttentional
-MatchType=cfg.MatchType_Attention;
-TargetFilter = extractBetween(cfg.ExtraSaveTerm,'{','}');
-if isempty(TargetFilter)
-TargetFilter = FullTable(pidx,:).Properties.RowNames;
-end
-TargetFilter = erase(TargetFilter, {'-',' ','(',')'});
-% TargetFilter = 'Overall';
-end
-
-    [~,OverwriteSignificance{pidx}] = cgg_testAccuracyTableSignificance(this_FullTable,'SignificanceValue',SignificanceValue,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',Subset,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
-end
+[OverwriteSignificance,~] = cgg_getSignificanceFromFullTable(FullTable,cfg,'SignificanceValue',SignificanceValue,'IsSplit',IsSplit,'IsAttentional',IsAttentional);
+% OverwriteSignificance = cell(1,length(Window_Accuracy_All));
+% 
+% for pidx = 1:length(Window_Accuracy_All)
+% 
+% this_FullTable = FullTable(pidx,:);
+% 
+% FilterColumn = cfg.FilterColumn;
+% cfg_Encoder = cgg_mergeStructs(cfg, cfg.cfg_Encoder);
+% cfg_Epoch = cfg.cfg;
+% Subset=FullTable.("Session Name"){1};
+% TrialFilter="All";
+% TrialFilter_Value=NaN;
+% MatchType=cfg.MatchType;
+% TargetFilter='Overall';
+% LabelClassFilter='';
+% 
+% if IsSplit
+% this_ExtraTerm = cfg.ExtraSaveTerm;
+% this_ExtraTerm = erase(this_ExtraTerm,...
+%     {'Distractor (','Distractor-(','Distractor_('});
+% SplitType = extractBetween(this_ExtraTerm,'(',')');
+% if isempty(SplitType)
+% SplitType = FullTable(pidx,:).Properties.RowNames;
+% end
+% TypeValues = cgg_getSplitTableRowValues(SplitType, FilterColumn);
+% [TrialFilter,TrialFilter_Value] = ...
+%             cgg_getPackedTrialFilter(FilterColumn,TypeValues,'Pack');
+% end
+% 
+% if IsAttentional
+% MatchType=cfg.MatchType_Attention;
+% TargetFilter = extractBetween(cfg.ExtraSaveTerm,'{','}');
+% if isempty(TargetFilter)
+% TargetFilter = FullTable(pidx,:).Properties.RowNames;
+% end
+% TargetFilter = erase(TargetFilter, {'-',' ','(',')'});
+% % TargetFilter = 'Overall';
+% end
+% 
+%     [~,OverwriteSignificance{pidx},~] = cgg_testAccuracyTableSignificance(this_FullTable,'SignificanceValue',SignificanceValue,'cfg_Encoder',cfg_Encoder,'cfg_Epoch',cfg_Epoch,'Subset',Subset,'TrialFilter',TrialFilter,'TrialFilter_Value',TrialFilter_Value,'MatchType',MatchType,'TargetFilter',TargetFilter,'LabelClassFilter',LabelClassFilter);
+% end
 
 %%
 
@@ -471,8 +472,14 @@ thisPlotFolder = 'Network Results';
 
 if IsBlock
     thisPlotFolder = 'Block IA';
+    if isfield(cfg_OverwritePlot,'BlockFolder')
+        thisPlotFolder = cfg_OverwritePlot.BlockFolder;
+    end
 elseif IsLabelClass
     thisPlotFolder = 'Label-Class';
+    if isfield(cfg_OverwritePlot,'LabelClassFolder')
+        thisPlotFolder = cfg_OverwritePlot.LabelClassFolder;
+    end
 elseif ~isempty(OverwritePlotFolder)
     thisPlotFolder = OverwritePlotFolder;
 end
