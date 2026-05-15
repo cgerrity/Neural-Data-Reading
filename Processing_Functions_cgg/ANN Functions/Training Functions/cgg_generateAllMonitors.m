@@ -44,6 +44,7 @@ end
 
 if ~(isfield(cfg_Monitor,'Time_End'))
 cfg_Monitor.Time_End = 1.5;
+% cfg_Monitor.Time_End = '';
 end
 
 if ~(isfield(cfg_Monitor,'SamplingRate'))
@@ -113,6 +114,10 @@ if ~(isfield(cfg_Monitor,'NumEpochs'))
 cfg_Monitor.NumEpochs = 1;
 end
 
+if ~(isfield(cfg_Monitor,'WantConfidenceLoss'))
+cfg_Monitor.WantConfidenceLoss = false;
+end
+
 %%
 
 if cfg_Monitor.WantClassificationLoss
@@ -127,11 +132,11 @@ else
     cfg_Monitor.WantWindowMonitor = false;
 end
 
-if cfg_Monitor.WantReconstructionLoss
-    cfg_Monitor.WantReconstructionMonitor = true;
-else
-    cfg_Monitor.WantReconstructionMonitor = false;
-end
+% if cfg_Monitor.WantReconstructionLoss
+%     cfg_Monitor.WantReconstructionMonitor = true;
+% else
+%     cfg_Monitor.WantReconstructionMonitor = false;
+% end
 
 %%
 
@@ -140,6 +145,8 @@ stopTrainingQueue = parallel.pool.DataQueue;
 %%
 
 NumAccuracyMeasures = length(cfg_Monitor.AccuracyMeasures);
+
+AccuracyTypes = ["Peak", "Aggregate", "Average"];
 
 %%
 
@@ -164,17 +171,20 @@ TableIDX = 0;
 %% Progress Monitor
 if cfg_Monitor.WantProgressMonitor
 for midx = 1:NumAccuracyMeasures
+for aidx = 1:length(AccuracyTypes)
+    AccuracyType = AccuracyTypes(aidx);
     TableIDX = TableIDX + 1;
     this_AccuracyMeasure = cfg_Monitor.AccuracyMeasures{midx};
+    this_SaveTerm = sprintf('%s-%s',AccuracyType,this_AccuracyMeasure);
 [Monitor,DataNames] = cgg_generateProgressMonitor_v4(...
     'LossType',cfg_Monitor.LossType,'LogLoss',cfg_Monitor.LogLoss,...
     'WantKLLoss',cfg_Monitor.WantKLLoss,'WantReconstructionLoss',...
     cfg_Monitor.WantReconstructionLoss,'WantClassificationLoss',...
     cfg_Monitor.WantClassificationLoss,'SaveDir',cfg_Monitor.SaveDir,...
-    'SaveTerm',this_AccuracyMeasure,'MatchType',this_AccuracyMeasure,...
-    'Run',Run);
+    'SaveTerm',this_SaveTerm,'MatchType',this_AccuracyMeasure,...
+    'Run',Run,'AccuracyType',AccuracyType);
 
-Name = sprintf("Progress Monitor - %s",this_AccuracyMeasure);
+Name = sprintf("Progress Monitor - %s %s",AccuracyType,this_AccuracyMeasure);
 
 UpdateFcn = @(data) cgg_displayTrainingUpdate_v2(data,cfg_Monitor.NumEpochs,...
     cfg_Monitor.NumWorkers,Monitor,stopTrainingQueue);
@@ -210,6 +220,7 @@ this_TableRange = TableIDX;
 
 MonitorTable(this_TableRange,:) = this_Monitor;
 
+end
 end
 end
 
@@ -381,6 +392,53 @@ Monitor_ValueUpdate = @(Monitor_Values) ...
 SaveFcn = @(IsOptimal) savePlot(Monitor,IsOptimal);
 
 DataIdentifier = "Classification";
+
+UpdateEachIteration = true;
+
+this_Monitor = cell(1,NumVariables);
+this_Monitor(:,1) = {Name};
+this_Monitor{:,2} = {Monitor};
+this_Monitor{:,3} = {UpdateFcn};
+this_Monitor{:,4} = {ParallelUpdateFcn};
+this_Monitor{:,5} = {SaveFcn};
+this_Monitor{:,6} = {Monitor_ValueUpdate};
+this_Monitor{:,7} = {DataNames};
+this_Monitor(:,8) = {DataIdentifier};
+this_Monitor(:,9) = {UpdateEachIteration};
+
+this_TableRange = TableIDX;
+
+MonitorTable(this_TableRange,:) = this_Monitor;
+    end
+    if cfg_Monitor.WantConfidenceLoss
+TableIDX = TableIDX + 1;
+SaveTerm = 'Confidence';
+[Monitor,DataNames] = cgg_generateComponentProgressMonitor(...
+    'WantKLLoss',false,'WantReconstructionLoss',false, ...
+    'WantClassificationLoss',false,...
+    'WantConfidenceLoss',cfg_Monitor.WantConfidenceLoss,...
+    'SaveDir',cfg_Monitor.SaveDir,...
+    'NumAreas',cfg_Monitor.NumAreas,...
+    'NumDimensions',cfg_Monitor.NumDimensions,'SaveTerm',SaveTerm, ...
+    'Run',Run);
+
+Name = "Component Monitor - Confidence";
+
+UpdateFcn = @(data) cgg_displayTrainingLossComponentUpdate(data,Monitor);
+
+dataQueue = parallel.pool.DataQueue;
+afterEach(dataQueue,UpdateFcn);
+ParallelUpdateFcn = @(data) send(dataQueue,data);
+
+MonitorUpdateFcn = @(Monitor_Values) calcMonitorUpdate(Monitor,Monitor_Values);
+DataValuesFcn = @(Monitor_Values) generateData(Monitor,...
+    MonitorUpdateFcn(Monitor_Values));
+Monitor_ValueUpdate = @(Monitor_Values) ...
+    UpdateFcn(DataValuesFcn(Monitor_Values));
+
+SaveFcn = @(IsOptimal) savePlot(Monitor,IsOptimal);
+
+DataIdentifier = "Confidence";
 
 UpdateEachIteration = true;
 

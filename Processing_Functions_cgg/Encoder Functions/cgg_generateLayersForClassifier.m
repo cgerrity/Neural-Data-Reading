@@ -36,6 +36,22 @@ NetworkType='LSTM';
 end
 end
 
+if isfunction
+MultipleInstanceLearningType = CheckVararginPairs('MultipleInstanceLearningType', 'None', varargin{:});
+else
+if ~(exist('MultipleInstanceLearningType','var'))
+MultipleInstanceLearningType='None';
+end
+end
+
+if isfunction
+ConfidenceType = CheckVararginPairs('ConfidenceType', 'None', varargin{:});
+else
+if ~(exist('ConfidenceType','var'))
+ConfidenceType='None';
+end
+end
+
 %%
 
 if strcmp(NetworkType,'Logistic')
@@ -59,12 +75,26 @@ Layers_Classifier=cell(NumDimensions,1);
 
 for didx=1:NumDimensions
 
-    this_LayerName_LSTM=sprintf("LSTM_Dim_%d",didx);
-    this_LayerName_GRU=sprintf("GRU_Dim_%d",didx);
-    this_LayerName_FullyConnected=sprintf("fc_Dim_%d",didx);
-    this_LayerName_Activation=sprintf("activation_Dim_%d",didx);
-    this_LayerName_output=sprintf("softmax_Tuning_Dim_%d",didx);
-    this_LayerName_Dropout=sprintf("dropout_Dim_%d",didx);
+    switch ConfidenceType
+        case 'Trial Confidence'
+            NameAddition = "TrialConfidence";
+            this_LayerName_LSTM=sprintf("LSTM_%s",NameAddition);
+            this_LayerName_GRU=sprintf("GRU_%s",NameAddition);
+            this_LayerName_FullyConnected=sprintf("fc_%s",NameAddition);
+            this_LayerName_Activation=sprintf("activation_%s",NameAddition);
+            this_LayerName_output=sprintf("softmax_%s",NameAddition);
+            this_LayerName_Dropout=sprintf("dropout_%s",NameAddition);
+            this_LayerName_Confidence=sprintf("sigmoid_%s",NameAddition);
+        otherwise
+            this_LayerName_LSTM=sprintf("LSTM_Dim_%d",didx);
+            this_LayerName_GRU=sprintf("GRU_Dim_%d",didx);
+            this_LayerName_FullyConnected=sprintf("fc_Dim_%d",didx);
+            this_LayerName_Activation=sprintf("activation_Dim_%d",didx);
+            this_LayerName_output=sprintf("softmax_Tuning_Dim_%d",didx);
+            this_LayerName_Dropout=sprintf("dropout_Dim_%d",didx);
+            this_LayerName_Confidence=sprintf("sigmoid_Tuning_Dim_%d",didx);
+    end
+%%
 
     switch LossType
         case 'CTC'
@@ -153,11 +183,25 @@ for didx=1:NumDimensions
                 this_Layer_Dropout
                 this_Layer_After];
 
+    switch MultipleInstanceLearningType
+        case 'None'
+            this_Layer_Output = softmaxLayer("Name",this_LayerName_output);
+        case 'MIL'
+            this_Layer_Output = cgg_softmaxLayer('SCT',this_LayerName_output);
+        otherwise
+            this_Layer_Output = softmaxLayer("Name",this_LayerName_output);
+    end
+
+    switch ConfidenceType
+        case 'Trial Confidence'
+            this_Layer_Output = sigmoidLayer("Name",this_LayerName_Confidence);
+    end
+
     Layers_Tuning=[
                 Layers_Tuning
                 this_Layer
                 fullyConnectedLayer(this_NumClasses,"Name",this_LayerName_FullyConnected)
-                softmaxLayer("Name",this_LayerName_output)
+                this_Layer_Output
                 ];
 
 Layers_Classifier{didx}=layerGraph(Layers_Tuning);

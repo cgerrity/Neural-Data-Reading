@@ -22,6 +22,8 @@ classdef cgg_generateFullReconstructionAndClassificationMonitor < handle
         DataNames
         CurrentMonitor_Value
         RunTerm
+        Dimension_Bar
+        ClassifierOutputNames
     end
     
     methods
@@ -348,6 +350,8 @@ monitor.ExampleNumber = 1;
 monitor.ExampleTerm = ['_Example-' num2str(monitor.ExampleNumber)];
 monitor.CurrentMonitor_Value = [];
 monitor.RunTerm = sprintf('_Run-%d',Run);
+monitor.Dimension_Bar = cell(NumDimensions,2);
+monitor.ClassifierOutputNames = [];
 
 %%
 
@@ -372,6 +376,13 @@ monitor.DataNames = DataNames;
         function value = isClassification(~,PlotName)
             value = false;
             if contains(PlotName,"Dimension")
+                value = true;
+            end
+        end
+
+        function value = isValidation(~,PlotName)
+            value = false;
+            if contains(PlotName,"Validation")
                 value = true;
             end
         end
@@ -432,6 +443,7 @@ monitor.DataNames = DataNames;
 
             xlabel('Time (s)','FontSize',X_Name_Size);
             ylim(monitor.RangeReconstruction);
+            xlim([min(Time_Reconstruction),max(Time_Reconstruction)]);
 
         end
 
@@ -454,8 +466,17 @@ monitor.DataNames = DataNames;
                 LastDim = true;
             end
 
-            ClassPlots = cgg_plotSingleClassificationProbability(PlotUpdate,Time,InTiled_Plot,SubTiled_Plot,TileIDX,TileIDX_Within,[1,1],LastDim,TrueFeature);
+            WantAggregateBar = true;
+            [ClassPlots,AggregateBar] = cgg_plotSingleClassificationProbability(PlotUpdate,Time,InTiled_Plot,SubTiled_Plot,TileIDX,TileIDX_Within,[1,1],LastDim,TrueFeature,'WantAggregateBar',WantAggregateBar);
             ylim([0,1]);
+
+            if isValidation(monitor,PlotName)
+                monitor.Dimension_Bar{DimensionIDX,1} = AggregateBar;
+            else
+                monitor.Dimension_Bar{DimensionIDX,2} = AggregateBar;
+            end
+            
+            % xlim([min(Time),max(Time)]);
 
             % nexttile(TileIDX,[Height,1]);
             % 
@@ -548,6 +569,18 @@ monitor.DataNames = DataNames;
                 InSaveTerm monitor.RunTerm monitor.ExampleTerm '.pdf'];
             saveas(monitor.Figure,SavePathNameExt);
             updateExampleTerm(monitor);
+            deleteAggregateBars(monitor)
+        end
+
+        function deleteAggregateBars(monitor)
+
+            if isprop(monitor,'Dimension_Bar')
+            for didx = 1:size(monitor.Dimension_Bar,1)
+                for cidx = 1:size(monitor.Dimension_Bar,2)
+                delete(monitor.Dimension_Bar{didx,cidx});
+                end
+            end
+            end
         end
 
         function data = generateData(monitor,MonitorUpdate)
@@ -563,6 +596,14 @@ monitor.DataNames = DataNames;
             monitor.CurrentMonitor_Value = Monitor_Values;
         end
 
+        function getClassifierOutputNames(monitor,Monitor_Values)
+            if isempty(monitor.ClassifierOutputNames)
+            [OutputInformation,~] = ...
+                cgg_getNetworkOutputInformation(Monitor_Values.Classifier);
+            monitor.ClassifierOutputNames = OutputInformation.Classifier;
+            end
+        end
+
         function MonitorUpdate = calcMonitorUpdate(monitor,IsOptimal)
             % LossInformation_Training = Monitor_Values.LossInformation_Training;
             % LossInformation_Validation = Monitor_Values.LossInformation_Validation;
@@ -570,7 +611,7 @@ monitor.DataNames = DataNames;
             % CM_Table_Validation = Monitor_Values.CM_Table_Validation;
             % ClassNames = Monitor_Values.ClassNames;
             Monitor_Values = monitor.CurrentMonitor_Value;
-            
+            getClassifierOutputNames(monitor,Monitor_Values);
 
             Mbq_Display_Training = Monitor_Values.Mbq_Display_Training;
             Mbq_Display_Validation = Monitor_Values.Mbq_Display_Validation;
@@ -627,13 +668,13 @@ monitor.DataNames = DataNames;
                 if ~IsClassifierLearnable
                 Monitor_Values.Classifier=initialize(Monitor_Values.Classifier);
                 end
-                [MonitorUpdate.Y_Classification_Training{:},~] = predict(Monitor_Values.Classifier,Encoding_Training);
+                [MonitorUpdate.Y_Classification_Training{:},~] = predict(Monitor_Values.Classifier,Encoding_Training,Outputs=monitor.ClassifierOutputNames);
                 % Monitor_Values.Classifier=resetState(Monitor_Values.Classifier);
                 Monitor_Values.Classifier=cgg_resetState(Monitor_Values.Classifier);
                 if ~IsClassifierLearnable
                 Monitor_Values.Classifier=initialize(Monitor_Values.Classifier);
                 end
-                [MonitorUpdate.Y_Classification_Validation{:},~] = predict(Monitor_Values.Classifier,Encoding_Validation);
+                [MonitorUpdate.Y_Classification_Validation{:},~] = predict(Monitor_Values.Classifier,Encoding_Validation,Outputs=monitor.ClassifierOutputNames);
             else
                 MonitorUpdate.Y_Classification_Training = [];
                 MonitorUpdate.Y_Classification_Validation = [];

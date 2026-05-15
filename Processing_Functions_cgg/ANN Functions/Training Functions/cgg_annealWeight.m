@@ -14,5 +14,9 @@ else
     Weight = InitialWeight;
 end
 
+if isnan(InitialWeight)
+Weight = NaN;
+end
+
 end
 

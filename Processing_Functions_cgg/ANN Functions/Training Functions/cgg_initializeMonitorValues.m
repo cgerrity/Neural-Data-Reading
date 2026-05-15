@@ -16,6 +16,12 @@ if ~isfield(Monitor_Values,'ClassNames')
 Monitor_Values.ClassNames = ClassNames;
 end
 
+if ~isfield(Monitor_Values,'EpochIterationTable')
+EpochIterationTable = cgg_generateBlankTable({'Epoch','Iteration'},{'single','single'});
+EpochIterationTable(1,:) = {1,1};
+Monitor_Values.EpochIterationTable = EpochIterationTable;
+end
+
 NumDisplayExamples=10;
 
 Mbq_Display = minibatchqueue(shuffle(DataStore),...
@@ -123,6 +129,7 @@ end
 
 Monitor_Values.IsQuaddle = IsQuaddle;
 Monitor_Values.MaximumValidationAccuracy = -Inf;
+Monitor_Values.AggregateValidationAccuracy = -Inf;
 Monitor_Values.MinimumValidationLoss = Inf;
 
 %%

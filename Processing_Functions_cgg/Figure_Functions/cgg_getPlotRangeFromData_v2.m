@@ -28,8 +28,14 @@ else
     this_Data = procAllChecks(this_Data,RecencyAmount);
 end
 
+% try
 Limit_Upper = prctile(this_Data,Percentile);
 Limit_Lower = prctile(this_Data,100-Percentile);
+% catch
+% disp(this_Data);
+% Limit_Upper = prctile(this_Data,Percentile);
+% Limit_Lower = prctile(this_Data,100-Percentile);
+% end
 
 if isnan(Limit_Upper) && isnan(Limit_Lower)
     Limit_Upper = 0.00001;

@@ -147,6 +147,10 @@ cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding;
 [cfg_tmp,~] = cgg_generateFolderAndPath(Target,'Target',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding=cfg_tmp;
 
+cfg_tmp=cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding;
+[cfg_tmp,~] = cgg_generateFolderAndPath(Target,'EncodingTarget',cfg_tmp,'WantDirectory',WantDirectory);
+cfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Encoding=cfg_tmp;
+
 if isfunction
 Fold = CheckVararginPairs('Fold', '', varargin{:});
 if ~isempty(Fold)

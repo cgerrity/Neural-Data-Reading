@@ -100,5 +100,11 @@ end
 end
 
 
+if isfield(cfg,"StitchingAndFusionLayer") && ~strcmp(string(cfg.StitchingAndFusionLayer),"")
+    
+    PostDecoderBlock = cgg_constructStitchingAndFusionNetwork(cfg.StitchingAndFusionLayer,cfg,'Decoder');
+% PreEncoderBlock = 
+end
+
 end
 

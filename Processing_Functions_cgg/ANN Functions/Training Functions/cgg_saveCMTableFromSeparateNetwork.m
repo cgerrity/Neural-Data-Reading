@@ -5,6 +5,7 @@ function cgg_saveCMTableFromSeparateNetwork(LossFunction,...
 %   Detailed explanation goes here
 
 if IsOptimal
+    fprintf('   *** Obtaining Test Measures for Optimal Network\n'); tic;
     if ~isempty(Classifier)
 [~,CM_Table,~,~] = LossFunction(Encoder,Decoder,Classifier,...
     LossInformation,WeightKL_Anneal);
@@ -14,6 +15,7 @@ CMTableSaveVariablesName={'CM_Table'};
 CMTableSavePathNameExt = [SaveDir filesep 'CM_Table.mat'];
 cgg_saveVariableUsingMatfile(CMTableSaveVariables,CMTableSaveVariablesName,CMTableSavePathNameExt);
     end
+    fprintf('   >>> Obtaining Test Measures for Optimal Network took %.3f seconds\n',toc);
 end
 
 end

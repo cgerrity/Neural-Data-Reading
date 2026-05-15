@@ -4,12 +4,12 @@ clc; clear; close all;
 
 %%
 
-Epoch = 'Synthetic_Simple';
+Epoch = 'Synthetic_Easy_SmallSize';
 
 NumChannels=2;
 NumSamples=3001;
 NumAreas=3;
-NumData=200;
+NumData=40;
 
 WantSave = true;
 WantPlot = false;
@@ -21,17 +21,20 @@ Time_End=1.5;
 % NoiseLevel=0.5; % Synthetic_3
 NoiseLevel=0;
 
+PlotScaleAmount = 20;
+PlotOffsetAmount = 10;
+
 %%
 
-FrequencyValues = [3,4,5,6];
-AmplitudeValues = [0.5,1,1.5,2];
+FrequencyValues = [1,5,15,40];
+AmplitudeValues = [0.5,1,1.5,2].^3;
 NumPatterns = 4;
 
-PatternFrequency = 0.0005;
+PatternFrequency = 0.001;
 % PatternSTD = 0.025; % Synthetic_3
-PatternSTD = 0.0025;
+PatternSTD = 0.01;
 % PatternAmplitude = 1.5; % Synthetic_3
-PatternAmplitude = 5;
+PatternAmplitude = 10;
 
 %% Noise
 
@@ -44,17 +47,24 @@ NoiseLevelArea = [1,1.5,2,2.5,3,3.5];
 
 LowPassFrequency = 10;
 
+LowPassDataFrequency = NaN;
+
+NoiseLevelAmplitude = 0.1;
+NoiseLevelFrequency = 0.1;
+
 %%
 
-NaNChannel = randi(NumChannels,NumNaN);
-NaNArea = randi(NumAreas,NumNaN);
+NaNChannel = randi(NumChannels,[NumNaN,1]);
+NaNArea = randi(NumAreas,[NumNaN,1]);
 
 %%
 
+if WantSave
 cfg_Session = DATA_cggAllSessionInformationConfiguration;
 
 TargetDir=cfg_Session(1).outdatadir;
 ResultsDir=cfg_Session(1).temporarydir;
+TargetDir = ResultsDir;
 
 cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,'Epoch',Epoch,'Data_Normalized',true);
 cfg_tmp = cgg_generateDecodingFolders('TargetDir',ResultsDir,'Epoch',Epoch,'Data_Normalized',true);
@@ -73,16 +83,17 @@ TargetDir=[SyntheticDir filesep 'Target'];
 Data_PathNameExt=[DataDir filesep 'Synthetic_Data_%07d.mat'];
 DataNormalized_PathNameExt=[DataNormalizedDir filesep 'Synthetic_Data_%07d.mat'];
 Target_PathNameExt=[TargetDir filesep 'Target_%07d.mat'];
-
+end
 %%
 Time=linspace(Time_Start,Time_End,NumSamples);
+SamplingFrequency = 1/mean(diff(Time));
 
 FrequencyDiff = diff(FrequencyValues);
 FrequencyNoiseLevel = mean([FrequencyDiff(1),diff(FrequencyValues);diff(FrequencyValues),FrequencyDiff(end)],1);
-FrequencyNoiseLevel = FrequencyNoiseLevel/2;
+FrequencyNoiseLevel = FrequencyNoiseLevel/2*NoiseLevelFrequency;
 AmplitudeDiff = diff(AmplitudeValues);
 AmplitudeNoiseLevel = mean([AmplitudeDiff(1),diff(AmplitudeValues);diff(AmplitudeValues),AmplitudeDiff(end)],1);
-AmplitudeNoiseLevel = AmplitudeNoiseLevel/2;
+AmplitudeNoiseLevel = AmplitudeNoiseLevel/2*NoiseLevelAmplitude;
 
 PatternNoiseLevel = PatternAmplitude/2;
 
@@ -108,10 +119,10 @@ ClassNames{2}=1:NumClass_2;
 ClassNames{3}=1:NumClass_3;
 ClassNames{4}=[0,1,2,3];
 
-Dimension_1=repmat(ClassNames{1},[1,NumData/length(ClassNames{1})]);
-Dimension_2=repmat(ClassNames{2},[1,NumData/length(ClassNames{2})]);
-Dimension_3=repmat(ClassNames{3},[1,NumData/length(ClassNames{3})]);
-Dimension_4=repmat(ClassNames{4},[1,NumData/length(ClassNames{4})]);
+Dimension_1=repmat(ClassNames{1},[1,round(NumData/length(ClassNames{1}))]);
+Dimension_2=repmat(ClassNames{2},[1,round(NumData/length(ClassNames{2}))]);
+Dimension_3=repmat(ClassNames{3},[1,round(NumData/length(ClassNames{3}))]);
+Dimension_4=repmat(ClassNames{4},[1,round(NumData/length(ClassNames{4}))]);
 
 Dimension_1 = Dimension_1(randperm(NumData));
 Dimension_2 = Dimension_2(randperm(NumData));
@@ -187,6 +198,8 @@ this_Sample_Data(cidx,:,aidx)=this_Channel_Data;
     end
 end
 
+if WantSave
+
 this_Target_PathNameExt = sprintf(Target_PathNameExt,didx);
 
 this_ProbeProcessing = struct;
@@ -212,6 +225,7 @@ this_Target.ReactionTime=1;
 this_Target.TrialChosen=true;
 this_Target.SharedFeatureCoding=1;
 this_Target.SharedFeature=1;
+this_Target.Block=1;
 
 SaveVariables={this_Target};
 SaveVariablesName={'Target'};
@@ -222,9 +236,17 @@ cgg_saveVariableUsingMatfile(SaveVariables,SaveVariablesName,SavePathNameExt);
 this_Data_PathNameExt = sprintf(Data_PathNameExt,didx);
 this_DataNormalized_PathNameExt = sprintf(DataNormalized_PathNameExt,didx);
 
+end
+
 this_Noise = cgg_generateSyntheticNoise(NumAreas,NumChannels,NoiseLevel,Time,Noise_Amplitude,Noise_Spread,Noise_Center,Noise_Maximum,NoiseLevelArea,LowPassFrequency);
 
 this_Data=this_Sample_Data+this_Noise;
+
+if ~isnan(LowPassDataFrequency)
+for aidx = 1:NumAreas
+this_Data(:,:,aidx) = lowpass(this_Data(:,:,aidx)',LowPassDataFrequency,SamplingFrequency)';
+end
+end
 
 Par_NaNChannel = NaNChannel_Parallel.Value;
 Par_NaNArea = NaNArea_Parallel.Value;
@@ -240,7 +262,7 @@ PlotCount = 0;
 figure;
 for aidx = 1:NumAreas
     for cidx = 1:NumChannels
-plot(Time,this_Data(cidx,:,aidx)+PlotCount*4);
+plot(Time,this_Data(cidx,:,aidx)+PlotCount*PlotScaleAmount);
 PlotCount = PlotCount+1;
 if PlotCount == 1
 hold on
@@ -248,6 +270,7 @@ end
     end
 end
 hold off
+ylim([0-PlotOffsetAmount,PlotCount*PlotScaleAmount+PlotOffsetAmount]);
 end
 
 if WantSave

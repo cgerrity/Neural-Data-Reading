@@ -87,6 +87,14 @@ end
 end
 
 if isfunction
+WeightConfidence = CheckVararginPairs('WeightConfidence', NaN, varargin{:});
+else
+if ~(exist('WeightConfidence','var'))
+WeightConfidence=NaN;
+end
+end
+
+if isfunction
 GradientThreshold = CheckVararginPairs('GradientThreshold', 1, varargin{:});
 else
 if ~(exist('GradientThreshold','var'))
@@ -270,6 +278,62 @@ Freeze_cfg=struct();
 end
 end
 
+if isfunction
+MultipleInstanceLearningType = CheckVararginPairs('MultipleInstanceLearningType', 'None', varargin{:});
+else
+if ~(exist('MultipleInstanceLearningType','var'))
+MultipleInstanceLearningType='None';
+end
+end
+
+if isfunction
+LoadParameters = CheckVararginPairs('LoadParameters', [], varargin{:});
+else
+if ~(exist('LoadParameters','var'))
+LoadParameters=[];
+end
+end
+
+if isfunction
+WeightParameters = CheckVararginPairs('WeightParameters', [], varargin{:});
+else
+if ~(exist('WeightParameters','var'))
+WeightParameters=[];
+end
+end
+
+if isfunction
+FreezeParameters = CheckVararginPairs('FreezeParameters', [], varargin{:});
+else
+if ~(exist('FreezeParameters','var'))
+FreezeParameters=[];
+end
+end
+
+if isfunction
+AccuracyType = CheckVararginPairs('AccuracyType', 'Aggregate', varargin{:});
+else
+if ~(exist('AccuracyType','var'))
+AccuracyType='Aggregate';
+end
+end
+
+if isfunction
+PriorProportion = CheckVararginPairs('PriorProportion', 0, varargin{:});
+else
+if ~(exist('PriorProportion','var'))
+PriorProportion=0;
+end
+end
+
+if isfunction
+WantBatchCorrection = CheckVararginPairs('WantBatchCorrection', false, varargin{:});
+else
+if ~(exist('WantBatchCorrection','var'))
+WantBatchCorrection=false;
+end
+end
+
 MessageAlreadyTrained = '!!! Network trained to maximum number of epochs\n';
 
 %% No Epochs
@@ -278,25 +342,39 @@ MessageAlreadyTrained = '!!! Network trained to maximum number of epochs\n';
 if NumEpochs < 1
     return
 end
-
+Timer_Overhead = tic;
 %% Identify the Networks
 HasDecoder = ~isempty(Decoder);
 HasClassifier = ~isempty(Classifier);
 
+% %% Potential to get MultipleInstanceLearningType from Classifier
+% for lidx = 1:length(Classifier.Layers)
+% if isprop(Classifier.Layers(lidx),'SoftmaxFormat')
+% MILTYPE = Classifier.Layers(lidx).SoftmaxFormat;
+% break
+% end
+% end
+
 %% Get frozen components
-WantFreeze = ~isempty(fieldnames(Freeze_cfg));
+% WantFreeze = ~isempty(fieldnames(Freeze_cfg));
+WantFreeze = ~isempty(FreezeParameters);
 if WantFreeze
-    cgg_getFrozenNetwork(Encoder,"Encoder",Freeze_cfg);
-    cgg_getFrozenNetwork(Decoder,"Decoder",Freeze_cfg);
-    cgg_getFrozenNetwork(Classifier,"Classifier",Freeze_cfg);
+    FreezeParameters.updateAllParameters(0);
+    cgg_getFrozenNetwork(Encoder,"Encoder");
+    cgg_getFrozenNetwork(Decoder,"Decoder");
+    cgg_getFrozenNetwork(Classifier,"Classifier");
 end
 
 %% Get Initial values
 fprintf('*** Getting Initial Values\n');
 % Initialize Epoch and Iteration counters
 [Iteration,Epoch,Run,MaximumValidationAccuracy,...
-    MinimumValidationLoss,OptimizerVariables] = ...
-    cgg_getIterationInformation(SaveDir,NumEpochs);
+    MinimumValidationLoss,AggregateValidationAccuracy,...
+    OptimizerVariables] = cgg_getIterationInformation(SaveDir,NumEpochs);
+fprintf('   --- Epoch: %d, Iteration: %d\n',Epoch,Iteration);
+fprintf('   --- Peak Validation Accuracy: %.3f\n',MaximumValidationAccuracy);
+fprintf('   --- Aggregate Validation Accuracy: %.3f\n',AggregateValidationAccuracy);
+fprintf('   --- Minimum Validation Loss: %.4e\n',MinimumValidationLoss);
 
 if Epoch > NumEpochs
     fprintf(MessageAlreadyTrained);
@@ -308,6 +386,10 @@ OptimizerVariables = cgg_initializeAllOptimizerVariables(Optimizer,...
 [Weights,ClassNames] = cgg_getWeightsForLoss(DataStore_Training,...
     WeightedLoss);
 
+SetSize_Training = numpartitions(DataStore_Training);
+SetSize_Validation = numpartitions(DataStore_Validation);
+SetSize_Testing = numpartitions(DataStore_Testing);
+
 %% Generate Monitors
 fprintf('*** Generating Monitors\n');
 MonitorTable = cgg_generateAllMonitors(cfg_Monitor,Run);
@@ -316,7 +398,9 @@ Monitor_Values = cgg_initializeMonitorValues([],DataStore_Training,DataFormat,Is
 fprintf('*** Initializing Monitors with Validation\n');
 Monitor_Values = cgg_initializeMonitorValues(Monitor_Values,DataStore_Validation,DataFormat,IsQuaddle,cfg_Monitor,'Validation');
 Monitor_Values.MaximumValidationAccuracy = MaximumValidationAccuracy;
+Monitor_Values.AggregateValidationAccuracy = AggregateValidationAccuracy;
 Monitor_Values.MinimumValidationLoss = MinimumValidationLoss;
+
 %% Establish Loss Functions
 fprintf('*** Establishing Loss Functions\n');
 ModelLoss_Training = ...
@@ -332,7 +416,12 @@ ModelLoss_Training = ...
     'ClassNames',ClassNames,'LossType_Decoder',LossType_Decoder,...
     'DataType','Training',...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize, ...
-    'L2Factor',L2Factor,'WeightOffsetAndScale',WeightOffsetAndScale);
+    'L2Factor',L2Factor,'WeightOffsetAndScale',WeightOffsetAndScale, ...
+    'MultipleInstanceLearningType',MultipleInstanceLearningType, ...
+    'WeightParameters',WeightParameters, ...
+    'WeightConfidence',WeightConfidence,'SetSize',SetSize_Training, ...
+    'PriorProportion',PriorProportion, ...
+    'WantBatchCorrection',WantBatchCorrection);
 ModelLoss_Validation = ...
     @(Encoder_Net,Decoder_Net,Classifier_Net,LossInformation_Var,...
     WeightKL_Var) ...
@@ -346,7 +435,12 @@ ModelLoss_Validation = ...
     'ClassNames',ClassNames,'LossType_Decoder',LossType_Decoder,...
     'DataType','Validation',...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize, ...
-    'L2Factor',L2Factor,'WeightOffsetAndScale',WeightOffsetAndScale);
+    'L2Factor',L2Factor,'WeightOffsetAndScale',WeightOffsetAndScale, ...
+    'MultipleInstanceLearningType',MultipleInstanceLearningType, ...
+    'WeightParameters',WeightParameters, ...
+    'WeightConfidence',WeightConfidence,'SetSize',SetSize_Validation, ...
+    'PriorProportion',PriorProportion, ...
+    'WantBatchCorrection',WantBatchCorrection);
 ModelLoss_Testing = ...
     @(Encoder_Net,Decoder_Net,Classifier_Net,LossInformation_Var,...
     WeightKL_Var) ...
@@ -360,7 +454,12 @@ ModelLoss_Testing = ...
     'ClassNames',ClassNames,'LossType_Decoder',LossType_Decoder,...
     'DataType','Testing',...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize, ...
-    'L2Factor',L2Factor,'WeightOffsetAndScale',WeightOffsetAndScale);
+    'L2Factor',L2Factor,'WeightOffsetAndScale',WeightOffsetAndScale, ...
+    'MultipleInstanceLearningType',MultipleInstanceLearningType, ...
+    'WeightParameters',WeightParameters, ...
+    'WeightConfidence',WeightConfidence,'SetSize',SetSize_Testing, ...
+    'PriorProportion',PriorProportion, ...
+    'WantBatchCorrection',WantBatchCorrection);
 
 %% Training
 
@@ -382,14 +481,23 @@ while Epoch <= NumEpochs
     WeightKL_Anneal = cgg_annealWeight(Epoch,WeightKL,...
         WeightDelayEpoch,WeightEpochRamp);
 
+    % Update Dynamic parameters
+    WeightParameters.WeightKL = WeightKL_Anneal;
+    LoadParameters.updateAllParameters(Epoch);
+    WeightParameters.updateAllParameters(Epoch);
+    FreezeParameters.updateAllParameters(Epoch);
+
     % If weights are frozen unfreeze them after annealing period
     if WantFreeze
-        Encoder = cgg_setFrozenNetwork(Epoch,Encoder,"Encoder",Freeze_cfg);
+        % Encoder = cgg_setFrozenNetwork(Epoch,Encoder,"Encoder",Freeze_cfg);
+        Encoder = cgg_setFrozenNetwork_v2(Encoder,"Encoder",FreezeParameters);
         if HasDecoder
-        Decoder = cgg_setFrozenNetwork(Epoch,Decoder,"Decoder",Freeze_cfg);
+        % Decoder = cgg_setFrozenNetwork(Epoch,Decoder,"Decoder",Freeze_cfg);
+        Decoder = cgg_setFrozenNetwork_v2(Decoder,"Decoder",FreezeParameters);
         end
         if HasClassifier
-        Classifier = cgg_setFrozenNetwork(Epoch,Classifier,"Classifier",Freeze_cfg);
+        % Classifier = cgg_setFrozenNetwork(Epoch,Classifier,"Classifier",Freeze_cfg);
+        Classifier = cgg_setFrozenNetwork_v2(Classifier,"Classifier",FreezeParameters);
         end
     end
 
@@ -425,14 +533,16 @@ while Epoch <= NumEpochs
         %     dlfeval(ModelLoss_Training,this_DataStore_Training,...
         %     Encoder,Decoder,Classifier,...
         %     LossInformation_Training,WantUpdateLossPrior,WeightKL_Anneal);
+        fprintf('   ??? Overhead Time is %.3f\n',toc(Timer_Overhead));
         tic;
         [LossInformation_Training,CM_Table_Training,Gradients,State] = ...
             cgg_procGradientAggregation(ModelLoss_Training, ...
             this_DataStore_Training,Encoder,Decoder,Classifier, ...
             LossInformation_Training,WantUpdateLossPrior, ...
             WeightKL_Anneal,maxworkerMiniBatchSize);
-        fprintf('??? Gradient Aggregation Time is %.3f\n',toc);
+        fprintf('   ??? Gradient Aggregation Time is %.3f\n',toc);
         WantUpdateLossPrior = false;
+        Timer_Overhead = tic;
     
         %% Update Gradient Threshold
         Gradients_PreThreshold = Gradients;
@@ -472,38 +582,49 @@ while Epoch <= NumEpochs
         %% Get Measures
 
         if mod(Iteration,ValidationFrequency)==1 || FirstIteration || ValidationFrequency == 1 || LastIteration
+            fprintf('   *** Obtaining Validation Measures\n'); tic;
         [LossInformation_Validation,CM_Table_Validation,~,~] = ...
             ModelLoss_Validation(Encoder,Decoder,Classifier,LossInformation_Training,WeightKL_Anneal);
-        FirstIteration = false;
+        % FirstIteration = false;
+            fprintf('   >>> Obtaining Validation Measures took %.3f seconds\n',toc);
         else
             LossInformation_Validation = [];
             CM_Table_Validation = [];
         end
     
         %% Update Monitors
+        fprintf('   *** Calculating Monitor Values\n'); tic;
         [Monitor_Values,IsOptimal] = cgg_calcAllMonitorValues(...
             Monitor_Values,Encoder,Decoder,Classifier,Epoch,Iteration,...
             LearningRate,...
             LossInformation_Training,LossInformation_Validation,...
             CM_Table_Training,CM_Table_Validation,...
-            Gradients,Gradients_PreThreshold);
-        %% Only Get Optimal Network for Annealed Weights  
-        if Epoch < WeightDelayEpoch + WeightEpochRamp
-            IsOptimal = false;
-            Monitor_Values.MaximumValidationAccuracy = -Inf;
-            Monitor_Values.MinimumValidationLoss = Inf;
-        end
+            Gradients,Gradients_PreThreshold,'AccuracyType',AccuracyType);
+        fprintf('   >>> Calculating Monitor Values took %.3f seconds\n',toc);
+        % %% Only Get Optimal Network for Annealed Weights  
+        % if Epoch < WeightDelayEpoch + WeightEpochRamp && ~isnan(WeightKL_Anneal)
+        %     IsOptimal = false;
+        %     Monitor_Values.MaximumValidationAccuracy = -Inf;
+        %     Monitor_Values.AggregateValidationAccuracy = -Inf;
+        %     Monitor_Values.MinimumValidationLoss = Inf;
+        % end
         %%
-        SaveAll = mod(Iteration,SaveFrequency)==1 || SaveFrequency == 1 || LastIteration;
+        SaveAll = mod(Iteration,SaveFrequency)==1 || SaveFrequency == 1 || LastIteration || FirstIteration;
+        fprintf('   *** Updating All Monitors\n');tic;
         cgg_updateAllMonitors(MonitorTable,Monitor_Values,SaveAll);
+        fprintf('   >>> Updating All Monitors took %.3f seconds\n',toc);
 
         %% Save Monitors when optimal condition is met
         if IsOptimal
-        cgg_saveAllMonitors(MonitorTable,true,true);            
+            fprintf('   *** Saving Optimal Monitors\n'); tic;
+        cgg_saveAllMonitors(MonitorTable,true,true); 
+        fprintf('   >>> Saving Optimal Monitors took %.3f seconds\n',toc);           
         end
 
         %% Save Monitors at set times
+        fprintf('   *** Saving Current Monitors\n'); tic;
         cgg_saveAllMonitors(MonitorTable,false,SaveAll);
+        fprintf('   >>> Saving Current Monitors took %.3f seconds\n',toc);
 
         %% Save Networks
         SaveNetwork = WantSaveNet && SaveAll;
@@ -522,6 +643,7 @@ while Epoch <= NumEpochs
         %% Save Iteration Parameters
         cgg_saveIterationInformation(Iteration,Epoch,Run,...
             Monitor_Values.MaximumValidationAccuracy,...
+            Monitor_Values.AggregateValidationAccuracy,...
             Monitor_Values.MinimumValidationLoss,...
             IterationSaveFrequency,SaveDir,Timer,OptimizerVariables,...
             IsOptimal);
@@ -529,9 +651,14 @@ while Epoch <= NumEpochs
         % If the MiniBatchIDX reaches the end of the table then the epoch
         % has finished
         HasData = ~(MiniBatchIDX == NumBatches);
+        FirstIteration = false;
+
+        if RescaleLossEpoch == 0
+            WantUpdateLossPrior = true;
+        end
     end
 
-    if mod(Epoch+1,RescaleLossEpoch) == 1 || RescaleLossEpoch == 1
+    if mod(Epoch+1,RescaleLossEpoch) == 1 || RescaleLossEpoch == 1 || RescaleLossEpoch == 0
         WantUpdateLossPrior = true;
     end
 
@@ -545,6 +672,7 @@ cgg_saveNetworks(Encoder,Decoder,Classifier,WantSaveNet,...
 % Save Iteration Parameters
 cgg_saveIterationInformation(Iteration,Epoch,Run,...
     Monitor_Values.MaximumValidationAccuracy,...
+    Monitor_Values.AggregateValidationAccuracy,...
     Monitor_Values.MinimumValidationLoss,...
     Iteration-1,SaveDir,Timer,OptimizerVariables,...
     false);

@@ -22,6 +22,8 @@ classdef cgg_generateProgressMonitor_v4 < handle
         DataNames
         MatchType
         RunTerm
+        AccuracyType
+        % UpdateEpochLine
     end
 
     methods
@@ -122,6 +124,14 @@ Run = CheckVararginPairs('Run', 1, varargin{:});
 else
 if ~(exist('Run','var'))
 Run=1;
+end
+end
+
+if isfunction
+AccuracyType = CheckVararginPairs('AccuracyType', 'Aggregate', varargin{:});
+else
+if ~(exist('AccuracyType','var'))
+AccuracyType='Aggregate';
 end
 end
 %%
@@ -441,6 +451,8 @@ monitor.RangeFactor = RangeFactor;
 monitor.DataNames = DataNames;
 monitor.MatchType = MatchType;
 monitor.RunTerm = sprintf('_Run-%d',Run);
+monitor.AccuracyType = AccuracyType;
+% monitor.UpdateEpochLine = false;
 
         end
 
@@ -529,7 +541,14 @@ monitor.RunTerm = sprintf('_Run-%d',Run);
             SavePathNameExt = [monitor.SaveDir filesep ...
                 'Progress-Monitor' monitor.SaveTerm '_Iteration-' ...
                 InSaveTerm monitor.RunTerm '.pdf'];
-            saveas(monitor.Figure,SavePathNameExt);
+            try
+                saveas(monitor.Figure,SavePathNameExt);
+            catch ME
+                fprintf('   <strong>!!!</strong> <strong>Saveas Failed:</strong> %s\n', ME.message);
+                [~,SaveName,~] = fileparts(SavePathNameExt);
+                fprintf('      ~~~ FILENAME: %s\n', SaveName);
+                exportgraphics(monitor.Figure,SavePathNameExt);
+            end
         end
 
         function data = generateData(monitor,MonitorUpdate)
@@ -606,7 +625,26 @@ monitor.RunTerm = sprintf('_Run-%d',Run);
                 'RandomChance',RandomChance_Baseline_Training,...
                 'MostCommon',MostCommon_Baseline_Training,...
                 'Stratified',Stratified_Baseline_Training);
-            accuracyTraining = max(accuracyTraining);
+            [~,~,accuracyTraining_Aggregate] = ...
+                cgg_procConfusionMatrixFromTable(CM_Table_Training,...
+                ClassNames,'MatchType',monitor.MatchType,...
+                'IsQuaddle',Monitor_Values.IsQuaddle,...
+                'RandomChance',RandomChance_Baseline_Training,...
+                'MostCommon',MostCommon_Baseline_Training,...
+                'Stratified',Stratified_Baseline_Training, ...
+                'PredictionColumn','Aggregation_Prediction');
+            %
+            switch monitor.AccuracyType
+                case 'Peak'
+                    accuracyTraining = max(accuracyTraining);
+                case 'Aggregate'
+                    accuracyTraining = accuracyTraining_Aggregate;
+                case 'Average'
+                    accuracyTraining = mean(accuracyTraining,"all");
+                otherwise
+                    accuracyTraining = max(accuracyTraining);
+            end
+
             else
                 accuracyTraining = NaN;
             end
@@ -666,11 +704,51 @@ monitor.RunTerm = sprintf('_Run-%d',Run);
                     'RandomChance',RandomChance_Baseline_Validation,...
                     'MostCommon',MostCommon_Baseline_Validation,...
                     'Stratified',Stratified_Baseline_Validation);
-                accuracyValidation = max(accuracyValidation);
+                [~,~,accuracyValidation_Aggregate] = ...
+                cgg_procConfusionMatrixFromTable(CM_Table_Validation,...
+                ClassNames,'MatchType',monitor.MatchType,...
+                'IsQuaddle',Monitor_Values.IsQuaddle,...
+                'RandomChance',RandomChance_Baseline_Validation,...
+                'MostCommon',MostCommon_Baseline_Validation,...
+                'Stratified',Stratified_Baseline_Validation, ...
+                'PredictionColumn','Aggregation_Prediction');
+
+                switch monitor.AccuracyType
+                    case 'Peak'
+                        accuracyValidation = max(accuracyValidation);
+                    case 'Aggregate'
+                        accuracyValidation = accuracyValidation_Aggregate;
+                    case 'Average'
+                        accuracyValidation = mean(accuracyValidation,"all");
+                    otherwise
+                        accuracyValidation = max(accuracyValidation);
+                end
+                % accuracyValidation = max(accuracyValidation);
 
             MonitorUpdate.accuracyValidation = accuracyValidation;
             end
 
+            UpdateEpochLine = ...
+                Monitor_Values.EpochIterationTable{end,"Iteration"} == ...
+                Monitor_Values.iteration;
+
+            if UpdateEpochLine
+                addEpochLines(monitor,Monitor_Values.epoch,Monitor_Values.iteration)
+            end
+        end
+
+        function addEpochLines(monitor,Epoch,Iteration)
+            this_Group = monitor.PlotTable{:,"Group"};
+            this_Group = cell2mat(this_Group);
+            [UniqueGroups,IDX,~] = unique(this_Group);
+
+            for gidx = 1:length(UniqueGroups)
+                this_Tile = monitor.PlotTable{IDX(gidx),"Tile"};
+            if iscell(this_Tile)
+                this_Tile=this_Tile{1};
+            end
+                cgg_plotEpochLine(Epoch,Iteration,'PlotAxes',this_Tile);
+            end
         end
 
     end

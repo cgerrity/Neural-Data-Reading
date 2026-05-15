@@ -14,6 +14,13 @@ ExtraSaveTerm='';
 end
 end
 
+if isfunction
+wantStratifiedPartition = CheckVararginPairs('wantStratifiedPartition', true, varargin{:});
+else
+if ~(exist('wantStratifiedPartition','var'))
+wantStratifiedPartition=true;
+end
+end
 %%
 
 Partition_Dir = INcfg.TargetDir.Aggregate_Data.Epoched_Data.Epoch.Partition.path;
@@ -27,6 +34,19 @@ Partition_NameExt = 'KFoldPartition.mat';
 else
 Partition_NameExt = sprintf('KFoldPartition_%s.mat',ExtraSaveTerm);
 end
+
+%%
+if ~wantStratifiedPartition
+    [~,Partition_Name,Partition_Ext] = fileparts(Partition_NameExt);
+    Partition_Name = [Partition_Name, '_NS'];
+    Partition_NameExt = [Partition_Name Partition_Ext];
+elseif strcmp(wantStratifiedPartition,'Standard')
+    [~,Partition_Name,Partition_Ext] = fileparts(Partition_NameExt);
+    Partition_Name = [Partition_Name, '_Standard'];
+    Partition_NameExt = [Partition_Name Partition_Ext];
+end
+
+%%
 Partition_PathNameExt = [Partition_Dir filesep Partition_NameExt];
 
 %%

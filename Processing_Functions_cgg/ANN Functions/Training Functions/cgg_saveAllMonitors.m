@@ -6,9 +6,11 @@ if SaveAll
 
 NumMonitors = height(MonitorTable);
 
+SaveFunctions = MonitorTable{:,"SaveFunction"};
 for midx = 1:NumMonitors
 
-MonitorValueUpdateFunction=MonitorTable{midx,"SaveFunction"}{1};
+% MonitorTable{midx,"SaveFunction"}{1};
+MonitorValueUpdateFunction = SaveFunctions{midx};
 MonitorValueUpdateFunction(IsOptimal);
 end
 

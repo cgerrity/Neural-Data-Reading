@@ -1,4 +1,4 @@
-classdef reshapeLayer < nnet.layer.Layer
+classdef cgg_reshapeLayer_v0 < nnet.layer.Layer
     properties
         InputSize
         DataFormat

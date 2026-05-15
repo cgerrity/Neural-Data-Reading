@@ -96,20 +96,28 @@ end
 end
 
 if isfunction
-DataArrayParameters = CheckVararginPairs('DataArrayParameters', [], varargin{:});
+LoadParameters = CheckVararginPairs('LoadParameters', [], varargin{:});
 else
-if ~(exist('DataArrayParameters','var'))
-DataArrayParameters=[];
+if ~(exist('LoadParameters','var'))
+LoadParameters=[];
+end
+end
+
+if isfunction
+StartEndPercent = CheckVararginPairs('StartEndPercent', [NaN,NaN], varargin{:});
+else
+if ~(exist('StartEndPercent','var'))
+StartEndPercent=[NaN,NaN];
 end
 end
 
 %%
-if ~isempty(DataArrayParameters)
-    STDChannelOffset = DataArrayParameters.CurrentSTDChannelOffset;
-    STDWhiteNoise = DataArrayParameters.CurrentSTDWhiteNoise;
-    STDRandomWalk = DataArrayParameters.CurrentSTDRandomWalk;
-    STDTimeShift = DataArrayParameters.CurrentSTDTimeShift;
-    WantSeparateTimeShift = DataArrayParameters.WantSeparateTimeShift;
+if ~isempty(LoadParameters)
+    STDChannelOffset = LoadParameters.CurrentSTDChannelOffset;
+    STDWhiteNoise = LoadParameters.CurrentSTDWhiteNoise;
+    STDRandomWalk = LoadParameters.CurrentSTDRandomWalk;
+    STDTimeShift = LoadParameters.CurrentSTDTimeShift;
+    WantSeparateTimeShift = LoadParameters.WantSeparateTimeShift;
 end
 
 %% Normalize Data
@@ -129,7 +137,8 @@ this_DataWidth=SmallDataWidth;
 end
 
 %% Final Possible Start Index
-FinalStartIDX=NumSamples+1-this_DataWidth;
+FinalPossibleStartIDX=NumSamples+1-this_DataWidth;
+
 
 %% Window Stride
 if isequal(WindowStride,'All')
@@ -143,10 +152,11 @@ end
 %% Ending Index
 if isequal(EndingIDX,'All')
 % Don't do anything!
+FinalStartIDX = FinalPossibleStartIDX;
 elseif isscalar(EndingIDX) && ~isequal(DataWidth,'All')
 FinalStartIDX=EndingIDX;
 else
-FinalStartIDX=randi(FinalStartIDX);
+FinalStartIDX=randi(FinalPossibleStartIDX);
 end
 
 %% Starting Index
@@ -158,6 +168,16 @@ else
 Start_IDX=randi(FinalStartIDX);
 end
 
+%% Start and End Indices as a percentage
+if ~isnan(StartEndPercent(1)) && StartEndPercent(1) >= 0 && StartEndPercent(1) <= 1
+Start_IDX = round(NumSamples*StartEndPercent(1));
+end
+if ~isnan(StartEndPercent(2)) && StartEndPercent(2) >= 0 && StartEndPercent(2) <= 1
+FinalStartIDX = round(NumSamples*StartEndPercent(2)-this_DataWidth);
+if FinalStartIDX > FinalPossibleStartIDX
+    FinalStartIDX = FinalPossibleStartIDX;
+end
+end
 %% All Start Indices
 
 StartPoint_IDX=Start_IDX:this_WindowStride:FinalStartIDX;
@@ -207,10 +227,14 @@ end
 
 %% Data Augmentation
 
+WantDataAugmentation = ~(isnan(STDChannelOffset) && isnan(STDWhiteNoise) ...
+    && isnan(STDRandomWalk));
+if WantDataAugmentation
 DataAugmentationSignal = cgg_generateDataAugmentationSignal(NumChannels,...
     NumSamples,NumProbes,STDChannelOffset,STDWhiteNoise,STDRandomWalk);
 
 Data = Data + DataAugmentationSignal;
+end
 
 % Time Shift Augmentation
     TimeShiftIDX = NaN;

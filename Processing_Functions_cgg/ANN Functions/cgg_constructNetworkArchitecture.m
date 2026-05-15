@@ -83,6 +83,10 @@ if isfield(cfg_Encoder,'EncoderOutputType')
 cfg.EncoderOutputType = cfg_Encoder.EncoderOutputType;
 end
 
+if isfield(cfg_Encoder,'StitchingAndFusionLayer')
+cfg.StitchingAndFusionLayer = cfg_Encoder.StitchingAndFusionLayer;
+end
+
 % if isfield(cfg_Encoder,'WantLearnableScale')
 % cfg.WantLearnableScale = cfg_Encoder.WantLearnableScale;
 % end
@@ -90,6 +94,14 @@ end
 % if isfield(cfg_Encoder,'WantLearnableOffset')
 % cfg.WantLearnableOffset = cfg_Encoder.WantLearnableOffset;
 % end
+
+%%
+if isfield(cfg,'StitchingAndFusionLayer')
+    if ~strcmp(string(cfg.StitchingAndFusionLayer),"") && ~strcmp(string(cfg.StitchingAndFusionLayer),"Feedforward")
+        cfg.needReshape = false;
+        cfg.OutputFullyConnected = false;
+    end
+end
 
 %%
 
@@ -110,6 +122,7 @@ end
 PostBottleNeckBlock = [];
 
 cfg.HiddenSizeBottleNeck = HiddenSizeBottleNeck;
+cfg.CrossAreaFusionSize = HiddenSizeAutoEncoder(1)*2;
 
 RemoveNaNFunc = @(x) cgg_setNaNToValue(x,0);
 
@@ -164,6 +177,10 @@ end
 
 if ~(isempty(PostDecoderBlock)) && ~(isa(PostDecoderBlock,'nnet.cnn.LayerGraph') || isa(PostDecoderBlock,'dlnetwork'))
 PostDecoderBlock = layerGraph(PostDecoderBlock);
+end
+
+if ~(isempty(PreEncoderBlock)) && ~(isa(PreEncoderBlock,'nnet.cnn.LayerGraph') || isa(PreEncoderBlock,'dlnetwork'))
+PreEncoderBlock = layerGraph(PreEncoderBlock);
 end
 
 if cfg.needReshape

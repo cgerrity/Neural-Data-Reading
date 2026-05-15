@@ -91,6 +91,22 @@ if ~(exist('WantPostDecoderConvolution','var'))
 WantPostDecoderConvolution=false;
 end
 end
+
+if isfunction
+WantCombinationBlocks = CheckVararginPairs('WantCombinationBlocks', true, varargin{:});
+else
+if ~(exist('WantCombinationBlocks','var'))
+WantCombinationBlocks=true;
+end
+end
+
+if isfunction
+IsGrouped = CheckVararginPairs('IsGrouped', false, varargin{:});
+else
+if ~(exist('IsGrouped','var'))
+IsGrouped=false; % Number of convolutional and activation layers in a single block
+end
+end
 %%
 
 CropSizes = cgg_getCropAmount(InputSize(1:2),Stride,length(FilterHiddenSizes));
@@ -172,10 +188,15 @@ if ~WantSplitAreas
     end
     % CombinationLayer = [convolution2dLayer(1,1,"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")
 %     CombinationActivationLayer];
+if WantCombinationBlocks
 CombinationLayer = [convolution2dLayer(RepeatFilterSize,FilterHiddenSizes(1),"Name",CombinationRepeatConvolutionName,"Padding",'same',"WeightsInitializer","he")
     % batchNormalizationLayer("Name",CombinationRepeatNormalizationName)
     CombinationActivationLayer
     convolution2dLayer(TimeFilterSize,OutputSize,"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")];
+else
+CombinationLayer = [CombinationActivationLayer
+    convolution2dLayer(TimeFilterSize,OutputSize,"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")];
+end
 CombinationLG = layerGraph(CombinationLayer);
 if WantLearnableOffset || WantLearnableScale
 % [~,Source,~,~] = cgg_identifyUnconnectedLayers(CombinationLG);
@@ -190,6 +211,7 @@ CombinationLG = connectLayers(CombinationLG,CombinationName,NameAugmentTarget);
 end
 
 CoderBlock = cgg_connectLayerGraphs(CoderBlock,CombinationLG);
+
     % otherwise
     %     if NumFilters > 1
     %     this_Source="concatenationFilter" + Coder_Name + Area_Name;
@@ -292,11 +314,26 @@ end
 
 % CombinationLayer = [convolution2dLayer(1,1,"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")
 %     CombinationActivationLayer];
+if WantCombinationBlocks
 CombinationLayer = [convolution2dLayer(RepeatFilterSize,FilterHiddenSizes(1),"Name",CombinationRepeatConvolutionName,"Padding",'same',"WeightsInitializer","he")
     % batchNormalizationLayer("Name",CombinationRepeatNormalizationName)
     CombinationActivationLayer
     convolution2dLayer(TimeFilterSize,OutputSize,"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")];
+else
+CombinationLayer = [CombinationActivationLayer
+    convolution2dLayer(TimeFilterSize,OutputSize,"Name",CombinationName,"Padding",'same',"WeightsInitializer","he")];
+end
+%% Add residual connection at end
+NameCombination_Residual = cgg_generateLayerName(Coder_Name + Area_Name,"conv_combination_residual",'IsGrouped',IsGrouped);
+Combination_ResidualLayer = convolution2dLayer(1,1,"Name",NameCombination_Residual,"Padding",'same','Stride',1,"WeightsInitializer","he");
+NameCombination_Addition = cgg_generateLayerName(Coder_Name + Area_Name,"addition_combination",'IsGrouped',IsGrouped);
+CombinationAdditionLayer = additionLayer(2,'Name',NameCombination_Addition);
+this_Source = NameCombination_Addition;
+CombinationLayer = [CombinationLayer
+    CombinationAdditionLayer];
+%%
 CombinationLG = layerGraph(CombinationLayer);
+
 if WantLearnableOffset || WantLearnableScale
 % [~,Source,~,~] = cgg_identifyUnconnectedLayers(CombinationLG);
 % FIXME: Adjust InputSize to account for other options
@@ -310,14 +347,27 @@ CombinationLG = connectLayers(CombinationLG,CombinationName,NameAugmentTarget);
 end
 
 AreaBlocks = cgg_connectLayerGraphs(AreaBlocks,CombinationLG);
+
+
+% 1. Make sure your residual layer is added to the graph first
+% (Assuming Combination_ResidualLayer is already defined as a layer object)
+AreaBlocks = cgg_combineLayerGraphs(AreaBlocks,layerGraph(Combination_ResidualLayer));
+% AreaBlocks = addLayer(AreaBlocks, Combination_ResidualLayer);
+
+% 2. Call the traversal function using the name of the layer
+AreaBlocks = connectResidualPath(AreaBlocks,NameCombination_Residual);
     otherwise
-        if NumFilters > 1
-        this_Source="concatenationFilter" + Coder_Name + Area_Name;
-        else
-        % [~,this_Source,~,~] = cgg_identifyUnconnectedLayers(AreaBlocks);
         [~,this_Source] = cgg_identifyUnconnectedLayers(AreaBlocks);
-        this_Source = this_Source{1};
-        end  
+            this_Source = this_Source{1};
+        % if NumFilters > 1
+        %     [~,this_Source] = cgg_identifyUnconnectedLayers(AreaBlocks);
+        %     this_Source = this_Source{1};
+        % % this_Source="concatenationFilter" + Coder_Name + Area_Name;
+        % else
+        % % [~,this_Source,~,~] = cgg_identifyUnconnectedLayers(AreaBlocks);
+        % [~,this_Source] = cgg_identifyUnconnectedLayers(AreaBlocks);
+        % this_Source = this_Source{1};
+        % end  
 end
 
 CoderBlock = cgg_combineLayerGraphs(CoderBlock,AreaBlocks);
@@ -387,3 +437,90 @@ end
 
 end
 
+%%%
+
+function lgraph = connectResidualPath(lgraph, residualLayerName)
+    % connectResidualPath traverses a layer graph backward from the final addition 
+    % layer to find an activation layer, connects the layer preceding it to a 
+    % specified residual layer, and connects that residual layer to the final addition layer.
+
+    % Extract connections
+    conn = lgraph.Connections;
+    src = string(conn.Source);
+    dst = string(conn.Destination);
+    
+    % Helper function to strip port names (e.g., 'layer/in1' -> 'layer')
+    % This allows us to match layer names cleanly.
+    stripPort = @(x) extractBefore(x + "/", "/");
+    srcBase = stripPort(src);
+    dstBase = stripPort(dst);
+    
+    % 1. Find the final layer (a layer that is a destination but never a source)
+    isFinal = ~ismember(dstBase, srcBase);
+    finalLayers = unique(dstBase(isFinal));
+    
+    % Locate the final addition layer specifically
+    finalAdditionLayer = "";
+    for i = 1:length(finalLayers)
+        if contains(lower(finalLayers(i)), "addition")
+            finalAdditionLayer = finalLayers(i);
+            break;
+        end
+    end
+    
+    if finalAdditionLayer == ""
+        error('Could not find a final layer containing "addition" in its name.');
+    end
+    
+    % 2. Traverse backwards to find the activation layer
+    currentNode = finalAdditionLayer;
+    activationLayer = "";
+    
+    while true
+        % Find edges where the destination is the current node
+        idx = find(dstBase == currentNode);
+        
+        if isempty(idx)
+            error('Reached the beginning of the graph without finding an activation layer.');
+        end
+        
+        % If traversing backward through an addition/concat layer, follow 'in1' (main path)
+        selectedIdx = idx(1);
+        for i = 1:length(idx)
+            if contains(dst(idx(i)), "/in1")
+                selectedIdx = idx(i);
+                break;
+            end
+        end
+        
+        parentNode = srcBase(selectedIdx);
+        
+        % Check if the parent node is our target activation layer
+        if contains(lower(parentNode), "activation")
+            activationLayer = parentNode;
+            break;
+        end
+        
+        currentNode = parentNode;
+    end
+    
+    % 3. Find the layer immediately BEFORE the activation layer
+    idxPreAct = find(dstBase == activationLayer);
+    if isempty(idxPreAct)
+        error('The activation layer has no preceding layer.');
+    end
+    
+    % Get the name of the layer before the activation
+    layerBeforeAct = char(srcBase(idxPreAct(1))); 
+    residualLayerName = char(residualLayerName);
+    finalPort2 = char(finalAdditionLayer + "/in2");
+    
+    % 4. Make the new connections
+    lgraph = connectLayers(lgraph, layerBeforeAct, residualLayerName);
+    lgraph = connectLayers(lgraph, residualLayerName, finalPort2);
+    
+    % Display success message
+    % fprintf('Success! Connected:\n');
+    % fprintf('  1. %s -> %s\n', layerBeforeAct, residualLayerName);
+    % fprintf('  2. %s -> %s\n', residualLayerName, finalPort2);
+end

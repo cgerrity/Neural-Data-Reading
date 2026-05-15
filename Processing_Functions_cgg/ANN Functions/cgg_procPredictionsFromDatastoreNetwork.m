@@ -56,6 +56,8 @@ NumMean=length(OutputInformation.Mean);
 NumLogVar=length(OutputInformation.LogVar);
 NumDimensions=length(OutputInformation.Classifier);
 NumReconstruction=length(OutputInformation.Reconstruction);
+NumTrialConfidence=length(OutputInformation.TrialConfidence);
+NumTaskConfidence=length(OutputInformation.TaskConfidence);
 
 %%
 
@@ -76,7 +78,8 @@ Window_TrueValue = NaN(NumDimensions,NumTrials,NumTimeSteps);
 DataNumber = NaN(NumTrials,1);
 
 AllOutputNames=[OutputInformation.Mean, OutputInformation.LogVar, ...
-    OutputInformation.Classifier, OutputInformation.Reconstruction];
+    OutputInformation.Classifier, OutputInformation.Reconstruction, ...
+    OutputInformation.TrialConfidence, OutputInformation.TaskConfidence];
 
 NumOutputs=length(AllOutputNames);
 
@@ -124,6 +127,16 @@ if NumReconstruction>0
 else
     Y_Reconstruction=[];
 end
+if NumTrialConfidence>0
+    Y_TrialConfidence=Y{(1:NumTrialConfidence)+NumMean+NumLogVar+NumDimensions+NumReconstruction};
+else
+    Y_TrialConfidence=[];
+end
+if NumTaskConfidence>0
+    Y_TaskConfidence=Y{(1:NumTaskConfidence)+NumMean+NumLogVar+NumDimensions+NumReconstruction + NumTrialConfidence};
+else
+    Y_TaskConfidence=[];
+end
 
 T_Reconstruction=X;
 
@@ -133,7 +146,7 @@ NumTrials = NumBatches;
 this_TrialRange = CurrentTrialCount:(CurrentTrialCount+NumTrials-1);
 
 [this_Window_Prediction,this_Window_TrueValue,~] = ...
-    cgg_getPredictionFromClassifierProbabilities(T,Y_Classification,ClassNames,'wantLoss',wantLoss,'IsQuaddle',IsQuaddle,'NumTimeSteps',NumTimeSteps,'NumTrials',NumTrials,'LossType',LossType);
+    cgg_getPredictionFromClassifierProbabilities(T,Y_Classification,ClassNames,'wantLoss',wantLoss,'IsQuaddle',IsQuaddle,'NumTimeSteps',NumTimeSteps,'NumTrials',NumTrials,'LossType',LossType,'TrialConfidence',Y_TrialConfidence,'TaskConfidence',Y_TaskConfidence);
 
 Window_TrueValue(:,this_TrialRange,:) = this_Window_TrueValue;
 Window_Prediction(:,this_TrialRange,:) = this_Window_Prediction;

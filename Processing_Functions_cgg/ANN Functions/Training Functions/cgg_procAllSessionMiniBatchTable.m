@@ -10,8 +10,9 @@ Session_Fun=@(x) cgg_loadTargetArray(x,'SessionName',true);
 % SessionNameDataStore = fileDatastore(TargetDir,"ReadFcn",Session_Fun);
 SessionNameDataStore = fileDatastore(DataStore.UnderlyingDatastores{2}.Files,"ReadFcn",Session_Fun);
 
-SessionsList=[];
-evalc('SessionsList=gather(tall(SessionNameDataStore));');
+% SessionsList=[];
+% evalc('SessionsList=gather(tall(SessionNameDataStore));');
+SessionsList = readall(SessionNameDataStore,UseParallel=true);
 
 SessionNames=unique(SessionsList);
 NumSessions=length(SessionNames);

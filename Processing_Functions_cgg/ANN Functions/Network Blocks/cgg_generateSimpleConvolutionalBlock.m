@@ -83,6 +83,30 @@ if ~(exist('WantPreActivation','var'))
 WantPreActivation=false;
 end
 end
+
+if isfunction
+BlockDepth = CheckVararginPairs('BlockDepth', NaN, varargin{:});
+else
+if ~(exist('BlockDepth','var'))
+BlockDepth=NaN; % Number of convolutional and activation layers in a single block
+end
+end
+
+if isfunction
+IsGrouped = CheckVararginPairs('IsGrouped', true, varargin{:});
+else
+if ~(exist('IsGrouped','var'))
+IsGrouped=true; % Number of convolutional and activation layers in a single block
+end
+end
+
+if isfunction
+IsLastDepth = CheckVararginPairs('IsLastDepth', true, varargin{:});
+else
+if ~(exist('IsLastDepth','var'))
+IsLastDepth=true; % Number of convolutional and activation layers in a single block
+end
+end
 %%
 
 % CoderBlock_Name = sprintf("_%s",Coder);
@@ -99,7 +123,16 @@ end
 %     CoderBlock_Name = sprintf("%s_Layer-%d",CoderBlock_Name,Level);
 % end
 
-CoderBlock_Name = cgg_generateCoderBlockName(Coder,AreaIDX,FilterNumber,Level);
+%%
+if ~IsLastDepth
+    Stride = 1;
+    DownSampleMethod = 'None';
+    UpSampleMethod = 'None';
+end
+
+%%
+
+CoderBlock_Name = cgg_generateCoderBlockName(Coder,AreaIDX,FilterNumber,Level,'IsGrouped',IsGrouped,'BlockDepth',BlockDepth);
 %%
 
 ConvolutionalFilterSize = FilterSize;
@@ -107,14 +140,16 @@ ConvolutionalFilterSize = FilterSize;
 %%
 switch DownSampleMethod
     case 'MaxPool'
-        DownSampleName="maxpool" + CoderBlock_Name;
+        % DownSampleName="maxpool" + CoderBlock_Name;
+        DownSampleName = cgg_generateLayerName(CoderBlock_Name,"maxpool",'IsGrouped',IsGrouped);
         DownSampleLayer = maxPooling2dLayer(Stride,"Name",DownSampleName,'Stride',Stride,"Padding",'same');
         ConvolutionalStride = 1;
     case 'Same - Stride'
         DownSampleLayer = [];
         ConvolutionalStride = Stride;
     case 'Separate - Stride'
-        DownSampleName="convolutional1x1" + CoderBlock_Name;
+        % DownSampleName="convolutional1x1" + CoderBlock_Name;
+        DownSampleName = cgg_generateLayerName(CoderBlock_Name,"convolutional1x1",'IsGrouped',IsGrouped);
         DownSampleLayer = convolution2dLayer(1,NumFilters,"Name",DownSampleName,"Padding",'same','Stride',[Stride,Stride],"WeightsInitializer","he");
         ConvolutionalStride = 1;
     case 'None'
@@ -127,10 +162,12 @@ CropLayer = [];
 
 switch UpSampleMethod
     case 'Transpose Convolution - Point-Wise'
-        UpSampleName="transposeconv" + CoderBlock_Name;
+        % UpSampleName="transposeconv" + CoderBlock_Name;
+        UpSampleName = cgg_generateLayerName(CoderBlock_Name,"transposeconv",'IsGrouped',IsGrouped);
         UpSampleLayer = transposedConv2dLayer(FilterSize,NumFilters,"Name",UpSampleName,'Stride',Stride,"Cropping","same","WeightsInitializer","he");
         % UpSampleLayer = transposedConv2dLayer(FilterSize,NumFilters,"Name",UpSampleName,'Stride',Stride,"Cropping",0,"WeightsInitializer","he");
-        CropName="crop" + CoderBlock_Name;
+        % CropName="crop" + CoderBlock_Name;
+        CropName = cgg_generateLayerName(CoderBlock_Name,"crop",'IsGrouped',IsGrouped);
         % UpSampleLayer = [UpSampleLayer
         %     cgg_cropLayer(CropName,CropAmount)];
         CropLayer = cgg_cropLayer(CropName,CropAmount);
@@ -138,10 +175,12 @@ switch UpSampleMethod
         ConvolutionalFilterSize = 1;
         ConvolutionalFilterSize = Stride*2;
     case 'Transpose Convolution'
-        UpSampleName="transposeconv" + CoderBlock_Name;
+        % UpSampleName="transposeconv" + CoderBlock_Name;
+        UpSampleName = cgg_generateLayerName(CoderBlock_Name,"transposeconv",'IsGrouped',IsGrouped);
         UpSampleLayer = transposedConv2dLayer(FilterSize,NumFilters,"Name",UpSampleName,'Stride',Stride,"Cropping","same","WeightsInitializer","he");
         % UpSampleLayer = transposedConv2dLayer(FilterSize,NumFilters,"Name",UpSampleName,'Stride',Stride,"Cropping",0,"WeightsInitializer","he");
         CropName="crop" + CoderBlock_Name;
+        CropName = cgg_generateLayerName(CoderBlock_Name,"crop",'IsGrouped',IsGrouped);
         % UpSampleLayer = [UpSampleLayer
         %     cgg_cropLayer(CropName,CropAmount)];
         CropLayer = cgg_cropLayer(CropName,CropAmount);
@@ -154,7 +193,8 @@ end
 
 %%
 
-ConvolutionalName="convolution" + CoderBlock_Name;
+% ConvolutionalName="convolution" + CoderBlock_Name;
+ConvolutionalName = cgg_generateLayerName(CoderBlock_Name,"convolution",'IsGrouped',IsGrouped);
 
 ConvolutionalLayer = convolution2dLayer(ConvolutionalFilterSize,NumFilters,"Name",ConvolutionalName,"Padding",'same','Stride',[ConvolutionalStride,ConvolutionalStride],"WeightsInitializer","he");
 
@@ -164,22 +204,27 @@ ConvolutionalLayer = convolution2dLayer(ConvolutionalFilterSize,NumFilters,"Name
 % else
 %     PointWiseConvolutionLayer = [];
 % end
-Name_PreActivation = "activation-pre" + CoderBlock_Name;
+% Name_PreActivation = "activation-pre" + CoderBlock_Name;
+Name_PreActivation = cgg_generateLayerName(CoderBlock_Name,"activation-pre",'IsGrouped',IsGrouped);
 switch Activation
     case 'SoftSign'
-        Name_Activation = "activation" + CoderBlock_Name;
+        % Name_Activation = "activation" + CoderBlock_Name;
+        Name_Activation = cgg_generateLayerName(CoderBlock_Name,"activation",'IsGrouped',IsGrouped);
         ActivationLayer = softplusLayer("Name",Name_Activation);
         PreActivationLayer = softplusLayer("Name",Name_PreActivation);
     case 'ReLU'
-        Name_Activation = "activation" + CoderBlock_Name;
+        % Name_Activation = "activation" + CoderBlock_Name;
+        Name_Activation = cgg_generateLayerName(CoderBlock_Name,"activation",'IsGrouped',IsGrouped);
         ActivationLayer = reluLayer("Name",Name_Activation);
         PreActivationLayer = reluLayer("Name",Name_PreActivation);
     case 'Leaky ReLU'
-        Name_Activation = "activation" + CoderBlock_Name;
+        % Name_Activation = "activation" + CoderBlock_Name;
+        Name_Activation = cgg_generateLayerName(CoderBlock_Name,"activation",'IsGrouped',IsGrouped);
         ActivationLayer = leakyReluLayer("Name",Name_Activation);
         PreActivationLayer = leakyReluLayer("Name",Name_PreActivation);
     case 'GeLU'
-        Name_Activation = "activation" + CoderBlock_Name;
+        % Name_Activation = "activation" + CoderBlock_Name;
+        Name_Activation = cgg_generateLayerName(CoderBlock_Name,"activation",'IsGrouped',IsGrouped);
         ActivationLayer = geluLayer("Name",Name_Activation);
         PreActivationLayer = geluLayer("Name",Name_PreActivation);
     otherwise
@@ -191,7 +236,8 @@ if ~WantPreActivation
     PreActivationLayer = [];
 end
 
-Name_Normalization="normalization" + CoderBlock_Name;
+% Name_Normalization="normalization" + CoderBlock_Name;
+Name_Normalization = cgg_generateLayerName(CoderBlock_Name,"normalization",'IsGrouped',IsGrouped);
 NormalizationLayer = cgg_selectNormalizationLayer(WantNormalization,Name_Normalization);
 
 WantDropout = false;
@@ -200,14 +246,26 @@ WantDropout = true;
 end
 
 if WantDropout
-    Name_DropOut = "dropout" + CoderBlock_Name;
+    % Name_DropOut = "dropout" + CoderBlock_Name;
+    Name_DropOut = cgg_generateLayerName(CoderBlock_Name,"dropout",'IsGrouped',IsGrouped);
     DropoutLayer = [dropoutLayer(Dropout,'Name',Name_DropOut)];
 else
     DropoutLayer = [];
 end
 
-if WantResNet
-    Name_Addition="addition" + CoderBlock_Name;
+if IsLastDepth
+    ActivationLayerLast = ActivationLayer;
+    CoderBlockLast_Name = cgg_generateCoderBlockName(Coder,AreaIDX,FilterNumber,Level,'IsGrouped',IsGrouped,'BlockDepth',NaN);
+    Name_ActivationLast = cgg_generateLayerName(CoderBlockLast_Name,"activation",'IsGrouped',IsGrouped);
+    ActivationLayerLast.Name = Name_ActivationLast;
+    ActivationLayer = [];
+else
+    ActivationLayerLast = [];
+end
+
+if WantResNet && IsLastDepth
+    % Name_Addition="addition" + CoderBlock_Name;
+    Name_Addition = cgg_generateLayerName(CoderBlockLast_Name,"addition",'IsGrouped',IsGrouped);
     AdditionLayer = additionLayer(2,'Name',Name_Addition);
 else
     AdditionLayer = [];
@@ -225,6 +283,7 @@ Block = [
     NormalizationLayer
     DownSampleLayer
     AdditionLayer
+    ActivationLayerLast
     ];
 
 end

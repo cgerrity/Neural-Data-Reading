@@ -6,6 +6,7 @@ if ~WantSaveNet
     return
 end
 
+fprintf('   *** Saving Networks\n'); tic;
 OptimalSaveTerm = '-Optimal';
 CurrentSaveTerm = '-Current';
 
@@ -58,6 +59,6 @@ if HasClassifier
     cgg_saveVariableUsingMatfile({Classifier},{'Classifier'},ClassifierPathNameExt);
     end
 end
-
+fprintf('   >>> Saving Networks took %.3f seconds\n',toc);
 end
 

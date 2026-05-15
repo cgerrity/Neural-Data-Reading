@@ -47,8 +47,15 @@ Layers = InNetwork.Layers(PCAIDX);
     end
 end
 
+outputNames = InNetwork.OutputNames;
+if any(contains(outputNames,'SamplingLayer'))
+    BottleNeckSize = round(BottleNeckSize/2);
+end
+
 %%
 
+% only run if matlab release is as new or newer than 2024a
+if ~isMATLABReleaseOlderThan("R2024a")
 % 1. Run analysis and explicitly suppress the visual plot/UI window
     analyzer = analyzeNetwork(InNetwork, Plots="none");
     
@@ -158,5 +165,6 @@ end
     end
 
     BottleNeckSize = max(outSize);
+end
 end
 

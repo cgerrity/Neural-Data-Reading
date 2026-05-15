@@ -12,6 +12,22 @@ Coder='Encoder';
 end
 end
 
+if isfunction
+WantSingleResidualBlock = CheckVararginPairs('WantSingleResidualBlock', false, varargin{:});
+else
+if ~(exist('WantSingleResidualBlock','var'))
+WantSingleResidualBlock=false;
+end
+end
+
+if isfunction
+TemporalAndSpatialFusionSize = CheckVararginPairs('TemporalAndSpatialFusionSize', [1,1], varargin{:});
+else
+if ~(exist('TemporalAndSpatialFusionSize','var'))
+TemporalAndSpatialFusionSize=[1,1];
+end
+end
+
 Coder_Name = sprintf("_%s",Coder);
 
 NumFilters = length(FilterSizes);
@@ -23,9 +39,30 @@ if NumFilters > 1
         Area_Name = "";
     end
 FilterConcatenationName="concatenationFilter" + Coder_Name + Area_Name;
-
+IsGrouped = false;
 FilterConcatenationLayer = depthConcatenationLayer(NumFilters,"Name",FilterConcatenationName);
-CoderBlock = layerGraph(FilterConcatenationLayer);
+% NumFiltersOnebyOne = round(FilterHiddenSizes(end)*NumFilters/2);
+NumFiltersTemporalAndSpatialFusion = round(FilterHiddenSizes(end));
+if isequal(TemporalAndSpatialFusionSize,[1,1])
+% NumFiltersTemporalAndSpatialFusion = round(FilterHiddenSizes(end));
+OnebyOneName = cgg_generateLayerName("Filter" + Coder_Name + Area_Name,"convolutional1x1",'IsGrouped',IsGrouped);
+OnebyOneLayer = convolution2dLayer(TemporalAndSpatialFusionSize,NumFiltersTemporalAndSpatialFusion,"Name",OnebyOneName,"Padding",'same','Stride',[1,1],"WeightsInitializer","he");
+else
+% NumFiltersTemporalAndSpatialFusion = round(FilterHiddenSizes(end));
+TemporalSpatialName = cgg_generateLayerName("Filter" + Coder_Name + Area_Name,"convolutionaltemporalspatial",'IsGrouped',IsGrouped);
+switch Coder
+    case 'Decoder'
+        TemporalSpatialStride = 1;
+    otherwise
+        TemporalSpatialStride = ceil(TemporalAndSpatialFusionSize/2);
+end
+TemporalSpatialLayer = convolution2dLayer(TemporalAndSpatialFusionSize,NumFiltersTemporalAndSpatialFusion,"Name",TemporalSpatialName,"Padding",'same','Stride',TemporalSpatialStride,"WeightsInitializer","he");
+
+OnebyOneLayer = TemporalSpatialLayer;
+end
+FilterLayer = [FilterConcatenationLayer
+                OnebyOneLayer];
+CoderBlock = layerGraph(FilterLayer);
 end
 %%
 
@@ -43,7 +80,12 @@ for fidx = 1:NumFilters
         this_FilterSize = FilterSizes(fidx);
     end
 
-FilterBlocks = cgg_generateSingleConvolutionalPath(this_FilterSize,FilterHiddenSizes,FilterNumber,AreaIDX,varargin{:});
+    this_varargin = varargin;
+    % if WantResidualBlock
+    %     this_varargin = cgg_changeFieldFromVarargin(this_varargin,'WantResnet',false);
+    % end
+
+FilterBlocks = cgg_generateSingleConvolutionalPath(this_FilterSize,FilterHiddenSizes,FilterNumber,AreaIDX,this_varargin{:});
 
     if NumFilters > 1
         this_Destination = FilterConcatenationName + sprintf("/in%d",fidx);
@@ -62,6 +104,10 @@ FilterBlocks = cgg_generateSingleConvolutionalPath(this_FilterSize,FilterHiddenS
         end
     end
 
+end
+
+if WantSingleResidualBlock
+CoderBlock = cgg_constructMergedResidual(CoderBlock,true);
 end
 
 end

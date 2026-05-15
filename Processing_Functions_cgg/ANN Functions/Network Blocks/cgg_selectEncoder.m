@@ -14,6 +14,14 @@ if isempty(HiddenSizeAutoEncoder)
     return
 end
 
+%%
+if isfield(cfg,"StitchingAndFusionLayer") && ~strcmp(string(cfg.StitchingAndFusionLayer),"")
+    PreEncoderBlock = cgg_constructStitchingAndFusionNetwork(cfg.StitchingAndFusionLayer,cfg,'Encoder');
+% PreEncoderBlock = 
+end
+
+%%
+
 
 if cfg.IsSimple
     Dropout = cfg.Dropout;

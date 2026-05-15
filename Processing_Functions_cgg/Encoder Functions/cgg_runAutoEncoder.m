@@ -28,6 +28,14 @@ SessionRunIDX=NaN;
 end
 end
 
+if isfunction
+Epoch = CheckVararginPairs('Epoch', 'Decision', varargin{:});
+else
+if ~(exist('Epoch','var'))
+Epoch='Decision';
+end
+end
+
 %%
 
 cfg_Session = DATA_cggAllSessionInformationConfiguration;
@@ -35,20 +43,20 @@ cfg_Session = DATA_cggAllSessionInformationConfiguration;
 cfg_param_Decoder = PARAMETERS_cgg_procSimpleDecoders_v2;
 
 if isfunction
-cfg_Encoder = PARAMETERS_cgg_runAutoEncoder(varargin{:});
+cfg_Encoder = PARAMETERS_cgg_runAutoEncoder(varargin{:},'ParameterSetName','Optimal');
 else
-cfg_Encoder = PARAMETERS_cgg_runAutoEncoder();
+cfg_Encoder = PARAMETERS_cgg_runAutoEncoder('Epoch',Epoch,'ParameterSetName','Optimal');
 end
 
 if strcmp(SLURMChoice,'Base') && ~isnan(SLURMIDX)
 [TableSLURM, IsInccidentalBaseRepeat] = ...
     SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX, ...
-    'SessionRunIDX',SessionRunIDX);
+    'SessionRunIDX',SessionRunIDX,'Epoch',Epoch);
 [Fold,cfg_Encoder] = cgg_assignSLURMEncoderParameters(cfg_Encoder,TableSLURM);
 elseif ~isnan(SLURMIDX) && ~isnan(SLURMChoice)
 [TableSLURM, IsInccidentalBaseRepeat] = ...
     SLURMPARAMETERS_cgg_runAutoEncoder_v2(SLURMChoice,SLURMIDX, ...
-    'SessionRunIDX',SessionRunIDX);
+    'SessionRunIDX',SessionRunIDX,'Epoch',Epoch);
 [~,cfg_Encoder] = cgg_assignSLURMEncoderParameters(cfg_Encoder,TableSLURM);
 else
 IsInccidentalBaseRepeat = false;
@@ -73,6 +81,9 @@ if isfunction
 cfg_Encoder.Epoch = CheckVararginPairs('Epoch', Epoch, varargin{:});
 end
 Epoch=cfg_Encoder.Epoch;
+if isfunction
+cfg_Encoder.Target = CheckVararginPairs('Target', cfg_Encoder.Target, varargin{:});
+end
 %%
 
 cfg_Encoder.NumEpochsBase = cfg_Encoder.NumEpochsAutoEncoder;
@@ -88,8 +99,15 @@ cfg_PreProcessing = PARAMETERS_cgg_proc_NeuralDataPreparation('SessionName','non
 cfg_Encoder.SamplingRate = cfg_PreProcessing.rect_samprate;
 
 %%
-outdatadir=cfg_Session(1).outdatadir;
-TargetDir=outdatadir;
+% outdatadir=cfg_Session(1).outdatadir;
+% TargetDir=outdatadir;
+if contains(Epoch,'Synthetic_Easy')
+    temporarydir=cfg_Session(1).temporarydir;
+    TargetDir=temporarydir;
+else
+    outdatadir=cfg_Session(1).outdatadir;
+    TargetDir=outdatadir;
+end
 ResultsDir=cfg_Session(1).temporarydir;
 
 % cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
@@ -97,10 +115,14 @@ ResultsDir=cfg_Session(1).temporarydir;
 
 Data_Normalized=true;
 
+% cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
+%     'Epoch',Epoch,'Encoding',true,'Target',cfg_Encoder.Target,'Fold',Fold,'Data_Normalized',Data_Normalized);
+% cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
+%     'Epoch',Epoch,'Encoding',true,'Target',cfg_Encoder.Target,'Fold',Fold,'Data_Normalized',Data_Normalized);
 cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
-    'Epoch',Epoch,'Encoding',true,'Target',cfg_Encoder.Target,'Fold',Fold,'Data_Normalized',Data_Normalized);
+    'Epoch',Epoch,'Encoding',true,'Target',cfg_Encoder.Target,'Data_Normalized',Data_Normalized);
 cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
-    'Epoch',Epoch,'Encoding',true,'Target',cfg_Encoder.Target,'Fold',Fold,'Data_Normalized',Data_Normalized);
+    'Epoch',Epoch,'Encoding',true,'Target',cfg_Encoder.Target,'Data_Normalized',Data_Normalized);
 cfg.ResultsDir=cfg_Results.TargetDir;
 
 %%
@@ -172,6 +194,15 @@ cfg_Encoder.WeightKL = CheckVararginPairs('WeightKL', cfg_Encoder.WeightKL, vara
 cfg_Encoder.LossFactorKL = cfg_Encoder.WeightKL;
 end
 if isfunction
+cfg_Encoder.WeightConfidence = CheckVararginPairs('WeightConfidence', cfg_Encoder.WeightConfidence, varargin{:});
+end
+if isfunction
+cfg_Encoder.ConfidenceType = CheckVararginPairs('ConfidenceType', cfg_Encoder.ConfidenceType, varargin{:});
+end
+if isfunction
+cfg_Encoder.WantBatchCorrection = CheckVararginPairs('WantBatchCorrection', cfg_Encoder.WantBatchCorrection, varargin{:});
+end
+if isfunction
 cfg_Encoder.WantSaveOptimalNet = CheckVararginPairs('WantSaveOptimalNet', WantSaveOptimalNet, varargin{:});
 end
 if isfunction
@@ -220,6 +251,47 @@ cfg_Encoder.Freeze_cfg = CheckVararginPairs('Freeze_cfg', cfg_Encoder.Freeze_cfg
 end
 if isfunction
 cfg_Encoder.EncoderOutputType = CheckVararginPairs('EncoderOutputType', cfg_Encoder.EncoderOutputType, varargin{:});
+end
+if isfunction
+cfg_Encoder.MultipleInstanceLearningType = CheckVararginPairs('MultipleInstanceLearningType', cfg_Encoder.MultipleInstanceLearningType, varargin{:});
+end
+if isfunction
+cfg_Encoder.DynamicParameterSet = CheckVararginPairs('DynamicParameterSet', cfg_Encoder.DynamicParameterSet, varargin{:});
+[DynamicAugmentation, DynamicWeighting, DynamicFreezing, DynamicSetDescription] = PARAMETERS_cgg_selectDynamicParameters(cfg_Encoder.DynamicParameterSet);
+cfg_Encoder.DynamicAugmentation = DynamicAugmentation;
+cfg_Encoder.DynamicWeighting = DynamicWeighting;
+cfg_Encoder.DynamicFreezing = DynamicFreezing;
+cfg_Encoder.DynamicSetDescription = DynamicSetDescription;
+end
+if isfunction
+cfg_Encoder.DynamicAugmentation = CheckVararginPairs('DynamicAugmentation', cfg_Encoder.DynamicAugmentation, varargin{:});
+end
+if isfunction
+cfg_Encoder.DynamicFreezing = CheckVararginPairs('DynamicFreezing', cfg_Encoder.DynamicFreezing, varargin{:});
+end
+if isfunction
+cfg_Encoder.DynamicWeighting = CheckVararginPairs('DynamicWeighting', cfg_Encoder.DynamicWeighting, varargin{:});
+end
+if isfunction
+cfg_Encoder.wantStratifiedPartition = CheckVararginPairs('wantStratifiedPartition', cfg_Encoder.wantStratifiedPartition, varargin{:});
+end
+if isfunction
+cfg_Encoder.StitchingAndFusionLayer = CheckVararginPairs('StitchingAndFusionLayer', cfg_Encoder.StitchingAndFusionLayer, varargin{:});
+end
+%%
+cfg_Encoder.BaselineDynamicParameters = cgg_setBaselineDynamicParameters(cfg_Encoder,'IsFinalSetting',true);
+
+%%
+if any(~isnan(cfg_Encoder.StartEndPercent))
+    TimeRange = range([cfg_Encoder.Time_Start,cfg_Encoder.Time_End]);
+    if ~isnan(cfg_Encoder.StartEndPercent(2))
+        TimeAddition = cfg_Encoder.StartEndPercent(2)*TimeRange;
+        cfg_Encoder.Time_End = cfg_Encoder.Time_Start + TimeAddition;
+    end
+    if ~isnan(cfg_Encoder.StartEndPercent(1))
+        TimeAddition = cfg_Encoder.StartEndPercent(1)*TimeRange;
+        cfg_Encoder.Time_Start = cfg_Encoder.Time_Start + TimeAddition;
+    end
 end
 
 %%

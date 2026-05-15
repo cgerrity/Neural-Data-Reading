@@ -1,4 +1,4 @@
-function [SweepAccuracy,SweepWindowAccuracy,SweepAllNames,RunTable,BestRunTable] = cgg_procParameterSweepTable(SweepName,SweepNameIgnore,cfg,varargin)
+function [SweepAccuracy,SweepAccuracyAggregate,SweepWindowAccuracy,SweepAllNames,RunTable,BestRunTable] = cgg_procParameterSweepTable(SweepName,SweepNameIgnore,cfg,varargin)
 %CGG_PROCPARAMETERSWEEPTABLE Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -60,9 +60,30 @@ WantValidation=false;
 end
 end
 
+if isfunction
+Epoch = CheckVararginPairs('Epoch', 'Decision', varargin{:});
+else
+if ~(exist('Epoch','var'))
+Epoch='Decision';
+end
+end
 
-cfg_Encoder_Best = PARAMETERS_OPTIMAL_cgg_runAutoEncoder_v2();
+if isfunction
+KeepAllFields = CheckVararginPairs('KeepAllFields', false, varargin{:});
+else
+if ~(exist('KeepAllFields','var'))
+KeepAllFields=false;
+end
+end
 
+cfg_Encoder_Best = PARAMETERS_cgg_runAutoEncoder('ParameterSetName','Optimal','Epoch',Epoch);
+
+%%
+if WantValidation
+    CMTableVariableName = "CM_Table_Validation";
+else
+    CMTableVariableName = "CM_Table";
+end
 %%
 
 IsScaled = contains(MatchType,'Scaled');
@@ -82,7 +103,8 @@ Target = cfg_Encoder_Best.Target;
 EncodingParametersPath = cgg_getDirectory(cfg.ResultsDir,'Encoding');
 % EncodingParametersPath = fullfile(EncodingParametersPath,Target,'Fold_1');
 EncoderParametersFunc = @(x,y) cgg_getAllEncoderCMTable(x,y,...
-    'WantFinished',WantFinished,'WantValidation',WantValidation);
+    'WantFinished',WantFinished,'WantValidation',WantValidation, ...
+    'KeepAllFields',KeepAllFields);
 
 if isempty(RunTable)
 EncoderParameters_CM_Table = cgg_procDirectorySearchAndApply(EncodingParametersPath, ...
@@ -93,13 +115,28 @@ else
 end
 
 %%
-cfg_Encoder_Best = PARAMETERS_OPTIMAL_cgg_runAutoEncoder_v2();
-EncodingParametersPath_Fold1 = fullfile(EncodingParametersPath,Target,'Fold_1');
-cfg_Best = cgg_generateEncoderSubFolders_v2(EncodingParametersPath_Fold1,cfg_Encoder_Best);
+% cfg_Encoder_Best = PARAMETERS_cgg_runAutoEncoder('ParameterSetName','Prior Optimal','Epoch',Epoch);
+% EncodingParametersPath_Fold1 = fullfile(EncodingParametersPath,Target,'Fold_1');
+if KeepAllFields
+    cfg_Encoder_Best = PARAMETERS_cgg_runAutoEncoder('ParameterSetName','Optimal','Epoch',Epoch);
+    EncodingParametersPath = fullfile(EncodingParametersPath,Target);
+    cfg_Encoder_Best.Fold = 0;
+    cfg_Best = cgg_generateEncoderSubFolders_v3(EncodingParametersPath,cfg_Encoder_Best,'WantDirectory',false);
+    Encoding_Best_ParametersPath = cgg_getDirectory(cfg_Best,'Fold');
+    BestNameExt = fullfile(extractAfter(Encoding_Best_ParametersPath,'Fold_0'),'EncodingParameters.yaml');
+    BestPath =  extractBefore(Encoding_Best_ParametersPath,'Fold_0');
+else
+    cfg_Encoder_Best = PARAMETERS_cgg_runAutoEncoder('ParameterSetName','Prior Optimal','Epoch',Epoch);
+    EncodingParametersPath_Fold1 = fullfile(EncodingParametersPath,Target,'Fold_1');
+cfg_Best = cgg_generateEncoderSubFolders_v2(EncodingParametersPath_Fold1,cfg_Encoder_Best,'WantDirectory',false);
 Encoding_Best_ParametersPath = cgg_getDirectory(cfg_Best,'Classifier');
-% BestPath =  extractBefore(cfg_Best.EncodingDir.path,Target);
 BestNameExt = fullfile(extractAfter(Encoding_Best_ParametersPath,'Fold_1'),'EncodingParameters.yaml');
 BestPath =  extractBefore(Encoding_Best_ParametersPath,'Fold_1');
+end
+% Encoding_Best_ParametersPath = cgg_getDirectory(cfg_Best,'Classifier');
+% % BestPath =  extractBefore(cfg_Best.EncodingDir.path,Target);
+% BestNameExt = fullfile(extractAfter(Encoding_Best_ParametersPath,'Fold_1'),'EncodingParameters.yaml');
+% BestPath =  extractBefore(Encoding_Best_ParametersPath,'Fold_1');
 if isempty(BestRunTable)
 EncoderParameters_Best = cgg_procDirectorySearchAndApply(BestPath, ...
     BestNameExt, EncoderParametersFunc);
@@ -116,8 +153,10 @@ end
 this_SweepNameIgnore = [SweepNameIgnore, SweepName];
 %%
 
-Table_Best = removevars(EncoderParameters_Best,["Fold","CM_Table"]);
-Table_Sweep = removevars(EncoderParameters_CM_Table,["Fold","CM_Table"]);
+% Table_Best = removevars(EncoderParameters_Best,["Fold","CM_Table"]);
+% Table_Sweep = removevars(EncoderParameters_CM_Table,["Fold","CM_Table"]);
+Table_Best = removevars(EncoderParameters_Best,["Fold","CM_Table"],"CM_Table_Validation");
+Table_Sweep = removevars(EncoderParameters_CM_Table,["Fold","CM_Table","CM_Table_Validation"]);
 
 % Table_Sweep_Keep = Table_Sweep{:,SweepName};
 Table_Best_Keep = Table_Best{:,SweepName};
@@ -131,7 +170,8 @@ MatchIDX_Ignore = ismember(Table_Sweep_Ignore,Table_Best);
 SweepTable = EncoderParameters_CM_Table(MatchIDX_Ignore,:);
 % SweepTable_tmp = EncoderParameters_CM_Table(MatchIDX_tmp,:);
 % SweepAllNames = SweepTable{:,SweepNameIgnore};
-MatchBestIDX = ismember(removevars(SweepTable,["Fold","CM_Table"]),removevars(EncoderParameters_Best,["Fold","CM_Table"]));
+% MatchBestIDX = ismember(removevars(SweepTable,["Fold","CM_Table"]),removevars(EncoderParameters_Best,["Fold","CM_Table"]));
+MatchBestIDX = ismember(removevars(SweepTable,["Fold","CM_Table","CM_Table_Validation"]),removevars(EncoderParameters_Best,["Fold","CM_Table","CM_Table_Validation"]));
 % LoopCM_Table = LoopTable{:,"CM_Table"};
 % LoopFolds = LoopTable{:,"Fold"};
 
@@ -163,7 +203,8 @@ SweepTable = SweepTable(SweepOrderedIDX,:);
 MatchBestIDX = MatchBestIDX(SweepOrderedIDX);
 %%
 
-CMTable_Best = EncoderParameters_Best{:,"CM_Table"};
+% CMTable_Best = EncoderParameters_Best{:,"CM_Table"};
+CMTable_Best = EncoderParameters_Best{:,CMTableVariableName};
 CMTable_Best = CMTable_Best{1};
 Folds = EncoderParameters_Best{:,"Fold"};
 Folds = Folds{1};
@@ -188,12 +229,14 @@ end
 %%
 
 SweepAccuracy = cell(height(SweepTable),1);
+SweepAccuracyAggregate = cell(height(SweepTable),1);
 SweepWindowAccuracy = cell(height(SweepTable),1);
 
 for ridx = 1:height(SweepTable)
 
     this_SweepTable = SweepTable(ridx,:);
-    CMTable_Sweep = this_SweepTable{:,"CM_Table"};
+    % CMTable_Sweep = this_SweepTable{:,"CM_Table"};
+    CMTable_Sweep = this_SweepTable{:,CMTableVariableName};
     CMTable_Sweep = CMTable_Sweep{1};
     Folds_Sweep = this_SweepTable{:,"Fold"};
     Folds_Sweep = Folds_Sweep{1};
@@ -201,6 +244,7 @@ for ridx = 1:height(SweepTable)
     this_NumFolds = length(Folds_Sweep);
 
    this_SweepAccuracy = NaN(this_NumFolds,1);
+   this_SweepAccuracyAggregate = NaN(this_NumFolds,1);
    this_SweepWindowAccuracy = cell(this_NumFolds,1);
 
    IsSameSubset = isequal(this_SweepTable.Subset,EncoderParameters_Best.Subset);
@@ -227,12 +271,19 @@ this_CM_Table,this_ClassNames,'MatchType',MatchType,...
 'IsQuaddle',IsQuaddle,'MostCommon',this_MostCommon,...
 'RandomChance',this_RandomChance,'Stratified',this_Stratified);
 
+[~,~,Accuracy_Aggregated] = cgg_procConfusionMatrixFromTable(...
+this_CM_Table,this_ClassNames,'MatchType',MatchType,...
+'IsQuaddle',IsQuaddle,'MostCommon',this_MostCommon,...
+'RandomChance',this_RandomChance,'Stratified',this_Stratified, ...
+'PredictionColumn','Aggregation_Prediction');
 
     this_SweepAccuracy(fidx) = max(this_WindowAccuracy);
+    this_SweepAccuracyAggregate(fidx) = Accuracy_Aggregated;
     this_SweepWindowAccuracy{fidx} = this_WindowAccuracy;
     end
 
 SweepAccuracy{ridx} = this_SweepAccuracy;
+SweepAccuracyAggregate{ridx} = this_SweepAccuracyAggregate;
 SweepWindowAccuracy{ridx} = cell2mat(this_SweepWindowAccuracy);
 
 end
@@ -270,6 +321,7 @@ end
 
 SweepAllNames(RemoveIDX) = [];
 SweepAccuracy(RemoveIDX) = [];
+SweepAccuracyAggregate(RemoveIDX) = [];
 SweepWindowAccuracy(RemoveIDX) = [];
 
 end

@@ -137,6 +137,11 @@ EncoderOutputType = [];
 if isfield(cfg_Encoder,'EncoderOutputType')
 EncoderOutputType = cfg_Encoder.EncoderOutputType;
 end
+
+MultipleInstanceLearningType = [];
+if isfield(cfg_Encoder,'MultipleInstanceLearningType')
+MultipleInstanceLearningType = cfg_Encoder.MultipleInstanceLearningType;
+end
 %% Model Name Folder
 
 % Make the Model Name folder name.
@@ -370,8 +375,18 @@ if ~isempty(WeightedLoss)
 else
     NameWeightedLoss = 'Weighted Loss - None';
 end
+if ~isempty(MultipleInstanceLearningType)
+    switch MultipleInstanceLearningType
+        case 'MIL'
+            NameMIL = sprintf(' ~ SCT');
+        otherwise
+            NameMIL = '';
+    end
+else
+    NameMIL = '';
+end
 NameClassifier = [NameClassifierModel ' ~ ' NameClassifierHiddenSizes ...
-    ' ~ ' NameWeightedLoss];
+    ' ~ ' NameWeightedLoss NameMIL];
 cfg_tmp=cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset.AutoEncoder.Loss;
 [cfg_tmp,~] = cgg_generateFolderAndPath(NameClassifier,'Classifier',cfg_tmp,'WantDirectory',WantDirectory);
 cfg.EncodingDir.ModelName.ModelParameters.WidthStride.Normalization.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset.AutoEncoder.Loss=cfg_tmp;

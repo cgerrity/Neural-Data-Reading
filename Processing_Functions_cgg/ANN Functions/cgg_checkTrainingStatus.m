@@ -37,8 +37,8 @@ end
 
 %%
 
-Encoding_Dir = cgg_getDirectory(cfg_Network,'Classifier');
-AutoEncoding_Dir = cgg_getDirectory(cfg_Network,'AutoEncoderInformation');
+Encoding_Dir = cgg_getDirectory(cfg_Network,'Fold','Classifier');
+AutoEncoding_Dir = cgg_getDirectory(cfg_Network,'Fold','AutoEncoderInformation');
 
 %%
 AutoEncoder_CurrentIterationSavePathNameExt = [AutoEncoding_Dir ...

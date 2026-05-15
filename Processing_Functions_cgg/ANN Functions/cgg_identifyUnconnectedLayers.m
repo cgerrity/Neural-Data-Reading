@@ -57,8 +57,11 @@ InputNames(InputNamesRemovalIDX) = [];
 OutputNames(OutputNamesRemovalIDX) = [];
 %%
 
-NumInputs_Used = cellfun(@(x) sum(contains(Destination,x)),InputNames);
-NumOutputs_Used = cellfun(@(x) sum(contains(Source,x)),OutputNames);
+% NumInputs_Used = cellfun(@(x) sum(contains(Destination,x)),InputNames);
+% NumOutputs_Used = cellfun(@(x) sum(contains(Source,x)),OutputNames);
+
+NumInputs_Used = cellfun(@(x) sum(strcmp(Destination,x)),InputNames);
+NumOutputs_Used = cellfun(@(x) sum(strcmp(Source,x)),OutputNames);
 
 %%
 

@@ -36,6 +36,22 @@ WantResNet=false;
 end
 end
 
+if isfunction
+IsGrouped = CheckVararginPairs('IsGrouped', false, varargin{:});
+else
+if ~(exist('IsGrouped','var'))
+IsGrouped=false; % Number of convolutional and activation layers in a single block
+end
+end
+
+if isfunction
+RepetitionsPerBlock = CheckVararginPairs('RepetitionsPerBlock', 1, varargin{:});
+else
+if ~(exist('RepetitionsPerBlock','var'))
+RepetitionsPerBlock=1; % Number of convolutional and activation layers in a single block
+end
+end
+
 % functionLayer(@(X) dlresize(X,'Scale',2))
 
 %%
@@ -53,12 +69,25 @@ for lidx = 1:NumLevels
     this_NumFilters = FilterHiddenSizes(lidx);
     this_CropAmount = CropSizes{lidx};
     this_FilterSize = ceil(FilterSize/(Stride^(lidx-1)));
-this_CoderBlock = cgg_generateSimpleConvolutionalBlock(this_FilterSize,this_NumFilters,lidx,FilterNumber,AreaIDX,'CropAmount',this_CropAmount,varargin{:});
-
+    this_CoderBlock = [];
+    for ridx = 1:RepetitionsPerBlock
+        IsLastDepth = true;
+        if RepetitionsPerBlock < 2
+            BlockDepth = NaN;
+        else
+            BlockDepth = ridx;
+            IsLastDepth = ridx == RepetitionsPerBlock;
+        end
+        
+this_RepetitionCoderBlock = cgg_generateSimpleConvolutionalBlock(this_FilterSize,this_NumFilters,lidx,FilterNumber,AreaIDX,'CropAmount',this_CropAmount,'IsGrouped',IsGrouped,'BlockDepth',BlockDepth,'IsLastDepth',IsLastDepth,varargin{:});
+    this_CoderBlock = [this_CoderBlock
+                        this_RepetitionCoderBlock];
+    end
 
 if WantResNet
-CoderBlock_Name = cgg_generateCoderBlockName(Coder,AreaIDX,FilterNumber,lidx);
-Name_Residual = "conv_residual" + CoderBlock_Name;
+CoderBlock_Name = cgg_generateCoderBlockName(Coder,AreaIDX,FilterNumber,lidx,'IsGrouped',IsGrouped);
+% Name_Residual = "conv_residual" + CoderBlock_Name;
+Name_Residual = cgg_generateLayerName(CoderBlock_Name,"conv_residual",'IsGrouped',IsGrouped);
 % OutResidual_Name = Name_Residual;
 % Name_Depth = "channelrepeat" + CoderBlock_Name;
 
@@ -66,7 +95,8 @@ Name_Residual = "conv_residual" + CoderBlock_Name;
 
 switch Coder
     case 'Decoder'
-        CropName="crop_residual" + CoderBlock_Name;
+        % CropName="crop_residual" + CoderBlock_Name;
+        CropName = cgg_generateLayerName(CoderBlock_Name,"crop_residual",'IsGrouped',IsGrouped);
         this_Residual = [transposedConv2dLayer(1,this_NumFilters,"Name",Name_Residual,'Stride',Stride,"Cropping","same","WeightsInitializer","he")
             cgg_cropLayer(CropName,this_CropAmount)];
         % this_Residual = [functionLayer(@(X) dlresize(X,'Scale',Stride),'Name',Name_Residual)

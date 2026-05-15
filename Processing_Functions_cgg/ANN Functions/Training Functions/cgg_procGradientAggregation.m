@@ -57,7 +57,7 @@ end
     cgg_procAllSessionMiniBatchTable(DataStore,MaxGradSize,false);
     if ~WantParallel
     for bidx = 1:NumBatches
-        fprintf('??? Current gradient aggregation pass through is %d\n',bidx);
+        fprintf('   ??? Current gradient aggregation pass through is %d\n',bidx);
         [this_DataStore,~,~] = ...
         cgg_getCurrentIterationDataStore(MiniBatchTable,bidx,DataStore);
         
@@ -125,7 +125,7 @@ end
         % try
 
     parfor bidx = 1:NumBatches
-        fprintf('??? Current gradient aggregation pass through is %d\n',bidx);
+        fprintf('   ??? Current gradient aggregation pass through is %d\n',bidx);
         [this_DataStore,~,~] = ...
         cgg_getCurrentIterationDataStore(MiniBatchTable,bidx,DataStore);
         

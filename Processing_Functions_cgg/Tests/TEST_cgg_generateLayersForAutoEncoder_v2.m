@@ -13,8 +13,10 @@ Dropout = 0.5;
 IsVariational = true;
 EncoderOutputType = 'Stochastic'; % 'Deterministic', 'Stochastic'
 
-NetworkToView = 'Classifier';
+NetworkToView = 'Decoder';
 Pause_Time = 0;
+
+StitchingAndFusionLayer = ''; % 'Default','Feedforward','Parallel Single Level', 'Cascade Single Kernel - Single Reduction'
 
 wantGrouped = false;
 
@@ -48,12 +50,15 @@ ClassifierName = 'Deep LSTM - Dropout 0.5';
 % ClassifierName = 'Deep Feedforward - Dropout 0.5';
 % ClassifierName = 'Logistic';
 LossType = 'Classification';
-ClassifierHiddenSize = [500,250];
+ClassifierHiddenSize = [250,100,50];
 
-NumChannels = 6;
-DataWidth = 20;
-NumWindows = 10;
-NumAreas = 3;
+MultipleInstanceLearningType = 'MIL';
+ConfidenceType = ["Trial Confidence","Task Confidence"];
+
+NumChannels = 58;
+DataWidth = 100;
+NumWindows = 59;
+NumAreas = 6;
 NumExamples = 5;
 
 NumClasses = [1,4,4,4];
@@ -99,6 +104,7 @@ cfg_Encoder.WantNormalization = WantNormalization;
 cfg_Encoder.IsVariational = IsVariational;
 cfg_Encoder.Dropout = Dropout;
 cfg_Encoder.EncoderOutputType = EncoderOutputType;
+cfg_Encoder.StitchingAndFusionLayer = StitchingAndFusionLayer;
 PCAInformation = struct();
 if strcmp(ModelName,'PCA')
 PCAInformation = cgg_getPCAForLayer(X_Input,'WantPerTime',WantPerTime);
@@ -127,7 +133,7 @@ end
 
 HiddenSizeBottleNeck = cgg_getBottleNeckSize(Encoder);
 
-Classifier = cgg_constructClassifierArchitecture(NumClasses,'ClassifierName',ClassifierName,'ClassifierHiddenSize',ClassifierHiddenSize,'LossType',LossType,'HiddenSizeBottleNeck',HiddenSizeBottleNeck);
+Classifier = cgg_constructClassifierArchitecture(NumClasses,'ClassifierName',ClassifierName,'ClassifierHiddenSize',ClassifierHiddenSize,'LossType',LossType,'HiddenSizeBottleNeck',HiddenSizeBottleNeck,'MultipleInstanceLearningType',MultipleInstanceLearningType,'ConfidenceType',ConfidenceType);
 
 switch NetworkToView
     case 'Encoder'
@@ -170,7 +176,7 @@ OutputNames=cellfun(@(x,y) cellfun(@(z) [x '/' z],y,'UniformOutput',false),{Inpu
 OutputNames = [OutputNames{:}];
 % OutputNames=cellfun(@(x,y) [x '/' y{1}],{InputNet.Layers(:).Name},OutputLayerNames,'UniformOutput',false);
 OutputExample=cell(1,length(OutputNames));
-[OutputExample{:}]=forward(InputNet,X_Network,Outputs=OutputNames);
+[OutputExample{:},State]=forward(InputNet,X_Network,Outputs=OutputNames);
 
 
 %%
@@ -192,9 +198,11 @@ OutputTable = table(OutputTable_Cell);
 
 %%
 
-plot([OutputTable_Cell{:,7}])
-pause(Pause_Time);
+% plot([OutputTable_Cell{:,7}])
+% pause(Pause_Time);
 % close all
+% ExpansionIDX = contains(OutputNames,'area_defusion_expansion');
+% imshow(cgg_extractData(squeeze(OutputExample{ExpansionIDX}(:,:,1,1,1)))~=0);
 
 analyzeNetwork(InputNet);
 

@@ -1,5 +1,5 @@
 function [Iteration,Epoch,Run,MaximumValidationAccuracy,...
-    MinimumValidationLoss,OptimizerVariables] = ...
+    MinimumValidationLoss,AggregateValidationAccuracy,OptimizerVariables] = ...
     cgg_getIterationInformation(SaveDir,NumEpochs)
 %CGG_GETITERATIONINFORMATION Summary of this function goes here
 %   Detailed explanation goes here
@@ -18,6 +18,11 @@ Epoch=m_IterationInformation.Epoch;
 Iteration=m_IterationInformation.Iteration;
 Run=m_IterationInformation.Run;
 MaximumValidationAccuracy=m_IterationInformation.MaximumValidationAccuracy;
+if any(strcmp(who(m_IterationInformation),'AggregateValidationAccuracy'))
+AggregateValidationAccuracy=m_IterationInformation.AggregateValidationAccuracy;
+else
+AggregateValidationAccuracy=-Inf;
+end
 MinimumValidationLoss=m_IterationInformation.MinimumValidationLoss;
 IsFinished = Epoch > NumEpochs;
 WantReset = ~IsFinished & ~HasNetwork;
@@ -26,6 +31,7 @@ WantReset = ~IsFinished & ~HasNetwork;
     Iteration=0;
     Run=0;
     MaximumValidationAccuracy=-Inf;
+    AggregateValidationAccuracy=-Inf;
     MinimumValidationLoss=Inf;
     end
 else
@@ -33,6 +39,7 @@ Epoch=1;
 Iteration=0;
 Run=0;
 MaximumValidationAccuracy=-Inf;
+AggregateValidationAccuracy=-Inf;
 MinimumValidationLoss=Inf;
 end
 %%

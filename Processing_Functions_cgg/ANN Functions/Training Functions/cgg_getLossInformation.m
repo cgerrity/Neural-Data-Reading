@@ -1,261 +1,176 @@
-function [LossInformation] = cgg_getLossInformation(Loss_Reconstruction,Loss_KL,Loss_Reconstruction_PerArea,Loss_Classification_PerDimension,Loss_OffsetAndScale,LossInformation,WantUpdateLossPrior,WeightReconstruction,WeightKL,WeightClassification,WeightOffsetAndScale)
-%CGG_GETLOSSINFORMATION Summary of this function goes here
-%   Detailed explanation goes here
+function [LossInformation] = cgg_getLossInformation(Loss_Reconstruction, Loss_KL, Loss_Reconstruction_PerArea, Loss_Classification_PerDimension, Loss_OffsetAndScale, LossInformation, WantUpdateLossPrior, WeightReconstruction, WeightKL, WeightClassification, WeightOffsetAndScale, ClassNames, varargin)
+%CGG_GETLOSSINFORMATION Normalizes, rescales, and weights multi-branch losses.
+%   Delegates confidence tracking to cgg_getConfidenceLossInformation and uses 
+%   a dynamic struct helper to systematically process and log all loss components.
 
-WantDisplay = false;
+isfunction=exist('varargin','var');
+if isfunction
+    WantDisplay = CheckVararginPairs('WantDisplay', false, varargin{:});
+else
+    if ~(exist('WantDisplay','var'))
+        WantDisplay=false;
+    end
+end
+if isfunction
+    WeightConfidence = CheckVararginPairs('WeightConfidence', 0, varargin{:});
+else
+    if ~(exist('WeightConfidence','var'))
+        WeightConfidence=0;
+    end
+end
+if isfunction
+    Loss_TotalConfidence = CheckVararginPairs('Loss_TotalConfidence', NaN, varargin{:});
+else
+    if ~(exist('Loss_TotalConfidence','var'))
+        Loss_TotalConfidence=NaN;
+    end
+end
+% if isfunction
+%     Loss_TotalConfidence_PerDimension = CheckVararginPairs('Loss_TotalConfidence_PerDimension', NaN, varargin{:});
+% else
+%     if ~(exist('Loss_TotalConfidence_PerDimension','var'))
+%         Loss_TotalConfidence_PerDimension=NaN;
+%     end
+% end
+if isfunction
+    Loss_TrialConfidence = CheckVararginPairs('Loss_TrialConfidence', NaN, varargin{:});
+else
+    if ~(exist('Loss_TrialConfidence','var'))
+        Loss_TrialConfidence=NaN;
+    end
+end
+if isfunction
+    Loss_TaskConfidence = CheckVararginPairs('Loss_TaskConfidence', NaN, varargin{:});
+else
+    if ~(exist('Loss_TaskConfidence','var'))
+        Loss_TaskConfidence=NaN;
+    end
+end
+if isfunction
+    TrialConfidence = CheckVararginPairs('TrialConfidence', [], varargin{:});
+else
+    if ~(exist('TrialConfidence','var'))
+        TrialConfidence=[];
+    end
+end
+if isfunction
+    TaskConfidence = CheckVararginPairs('TaskConfidence', [], varargin{:});
+else
+    if ~(exist('TaskConfidence','var'))
+        TaskConfidence=[];
+    end
+end
+if isfunction
+    BatchFraction = CheckVararginPairs('BatchFraction', 1.0, varargin{:});
+else
+    if ~(exist('BatchFraction','var'))
+        BatchFraction=1.0;
+    end
+end
+if isfunction
+    PriorProportion = CheckVararginPairs('PriorProportion', 0, varargin{:});
+else
+    if ~(exist('PriorProportion','var'))
+        PriorProportion=0;
+    end
+end
+
+%%
 
 WantWeightedLoss_Reconstruction = ~isnan(WeightReconstruction);
 WantWeightedLoss_KL = ~isnan(WeightKL);
 WantWeightedLoss_Classification = ~isnan(WeightClassification);
 WantWeightedLoss_OffsetAndScale = ~isnan(WeightOffsetAndScale);
+WantWeightedLoss_Confidence = ~isnan(WeightConfidence);
 
-% if WeightKL == 0
-% Loss_KL = NaN;
-% end
+%% Identify Valid Classification Dimensions
+ValidClassificationIndices = cellfun(@(x) length(x),ClassNames) > 1;
+NumDimensions = length(ValidClassificationIndices);
 
-%%
-Loss_Classification = sum(Loss_Classification_PerDimension);
-NumDimensions = length(Loss_Classification_PerDimension);
-
-%%
+%% Initialize Struct
 if isempty(LossInformation)
-LossInformation = struct;
-LossInformation.Prior_Loss_Reconstruction = 1;
-LossInformation.Prior_Loss_KL = 1;
-
-LossInformation.Prior_Loss_Classification_PerDimension = ...
-    ones(1,NumDimensions);
-LossInformation.Prior_Loss_Classification = 1;
+    LossInformation = struct;
+    LossInformation.Prior_Loss_Reconstruction = [];
+    LossInformation.Prior_Loss_KL = [];
+    LossInformation.Prior_Loss_Classification_PerDimension = [];
+    LossInformation.Prior_Loss_Classification = [];
+    LossInformation.Prior_Loss_OffsetAndScale = [];
+    LossInformation.Prior_Loss_TotalConfidence = [];
+    LossInformation.Prior_Loss_TotalConfidence_PerDimension = ones(1,NumDimensions);
+    LossInformation.Prior_Loss_TrialConfidence = ones(1,NumDimensions);
+    LossInformation.Prior_Loss_TaskConfidence = ones(1,NumDimensions);
+    LossInformation.Confidence_Beta = 1;
 end
 
-LossInformation.Loss_Reconstruction = ...
-    cgg_extractData(Loss_Reconstruction);
-LossInformation.Loss_KL = ...
-    cgg_extractData(Loss_KL);
-LossInformation.Loss_Reconstruction_PerArea = ...
-    cgg_extractData(Loss_Reconstruction_PerArea);
-LossInformation.Loss_Classification_PerDimension = ...
-    cgg_extractData(Loss_Classification_PerDimension);
-LossInformation.Loss_Classification = ...
-    cgg_extractData(Loss_Classification);
-LossInformation.Loss_OffsetAndScale = ...
-    cgg_extractData(Loss_OffsetAndScale);
+%% Delegate Confidence Tracking & Budgeting
+[Loss_Confidence, LossInformation] = cgg_getConfidenceLossInformation(...
+    LossInformation, TrialConfidence, TaskConfidence, ...
+    Loss_TrialConfidence, Loss_TaskConfidence, Loss_TotalConfidence, ...
+    ValidClassificationIndices, BatchFraction);
 
-if WantUpdateLossPrior
-    LossInformation.Prior_Loss_Reconstruction = ...
-        LossInformation.Loss_Reconstruction;
-    LossInformation.Prior_Loss_KL = ...
-        LossInformation.Loss_KL;
-    LossInformation.Prior_Loss_Classification_PerDimension = ...
-        LossInformation.Loss_Classification_PerDimension;
-    LossInformation.Prior_Loss_Classification = ...
-        LossInformation.Loss_Classification;
-    LossInformation.Prior_Loss_OffsetAndScale = ...
-        LossInformation.Loss_OffsetAndScale;
+%% Compute Raw Classification (Summed across dimensions)
+Loss_Classification = sum(Loss_Classification_PerDimension(ValidClassificationIndices));
+
+% Track the PerArea reconstruction purely for logging
+LossInformation.Loss_Reconstruction_PerArea = cgg_extractData(Loss_Reconstruction_PerArea);
+
+%% Determine Rescale Value
+% Pre-calculate the prior reference value to pass into the processing helper
+if isempty(LossInformation.Prior_Loss_Classification) && ...
+        isempty(LossInformation.Prior_Loss_Reconstruction)
+    Prior_Class = cgg_extractData(Loss_Classification);
+    Prior_Recon = cgg_extractData(Loss_Reconstruction);
+else
+    Prior_Class = LossInformation.Prior_Loss_Classification;
+    Prior_Recon = LossInformation.Prior_Loss_Reconstruction;
 end
 
-%% Normalize Loss
-
-% Loss_Reconstruction_Normalized = Loss_Reconstruction;
-% Loss_KL_Normalized = Loss_KL;
-% Loss_Classification_PerDimension_Normalized = ...
-%     Loss_Classification_PerDimension;
-% Loss_Classification_Normalized = Loss_Classification;
-
-if LossInformation.Prior_Loss_Reconstruction ~= 0 && ...
-        WantWeightedLoss_Reconstruction
-% Loss_Reconstruction_Normalized = Loss_Reconstruction./ ...
-%     LossInformation.Prior_Loss_Reconstruction;
-Loss_Reconstruction = Loss_Reconstruction./ ...
-    LossInformation.Prior_Loss_Reconstruction;
-end
-if LossInformation.Prior_Loss_KL ~= 0 && ...
-        WantWeightedLoss_KL
-% Loss_KL_Normalized = Loss_KL./ ...
-%     LossInformation.Prior_Loss_KL;
-Loss_KL = Loss_KL./ ...
-    LossInformation.Prior_Loss_KL;
+if isdlarray(Loss_Classification) || ~(all(isnan(cgg_extractData(Loss_Classification)),'all') || isempty(Loss_Classification))
+    Rescale_Value = Prior_Class;
+elseif isdlarray(Loss_Reconstruction) || ~(all(isnan(cgg_extractData(Loss_Reconstruction)),'all') || isempty(Loss_Reconstruction))
+    Rescale_Value = Prior_Recon;
+else
+    Rescale_Value = 1;
 end
 
-if all(LossInformation.Prior_Loss_Classification_PerDimension ~= 0) && ...
-        WantWeightedLoss_Classification
-% Loss_Classification_PerDimension_Normalized = ...
-%     Loss_Classification_PerDimension./ ...
-%     LossInformation.Prior_Loss_Classification_PerDimension;
-Loss_Classification_PerDimension = ...
-    Loss_Classification_PerDimension./ ...
-    LossInformation.Prior_Loss_Classification_PerDimension;
-end
+%% Process Core Loss Components via Dynamic Helper
+[Loss_Reconstruction, LossInformation] = cgg_processLossComponent(...
+    Loss_Reconstruction, 'Reconstruction', LossInformation, ...
+    WantUpdateLossPrior, WantWeightedLoss_Reconstruction, ...
+    Rescale_Value, WeightReconstruction,NaN,PriorProportion);
 
-if LossInformation.Prior_Loss_Classification ~= 0 && ...
-        WantWeightedLoss_Classification
-% Loss_Classification_Normalized = Loss_Classification./ ...
-%     LossInformation.Prior_Loss_Classification;
-Loss_Classification = Loss_Classification./ ...
-    LossInformation.Prior_Loss_Classification;
-end
+[Loss_KL, LossInformation] = cgg_processLossComponent(...
+    Loss_KL, 'KL', LossInformation, ...
+    WantUpdateLossPrior, WantWeightedLoss_KL, Rescale_Value, ...
+    WeightKL,NaN,PriorProportion);
 
-if LossInformation.Prior_Loss_OffsetAndScale ~= 0 && ...
-        WantWeightedLoss_OffsetAndScale
-% Loss_OffsetAndScale_Normalized = Loss_OffsetAndScale./ ...
-%     LossInformation.Prior_Loss_OffsetAndScale;
-Loss_OffsetAndScale = Loss_OffsetAndScale./ ...
-    LossInformation.Prior_Loss_OffsetAndScale;
-end
+[Loss_Classification_PerDimension, LossInformation] = cgg_processLossComponent(...
+    Loss_Classification_PerDimension, 'Classification_PerDimension', LossInformation, ...
+    WantUpdateLossPrior, WantWeightedLoss_Classification, ...
+    Rescale_Value, WeightClassification,NaN,PriorProportion);
 
-%% Save Normalized Loss
+[Loss_Classification, LossInformation] = cgg_processLossComponent(...
+    Loss_Classification, 'Classification', LossInformation, ...
+    WantUpdateLossPrior, WantWeightedLoss_Classification, ...
+    Rescale_Value, WeightClassification,NaN,PriorProportion);
 
-LossInformation.Loss_Reconstruction_Normalized = ...
-   cgg_extractData(Loss_Reconstruction);
-LossInformation.Loss_KL_Normalized = ...
-   cgg_extractData(Loss_KL);
-LossInformation.Loss_Classification_PerDimension_Normalized = ...
-   cgg_extractData(Loss_Classification_PerDimension);
-LossInformation.Loss_Classification_Normalized = ...
-   cgg_extractData(Loss_Classification);
-LossInformation.Loss_OffsetAndScale_Normalized = ...
-   cgg_extractData(Loss_OffsetAndScale);
+[Loss_OffsetAndScale, LossInformation] = cgg_processLossComponent(...
+    Loss_OffsetAndScale, 'OffsetAndScale', LossInformation, ...
+    WantUpdateLossPrior, WantWeightedLoss_OffsetAndScale, ...
+    Rescale_Value, WeightOffsetAndScale,NaN,PriorProportion);
 
-% LossInformation.Loss_Reconstruction_Normalized = ...
-%     Loss_Reconstruction_Normalized;
-% LossInformation.Loss_KL_Normalized = ...
-%     Loss_KL_Normalized;
-% LossInformation.Loss_Classification_PerDimension_Normalized = ...
-%     Loss_Classification_PerDimension_Normalized;
-% LossInformation.Loss_Classification_Normalized = ...
-%     Loss_Classification_Normalized;
+[Loss_Confidence, LossInformation] = cgg_processLossComponent(...
+    Loss_Confidence, 'Confidence', LossInformation, ...
+    WantUpdateLossPrior, WantWeightedLoss_Confidence, Rescale_Value, ...
+    WeightConfidence, LossInformation.Confidence_Beta,PriorProportion);
 
-%% Rescale Loss
-
-% fprintf('??? Selecting Rescale Value\n');
-% if isdlarray(Loss_Classification_Normalized)
-if isdlarray(Loss_Classification)
-    Rescale_Value = LossInformation.Prior_Loss_Classification;
-    % fprintf('??? Using Classification as rescale. Value is: %d\n',Rescale_Value);
-% elseif isdlarray(Loss_Reconstruction_Normalized)
-elseif isdlarray(Loss_Reconstruction)
-    Rescale_Value = LossInformation.Prior_Loss_Reconstruction;
-    % fprintf('??? Using Reconstuction as rescale. Value is: %d\n',Rescale_Value);
-elseif ~(all(isnan(Loss_Classification),'all') || ...
-        isempty(Loss_Classification))
-    Rescale_Value = LossInformation.Prior_Loss_Classification;
-    % fprintf('??? Using Prior Classification as rescale. Value is: %d\n',Rescale_Value);
-elseif ~(all(isnan(Loss_Reconstruction),'all') || ...
-        isempty(Loss_Reconstruction))
-    Rescale_Value = LossInformation.Prior_Loss_Reconstruction;
-    % fprintf('??? Using Prior Reconstruction as rescale. Value is: %d\n',Rescale_Value);
-end
-
-if WantWeightedLoss_Reconstruction
-    % fprintf('??? Loss Reconstruction. Rescale Value is: %d\n',Rescale_Value);
-Loss_Reconstruction = Loss_Reconstruction.*Rescale_Value;
-end
-if WantWeightedLoss_KL
-Loss_KL = Loss_KL.*Rescale_Value;
-end
-if WantWeightedLoss_Classification
-Loss_Classification_PerDimension = Loss_Classification_PerDimension.*Rescale_Value;
-end
-if WantWeightedLoss_Classification
-Loss_Classification = Loss_Classification.*Rescale_Value;
-end
-if WantWeightedLoss_OffsetAndScale
-Loss_OffsetAndScale = Loss_OffsetAndScale.*Rescale_Value;
-end
-
-% Loss_Reconstruction_Rescaled = ...
-%     Loss_Reconstruction_Normalized.*Rescale_Value;
-% Loss_KL_Rescaled = ...
-%     Loss_KL_Normalized.*Rescale_Value;
-% Loss_Classification_PerDimension_Rescaled = ...
-%     Loss_Classification_PerDimension_Normalized.*Rescale_Value;
-% Loss_Classification_Rescaled = ...
-%     Loss_Classification_Normalized.*Rescale_Value;
-
-%% Save Rescale Loss
-
-LossInformation.Loss_Reconstruction_Rescaled = ...
-   cgg_extractData(Loss_Reconstruction);
-LossInformation.Loss_KL_Rescaled = ...
-   cgg_extractData(Loss_KL);
-LossInformation.Loss_Classification_PerDimension_Rescaled = ...
-   cgg_extractData(Loss_Classification_PerDimension);
-LossInformation.Loss_Classification_Rescaled = ...
-   cgg_extractData(Loss_Classification);
-LossInformation.Loss_OffsetAndScale_Rescaled = ...
-   cgg_extractData(Loss_OffsetAndScale);
-
-% LossInformation.Loss_Reconstruction_Rescaled = ...
-%     Loss_Reconstruction_Rescaled;
-% LossInformation.Loss_KL_Rescaled = ...
-%     Loss_KL_Rescaled;
-% LossInformation.Loss_Classification_PerDimension_Rescaled = ...
-%     Loss_Classification_PerDimension_Rescaled;
-% LossInformation.Loss_Classification_Rescaled = ...
-%     Loss_Classification_Rescaled;
-
-%% Weighted Loss
-
-if WantWeightedLoss_Reconstruction
-Loss_Reconstruction = Loss_Reconstruction .* WeightReconstruction;
-end
-if WantWeightedLoss_KL
-Loss_KL = Loss_KL .* WeightKL;
-end
-if WantWeightedLoss_Reconstruction
-Loss_Classification_PerDimension = Loss_Classification_PerDimension .* WeightClassification;
-end
-if WantWeightedLoss_Classification
-Loss_Classification = Loss_Classification .* WeightClassification;
-end
-if WantWeightedLoss_OffsetAndScale
-Loss_OffsetAndScale = Loss_OffsetAndScale .* WeightOffsetAndScale;
-end
-
-% if isnan(WeightReconstruction)
-% Loss_Reconstruction_Weighted = ...
-%     Loss_Reconstruction;
-% else
-% Loss_Reconstruction_Weighted = ...
-%     LossInformation.Loss_Reconstruction_Rescaled .* WeightReconstruction;
-% end
-% 
-% if isnan(WeightKL)
-% Loss_KL_Weighted = ...
-%     Loss_KL;
-% else
-% Loss_KL_Weighted = ...
-%     LossInformation.Loss_KL_Rescaled .* WeightKL;
-% end
-% 
-% if isnan(WeightClassification)
-% Loss_Classification_Weighted = ...
-%     Loss_Classification;
-% else
-% Loss_Classification_Weighted = ...
-%     LossInformation.Loss_Classification_Rescaled .* WeightClassification;
-% end
-
-%% Save Weighted Loss
-
-LossInformation.Loss_Reconstruction_Weighted = ...
-   cgg_extractData(Loss_Reconstruction);
-LossInformation.Loss_KL_Weighted = ...
-   cgg_extractData(Loss_KL);
-LossInformation.Loss_Classification_PerDimension_Weighted = ...
-   cgg_extractData(Loss_Classification_PerDimension);
-LossInformation.Loss_Classification_Weighted = ...
-   cgg_extractData(Loss_Classification);
-LossInformation.Loss_OffsetAndScale_Weighted = ...
-   cgg_extractData(Loss_OffsetAndScale);
-
-%% Network Loss
-
+%% Network Loss Construction
 if ~isnan(Loss_Reconstruction)
     Loss_Decoder = Loss_Reconstruction;
 else
     Loss_Decoder = NaN;
 end
+
 if ~isnan(Loss_KL) && ~isnan(Loss_Decoder)
     Loss_Decoder = Loss_Decoder + Loss_KL;
 end
@@ -268,70 +183,92 @@ if ~isnan(Loss_Classification)
 else
     Loss_Classifier = NaN;
 end
+
+% Merge confidence penalty strictly into classifier gradients
+if ~isnan(Loss_Confidence) && ~isnan(Loss_Classifier) && Loss_Confidence ~= 0
+    Loss_Classifier = Loss_Classifier + Loss_Confidence;
+end
+
 if ~isnan(Loss_Decoder)
     Loss_Encoder = Loss_Decoder;
 else
     Loss_Encoder = NaN;
 end
+
 if ~isnan(Loss_Classifier) && ~isnan(Loss_Encoder)
     Loss_Encoder = Loss_Encoder + Loss_Classifier;
 elseif ~isnan(Loss_Classifier)
     Loss_Encoder = Loss_Classifier;
 end
 
-% if ~isnan(Loss_Reconstruction_Weighted)
-%     Loss_Decoder = Loss_Reconstruction_Weighted;
-% else
-%     Loss_Decoder = NaN;
-% end
-% if ~isnan(Loss_KL_Weighted) && ~isnan(Loss_Decoder)
-%     Loss_Decoder = Loss_Decoder + Loss_KL_Weighted;
-% end
-% 
-% if ~isnan(Loss_Classification_Weighted)
-%     Loss_Classifier = Loss_Classification_Weighted;
-% else
-%     Loss_Classifier = NaN;
-% end
-% if ~isnan(Loss_Decoder)
-%     Loss_Encoder = Loss_Decoder;
-% else
-%     Loss_Encoder = NaN;
-% end
-% if ~isnan(Loss_Classifier) && ~isnan(Loss_Encoder)
-%     Loss_Encoder = Loss_Encoder + Loss_Classifier;
-% elseif ~isnan(Loss_Classifier)
-%     Loss_Encoder = Loss_Classifier;
-% end
-
-%%
-
-% LossInformation.Loss_Reconstruction_Weighted = cgg_extractData(Loss_Reconstruction_Weighted);
-% LossInformation.Loss_KL_Weighted = cgg_extractData(Loss_KL_Weighted);
-% LossInformation.Loss_Classification_Weighted = cgg_extractData(Loss_Classification_Weighted);
-
 LossInformation.Loss_Decoder = Loss_Decoder;
 LossInformation.Loss_Classifier = Loss_Classifier;
 LossInformation.Loss_Encoder = Loss_Encoder;
 
-%%
-
 if WantDisplay
-% fprintf('\tReconstruction = %f \n',cgg_extractData(Loss_Reconstruction));
-% fprintf('\tKL = %f \n',Loss_KL);
-% 
-% fprintf('\tReconstruction Prior = %f \n',LossInformation.Prior_Loss_Reconstruction);
-% fprintf('\tKL Prior = %f \n',LossInformation.Prior_Loss_KL);
-% 
-% fprintf('\tReconstruction Normalized = %f \n',cgg_extractData(Loss_Reconstruction_Normalized));
-% fprintf('\tKL Normalized = %f \n',Loss_KL_Normalized);
-% 
-% fprintf('\tReconstruction Rescaled = %f \n',cgg_extractData(Loss_Reconstruction_Rescaled));
-% fprintf('\tKL Rescaled = %f \n',Loss_KL_Rescaled);
-% 
-% fprintf('\tReconstruction Weighted = %f \n',cgg_extractData(Loss_Reconstruction_Weighted));
-% fprintf('\tKL Weighted = %f \n',Loss_KL_Weighted);
+    fprintf("      ||| Target Beta is %.2f\n", LossInformation.Confidence_Beta);
 end
 
 end
 
+%% ================= HELPER FUNCTIONS ================= %%
+
+function [Loss_Out, LossInformation] = cgg_processLossComponent(Loss_In, LossName, LossInformation, WantUpdatePrior, WantWeighted, Rescale_Value, Weight,Beta,PriorProportion)
+%CGG_PROCESSLOSSCOMPONENT Centralizes extraction, prior updating, normalization, rescaling, and weighting.
+%   Uses dynamic field generation (struct.(['Name'])) to avoid repetitive assignments.
+
+    % Define dynamic field names
+    RawField     = ['Loss_' LossName];
+    PriorField   = ['Prior_Loss_' LossName];
+    NormField    = ['Loss_' LossName '_Normalized'];
+    RescaleField = ['Loss_' LossName '_Rescaled'];
+    WeightField  = ['Loss_' LossName '_Weighted'];
+
+    % 1. Extract Raw Data
+    RawData = cgg_extractData(Loss_In);
+    LossInformation.(RawField) = RawData;
+    
+
+    % 2. Establish Prior
+    % Fallback if field hasn't been initialized yet
+    if isfield(LossInformation, PriorField)
+        PriorData = LossInformation.(PriorField);
+    else
+        PriorData = [];
+    end
+
+    if WantUpdatePrior && ~isempty(PriorData)
+        PriorData = RawData.*(1-PriorProportion) + PriorData.*(PriorProportion);
+    else
+        PriorData = RawData;
+    end
+    LossInformation.(PriorField) = PriorData;
+    
+    Loss_Working = Loss_In;
+    
+    % 3. Normalize
+    % Ensure we do not divide by zero if prior tracking has not stabilized
+    if WantWeighted && all(PriorData ~= 0, 'all')
+        Loss_Working = Loss_Working ./ PriorData;
+    end
+    LossInformation.(NormField) = cgg_extractData(Loss_Working);
+    
+    % 4. Rescale
+    if WantWeighted
+        Loss_Working = Loss_Working .* Rescale_Value;
+    end
+    LossInformation.(RescaleField) = cgg_extractData(Loss_Working);
+    
+    % 5. Weight
+    if WantWeighted
+        Loss_Working = Loss_Working .* Weight;
+    end
+    LossInformation.(WeightField) = cgg_extractData(Loss_Working);
+
+    if ~isnan(Beta)
+        Loss_Working = Loss_Working .* Beta;
+    end
+    
+    % Return the final fully processed loss block (as a dlarray for gradients)
+    Loss_Out = Loss_Working;
+end

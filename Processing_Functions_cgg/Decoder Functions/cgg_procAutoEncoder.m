@@ -67,6 +67,14 @@ if ~(exist('NetworkTrainingVersion','var'))
 NetworkTrainingVersion='Version 2';
 end
 end
+
+if isfunction
+StopAfterParameterSave = CheckVararginPairs('StopAfterParameterSave', false, varargin{:});
+else
+if ~(exist('StopAfterParameterSave','var'))
+StopAfterParameterSave=false;
+end
+end
 %%
 
 % NumStacks=1;
@@ -108,11 +116,15 @@ NumEpochsAutoEncoder = cfg_Encoder.NumEpochsAutoEncoder;
 WeightReconstruction = cfg_Encoder.WeightReconstruction;
 WeightKL = cfg_Encoder.WeightKL;
 WeightClassification = cfg_Encoder.WeightClassification;
+WeightOffsetAndScale = cfg_Encoder.WeightOffsetAndScale;
+DynamicWeighting = cfg_Encoder.DynamicWeighting;
 WeightedLoss = cfg_Encoder.WeightedLoss;
 GradientThreshold = cfg_Encoder.GradientThreshold;
 Optimizer = cfg_Encoder.Optimizer;
 Normalization = cfg_Encoder.Normalization;
 LossType_Decoder = cfg_Encoder.LossType_Decoder;
+
+StartEndPercent = cfg_Encoder.StartEndPercent;
 
 STDChannelOffset = cfg_Encoder.STDChannelOffset;
 STDWhiteNoise = cfg_Encoder.STDWhiteNoise;
@@ -120,46 +132,62 @@ STDRandomWalk = cfg_Encoder.STDRandomWalk;
 STDTimeShift = cfg_Encoder.STDTimeShift;
 WantSeparateTimeShift = cfg_Encoder.WantSeparateTimeShift;
 
+[LoadParameters, WeightParameters, FreezeParameters] = ...
+    cgg_generateAllDynamicParameters(cfg_Encoder);
+
+if cfg_Encoder.WeightConfidence == 0
+    cfg_Encoder.ConfidenceType = '';
+end
+
+%%
+
 Target = cfg_Encoder.Target;
 
 % Encoding_Dir=cfg.ResultsDir.Aggregate_Data.Epoched_Data.Epoch.Encoding.Target.Fold.path;
-Encoding_Dir = cgg_getDirectory(cfg.ResultsDir,'Fold');
+% Encoding_Dir = cgg_getDirectory(cfg.ResultsDir,'Fold');
+Encoding_Dir = cgg_getDirectory(cfg.ResultsDir,'EncodingTarget');
 
 % cfg_Network = cgg_generateEncoderSubFolders(Encoding_Dir,ModelName,DataWidth,WindowStride,HiddenSize,InitialLearningRate,WeightReconstruction,WeightKL,WeightClassification,MiniBatchSize,wantSubset,WeightedLoss,GradientThreshold,ClassifierName,ClassifierHiddenSize,STDChannelOffset,STDWhiteNoise,STDRandomWalk,Optimizer,NumEpochsAutoEncoder,Normalization,LossType_Decoder);
-cfg_Network = cgg_generateEncoderSubFolders_v2(Encoding_Dir,cfg_Encoder);
+% cfg_Network = cgg_generateEncoderSubFolders_v2(Encoding_Dir,cfg_Encoder);
+cfg_Encoder.Fold = Fold;
+cfg_Network = cgg_generateEncoderSubFolders_v3(Encoding_Dir,cfg_Encoder);
 
-
-Encoding_Dir = cgg_getDirectory(cfg_Network,'Classifier');
-AutoEncoding_Dir = cgg_getDirectory(cfg_Network,'AutoEncoderInformation');
+% Encoding_Dir = cgg_getDirectory(cfg_Network,'Fold');
+Encoding_Dir = cgg_getDirectory(cfg_Network, 'Fold', 'Classifier');
+AutoEncoding_Dir = cgg_getDirectory(cfg_Network,'AutoEncoderFold','AutoEncoderInformation');
 
 % Encoding_Dir = cfg_tmp.EncodingDir.ModelName.WidthStride.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset.Loss.Classifier.path;
 
 % AutoEncoding_Dir = cfg_tmp.EncodingDir.ModelName.WidthStride.HiddenSize.Learning.MiniBatchSize.DataAugmentation.IsSubset.path;
 
 NetworkParametersPathNameExt = [Encoding_Dir filesep 'EncodingParameters.yaml'];
+% NetworkParametersPathNameExt = fullfile(Encoding_Dir, 'EncodingParameters.yaml');
 
 WriteYaml(NetworkParametersPathNameExt, cfg_Encoder);
 
+if StopAfterParameterSave
+return
+end
 %%
 
 kidx=Fold;
 
 if isfield(cfg_Encoder,'Subset')
     if islogical(cfg_Encoder.Subset)
-        cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','Subset');
+        cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','Subset','wantStratifiedPartition',cfg_Encoder.wantStratifiedPartition);
     else
-        cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm',cfg_Encoder.Subset);
+        cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm',cfg_Encoder.Subset,'wantStratifiedPartition',cfg_Encoder.wantStratifiedPartition);
     end
 elseif cfg_Encoder.wantSubset
-    cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','Subset');
+    cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','Subset','wantStratifiedPartition',cfg_Encoder.wantStratifiedPartition);
 else
-    cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','All');
+    cfg_partition = cgg_generatePartitionVariableSaveName(cfg,'ExtraSaveTerm','All','wantStratifiedPartition',cfg_Encoder.wantStratifiedPartition);
 end
 
 Partition_PathNameExt = cfg_partition.Partition;
 
 if ~isfile(Partition_PathNameExt)
-    cgg_getKFoldPartitions('Epoch',cfg_Encoder.Epoch,'SingleSessionSubset',cfg_Encoder.Subset,'wantSubset',cfg_Encoder.wantSubset);
+    cgg_getKFoldPartitions('Epoch',cfg_Encoder.Epoch,'SingleSessionSubset',cfg_Encoder.Subset,'wantSubset',cfg_Encoder.wantSubset,'wantStratifiedPartition',cfg_Encoder.wantStratifiedPartition);
 end
 m_Partition = matfile(Partition_PathNameExt,'Writable',false);
 KFoldPartition=m_Partition.KFoldPartition;
@@ -184,6 +212,9 @@ TargetAggregateDir = cgg_getDirectory(cfg.TargetDir,'Target');
 
 NormalizationInformationPath = [cgg_getDirectory(cfg.TargetDir,'Epoch') filesep 'Normalization Information'];
 NormalizationInformationPathNameExt = [NormalizationInformationPath filesep 'NormalizationInformation.mat'];
+if ~isfile(NormalizationInformationPathNameExt)
+cgg_procNormalizationInformation(Epoch);
+end
 NormalizationInformation = load(NormalizationInformationPathNameExt);
 NormalizationInformation = NormalizationInformation.NormalizationInformation;
 % if Data_Normalized
@@ -201,13 +232,15 @@ WantRandomize=false;
 WantNaNZeroed=false;
 Want1DVector=false;
 
-Data_Fun=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'Normalization',Normalization,'NormalizationTable','','NormalizationInformation',NormalizationInformation);
-Data_Fun_Augmented=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'STDChannelOffset',STDChannelOffset,'STDWhiteNoise',STDWhiteNoise,'STDRandomWalk',STDRandomWalk,'STDTimeShift',STDTimeShift,'WantSeparateTimeShift',WantSeparateTimeShift,'Normalization',Normalization,'NormalizationTable','','NormalizationInformation',NormalizationInformation);
+Data_Fun=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'Normalization',Normalization,'NormalizationTable','','NormalizationInformation',NormalizationInformation,'StartEndPercent',StartEndPercent);
+Data_Fun_Augmented=@(x) cgg_loadDataArray(x,DataWidth,StartingIDX,EndingIDX,WindowStride,ChannelRemoval,WantDisp,WantRandomize,WantNaNZeroed,Want1DVector,'STDChannelOffset',STDChannelOffset,'STDWhiteNoise',STDWhiteNoise,'STDRandomWalk',STDRandomWalk,'STDTimeShift',STDTimeShift,'WantSeparateTimeShift',WantSeparateTimeShift,'Normalization',Normalization,'NormalizationTable','','NormalizationInformation',NormalizationInformation,'LoadParameters',LoadParameters,'StartEndPercent',StartEndPercent);
 
 switch Target
     case 'Dimension'
     Target_Fun=@(x) cgg_loadTargetArray(x,'Dimension',Dimension);
     case 'Trial Outcome'
+    Target_Fun=@(x) double(cgg_loadTargetArray(x,'CorrectTrial',true));
+    case 'Outcome'
     Target_Fun=@(x) double(cgg_loadTargetArray(x,'CorrectTrial',true));
     otherwise
     Target_Fun=@(x) cgg_loadTargetArray(x,Target,true);
@@ -378,9 +411,9 @@ switch NetworkTrainingVersion
     case 'Version 1'
         cgg_trainAllAutoEncoder(InDataStore,DataStore_Validation,DataStore_Testing,SessionsList,cfg_Encoder,ExtraSaveTerm,cfg_Network,'PCAInformation',PCAInformation);
     case 'Version 2'
-        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network,'PCAInformation',PCAInformation);
+        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network,'PCAInformation',PCAInformation,'LoadParameters',LoadParameters,'WeightParameters',WeightParameters,'FreezeParameters',FreezeParameters);
     otherwise
-        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network,'PCAInformation',PCAInformation);
+        cgg_trainAllAutoEncoder_v2(InDataStore,DataStore_Validation,DataStore_Testing,cfg_Encoder,cfg_Network,'PCAInformation',PCAInformation,'LoadParameters',LoadParameters,'WeightParameters',WeightParameters,'FreezeParameters',FreezeParameters);
 end
 
 %% All Session Encoder Tuning

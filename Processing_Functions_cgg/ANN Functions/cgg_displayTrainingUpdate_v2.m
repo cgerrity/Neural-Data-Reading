@@ -83,6 +83,10 @@ end
 
 updateTime(monitor)
 
+% if monitor.UpdateEpochLine
+% addEpochLines(monitor,epoch,iteration);
+% end
+
 drawnow;
 end
 

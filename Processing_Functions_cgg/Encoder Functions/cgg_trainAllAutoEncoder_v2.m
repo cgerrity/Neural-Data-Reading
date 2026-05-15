@@ -12,6 +12,38 @@ PCAInformation=[];
 end
 end
 
+if isfunction
+LoadParameters = CheckVararginPairs('LoadParameters', [], varargin{:});
+else
+if ~(exist('LoadParameters','var'))
+LoadParameters=[];
+end
+end
+
+if isfunction
+WeightParameters = CheckVararginPairs('WeightParameters', [], varargin{:});
+else
+if ~(exist('WeightParameters','var'))
+WeightParameters=[];
+end
+end
+
+if isfunction
+FreezeParameters = CheckVararginPairs('FreezeParameters', [], varargin{:});
+else
+if ~(exist('FreezeParameters','var'))
+FreezeParameters=[];
+end
+end
+
+if isfunction
+AccuracyType = CheckVararginPairs('AccuracyType', 'Aggregate', varargin{:});
+else
+if ~(exist('AccuracyType','var'))
+AccuracyType='Aggregate';
+end
+end
+
 %% Messages
 MessageUnsupervised = '+++ Unsupervised Training\n';
 MessageSupervised = '+++ Supervised Training\n';
@@ -22,6 +54,8 @@ MessageDelete_Optimal = '!!! Deleting Optimal Networks - Keeping None\n';
 MessageGenerating_Model = '*** Generating %s\n'; % Model
 MessageLoading_Model = '*** Loading %s %s %s\n'; % TrainingStage, Optimality, Model
 MessageFreezing_Model = '*** Freezing %s %s %s\n'; % TrainingStage, Optimality, Model
+
+MessageModelPath = '??? Model Path: %s\n'; % Encoding_Dir
 
 %%
 
@@ -37,10 +71,15 @@ WeightReconstruction=cfg_Encoder.WeightReconstruction;
 WeightKL=cfg_Encoder.WeightKL;
 WeightClassification=cfg_Encoder.WeightClassification;
 WeightOffsetAndScale=cfg_Encoder.WeightOffsetAndScale;
+WeightConfidence=cfg_Encoder.WeightConfidence;
 RescaleLossEpoch = cfg_Encoder.RescaleLossEpoch;
+PriorProportion = cfg_Encoder.PriorProportion;
 WeightedLoss = cfg_Encoder.WeightedLoss;
 ClassifierName = cfg_Encoder.ClassifierName;
 ClassifierHiddenSize = cfg_Encoder.ClassifierHiddenSize;
+MultipleInstanceLearningType = cfg_Encoder.MultipleInstanceLearningType;
+ConfidenceType = cfg_Encoder.ConfidenceType;
+WantBatchCorrection = cfg_Encoder.WantBatchCorrection;
 Optimizer = cfg_Encoder.Optimizer;
 LossType_Decoder = cfg_Encoder.LossType_Decoder;
 LossType_Classifier = cfg_Encoder.LossType_Classifier;
@@ -66,13 +105,16 @@ LearningRateDecay = cfg_Encoder.LearningRateDecay;
 LearningRateEpochDrop = cfg_Encoder.LearningRateEpochDrop;
 LearningRateEpochRamp = cfg_Encoder.LearningRateEpochRamp;
 
+WeightDelayEpoch = cfg_Encoder.WeightDelayEpoch;
+WeightEpochRamp = cfg_Encoder.WeightEpochRamp;
+
 Freeze_cfg_Autoencoder = struct();
 Freeze_cfg_FullNetwork = struct();
 
 %% Directories
 
-Encoding_Dir = cgg_getDirectory(cfg_Network,'Classifier');
-AutoEncoding_Dir = cgg_getDirectory(cfg_Network,'AutoEncoderInformation');
+Encoding_Dir = cgg_getDirectory(cfg_Network, 'Fold', 'Classifier');
+AutoEncoding_Dir = cgg_getDirectory(cfg_Network,'AutoEncoderFold','AutoEncoderInformation');
 
 %%
 
@@ -183,7 +225,7 @@ end
 %     Decoder = [];
 % end
 %%
-    cfg_Monitor = cgg_generateMonitorCFG(cfg_Encoder,Encoder,Decoder,[],'SaveDir',AutoEncoding_Dir,'NumEpochs',NumEpochsAutoEncoder);
+    cfg_Monitor = cgg_generateMonitorCFG(cfg_Encoder,Encoder,Decoder,[],'SaveDir',AutoEncoding_Dir,'NumEpochs',NumEpochsAutoEncoder,'NumWindows',NumWindows);
     
 %% Train AutoEncoder
 fprintf(MessageUnsupervised);
@@ -203,6 +245,8 @@ fprintf(MessageUnsupervised);
     'LearningRateDecay',LearningRateDecay,...
     'LearningRateEpochDrop',LearningRateEpochDrop,...
     'LearningRateEpochRamp',LearningRateEpochRamp,...
+    'WeightDelayEpoch',WeightDelayEpoch,...
+    'WeightEpochRamp',WeightEpochRamp,...
     'WantSaveNet',WantSaveNet_tmp,...
     'IterationSaveFrequency',IterationSaveFrequency,...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
@@ -210,7 +254,14 @@ fprintf(MessageUnsupervised);
     'L2Factor',L2Factor,'WantSaveOptimalNet',true, ...
     'WeightOffsetAndScale',WeightOffsetAndScale, ...
     'GradientClipType',GradientClipType, ...
-    'Freeze_cfg',Freeze_cfg_Autoencoder);
+    'Freeze_cfg',Freeze_cfg_Autoencoder, ...
+    'MultipleInstanceLearningType',MultipleInstanceLearningType, ...
+    'LoadParameters',LoadParameters, ...
+    'WeightParameters',WeightParameters, ...
+    'FreezeParameters',FreezeParameters, ...
+    'AccuracyType',AccuracyType,'WeightConfidence',WeightConfidence, ...
+    'PriorProportion',PriorProportion, ...
+    'WantBatchCorrection',WantBatchCorrection);
 
 %% Get Optimal Autoencoder
 
@@ -222,6 +273,8 @@ HasAutoEncoder_Optimal = HasAutoEncoder_Optimal_Encoder && ...
 
 % Get the optimal autoencoder only if it exists. Otherwise the current
 % autoencoder is used
+
+% TODO: Why is the Freeze_cfg setup like this???
 if HasAutoEncoder_Optimal && ~(HasFull_Current_Encoder && HasFull_Current_Decoder)
     fprintf(MessageLoading_Model,'Autoencoder', 'Optimal', 'Encoder');
     m_AutoEncoder_Encoder = matfile(AutoEncoder_Optimal_EncoderSavePathNameExt,"Writable",false);
@@ -240,17 +293,27 @@ elseif HasAutoEncoder_Optimal_Encoder && ~HasFull_Current_Encoder && strcmp(Loss
     Freeze_cfg_FullNetwork.Encoder = Freeze_cfg_Default.Encoder;
 end
 
+%%
+Freeze_cfg_FullNetwork = Freeze_cfg_Default;
 %% Full Network (Encoder, Decoder, Classifier)
 
 if ~HasFull_Current_Classifier
     fprintf(MessageGenerating_Model,'Classifier');
     HiddenSizeBottleNeck = cgg_getBottleNeckSize(Encoder);
+
+    % if ~(WeightConfidence ~=0 && all(strcmp(string(ConfidenceType),"")))
+    % ConfidenceType = 'Trial Confidence';
+    % else
+    % ConfidenceType = '';
+    % end
     
     Classifier = cgg_constructClassifierArchitecture(NumClasses,...
         'ClassifierName',ClassifierName,...
         'ClassifierHiddenSize',ClassifierHiddenSize,...
         'LossType',LossType_Classifier,...
-        'HiddenSizeBottleNeck',HiddenSizeBottleNeck);
+        'HiddenSizeBottleNeck',HiddenSizeBottleNeck, ...
+        'MultipleInstanceLearningType',MultipleInstanceLearningType, ...
+        'ConfidenceType',ConfidenceType);
     Classifier = initialize(Classifier);
 else
     fprintf(MessageLoading_Model,'Full Network', 'Current', 'Classifier');
@@ -262,9 +325,10 @@ end
 
     cfg_Monitor = cgg_generateMonitorCFG(cfg_Encoder,Encoder,...
         Decoder,Classifier,'SaveDir',Encoding_Dir,...
-        'NumEpochs',NumEpochsFull);
+        'NumEpochs',NumEpochsFull,'NumWindows',NumWindows);
     %%
 fprintf(MessageSupervised);
+fprintf(MessageModelPath,Encoding_Dir);
 [Encoder,Decoder,Classifier] = cgg_trainNetwork(Encoder,...
     DataStore_Training,DataStore_Validation,DataStore_Testing,...
     'Decoder',Decoder,'Classifier',Classifier,...
@@ -282,6 +346,8 @@ fprintf(MessageSupervised);
     'LearningRateDecay',LearningRateDecay,...
     'LearningRateEpochDrop',LearningRateEpochDrop,...
     'LearningRateEpochRamp',LearningRateEpochRamp,...
+    'WeightDelayEpoch',WeightDelayEpoch,...
+    'WeightEpochRamp',WeightEpochRamp,...
     'WantSaveNet',WantSaveNet_tmp,...
     'IterationSaveFrequency',IterationSaveFrequency,...
     'maxworkerMiniBatchSize',maxworkerMiniBatchSize,...
@@ -289,7 +355,14 @@ fprintf(MessageSupervised);
     'L2Factor',L2Factor,'WantSaveOptimalNet',WantSaveOptimalNet, ...
     'WeightOffsetAndScale',WeightOffsetAndScale, ...
     'GradientClipType',GradientClipType, ...
-    'Freeze_cfg',Freeze_cfg_FullNetwork);
+    'Freeze_cfg',Freeze_cfg_FullNetwork, ...
+    'MultipleInstanceLearningType',MultipleInstanceLearningType, ...
+    'LoadParameters',LoadParameters, ...
+    'WeightParameters',WeightParameters, ...
+    'FreezeParameters',FreezeParameters, ...
+    'AccuracyType',AccuracyType,'WeightConfidence',WeightConfidence, ...
+    'PriorProportion',PriorProportion, ...
+    'WantBatchCorrection',WantBatchCorrection);
 
 
 %%

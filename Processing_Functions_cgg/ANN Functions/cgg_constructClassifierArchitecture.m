@@ -37,9 +37,30 @@ HiddenSizeBottleNeck=25;
 end
 end
 
-%%
-Classifier_NoInput = cgg_selectClassifier(ClassifierName,NumClasses,LossType,'ClassifierHiddenSize',ClassifierHiddenSize);
+if isfunction
+MultipleInstanceLearningType = CheckVararginPairs('MultipleInstanceLearningType', 'None', varargin{:});
+else
+if ~(exist('MultipleInstanceLearningType','var'))
+MultipleInstanceLearningType='None';
+end
+end
 
+if isfunction
+ConfidenceType = CheckVararginPairs('ConfidenceType', 'None', varargin{:});
+else
+if ~(exist('ConfidenceType','var'))
+ConfidenceType='None';
+end
+end
+
+%%
+Classifier_NoInput = cgg_selectClassifier(ClassifierName,NumClasses,LossType,'ClassifierHiddenSize',ClassifierHiddenSize,'MultipleInstanceLearningType',MultipleInstanceLearningType);
+
+if any(contains(ConfidenceType,'Trial'))
+        [NetworkType,DropoutPercent] = cgg_getClassifierPropertiesFromName(ClassifierName);
+Layers_Confidence = cgg_generateLayersForClassifier(1,'ClassifierHiddenSize',ClassifierHiddenSize,'DropoutPercent',DropoutPercent,'NetworkType',NetworkType,'ConfidenceType','Trial Confidence','LossType',LossType);
+Classifier_NoInput{length(Classifier_NoInput) + 1} = Layers_Confidence{1};
+end
 % %%
 % Classifier = cell(1,length(Classifier_NoInput));
 % 
@@ -61,7 +82,8 @@ Input_LayerName="Input_Classifier";
 InputClassifier = sequenceInputLayer(HiddenSizeBottleNeck,"Name",Input_LayerName);
 Classifier = layerGraph(InputClassifier);
 
-for didx = 1:length(NumClasses)
+% for didx = 1:length(NumClasses)
+for didx = 1:length(Classifier_NoInput)
 
 Classifier = addLayers(Classifier,Classifier_NoInput{didx}.Layers);
 
@@ -86,6 +108,13 @@ Classifier = dlnetwork(Classifier);
 % end
 % 
 % T = dlarray(T,'CBT');
+
+%%
+if any(contains(ConfidenceType,'Task'))
+Classifier = cgg_addTaskConfidenceToClassifier(Classifier);
+end
+
+%%
 
 end
 

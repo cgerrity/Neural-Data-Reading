@@ -2,13 +2,18 @@
 clc; clear; close all;
 %%
 
-StatusType = 'Session';
+StatusType = 'Improvements Over Baseline';
 
 switch StatusType
     case 'Paper'
 SLURMChoice_All = {'Base',11,12,7,1,3,6,9,10};
-SLURMIDX_All = {1,[1,4],[1,2,3,5,7,8,9,10],[1,2,3,4,5,7,8,9,10], ...
+SLURMIDX_All = {NaN,[1,4],[1,2,3,5,7,8,9,10],[1,2,3,4,5,7,8,9,10], ...
     [1,2,3,6,7,8,9,10],[1,2,3,4,5,6,7,8,9],[1,2,3,4,5],[5,6],2};
+Fold_All = 1:10;
+SessionRunIDX_All = NaN;
+    case 'Improvements Over Baseline'
+SLURMChoice_All = {'Base',11,14,15};
+SLURMIDX_All = {1,7,10,[1,2,3,4,5,6,7]};
 Fold_All = 1:10;
 SessionRunIDX_All = NaN;
     case 'Session'
@@ -58,6 +63,11 @@ for cidx = 1:length(SLURMChoice_All)
 Fold = Fold_All(fidx);
 SessionRunIDX = SessionRunIDX_All(sidx);
 isfunction=exist('varargin','var');
+
+if isnan(SessionRunIDX) && strcmp(SLURMChoice,'Base')
+SLURMIDX = Fold;
+end
+
 %%
 
 cfg_Session = DATA_cggAllSessionInformationConfiguration;
@@ -86,6 +96,10 @@ end
 cfg_Encoder.Fold = Fold;
 Epoch=cfg_Encoder.Epoch;
 
+if isnan(SessionRunIDX) && strcmp(SLURMChoice,'Base')
+    SLURMIDX = NaN;
+end
+
 %%
 
 cfg_Encoder.NumEpochsBase = cfg_Encoder.NumEpochsAutoEncoder;
@@ -110,9 +124,9 @@ ResultsDir=cfg_Session(1).temporarydir;
 Data_Normalized=true;
 
 cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
-    'Epoch',Epoch,'Encoding',true,'Target',cfg_Encoder.Target,'Fold',Fold,'Data_Normalized',Data_Normalized);
+    'Epoch',Epoch,'Encoding',true,'Target',cfg_Encoder.Target);
 cfg_Results = cgg_generateDecodingFolders('TargetDir',ResultsDir,...
-    'Epoch',Epoch,'Encoding',true,'Target',cfg_Encoder.Target,'Fold',Fold,'Data_Normalized',Data_Normalized);
+    'Epoch',Epoch,'Encoding',true,'Target',cfg_Encoder.Target);
 cfg.ResultsDir=cfg_Results.TargetDir;
 
 
@@ -135,9 +149,9 @@ end
 
 %%
 
-Encoding_Dir = cgg_getDirectory(cfg.ResultsDir,'Fold');
+Encoding_Dir = cgg_getDirectory(cfg.ResultsDir,'EncodingTarget');
 
-cfg_Network = cgg_generateEncoderSubFolders_v2(Encoding_Dir,cfg_Encoder);
+cfg_Network = cgg_generateEncoderSubFolders_v3(Encoding_Dir,cfg_Encoder);
 
 %%
 if ~isnan(SessionRunIDX)

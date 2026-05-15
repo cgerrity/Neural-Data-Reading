@@ -48,12 +48,33 @@ if ~isempty(this_Var)
 cfg_Monitor.(this_VarName) = this_Var;
 end
 
+this_VarName = 'NumWindows';
+if isfunction
+this_Var = CheckVararginPairs(this_VarName, [], varargin{:});
+else
+if ~(exist(this_VarName,'var'))
+this_Var=[];
+end
+end
+if ~isempty(this_Var)
+cfg_Monitor.(this_VarName) = this_Var;
+end
+
 %%
 
 HasDecoder = ~isempty(Decoder);
 HasClassifier = ~isempty(Classifier);
 IsVariational = any(contains(Encoder.OutputNames,'/mean')) && ...
     any(contains(Encoder.OutputNames,'/log-variance'));
+
+HasConfidence = cgg_hasNetworkConfidence(Encoder);
+if HasDecoder
+HasConfidence = HasConfidence || cgg_hasNetworkConfidence(Decoder);
+end
+if HasClassifier
+HasConfidence = HasConfidence || cgg_hasNetworkConfidence(Classifier);
+end
+
 LossType = 'Classification';
 
 NumDimensions = [];
@@ -71,7 +92,10 @@ WantReconstructionLoss = ~isempty(Decoder.Learnables);
 end
 if HasClassifier
 LossType = 'Classification';
-NumDimensions = length(Classifier.OutputNames);
+[OutputInformation_Classifier,~] ...
+    = cgg_getNetworkOutputInformation(Classifier);
+OutputNames_Classifier = OutputInformation_Classifier.Classifier;
+NumDimensions = length(OutputNames_Classifier);
 else
     NumDimensions = 0;
 end
@@ -87,6 +111,7 @@ cfg_Monitor.WantKLLoss = IsVariational;
 % cfg_Monitor.WantReconstructionLoss = WantEncoderGradient || WantDecoderGradient;
 cfg_Monitor.WantReconstructionLoss = HasDecoder;
 cfg_Monitor.WantClassificationLoss = HasClassifier;
+cfg_Monitor.WantConfidenceLoss = HasConfidence;
 cfg_Monitor.NumAreas = NumAreas;
 cfg_Monitor.DataWidth = DataWidth;
 cfg_Monitor.WantEncoderGradient = WantEncoderGradient;

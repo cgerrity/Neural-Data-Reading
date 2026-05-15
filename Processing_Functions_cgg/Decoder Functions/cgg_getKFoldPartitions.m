@@ -105,8 +105,24 @@ Epoch=cfg_param.Epoch;
 end
 % Decoder=cfg_param.Decoder;
 
-outdatadir=cfg_Sessions(1).outdatadir;
-TargetDir=outdatadir;
+%%
+if any(wantStratifiedPartition) && ~(ischar(wantStratifiedPartition) || isstring(wantStratifiedPartition))
+    PartitionType = 'Hierarchically Stratified';
+elseif strcmp(wantStratifiedPartition,'Standard')
+    PartitionType = 'Standard Stratified';
+else
+    PartitionType = 'Not Stratified';
+end
+fprintf('*** Generating %d Fold %s Partions\n',NumFolds,PartitionType);
+%%
+
+if contains(Epoch,'Synthetic_Easy') 
+    temporarydir=cfg_Sessions(1).temporarydir;
+    TargetDir=temporarydir;
+else
+    outdatadir=cfg_Sessions(1).outdatadir;
+    TargetDir=outdatadir;
+end
 
 % cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,...
 %     'Epoch',Epoch,'Decoder',Decoder{1},'Fold',1);
@@ -147,8 +163,10 @@ switch wantSubset
 
         for sidx = 1:NumSessions
         this_SessionName = SessionNames{sidx};
-        if wantStratifiedPartition
+        if any(wantStratifiedPartition) && ~(ischar(wantStratifiedPartition) || isstring(wantStratifiedPartition))
             Partition_NameExt{sidx} = sprintf('KFoldPartition_%s.mat',this_SessionName);
+        elseif strcmp(wantStratifiedPartition,'Standard')
+            Partition_NameExt{sidx} = sprintf('KFoldPartition_%s_Standard.mat',this_SessionName);
         else
             Partition_NameExt{sidx} = sprintf('KFoldPartition_%s_NS.mat',this_SessionName);
         end
@@ -157,8 +175,10 @@ switch wantSubset
         end
         Target_ds = Target_ds_Cell;
     case true
-        if wantStratifiedPartition
+        if any(wantStratifiedPartition) && ~(ischar(wantStratifiedPartition) || isstring(wantStratifiedPartition))
             Partition_NameExt = 'KFoldPartition_Subset.mat';
+        elseif strcmp(wantStratifiedPartition,'Standard')
+            Partition_NameExt = 'KFoldPartition_Subset_Standard.mat';
         else
             Partition_NameExt = 'KFoldPartition_Subset_NS.mat';
         end
@@ -172,8 +192,10 @@ switch wantSubset
         Target_ds=subset(Target_ds,IndicesPartition);
         NumSessions = 1;
     case false
-        if wantStratifiedPartition
+        if any(wantStratifiedPartition) && ~(ischar(wantStratifiedPartition) || isstring(wantStratifiedPartition))
             Partition_NameExt = 'KFoldPartition.mat';
+        elseif strcmp(wantStratifiedPartition,'Standard')
+            Partition_NameExt = 'KFoldPartition_Standard.mat';
         else
             Partition_NameExt = 'KFoldPartition_NS.mat';
         end
@@ -247,7 +269,7 @@ for sidx = 1:NumSessions
     end
 
     %%
-if wantStratifiedPartition
+if any(wantStratifiedPartition) && ~(ischar(wantStratifiedPartition) || isstring(wantStratifiedPartition))
 % Each Data example gets its own identifier if it matches precise
 % characteristics
 % UniqueDataIdentifiers=readall(Target_ds);
@@ -260,6 +282,11 @@ Identifiers=cellfun(@(x) x{1},UniqueDataIdentifiers,'UniformOutput',false);
 IdentifierName=UniqueDataIdentifiers{1}{2};
 
 PartitionGroups = cgg_procAssignGroups(Identifiers,IdentifierName,NumFolds);
+elseif strcmp(wantStratifiedPartition,'Standard')
+    UniqueDataIdentifiers=gather(tall(this_Target_ds));
+    Identifiers=cellfun(@(x) x{1},UniqueDataIdentifiers,'UniformOutput',false);
+    IdentifierName=UniqueDataIdentifiers{1}{2};
+    PartitionGroups = cgg_procAssignGroups(Identifiers,IdentifierName,NumFolds,'NumLevels',1);
 else
 PartitionGroups = numpartitions(this_Target_ds);
 end
@@ -276,10 +303,11 @@ for pidx=2:NumKPartitions
 KFoldPartition(pidx) = cvpartition(PartitionGroups,"KFold",NumFolds);
 end
 
+if ~isfile(this_Partition_PathNameExt)
 Partition_SaveVariables={KFoldPartition,this_IndicesPartition};
 Partition_SaveVariablesName={'KFoldPartition','Indices'};
 cgg_saveVariableUsingMatfile(Partition_SaveVariables,Partition_SaveVariablesName,this_Partition_PathNameExt);
-
+end
 end % End iteration through sessions
 
 

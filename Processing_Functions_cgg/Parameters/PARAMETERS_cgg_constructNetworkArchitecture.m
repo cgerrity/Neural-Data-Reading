@@ -10,8 +10,10 @@ WantLearnableOffset = false;
 WantLearnableScale = false;
 
 BottleNeckNormalization = 'Layer';
+RepetitionsPerBlock = 1;
 
 EncoderOutputType = 'Deterministic'; %'Stochastic', 'Deterministic'
+
 
 %%
 

@@ -4,8 +4,13 @@ function cgg_procNormalizationInformation(Epoch)
 
 cfg_Session = DATA_cggAllSessionInformationConfiguration;
 
-outdatadir=cfg_Session(1).outdatadir;
-TargetDir=outdatadir;
+if contains(Epoch,'Synthetic_Easy')
+    temporarydir=cfg_Session(1).temporarydir;
+    TargetDir=temporarydir;
+else
+    outdatadir=cfg_Session(1).outdatadir;
+    TargetDir=outdatadir;
+end
 
 cfg = cgg_generateDecodingFolders('TargetDir',TargetDir,'Epoch',Epoch,'NormalizationInformation',true);
 

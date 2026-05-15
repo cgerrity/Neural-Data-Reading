@@ -42,6 +42,7 @@ Optimizer = 'ADAM'; % Name of Optimizer ['ADAM', 'SGD']
 Normalization = 'Channel - Z-Score - Global - MinMax - [-1,1] - Zero Centered - Range 0.5';
 LossType_Decoder = 'MSE';
 LossType_Classifier='CrossEntropy';
+MultipleInstanceLearningType = 'None'; % 'MIL'
 
 RescaleLossEpoch = 1;
 
@@ -49,15 +50,28 @@ maxworkerMiniBatchSize=10;
 
 NumEpochsFull_Final = 1000;
 
+%% Dynamic Weight Augmentation Parameters
+
+% DynamicWeighting = struct();
+% DynamicWeighting.Reconstruction.EpochPoints = [100,100];
+% DynamicWeighting.Reconstruction.MagnitudePoints = [1,1];
+% DynamicWeighting.KL.EpochPoints = [100,100];
+% DynamicWeighting.KL.MagnitudePoints = [1,1];
+% DynamicWeighting.Classification.EpochPoints = [100,100];
+% DynamicWeighting.Classification.MagnitudePoints = [1e-4,1];
+
 %% Network Freezing Parameters
 
 Freeze_cfg = struct();
-Freeze_cfg.Encoder.DelayEpochs = 25;
-Freeze_cfg.Encoder.RampEpochs = 50;
-Freeze_cfg.Decoder.DelayEpochs = 25;
-Freeze_cfg.Decoder.RampEpochs = 50;
-Freeze_cfg.Classifier.DelayEpochs = 25;
-Freeze_cfg.Classifier.RampEpochs = 50;
+% Freeze_cfg.Encoder.DelayEpochs = 25;
+% Freeze_cfg.Encoder.RampEpochs = 50;
+% Freeze_cfg.Decoder.DelayEpochs = 25;
+% Freeze_cfg.Decoder.RampEpochs = 50;
+% Freeze_cfg.Classifier.DelayEpochs = 25;
+% Freeze_cfg.Classifier.RampEpochs = 50;
+
+% DynamicFreezing.EpochPoints = [0,25,50];
+% DynamicFreezing.MagnitudePoints = [0,0,1];
 
 %% Data Augmentation Parameters
 
@@ -67,6 +81,19 @@ STDRandomWalk = 0.007;
 STDTimeShift = NaN;
 WantSeparateTimeShift = false;
 
+%% Dynamic Data Augmentation Parameters
+
+% DynamicAugmentation = struct();
+% DynamicAugmentation.EpochPoints = [100,100];
+% DynamicAugmentation.MagnitudePoints = [1e-2,1];
+% DynamicAugmentation.EpochPoints = [50,100,100,200];
+% DynamicAugmentation.MagnitudePoints = [1,1e-2,1,1e-2];
+
+%% Dynamic Parameters
+DynamicParameterSet = "Soft Two-Stage Curriculum";
+[DynamicAugmentation, DynamicWeighting, DynamicFreezing, ...
+    DynamicSetDescription] = PARAMETERS_cgg_selectDynamicParameters(...
+    DynamicParameterSet);
 %%
 
 wantSubset = true;

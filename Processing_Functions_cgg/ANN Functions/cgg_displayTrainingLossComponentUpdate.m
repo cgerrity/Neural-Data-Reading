@@ -18,14 +18,26 @@ Loss_ReconstructionValidationByComponent = data{9};
 Loss_ClassificationTrainingByDimension = data{10};
 Loss_ClassificationValidationByDimension = data{11};
 
+Loss_ConfidenceTraining = data{12};
+Loss_ConfidenceValidation = data{13};
+Loss_ConfidenceTrainingByType = data{14};
+Loss_ConfidenceValidationByType = data{15};
+
+%% Loss Tolerance for 0 loss
+Loss_Tolerance = 0.00001;
+Loss_ClassificationTrainingByDimension(Loss_ClassificationTrainingByDimension < Loss_Tolerance) = NaN;
+Loss_ClassificationValidationByDimension(Loss_ClassificationValidationByDimension < Loss_Tolerance) = NaN;
+
 %%
 
 IsVariational=~isnan(Loss_KLTraining);
 HasClassifier=~isnan(Loss_ClassificationTraining);
 HasReconstruction=~isnan(Loss_ReconstructionTraining);
-UpdateValidation=(~isnan(Loss_ReconstructionValidation))||(~isnan(Loss_KLValidation))||(~isnan(Loss_ClassificationValidation));
+HasConfidence=~isnan(Loss_ConfidenceTraining);
+UpdateValidation=(~isnan(Loss_ReconstructionValidation))||(~isnan(Loss_KLValidation))||(~isnan(Loss_ClassificationValidation))||(~isnan(Loss_ConfidenceValidation));
 NumReconstructionByComponent=numel(Loss_ReconstructionTrainingByComponent);
 NumClassificationByDimension=numel(Loss_ClassificationTrainingByDimension);
+NumConfidenceByTypes=numel(Loss_ConfidenceTrainingByType);
 
 %%
 
@@ -41,6 +53,10 @@ if UpdateValidation
     if HasReconstruction
         updatePlot(monitor,'ReconstructionLossTraining',[iteration,Loss_ReconstructionTraining]);
         updatePlot(monitor,'ReconstructionLossValidation',[iteration,Loss_ReconstructionValidation]);
+    end
+    if HasConfidence
+        updatePlot(monitor,'ConfidenceLossTraining',[iteration,Loss_ConfidenceTraining]);
+        updatePlot(monitor,'ConfidenceLossValidation',[iteration,Loss_ConfidenceValidation]);
     end
     if NumReconstructionByComponent > 1 && HasReconstruction
         for cidx = 1:NumReconstructionByComponent
@@ -60,6 +76,15 @@ if UpdateValidation
         updatePlot(monitor,this_PlotNameValidation,[iteration,Loss_ClassificationValidationByDimension(cidx)]);
         end
     end
+    if NumConfidenceByTypes > 1 && HasConfidence
+        for tidx = 1:NumConfidenceByTypes
+        this_PlotNameTraining = sprintf('%s_ConfidenceLossTraining',monitor.ConfidenceTypes(tidx));
+        this_PlotNameValidation = sprintf('%s_ConfidenceLossValidation',monitor.ConfidenceTypes(tidx));
+
+        updatePlot(monitor,this_PlotNameTraining,[iteration,Loss_ConfidenceTrainingByType(tidx)]);
+        updatePlot(monitor,this_PlotNameValidation,[iteration,Loss_ConfidenceValidationByType(tidx)]);
+        end
+    end
 else
     if HasClassifier
         updatePlot(monitor,'ClassificationLossTraining',[iteration,Loss_ClassificationTraining]);
@@ -69,6 +94,9 @@ else
     end
     if HasReconstruction
         updatePlot(monitor,'ReconstructionLossTraining',[iteration,Loss_ReconstructionTraining]);
+    end
+    if HasConfidence
+        updatePlot(monitor,'ConfidenceLossTraining',[iteration,Loss_ConfidenceTraining]);
     end
     if NumReconstructionByComponent > 1 && HasReconstruction
         for cidx = 1:NumReconstructionByComponent
@@ -82,6 +110,13 @@ else
         this_PlotNameTraining = sprintf('Dimension_%d_ClassificationLossTraining',cidx);
 
         updatePlot(monitor,this_PlotNameTraining,[iteration,Loss_ClassificationTrainingByDimension(cidx)]);
+        end
+    end
+    if NumConfidenceByTypes > 1 && HasConfidence
+        for tidx = 1:NumConfidenceByTypes
+        this_PlotNameTraining = sprintf('%s_ConfidenceLossTraining',monitor.ConfidenceTypes(tidx));
+
+        updatePlot(monitor,this_PlotNameTraining,[iteration,Loss_ConfidenceTrainingByType(tidx)]);
         end
     end
 end

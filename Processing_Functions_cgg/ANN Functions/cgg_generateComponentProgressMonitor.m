@@ -17,6 +17,9 @@ classdef cgg_generateComponentProgressMonitor < handle
         WantKLLoss
         WantReconstructionLoss
         WantReconstructionLossPerChannel
+        WantConfidenceLoss
+        WantConfidenceLossPerType
+        ConfidenceTypes
         RunTerm
     end
 
@@ -42,6 +45,14 @@ end
 end
 
 if isfunction
+ConfidenceTypes = CheckVararginPairs('ConfidenceTypes', ["Total","Trial","Task"], varargin{:});
+else
+if ~(exist('ConfidenceTypes','var'))
+ConfidenceTypes=["Total","Trial","Task"];
+end
+end
+
+if isfunction
 WantKLLoss = CheckVararginPairs('WantKLLoss', false, varargin{:});
 else
 if ~(exist('WantKLLoss','var'))
@@ -62,6 +73,14 @@ WantReconstructionLoss = CheckVararginPairs('WantReconstructionLoss', false, var
 else
 if ~(exist('WantReconstructionLoss','var'))
 WantReconstructionLoss=false;
+end
+end
+
+if isfunction
+WantConfidenceLoss = CheckVararginPairs('WantConfidenceLoss', false, varargin{:});
+else
+if ~(exist('WantConfidenceLoss','var'))
+WantConfidenceLoss=false;
 end
 end
 
@@ -134,7 +153,10 @@ if ~isempty(SaveTerm)
 SaveTerm = ['_' SaveTerm];
 end
 
-%
+%%
+NumConfidenceTypes = length(ConfidenceTypes);
+
+%%
 
 InFigure=figure;
 InFigure.Units="normalized";
@@ -156,6 +178,10 @@ WantClassificationLossPerDimension = false;
 if (NumDimensions > 1) && WantClassificationLoss
 WantClassificationLossPerDimension = true;
 end
+WantConfidenceLossPerType = false;
+if WantConfidenceLoss
+WantConfidenceLossPerType = true;
+end
 
 NumLossPlots = 0;
 
@@ -174,6 +200,12 @@ end
 if WantReconstructionLossPerChannel
 NumLossPlots = NumLossPlots+1;
 end
+if WantConfidenceLoss
+NumLossPlots = NumLossPlots+1;
+end
+if WantConfidenceLossPerType
+NumLossPlots = NumLossPlots+1;
+end
 
 PlotSplit=4;
 
@@ -186,6 +218,8 @@ PlotTile = cell(0);
 PlotGroup = NaN(0);
 PlotValues = cell(0);
 Current_Tile_Count = 1;
+
+%% Classification
 
 if WantClassificationLoss
 this_TileRowIDX = (Current_Tile_Count-1)*PlotSplit+1;
@@ -216,6 +250,8 @@ PlotValues{NumPlotCell+2} = [];
 
 Current_Tile_Count = Current_Tile_Count+1;
 end
+
+%% Classification Per Dimension
 
 if WantClassificationLossPerDimension
 this_TileRowIDX = (Current_Tile_Count-1)*PlotSplit+1;
@@ -276,6 +312,7 @@ end
 Current_Tile_Count = Current_Tile_Count+1;
 end
 
+%% KL
 if WantKLLoss
 this_TileRowIDX = (Current_Tile_Count-1)*PlotSplit+1;
 this_Tile = nexttile(Tiled_Plot,this_TileRowIDX,[1,PlotSplit]);
@@ -306,6 +343,7 @@ PlotValues{NumPlotCell+2} = [];
 Current_Tile_Count = Current_Tile_Count+1;
 end
 
+%% Reconstruction
 if WantReconstructionLoss
 this_TileRowIDX = (Current_Tile_Count-1)*PlotSplit+1;
 this_Tile = nexttile(Tiled_Plot,this_TileRowIDX,[1,PlotSplit]);
@@ -335,6 +373,8 @@ PlotValues{NumPlotCell+2} = [];
 
 Current_Tile_Count = Current_Tile_Count+1;
 end
+
+%% Reconstruction Per Area
 
 if WantReconstructionLossPerChannel
 this_TileRowIDX = (Current_Tile_Count-1)*PlotSplit+1;
@@ -401,11 +441,104 @@ end
 % Current_Tile_Count = Current_Tile_Count+1;
 end
 
+%% Confidence
+
+if WantConfidenceLoss
+this_TileRowIDX = (Current_Tile_Count-1)*PlotSplit+1;
+this_Tile = nexttile(Tiled_Plot,this_TileRowIDX,[1,PlotSplit]);
+
+    p_LossConfidenceTraining=plot(NaN,NaN,'DisplayName','Training Confidence Loss','LineWidth',Line_Width_ProgressMonitor);
+    hold on
+    p_LossConfidenceValidation=plot(NaN,NaN,'DisplayName','Validation Confidence Loss','LineWidth',Line_Width_ProgressMonitor);
+    hold off
+    box off
+    legend([p_LossConfidenceTraining,p_LossConfidenceValidation],"Location","best");
+    xlabel('Iteration','FontSize',X_Name_Size);
+    ylabel('Loss','FontSize',Y_Name_Size);
+    InFigure.CurrentAxes.XAxis.FontSize=Label_Size;
+    InFigure.CurrentAxes.YAxis.FontSize=Label_Size;
+
+NumPlotCell = numel(PlotCell);
+PlotCell{NumPlotCell+1} = p_LossConfidenceTraining;
+PlotName{NumPlotCell+1} = 'ConfidenceLossTraining';
+PlotTile{NumPlotCell+1} = this_Tile;
+PlotGroup{NumPlotCell+1} = Current_Tile_Count;
+PlotValues{NumPlotCell+1} = [];
+PlotCell{NumPlotCell+2} = p_LossConfidenceValidation;
+PlotName{NumPlotCell+2} = 'ConfidenceLossValidation';
+PlotTile{NumPlotCell+2} = this_Tile;
+PlotGroup{NumPlotCell+2} = Current_Tile_Count;
+PlotValues{NumPlotCell+2} = [];
+
+Current_Tile_Count = Current_Tile_Count+1;
+end
+
+%% Confidence Per Type
+
+if WantConfidenceLossPerType
+this_TileRowIDX = (Current_Tile_Count-1)*PlotSplit+1;
+this_Tile = nexttile(Tiled_Plot,this_TileRowIDX,[1,PlotSplit]);
+
+NumPlotCell = numel(PlotCell);
+
+PlotsConfidence = gobjects(NumConfidenceTypes*2,1);
+if NumConfidenceTypes > 7
+PlotColors = jet(NumConfidenceTypes);
+else
+    PlotColors = [0 0.4470 0.7410; ...
+        0.8500 0.3250 0.0980; ...
+        0.9290 0.6940 0.1250; ...
+        0.4940 0.1840 0.5560; ...
+        0.4660 0.6740 0.1880; ...
+        0.3010 0.7450 0.9330; ...
+        0.6350 0.0780 0.1840];
+end
+
+for tidx = 1:NumConfidenceTypes
+
+    this_DisplayNameTraining = sprintf('Training %s Confidence',ConfidenceTypes(tidx));
+    this_DisplayNameValidation = sprintf('Validation %s Confidence',ConfidenceTypes(tidx));
+    this_PlotNameTraining = sprintf('%s_ConfidenceLossTraining',ConfidenceTypes(tidx));
+    this_PlotNameValidation = sprintf('%s_ConfidenceLossValidation',ConfidenceTypes(tidx));
+
+    LightenFactor = 0.25;
+    ValidationColor = PlotColors(tidx,:);
+    TrainingColor = ValidationColor*LightenFactor + (1-LightenFactor);
+    
+    PlotsConfidence(tidx)=plot(NaN,NaN,'DisplayName',this_DisplayNameTraining,'LineWidth',Line_Width_ProgressMonitor,'Color',TrainingColor,'LineStyle','-');
+    if tidx == 1
+        hold on 
+    end
+    PlotsConfidence(tidx+NumConfidenceTypes)=plot(NaN,NaN,'DisplayName',this_DisplayNameValidation,'LineWidth',Line_Width_ProgressMonitor,'Color',ValidationColor,'LineStyle','-');
+
+PlotCell{NumPlotCell+tidx} = PlotsConfidence(tidx);
+PlotName{NumPlotCell+tidx} = this_PlotNameTraining;
+PlotTile{NumPlotCell+tidx} = this_Tile;
+PlotGroup{NumPlotCell+tidx} = Current_Tile_Count;
+PlotValues{NumPlotCell+tidx} = [];
+PlotCell{NumPlotCell+tidx+NumConfidenceTypes} = PlotsConfidence(tidx+NumConfidenceTypes);
+PlotName{NumPlotCell+tidx+NumConfidenceTypes} = this_PlotNameValidation;
+PlotTile{NumPlotCell+tidx+NumConfidenceTypes} = this_Tile;
+PlotGroup{NumPlotCell+tidx+NumConfidenceTypes} = Current_Tile_Count;
+PlotValues{NumPlotCell+tidx+NumConfidenceTypes} = [];
+
+end
+    hold off
+    box off
+    legend(PlotsConfidence,"Location","best","NumColumns",2);
+    xlabel('Iteration','FontSize',X_Name_Size);
+    ylabel('Loss','FontSize',Y_Name_Size);
+    InFigure.CurrentAxes.XAxis.FontSize=Label_Size;
+    InFigure.CurrentAxes.YAxis.FontSize=Label_Size;
+
+Current_Tile_Count = Current_Tile_Count+1;
+end
+
+%% Generate PlotTable
 PlotTable=table(PlotCell',PlotGroup',PlotValues',PlotTile','VariableNames',...
     {'Plot','Group','Values','Tile'},'RowNames',PlotName');
 
 monitor.PlotTable = PlotTable;
-
 %%
 
 drawnow;
@@ -429,6 +562,11 @@ monitor.WantReconstructionLoss = ...
     WantReconstructionLoss;
 monitor.WantReconstructionLossPerChannel = ...
     WantReconstructionLossPerChannel;
+monitor.WantConfidenceLoss = ...
+    WantConfidenceLoss;
+monitor.WantConfidenceLossPerType = ...
+    WantConfidenceLossPerType;
+monitor.ConfidenceTypes = ConfidenceTypes;
 
 %%
 DataNames = cell(0);
@@ -444,6 +582,10 @@ DataNames{8} = 'Loss_ReconstructionTrainingByComponent';
 DataNames{9} = 'Loss_ReconstructionValidationByComponent';
 DataNames{10} = 'Loss_ClassificationTrainingByDimension';
 DataNames{11} = 'Loss_ClassificationValidationByDimension';
+DataNames{12} = 'Loss_ConfidenceTraining';
+DataNames{13} = 'Loss_ConfidenceValidation';
+DataNames{14} = 'Loss_ConfidenceTrainingByType';
+DataNames{15} = 'Loss_ConfidenceValidationByType';
 
 monitor.DataNames = DataNames;
         end
@@ -467,6 +609,10 @@ monitor.DataNames = DataNames;
             end
             this_Plot.XData=[this_Plot.XData,PlotUpdate(1)];
             this_Plot.YData=[this_Plot.YData,PlotUpdate(2)];
+
+            if isnan(PlotUpdate(2))
+            this_Plot.YData=NaN(size(this_Plot.YData));
+            end
 
             monitor.PlotTable{PlotName,"Values"}{1} = this_Plot.YData;
             this_Group = monitor.PlotTable{PlotName,"Group"}{1};
@@ -523,8 +669,11 @@ monitor.DataNames = DataNames;
                 this_Tile=this_Tile{1};
             end
             this_PlotYData_Regular = this_Plot.YData;
+            this_PlotYData_Regular(this_PlotYData_Regular < 0) = 0;
             this_PlotYDataLog = log(this_PlotYData_Regular);
+            % disp({this_PlotYData_Regular,this_PlotYDataLog});
             this_PlotYDataLog(isinf(this_PlotYDataLog)) = NaN;
+            % disp({this_PlotYData_Regular,this_PlotYDataLog,isreal(this_PlotYData_Regular),isreal(this_PlotYDataLog)});
             this_Plot.YData=this_PlotYDataLog;
 
             %%
@@ -532,8 +681,10 @@ monitor.DataNames = DataNames;
             this_GroupIDX = cell2mat(monitor.PlotTable.Group)==this_Group;
             this_GroupValues = monitor.PlotTable{this_GroupIDX,"Values"};
 
+            % disp(this_GroupValues);
             if iscell(this_GroupValues)
-                this_LogGroupValues = cellfun(@(x) log(x),this_GroupValues,'UniformOutput',false);
+                this_LogGroupValues = cellfun(@(x) log(cgg_setRangeToNaN(x,'Positive')),this_GroupValues,'UniformOutput',false);
+                % disp(this_LogGroupValues);
             %     this_LogGroupValues = cellfun(@(x) x(~isinf(x)),this_LogGroupValues,'UniformOutput',false);
             %     this_LogGroupValues_Max = cellfun(@(x) max(x,[],"all","omitmissing"),this_LogGroupValues,'UniformOutput',false);
             %     this_LogGroupValues_Min = cellfun(@(x) min(x,[],"all","omitmissing"),this_LogGroupValues,'UniformOutput',false);
@@ -640,6 +791,10 @@ monitor.DataNames = DataNames;
             MonitorUpdate.Loss_ReconstructionValidationByComponent = NaN;
             MonitorUpdate.Loss_ClassificationTrainingByDimension = NaN;
             MonitorUpdate.Loss_ClassificationValidationByDimension = NaN;
+            MonitorUpdate.Loss_ConfidenceTraining = NaN;
+            MonitorUpdate.Loss_ConfidenceValidation = NaN;
+            MonitorUpdate.Loss_ConfidenceTrainingByType = NaN;
+            MonitorUpdate.Loss_ConfidenceValidationByType = NaN;
 
             UpdateValidation = ~isempty(LossInformation_Validation);
 
@@ -675,6 +830,20 @@ monitor.DataNames = DataNames;
                 MonitorUpdate.Loss_ReconstructionTrainingByComponent = LossInformation_Training.Loss_Reconstruction_PerArea;
                 if UpdateValidation
                     MonitorUpdate.Loss_ReconstructionValidationByComponent = LossInformation_Validation.Loss_Reconstruction_PerArea;
+                end
+            end
+
+            if monitor.WantConfidenceLoss
+                MonitorUpdate.Loss_ConfidenceTraining = LossInformation_Training.Loss_Confidence;
+                if UpdateValidation
+                    MonitorUpdate.Loss_ConfidenceValidation = LossInformation_Validation.Loss_Confidence;
+                end
+            end
+
+            if monitor.WantConfidenceLossPerType
+                MonitorUpdate.Loss_ConfidenceTrainingByType = LossInformation_Training.Loss_Confidence_PerType;
+                if UpdateValidation
+                    MonitorUpdate.Loss_ConfidenceValidationByType = LossInformation_Validation.Loss_Confidence_PerType;
                 end
             end
 
